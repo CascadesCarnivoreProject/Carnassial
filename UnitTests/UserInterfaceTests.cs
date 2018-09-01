@@ -252,8 +252,8 @@ namespace Carnassial.UnitTests
 
                     DispatcherOperation<Task> showFile = carnassial.Dispatcher.InvokeAsync(async () =>
                     {
-                    // move to the other file so change no longer matches current file and can't be exected or undone
-                    int otherFileIndex = carnassial.DataHandler.ImageCache.CurrentRow == 0 ? 1 : 0;
+                        // move to the other file so change no longer matches current file and can't be exected or undone
+                        int otherFileIndex = carnassial.DataHandler.ImageCache.CurrentRow == 0 ? 1 : 0;
                         await carnassial.ShowFileAsync(otherFileIndex, true);
                     });
                     this.WaitForRenderingComplete();
@@ -333,6 +333,10 @@ namespace Carnassial.UnitTests
                     MarkersForCounter currentMarkers = carnassial.DataHandler.ImageCache.Current.GetMarkersForCounter(TestConstant.DefaultDatabaseColumn.Counter0);
                     Assert.IsTrue(currentMarkers.Count == previousMarkers.Count);
 
+                    Assert.IsTrue(carnassial.DataHandler.ImageCache.Current.HasChanges);
+                    Assert.IsTrue(carnassial.DataHandler.TrySyncCurrentFileToDatabase());
+                    Assert.IsFalse(carnassial.DataHandler.ImageCache.Current.HasChanges);
+
                     // custom selection edit
                     Data.CustomSelection currentSelection = carnassial.DataHandler.FileDatabase.CustomSelection;
                     Data.CustomSelection undoSelection = new Data.CustomSelection(currentSelection);
@@ -361,14 +365,18 @@ namespace Carnassial.UnitTests
                     Assert.IsTrue(customSelectionEdit.IsExecuted);
 
                     // verify application exit
+                    Task<bool> backupTask = carnassial.DataHandler.FileDatabase.TryBackupAsync();
                     carnassial.Close();
+                    Assert.IsTrue(backupTask.IsCompleted);
+                    Assert.IsTrue(backupTask.Result);
+
                     if (cancellationTokenSource.Token.CanBeCanceled)
                     {
                         cancellationTokenSource.Cancel();
                     }
                 }
 
-                // open, load existing database, pop dialogs, close
+                // open, load existing database, pop dialogs, backup database, close
                 using (CarnassialWindow carnassial = new CarnassialWindow())
                 {
                     carnassial.Show();
@@ -386,7 +394,7 @@ namespace Carnassial.UnitTests
 
                     this.ShowDialog(new About(carnassial));
                     this.ShowDialog(new AdvancedCarnassialOptions(carnassial.State, carnassial.FileDisplay, carnassial));
-                    this.ShowDialog(new ChooseFileDatabase(new string[] { TestConstant.File.DefaultNewFileDatabaseFileName }, TestConstant.File.DefaultTemplateDatabaseFileName, carnassial));
+                    this.ShowDialog(new ChooseFileDatabase(new List<string>() { TestConstant.File.DefaultNewFileDatabaseFileName }, TestConstant.File.DefaultTemplateDatabaseFileName, carnassial));
 
                     this.ShowDialog(new Dialog.CustomSelection(carnassial.DataHandler.FileDatabase, carnassial));
 
@@ -420,7 +428,10 @@ namespace Carnassial.UnitTests
                     MessageBox yesNoMessageBox = this.CreateMessageBox(carnassial, MessageBoxButton.YesNo, MessageBoxImage.Question);
                     this.ShowDialog(yesNoMessageBox);
 
+                    Task<bool> backupTask = carnassial.DataHandler.FileDatabase.TryBackupAsync();
                     carnassial.Close();
+                    Assert.IsTrue(backupTask.IsCompleted);
+                    Assert.IsFalse(backupTask.Result);
                 }
             }
         }

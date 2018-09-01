@@ -46,7 +46,7 @@ namespace Carnassial.Data
         {
             this.status.BeginWrite(database.Files.RowCount);
 
-            using (TextWriter fileWriter = new StreamWriter(csvFilePath, false))
+            using (TextWriter fileWriter = new StreamWriter(csvFilePath, false, Encoding.UTF8))
             {
                 // write the header as defined by the data labels in the template file
                 // The append sequence results in a trailing comma which is retained when writing the line.

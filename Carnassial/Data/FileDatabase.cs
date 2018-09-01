@@ -116,31 +116,26 @@ namespace Carnassial.Data
 
         public AddFilesTransactionSequence CreateAddFilesTransaction()
         {
-            this.CreateBackupIfNeeded();
             return new AddFilesTransactionSequence(this, this.Controls);
         }
 
         public FileTransactionSequence CreateInsertFileTransaction()
         {
-            this.CreateBackupIfNeeded();
             return FileTransactionSequence.CreateInsert(this, this.Files);
         }
 
         public UpdateFileColumnTransactionSequence CreateUpdateFileColumnTransaction(string dataLabel)
         {
-            this.CreateBackupIfNeeded();
             return new UpdateFileColumnTransactionSequence(dataLabel, this);
         }
 
         public UpdateFileDateTimeOffsetTransactionSequence CreateUpdateFileDateTimeTransaction()
         {
-            this.CreateBackupIfNeeded();
             return new UpdateFileDateTimeOffsetTransactionSequence(this);
         }
 
         public FileTransactionSequence CreateUpdateFileTransaction()
         {
-            this.CreateBackupIfNeeded();
             return FileTransactionSequence.CreateUpdate(this, this.Files);
         }
 
@@ -190,7 +185,6 @@ namespace Carnassial.Data
                 return;
             }
 
-            this.CreateBackupIfNeeded();
             using (SQLiteTransaction transaction = this.Connection.BeginTransaction())
             {
                 using (SQLiteCommand deleteFiles = new SQLiteCommand(String.Format("DELETE FROM {0} WHERE {1} = @Id", Constant.DatabaseTable.Files, Constant.DatabaseColumn.ID), this.Connection, transaction))
@@ -205,9 +199,11 @@ namespace Carnassial.Data
                     }
 
                     this.IncrementalVacuum(transaction);
-                    transaction.Commit();
                 }
+
+                transaction.Commit();
             }
+            this.RowsDroppedSinceLastBackup += fileIDs.Count;
         }
 
         // swap the days and months of all file dates between the start and end index
@@ -611,14 +607,23 @@ namespace Carnassial.Data
             GC.Collect();
             GC.WaitForPendingFinalizers();
 
+            string oldBackupFilePath = this.GetBackupFilePath();
+
             // rename database file and update associated fields
             string newFilePath = Path.Combine(this.FolderPath, newFileName);
             File.Move(this.FilePath, newFilePath);
             this.FileName = newFileName;
             this.FilePath = newFilePath;
 
+            // rename database backup file if one is present
+            if (File.Exists(oldBackupFilePath))
+            {
+                string newBackupFilePath = this.GetBackupFilePath();
+                File.Move(oldBackupFilePath, newBackupFilePath);
+            }
+
             // reconnect to database file
-            this.OpenConnection(newFilePath);
+            this.Connection = this.OpenConnection(newFilePath);
         }
 
         /// <summary> 

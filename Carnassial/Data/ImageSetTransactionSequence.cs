@@ -9,7 +9,6 @@ namespace Carnassial.Data
     public class ImageSetTransactionSequence : TransactionSequence
     {
         private readonly SQLiteCommand insertOrUpdateImageSet;
-        private readonly bool isInsert;
 
         protected ImageSetTransactionSequence(StringBuilder command, SQLiteDatabase database, SQLiteTransaction transaction)
             : base(database, transaction)
@@ -22,7 +21,7 @@ namespace Carnassial.Data
             this.insertOrUpdateImageSet.Parameters.Add(new SQLiteParameter("@" + Constant.ImageSetColumn.Options));
             this.insertOrUpdateImageSet.Parameters.Add(new SQLiteParameter("@" + Constant.ImageSetColumn.TimeZone));
             this.insertOrUpdateImageSet.Parameters.Add(new SQLiteParameter("@" + Constant.DatabaseColumn.ID));
-            this.isInsert = this.insertOrUpdateImageSet.CommandText.StartsWith("INSERT", StringComparison.Ordinal);
+            this.IsInsert = this.insertOrUpdateImageSet.CommandText.StartsWith("INSERT", StringComparison.Ordinal);
         }
 
         public static ImageSetTransactionSequence CreateInsert(SQLiteDatabase database)
@@ -65,7 +64,7 @@ namespace Carnassial.Data
 
         public void AddImageSet(ImageSetRow imageSet)
         {
-            if ((this.isInsert == false) && (imageSet.HasChanges == false))
+            if ((this.IsInsert == false) && (imageSet.HasChanges == false))
             {
                 return;
             }

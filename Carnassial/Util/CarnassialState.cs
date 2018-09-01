@@ -13,6 +13,7 @@ namespace Carnassial.Util
         private KeyEventArgs mostRecentKey;
 
         public List<Dictionary<string, object>> Analysis { get; private set; }
+        public DispatcherTimer BackupTimer { get; private set; }
         public Dictionary<string, object> CurrentFileSnapshot { get; set; }
         public byte DifferenceThreshold { get; set; }
         public bool FileNavigatorSliderDragging { get; set; }
@@ -38,6 +39,10 @@ namespace Carnassial.Util
             {
                 this.Analysis.Add(null);
             }
+            this.BackupTimer = new DispatcherTimer()
+            {
+                Interval = Constant.Database.BackupInterval
+            };
             this.CurrentFileSnapshot = new Dictionary<string, object>(StringComparer.Ordinal);
             this.DifferenceThreshold = Constant.Images.DifferenceThresholdDefault;
 

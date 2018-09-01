@@ -20,35 +20,6 @@ namespace Carnassial.UnitTests
     public class FileTests : CarnassialTest
     {
         [TestMethod]
-        public void Backup()
-        {
-            DateTime utcStart = DateTime.UtcNow;
-            string fileNameToBackup = TestConstant.File.DefaultFileDatabaseFileName;
-            Assert.IsTrue(FileBackup.TryCreateBackup(fileNameToBackup));
-            Assert.IsTrue(FileBackup.TryCreateBackup(fileNameToBackup));
-            Assert.IsTrue(FileBackup.TryCreateBackup(fileNameToBackup));
-
-            Assert.IsTrue(Directory.Exists(Constant.File.BackupFolder));
-            List<string> filesInBackupFolder = Directory.EnumerateFiles(Constant.File.BackupFolder).ToList();
-            Assert.IsTrue(filesInBackupFolder.Count >= 3);
-            DateTime mostRecentBackupUtc = FileBackup.GetMostRecentBackup(fileNameToBackup);
-            Assert.IsTrue(mostRecentBackupUtc > utcStart);
-            // nontrivial to check file with most recent time is in the backup folder since the file's timestamps are likely
-            // a few milliseconds later than the time used to make the file name unique; this coverage can be added if needed
-
-            // move the three backup files created above to the Recycle Bin, along with any other files accumulated from other
-            // tests
-            List<FileInfo> filesToAgeOut = new List<FileInfo>(filesInBackupFolder.Select(filePath => new FileInfo(filePath)));
-            using (Recycler recycler = new Recycler())
-            {
-                recycler.MoveToRecycleBin(filesToAgeOut);
-            }
-
-            filesInBackupFolder = Directory.EnumerateFiles(Constant.File.BackupFolder).ToList();
-            Assert.IsTrue(filesInBackupFolder.Count == 0);
-        }
-
-        [TestMethod]
         public async Task Cache()
         {
             using (FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName))

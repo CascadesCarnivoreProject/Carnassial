@@ -51,6 +51,7 @@ namespace Carnassial.Data
                 }
                 // don't specify ID in the insert statement as it's an autoincrement primary key
                 // don't generate parameters for standard controls they're coded explicitly
+                this.IsInsert = true;
             }
 
             string dataLabelsConcatenated = null;

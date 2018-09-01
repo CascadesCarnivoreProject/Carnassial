@@ -9,7 +9,6 @@ namespace Carnassial.Data
     public class ControlTransactionSequence : TransactionSequence
     {
         private readonly SQLiteCommand insertOrUpdateControls;
-        private readonly bool isInsert;
 
         protected ControlTransactionSequence(StringBuilder command, SQLiteDatabase database, SQLiteTransaction transaction)
             : base(database, transaction)
@@ -29,7 +28,7 @@ namespace Carnassial.Data
             this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter("@" + Constant.ControlColumn.Visible));
             this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter("@" + Constant.ControlColumn.WellKnownValues));
             this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter("@" + Constant.DatabaseColumn.ID));
-            this.isInsert = this.insertOrUpdateControls.CommandText.StartsWith("INSERT", StringComparison.Ordinal);
+            this.IsInsert = this.insertOrUpdateControls.CommandText.StartsWith("INSERT", StringComparison.Ordinal);
         }
 
         public static ControlTransactionSequence CreateInsert(SQLiteDatabase database)
@@ -79,7 +78,7 @@ namespace Carnassial.Data
         {
             foreach (ControlRow control in controls)
             {
-                if ((this.isInsert == false) && (control.HasChanges == false))
+                if ((this.IsInsert == false) && (control.HasChanges == false))
                 {
                     continue;
                 }

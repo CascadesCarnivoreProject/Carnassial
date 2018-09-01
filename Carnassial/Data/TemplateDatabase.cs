@@ -14,12 +14,7 @@ namespace Carnassial.Data
     /// </summary>
     public class TemplateDatabase : SQLiteDatabase
     {
-        private DateTime mostRecentBackup;
-
         public ControlTable Controls { get; private set; }
-
-        /// <summary>Gets or sets the path of the database on disk.</summary>
-        public string FilePath { get; protected set; }
 
         /// <summary>Gets the complete path to the folder containing the database.</summary>
         public string FolderPath { get; private set; }
@@ -29,17 +24,12 @@ namespace Carnassial.Data
         protected TemplateDatabase(string filePath)
             : base(filePath)
         {
-            this.mostRecentBackup = FileBackup.GetMostRecentBackup(filePath);
-
             this.Controls = new ControlTable();
-            this.FilePath = filePath;
             this.FolderPath = Path.GetDirectoryName(filePath);
         }
 
         public ControlRow AppendUserDefinedControl(ControlType controlType)
         {
-            this.CreateBackupIfNeeded();
-
             // create the row for the new control in the data table
             ControlRow newControl = new ControlRow(controlType, this.GetNextUniqueDataLabel(controlType.ToString()), this.Controls.RowCount + 1);
             using (ControlTransactionSequence insertControl = ControlTransactionSequence.CreateInsert(this))
@@ -51,24 +41,6 @@ namespace Carnassial.Data
             // refresh in memory table in order to get the new control's ID
             this.GetControlsSortedByControlOrder();
             return this.Controls[this.Controls.RowCount - 1];
-        }
-
-        protected void CreateBackupIfNeeded()
-        {
-            if (DateTime.UtcNow - this.mostRecentBackup < Constant.File.BackupInterval)
-            {
-                // not due for a new backup yet
-                return;
-            }
-
-            if (FileBackup.TryCreateBackup(this.FilePath))
-            {
-                this.mostRecentBackup = DateTime.UtcNow;
-            }
-            else
-            {
-                throw new IOException("Could not back up '" + this.FilePath + "'.");
-            }
         }
 
         protected void GetControlsSortedByControlOrder()
@@ -111,8 +83,6 @@ namespace Carnassial.Data
 
         public void RemoveUserDefinedControl(ControlRow controlToRemove)
         {
-            this.CreateBackupIfNeeded();
-
             if (controlToRemove.IsUserControl() == false)
             {
                 throw new NotSupportedException(String.Format("Standard control {0} cannot be removed.", controlToRemove.DataLabel));
@@ -150,6 +120,7 @@ namespace Carnassial.Data
 
                 transaction.Commit();
             }
+            ++this.RowsDroppedSinceLastBackup;
 
             // refresh in memory table
             // Using Remove() rather than rebuilding the table would be desirable but doing so changes row ordering and requires a resort.
@@ -194,7 +165,6 @@ namespace Carnassial.Data
                 return false;
             }
 
-            this.CreateBackupIfNeeded();
             this.SyncControlToDatabase(control);
             return true;
         }

@@ -142,6 +142,9 @@ namespace Carnassial
 
         public static class Database
         {
+            public const string BackupFileNameSuffix = "-backup";
+            public const int BackupRetryIntervalInMilliseconds = 100;
+
             // default values
             public const long DefaultFileID = 1;
             public const string ImageSetDefaultLog = "Add text here";
@@ -151,6 +154,8 @@ namespace Carnassial
             // see performance remarks in FileDatabase.AddFiles()
             public const int NominalRowsPerTransactionFill = 2500;
             public const int RowsPerTransaction = 5000;
+
+            public static readonly TimeSpan BackupInterval = TimeSpan.FromMinutes(10);
         }
 
         public static class DatabaseColumn
@@ -171,6 +176,7 @@ namespace Carnassial
         {
             public const string Extension = ".xlsx";
             public const string FileDataWorksheetName = "file data";
+            public const string Filter = "Excel workbook (*.xlsx)|*.xlsx";
             public const char MarkerCoordinateSeparator = ',';
             public const string MarkerPositionFormat = "0.000000";
             public const char MarkerPositionSeparator = '|';
@@ -188,11 +194,8 @@ namespace Carnassial
         public static class File
         {
             public const string AviFileExtension = ".avi";
-            public const string BackupFileSuffixFormat = "yyyy-MM-ddTHH-mm-ss.fffK";
-            public const string BackupFileSuffixPattern = ".????-??-??T??-??-??.??????_??";
-            public const string BackupFolder = "Backups"; // Sub-folder that will contain database and csv file backups  
-            public const int NumberOfBackupFilesToKeep = 9; // Maximum number of backup files to keep
             public const string CsvFileExtension = ".csv";
+            public const string CsvFilter = "CSV UTF-8 (comma delimited) (*.csv)|*.csv";
             public const string DefaultFileDatabaseFileName = "CarnassialData.ddb";
             public const string DefaultTemplateDatabaseFileName = "CarnassialTemplate.tdb";
             public const string ExcelFileExtension = ".xlsx";
@@ -200,8 +203,7 @@ namespace Carnassial
             public const string JpgFileExtension = ".jpg";
             public const string Mp4FileExtension = ".mp4";
             public const string TemplateFileExtension = ".tdb";
-
-            public static readonly TimeSpan BackupInterval = TimeSpan.FromMinutes(10);
+            public const string TemplateFileFilter = "Carnassial template files (*.tdb)|*.tdb";
         }
 
         public static class FileColumn
@@ -398,6 +400,7 @@ namespace Carnassial
         {
             public const string CreationStringPrimaryKey = "INTEGER PRIMARY KEY AUTOINCREMENT";
             public const string FalseString = "0";
+            public const string MainDatabase = "main";
             public const string TrueString = "1";
             public const string Where = " WHERE ";
         }

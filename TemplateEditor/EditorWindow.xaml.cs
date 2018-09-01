@@ -23,6 +23,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Navigation;
 using MessageBox = Carnassial.Dialog.MessageBox;
+using SaveFileDialog = System.Windows.Forms.SaveFileDialog;
 
 namespace Carnassial.Editor
 {
@@ -583,25 +584,22 @@ namespace Carnassial.Editor
         /// </summary>
         private void MenuFileNewTemplate_Click(object sender, RoutedEventArgs e)
         {
-            SaveFileDialog newTemplateFilePathDialog = new SaveFileDialog()
+            SaveFileDialog saveFileDialog = new SaveFileDialog()
             {
-                CheckFileExists = true,
-                FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName), // Default file name without the extension
-                DefaultExt = Constant.File.TemplateFileExtension, // Default file extension
-                Filter = "Database Files (" + Constant.File.TemplateFileExtension + ")|*" + Constant.File.TemplateFileExtension, // Filter files by extension 
-                Title = "Select Location to Save New Template File"
+                AddExtension = true,
+                AutoUpgradeEnabled = true,
+                CheckPathExists = true,
+                CreatePrompt = false,
+                DefaultExt = Constant.File.TemplateFileExtension,
+                FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName),
+                Filter = Constant.File.TemplateFileFilter,
+                OverwritePrompt = true,
+                Title = "Save new template file",
             };
 
-            if (newTemplateFilePathDialog.ShowDialog() == true)
+            if (saveFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                // overwrite the file if it exists
-                if (File.Exists(newTemplateFilePathDialog.FileName))
-                {
-                    FileBackup.TryCreateBackup(newTemplateFilePathDialog.FileName);
-                    File.Delete(newTemplateFilePathDialog.FileName);
-                }
-
-                this.InitializeDataGrid(newTemplateFilePathDialog.FileName);
+                this.InitializeDataGrid(saveFileDialog.FileName);
             }
         }
 

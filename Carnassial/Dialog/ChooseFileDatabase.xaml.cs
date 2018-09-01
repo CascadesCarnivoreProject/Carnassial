@@ -1,5 +1,6 @@
 ﻿using Carnassial.Util;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -14,7 +15,7 @@ namespace Carnassial.Dialog
     {
         public string SelectedFile { get; set; }
 
-        public ChooseFileDatabase(string[] fileDatabasePaths, string templateDatabasePath, Window owner)
+        public ChooseFileDatabase(List<string> fileDatabasePaths, string templateDatabasePath, Window owner)
         {
             this.InitializeComponent();
             Utilities.TryFitWindowInWorkingArea(this);
@@ -24,7 +25,7 @@ namespace Carnassial.Dialog
             // populate list of file database names, setting the default to either the first or whichever has the same name as the template
             int defaultDatabaseIndex = 0;
             string templateDatabaseNameWithoutExtension = Path.GetFileNameWithoutExtension(templateDatabasePath);
-            for (int index = 0; index < fileDatabasePaths.Length; ++index)
+            for (int index = 0; index < fileDatabasePaths.Count; ++index)
             {
                 string databaseName = Path.GetFileName(fileDatabasePaths[index]);
                 string databaseNameWithoutExtension = Path.GetFileNameWithoutExtension(databaseName);

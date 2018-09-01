@@ -9,6 +9,7 @@ namespace Carnassial.Database
         private readonly bool ownsTransaction;
 
         protected SQLiteDatabase Database { get; private set; }
+        protected bool IsInsert { get; set; }
         protected int RowsCommitted { get; private set; }
         protected int RowsInCurrentTransaction { get; set; }
         protected SQLiteTransaction Transaction { get; set; }
@@ -17,6 +18,7 @@ namespace Carnassial.Database
         {
             this.Database = database;
             this.disposed = false;
+            this.IsInsert = false;
             this.ownsTransaction = true;
             this.RowsCommitted = 0;
             this.RowsInCurrentTransaction = 0;
@@ -39,6 +41,14 @@ namespace Carnassial.Database
         public void Commit()
         {
             this.Transaction.Commit();
+            if (this.IsInsert)
+            {
+                this.Database.RowsInsertedSinceLastBackup += this.RowsInCurrentTransaction;
+            }
+            else
+            {
+                this.Database.RowsUpdatedSinceLastBackup += this.RowsInCurrentTransaction;
+            }
             this.RowsCommitted += this.RowsInCurrentTransaction;
             this.RowsInCurrentTransaction = 0;
         }

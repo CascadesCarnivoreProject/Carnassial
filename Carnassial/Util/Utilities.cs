@@ -203,8 +203,8 @@ namespace Carnassial.Util
             {
                 exitNotification.Message.What += e.ExceptionObject.ToString();
             }
-            exitNotification.Message.Reason = "It's not you, it's us.  If you let us know we'll get it fixed.  If you don't tell us probably we don't know there's a problem and things won't get any better.";
-            exitNotification.Message.Result = String.Format("The data file is likely OK.  If it's not you can restore from the {0} folder.  The last few changes (if any) may have to redone, though.", Constant.File.BackupFolder);
+            exitNotification.Message.Reason = "It's not you, it's us.  If you let us know we'll get it fixed.  If you don't tell us probably we won't know there's a problem.";
+            exitNotification.Message.Result = "The data file is likely OK.  If it's not you can restore it from its backup.  The last few changes (if any) may have to redone, though.";
             exitNotification.Message.Hint = "\u2022 If you do the same thing this'll probably happen again.  If so, that's helpful to know as well." + Environment.NewLine;
             exitNotification.Message.Hint += "\u2022 If the automatic copy of the What content didn't take click on the What details, hit ctrl+a to select all of it, and ctrl+c to copy.";
 

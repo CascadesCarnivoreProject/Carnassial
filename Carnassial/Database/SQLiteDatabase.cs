@@ -5,31 +5,47 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Carnassial.Database
 {
-    /// <summary>
-    /// A helper layer over SQLiteConnection providing connection origination and some low level database operations.
-    /// </summary>
     public class SQLiteDatabase : IDisposable
     {
+        private int databasePragmaChangesSinceLastBackup;
         private bool disposed;
+        private int schemaChangesSinceLastBackup;
+
+        protected Task<bool> BackupTask { get; private set; }
 
         public SQLiteConnection Connection { get; protected set; }
+
+        /// <summary>Gets or sets the path of the database on disk.</summary>
+        public string FilePath { get; protected set; }
+
+        public int RowsDroppedSinceLastBackup { get; set; }
+        public int RowsInsertedSinceLastBackup { get; set; }
+        public int RowsUpdatedSinceLastBackup { get; set; }
 
         /// <summary>
         /// Prepares a database connection.  Creates the database file if it does not exist.
         /// </summary>
-        /// <param name="inputFile">the file containing the database</param>
-        protected SQLiteDatabase(string inputFile)
+        /// <param name="filePath">the file containing the database</param>
+        protected SQLiteDatabase(string filePath)
         {
+            this.BackupTask = null;
+            this.databasePragmaChangesSinceLastBackup = 0;
             this.disposed = false;
+            this.RowsDroppedSinceLastBackup = 0;
+            this.RowsInsertedSinceLastBackup = 0;
+            this.RowsUpdatedSinceLastBackup = 0;
+            this.schemaChangesSinceLastBackup = 0;
 
-            if (!File.Exists(inputFile))
+            if (!File.Exists(filePath))
             {
-                SQLiteConnection.CreateFile(inputFile);
+                SQLiteConnection.CreateFile(filePath);
             }
-            this.OpenConnection(inputFile);
+            this.Connection = this.OpenConnection(filePath);
+            this.FilePath = filePath;
         }
 
         /// <summary>
@@ -66,6 +82,8 @@ namespace Carnassial.Database
             this.CopyTableToNewSchema(transaction, table, newSchema, currentSchema.ColumnDefinitions, currentSchema.ColumnDefinitions);
             this.DropAndReplaceTable(transaction, table, newSchema.Table);
             newSchema.CreateIndices(this.Connection, transaction);
+
+            ++this.schemaChangesSinceLastBackup;
         }
 
         /// <summary>
@@ -176,6 +194,8 @@ namespace Carnassial.Database
 
             this.DropAndReplaceTable(transaction, table, newSchema.Table);
             newSchema.CreateIndices(this.Connection, transaction);
+
+            ++this.schemaChangesSinceLastBackup;
         }
 
         /// <summary>
@@ -260,6 +280,8 @@ namespace Carnassial.Database
             this.CopyTableToNewSchema(transaction, table, newSchema, newSchema.ColumnDefinitions, newSchema.ColumnDefinitions);
             this.DropAndReplaceTable(transaction, table, newSchema.Table);
             newSchema.CreateIndices(this.Connection, transaction);
+
+            ++this.schemaChangesSinceLastBackup;
         }
 
         public void Dispose()
@@ -277,6 +299,11 @@ namespace Carnassial.Database
 
             if (disposing)
             {
+                if (this.BackupTask != null)
+                {
+                    this.BackupTask.Wait();
+                    this.BackupTask.Dispose();
+                }
                 this.Connection.Dispose();
             }
             this.disposed = true;
@@ -308,6 +335,11 @@ namespace Carnassial.Database
                 Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
                 return vacuum;
             }
+        }
+
+        protected string GetBackupFilePath()
+        {
+            return Path.Combine(Path.GetDirectoryName(this.FilePath), Path.GetFileNameWithoutExtension(this.FilePath) + Constant.Database.BackupFileNameSuffix + Path.GetExtension(this.FilePath));
         }
 
         protected int GetCacheSize()
@@ -576,7 +608,7 @@ namespace Carnassial.Database
             }
         }
 
-        protected void OpenConnection(string databaseFilePath)
+        protected SQLiteConnection OpenConnection(string databaseFilePath)
         {
             SQLiteConnectionStringBuilder connectionStringBuilder = new SQLiteConnectionStringBuilder()
             {
@@ -586,9 +618,10 @@ namespace Carnassial.Database
                 SyncMode = SynchronizationModes.Off
             };
 
-            this.Connection = new SQLiteConnection(connectionStringBuilder.ConnectionString);
-            this.Connection.Open();
-            this.SetTemporaryStore(SQLiteTemporaryStore.Memory);
+            SQLiteConnection connection = new SQLiteConnection(connectionStringBuilder.ConnectionString);
+            connection.Open();
+            this.SetTemporaryStore(connection, SQLiteTemporaryStore.Memory);
+            return connection;
         }
 
         protected void Optimize()
@@ -658,6 +691,8 @@ namespace Carnassial.Database
             this.CopyTableToNewSchema(transaction, table, newSchema, currentSchema.ColumnDefinitions, newSchema.ColumnDefinitions);
             this.DropAndReplaceTable(transaction, table, newSchema.Table);
             newSchema.CreateIndices(this.Connection, transaction);
+
+            ++this.schemaChangesSinceLastBackup;
         }
 
         protected void RenameTable(SQLiteTransaction transaction, string currentTable, string newTable)
@@ -666,7 +701,9 @@ namespace Carnassial.Database
             {
                 command.ExecuteNonQuery();
                 Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
-            } 
+            }
+
+            ++this.schemaChangesSinceLastBackup;
         }
 
         protected void SetAutoVacuum(SQLiteAutoVacuum vacuum)
@@ -676,6 +713,8 @@ namespace Carnassial.Database
                 command.ExecuteNonQuery();
                 Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
             }
+
+            ++this.databasePragmaChangesSinceLastBackup;
         }
 
         protected void SetLockingMode(SQLiteLockMode mode)
@@ -685,14 +724,21 @@ namespace Carnassial.Database
                 command.ExecuteNonQuery();
                 Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
             }
+
+            ++this.databasePragmaChangesSinceLastBackup;
         }
 
         protected void SetTemporaryStore(SQLiteTemporaryStore store)
         {
-            using (SQLiteCommand command = new SQLiteCommand("PRAGMA TEMP_STORE = " + (int)store, this.Connection))
+            this.SetTemporaryStore(this.Connection, store);
+        }
+
+        private void SetTemporaryStore(SQLiteConnection connection, SQLiteTemporaryStore store)
+        {
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA TEMP_STORE = " + (int)store, connection))
             {
                 command.ExecuteNonQuery();
-                Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
+                Debug.Assert(connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
             }
         }
 
@@ -721,6 +767,8 @@ namespace Carnassial.Database
                 command.ExecuteNonQuery();
                 Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
             }
+
+            ++this.databasePragmaChangesSinceLastBackup;
         }
 
         protected void SetWalAutocheckpoint(int interval)
@@ -730,6 +778,39 @@ namespace Carnassial.Database
                 command.ExecuteNonQuery();
                 Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
             }
+        }
+
+        public async Task<bool> TryBackupAsync()
+        {
+            int pendingChanges = this.databasePragmaChangesSinceLastBackup + this.RowsDroppedSinceLastBackup + this.RowsInsertedSinceLastBackup + this.RowsUpdatedSinceLastBackup + this.schemaChangesSinceLastBackup;
+            if (pendingChanges < 1)
+            {
+                // nothing to do if no changes
+                return false;
+            }
+
+            if (this.BackupTask != null)
+            {
+                this.BackupTask.Wait();
+                this.BackupTask.Dispose();
+            }
+
+            this.BackupTask = Task.Run(() =>
+            {
+                string backupFilePath = this.GetBackupFilePath();
+                using (SQLiteConnection connectionToBackup = this.OpenConnection(backupFilePath))
+                {
+                    this.databasePragmaChangesSinceLastBackup = 0;
+                    this.RowsDroppedSinceLastBackup = 0;
+                    this.RowsInsertedSinceLastBackup = 0;
+                    this.RowsUpdatedSinceLastBackup = 0;
+                    this.schemaChangesSinceLastBackup = 0;
+
+                    this.Connection.BackupDatabase(connectionToBackup, Constant.Sql.MainDatabase, Constant.Sql.MainDatabase, -1, null, Constant.Database.BackupRetryIntervalInMilliseconds);
+                }
+                return true;
+            });
+            return await this.BackupTask;
         }
 
         protected void WalCheckpoint(SQLiteWalCheckpoint checkpoint)

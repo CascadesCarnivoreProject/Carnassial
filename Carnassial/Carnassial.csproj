@@ -492,7 +492,6 @@
     <Compile Include="Control\FeedbackControl.xaml.cs">
       <DependentUpon>FeedbackControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Database\FileBackup.cs" />
     <Compile Include="Data\ImageRow.cs" />
     <Compile Include="Data\FileSelection.cs" />
     <Compile Include="Data\MarkersForCounter.cs" />

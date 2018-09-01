@@ -30,6 +30,7 @@ namespace Carnassial.Data
                 this.insertOrUpdateFiles.Parameters.Add(new SQLiteParameter("@" + userColumn));
             }
             this.insertOrUpdateFiles.Parameters.Add(new SQLiteParameter("@" + Constant.DatabaseColumn.ID));
+            this.IsInsert = this.insertOrUpdateFiles.CommandText.StartsWith("INSERT", StringComparison.Ordinal);
         }
 
         public static FileTransactionSequence CreateInsert(SQLiteDatabase database, FileTable fileTable)
@@ -98,7 +99,7 @@ namespace Carnassial.Data
             for (int fileIndex = 0; fileIndex < files.Count; ++fileIndex)
             {
                 ImageRow file = files[fileIndex];
-                if (file.HasChanges == false)
+                if ((this.IsInsert == false) && (file.HasChanges == false))
                 {
                     continue;
                 }

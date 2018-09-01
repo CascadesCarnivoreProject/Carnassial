@@ -21,7 +21,6 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
-using DialogResult = System.Windows.Forms.DialogResult;
 using MessageBox = Carnassial.Dialog.MessageBox;
 using SaveFileDialog = System.Windows.Forms.SaveFileDialog;
 
@@ -120,6 +119,9 @@ namespace Carnassial
         {
             if (this.IsFileDatabaseAvailable())
             {
+                // stop any backup timer
+                this.State.BackupTimer.Stop();
+
                 // persist image set properties if an image set has been opened
                 if (this.DataHandler.FileDatabase.CurrentlySelectedFileCount > 0)
                 {
@@ -149,7 +151,7 @@ namespace Carnassial
 
                 // discard the image set and reset UX for no open image set/no selected files
                 // Controls are cleared after the call to ShowFileAsync() so that the show file can clear any data context set on the controls before they're
-                // discarded.
+                // discarded.  The dispose chain under DataEntryHandler blocks until any running backup is complete.
                 this.DataHandler.Dispose();
                 this.DataHandler = null;
                 this.EnableOrDisableMenusAndControls();
@@ -912,8 +914,7 @@ namespace Carnassial
                 OverwritePrompt = true
             };
 
-            DialogResult result = dialog.ShowDialog();
-            if (result == System.Windows.Forms.DialogResult.OK)
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 // Set the source and destination file names, including the complete path
                 string destinationPath = dialog.FileName;
@@ -998,21 +999,37 @@ namespace Carnassial
             bool openFile = (sender == this.MenuFileExportXlsxAndOpen) || (sender == this.MenuFileExportCsvAndOpen);
 
             string spreadsheetFileExtension = exportXlsx ? Constant.File.ExcelFileExtension : Constant.File.CsvFileExtension;
-            string spreadsheetFileName = Path.GetFileNameWithoutExtension(this.DataHandler.FileDatabase.FileName) + spreadsheetFileExtension;
-            string spreadsheetFilePath = Path.Combine(this.FolderPath, spreadsheetFileName);
+            string spreadsheetFileFilter = exportXlsx ? Constant.Excel.Filter : Constant.File.CsvFilter;
+
+            SaveFileDialog saveFileDialog = new SaveFileDialog()
+            {
+                AddExtension = true,
+                AutoUpgradeEnabled = true,
+                CheckPathExists = true,
+                CreatePrompt = false,
+                DefaultExt = spreadsheetFileExtension,
+                FileName = Path.GetFileNameWithoutExtension(this.DataHandler.FileDatabase.FileName),
+                InitialDirectory = this.FolderPath,
+                Filter = spreadsheetFileFilter,
+                OverwritePrompt = true,
+                Title = "Save current selection to a spreadsheet file"
+            };
+            if (saveFileDialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+            {
+                return;
+            }
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
             this.SetStatusMessage("Exporting spreadsheet...");
+            string spreadsheetFileName = Path.GetFileName(saveFileDialog.FileName);
+            string spreadsheetFilePath = saveFileDialog.FileName;
             SpreadsheetReaderWriter spreadsheetWriter = new SpreadsheetReaderWriter(this.UpdateSpreadsheetProgress, this.State.Throttles.GetDesiredProgressUpdateInterval());
             try
             {
                 await Task.Run(() =>
                 {
-                    // backup any existing file as it's overwritten on export
-                    FileBackup.TryCreateBackup(this.FolderPath, spreadsheetFileName);
-
                     if (exportXlsx)
                     {
                         spreadsheetWriter.ExportFileDataToXlsx(this.DataHandler.FileDatabase, spreadsheetFilePath);
@@ -1073,7 +1090,7 @@ namespace Carnassial
                 messageBox.Message.Solution += "\u2022 Column names can be swapped to assign data to different fields." + Environment.NewLine;
                 messageBox.Message.Solution += "\u2022 Adding, removing, or otherwise changing columns is not supported." + Environment.NewLine;
                 messageBox.Message.Solution += String.Format("\u2022 Using a worksheet with a name other than '{0}' in .xlsx files is not supported.{1}", Constant.Excel.FileDataWorksheetName, Environment.NewLine);
-                messageBox.Message.Result = String.Format("Carnassial will create a backup .ddb file in the {0} folder and then import as much data as it can.  If data can't be imported you'll get a dialog listing the problems.", Constant.File.BackupFolder);
+                messageBox.Message.Result = "Carnassial will import as much data as it can.  If data can't be imported you'll get a dialog listing the problems.";
                 messageBox.Message.Hint = "\u2022 After you import, check your data. If it is not what you expect, restore your data by using that backup file." + Environment.NewLine;
                 messageBox.Message.Hint += String.Format("\u2022 Usually the spreadsheet should be in the same folder as the data file ({0}) it was exported from.{1}", Constant.File.FileDatabaseFileExtension, Environment.NewLine);
                 messageBox.Message.Hint += "\u2022 If you check 'Don't show this message' this dialog can be turned back on via the Options menu.";
@@ -1099,16 +1116,6 @@ namespace Carnassial
                                              out string spreadsheetFilePath) == false)
             {
                 return;
-            }
-
-            // create a backup database file
-            if (FileBackup.TryCreateBackup(this.DataHandler.FileDatabase.FilePath))
-            {
-                this.SetStatusMessage("Backup of data file made.");
-            }
-            else
-            {
-                this.SetStatusMessage("No data file backup was made.");
             }
 
             // ensure all files are selected
@@ -1693,6 +1700,9 @@ namespace Carnassial
 
             // clear undo/redo chain as opening a .ddb or adding files is not an undoable operation
             this.OnBulkEdit(this, null);
+
+            // start backup timer
+            this.State.BackupTimer.Start();
         }
 
         private void OnFileFieldChanged(object sender, PropertyChangedEventArgs fileChange)
@@ -2408,8 +2418,8 @@ namespace Carnassial
                 messageBox.Message.Problem = "Carnassial could not load " + Path.GetFileName(templateDatabasePath) + Environment.NewLine;
                 messageBox.Message.Reason = "\u2022 The template was created with the Timelapse template editor instead of the Carnassial editor." + Environment.NewLine;
                 messageBox.Message.Reason = "\u2022 The template may be corrupted or somehow otherwise invalid.";
-                messageBox.Message.Solution = String.Format("You may have to recreate the template, restore it from the {0} folder, or use another copy of it if you have one.", Constant.File.BackupFolder);
-                messageBox.Message.Result = "Carnassial won't do anything.  You can try to select another template file.";
+                messageBox.Message.Solution = "You may have to recreate the template, restore it from a backup, or use another copy of it.";
+                messageBox.Message.Result = "Carnassial won't do anything.  You can select another template file.";
                 messageBox.Message.Hint = "If the template can't be opened in a SQLite database editor the file is corrupt.";
                 messageBox.Message.StatusImage = MessageBoxImage.Error;
                 messageBox.ShowDialog();
@@ -2457,8 +2467,8 @@ namespace Carnassial
                     messageBox.Message.Problem = "Carnassial could not load " + Path.GetFileName(fileDatabaseFilePath) + Environment.NewLine;
                     messageBox.Message.Reason = "\u2022 The database was created with Timelapse instead of Carnassial." + Environment.NewLine;
                     messageBox.Message.Reason = "\u2022 The database may be corrupted or somehow otherwise invalid.";
-                    messageBox.Message.Solution = String.Format("You may have to recreate the database, restore it from the {0} folder, or use another copy of it if you have one.", Constant.File.BackupFolder);
-                    messageBox.Message.Result = "Carnassial won't do anything.  You can try to select another template or database file.";
+                    messageBox.Message.Solution = "You may have to recreate the database, restore it from a backup (Carnassial makes one automatically), or use another copy of it if you have one.";
+                    messageBox.Message.Result = "Carnassial won't do anything.  You can select another template or database file.";
                     messageBox.Message.Hint = "If the database can't be opened in a SQLite database editor the file is corrupt.";
                     messageBox.Message.StatusImage = MessageBoxImage.Error;
                     messageBox.ShowDialog();
@@ -2533,12 +2543,12 @@ namespace Carnassial
 
             string databaseFileName;
             string directoryPath = Path.GetDirectoryName(templateDatabasePath);
-            string[] fileDatabasePaths = Directory.GetFiles(directoryPath, "*" + Constant.File.FileDatabaseFileExtension);
-            if (fileDatabasePaths.Length == 1)
+            List<string> fileDatabasePaths = Directory.GetFiles(directoryPath, "*" + Constant.File.FileDatabaseFileExtension).Where(databasePath => Path.GetFileNameWithoutExtension(databasePath).EndsWith(Constant.Database.BackupFileNameSuffix, StringComparison.Ordinal) == false).ToList();
+            if (fileDatabasePaths.Count == 1)
             {
                 databaseFileName = Path.GetFileName(fileDatabasePaths[0]);
             }
-            else if (fileDatabasePaths.Length > 1)
+            else if (fileDatabasePaths.Count > 1)
             {
                 ChooseFileDatabase chooseDatabaseFile = new ChooseFileDatabase(fileDatabasePaths, templateDatabasePath, this);
                 if (chooseDatabaseFile.ShowDialog() == true)
