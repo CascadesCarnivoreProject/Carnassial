@@ -16,8 +16,8 @@ namespace Carnassial.Data
         private bool isExcelWorksheetRead;
         private bool isTransactionCommit;
         private ulong mostRecentStatusUpdate;
-        private IProgress<SpreadsheetReadWriteStatus> progress;
-        private ulong progressUpdateIntervalInMilliseconds;
+        private readonly IProgress<SpreadsheetReadWriteStatus> progress;
+        private readonly ulong progressUpdateIntervalInMilliseconds;
 
         public SpreadsheetReadWriteStatus(Action<SpreadsheetReadWriteStatus> onProgressUpdate, TimeSpan progressUpdateInterval)
         {

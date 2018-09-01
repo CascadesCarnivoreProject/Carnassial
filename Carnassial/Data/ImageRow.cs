@@ -24,12 +24,27 @@ namespace Carnassial.Data
     /// </summary>
     public class ImageRow : SQLiteRow, INotifyPropertyChanged
     {
+        public class Foo
+        {
+            private readonly Bar field; // IDE0044: Make field readonly
+
+            public Foo()
+            {
+                this.field = new Bar();
+            }
+
+            public class Bar
+            {
+                public int Mutable { get; set; }
+            }
+        }
+
         private FileClassification classification;
         private DateTimeOffset dateTimeOffset;
         private bool deleteFlag;
         private string fileName;
         private string relativePath;
-        private FileTable table;
+        private readonly FileTable table;
 
         public int[] UserCounters { get; private set; }
         public bool[] UserFlags { get; private set; }

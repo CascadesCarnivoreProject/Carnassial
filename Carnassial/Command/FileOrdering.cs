@@ -5,7 +5,7 @@ namespace Carnassial.Command
 {
     internal class FileOrdering : UndoableCommandAsync<CarnassialWindow>
     {
-        private long originalFileID;
+        private readonly long originalFileID;
 
         public FileOrdering(FileTableEnumerator fileEnumerator)
         {

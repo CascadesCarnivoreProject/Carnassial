@@ -7,7 +7,7 @@ namespace Carnassial.Util
 {
     internal class SequentialPartitioner<TSource> : OrderablePartitioner<TSource>
     {
-        private IList<TSource> source;
+        private readonly IList<TSource> source;
 
         public override bool SupportsDynamicPartitions
         {
@@ -48,7 +48,7 @@ namespace Carnassial.Util
         private class DynamicPartitions : IEnumerable<KeyValuePair<long, TSource>>
         {
             private int currentIndex;
-            private IList<TSource> source;
+            private readonly IList<TSource> source;
 
             internal DynamicPartitions(IList<TSource> source)
             {
@@ -81,9 +81,9 @@ namespace Carnassial.Util
         private class InterleavedEnumerator : IEnumerator<TSource>
         {
             private int currentIndex;
-            private int offset;
-            private IList<TSource> source;
-            private int stride;
+            private readonly int offset;
+            private readonly IList<TSource> source;
+            private readonly int stride;
 
             object IEnumerator.Current
             {
@@ -125,9 +125,9 @@ namespace Carnassial.Util
         private class InterleavedOrderableEnumerator : IEnumerator<KeyValuePair<long, TSource>>
         {
             private int currentIndex;
-            private int offset;
-            private IList<TSource> source;
-            private int stride;
+            private readonly int offset;
+            private readonly IList<TSource> source;
+            private readonly int stride;
 
             object IEnumerator.Current
             {

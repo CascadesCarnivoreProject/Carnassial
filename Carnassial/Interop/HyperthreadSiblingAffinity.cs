@@ -8,9 +8,9 @@ namespace Carnassial.Interop
     internal class HyperthreadSiblingAffinity : IDisposable
     {
         private bool disposed;
-        private bool isPinning;
-        private UInt64 originalAffinity;
-        private SafeAccessTokenHandle unmanagedThread;
+        private readonly bool isPinning;
+        private readonly UInt64 originalAffinity;
+        private readonly SafeAccessTokenHandle unmanagedThread;
 
         public HyperthreadSiblingAffinity(int taskID)
         {

@@ -671,13 +671,7 @@ namespace Carnassial.Editor
         /// </summary>
         private void MenuOptionsShowAllColumns_Click(object sender, RoutedEventArgs e)
         {
-            MenuItem mi = sender as MenuItem;
-            if (mi == null)
-            {
-                return;
-            }
-
-            Visibility visibility = mi.IsChecked ? Visibility.Visible : Visibility.Collapsed;
+            Visibility visibility = this.MenuOptionsShowAllColumns.IsChecked ? Visibility.Visible : Visibility.Collapsed;
             foreach (DataGridColumn column in this.ControlDataGrid.Columns)
             {
                 if (column.Header.Equals(EditorConstant.ColumnHeader.ID) ||

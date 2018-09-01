@@ -6,7 +6,7 @@ namespace Carnassial.Database
     public class TransactionSequence : IDisposable
     {
         private bool disposed;
-        private bool ownsTransaction;
+        private readonly bool ownsTransaction;
 
         protected SQLiteDatabase Database { get; private set; }
         protected int RowsCommitted { get; private set; }

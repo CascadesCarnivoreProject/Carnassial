@@ -12,7 +12,7 @@ namespace Carnassial.Control
         private static readonly Brush Fill = Brushes.Black;
 
         private bool textBoxHasSelection;
-        private StreamGeometry triangle;
+        private readonly StreamGeometry triangle;
         private double x, top, bottom;
 
         public event Action<TextBox, int> Button_Clicked;

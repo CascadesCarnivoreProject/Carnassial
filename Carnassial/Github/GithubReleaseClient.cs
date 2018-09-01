@@ -12,8 +12,8 @@ namespace Carnassial.Github
 {
     public class GithubReleaseClient
     {
-        private string applicationName;
-        private Uri latestReleaseAddress;
+        private readonly string applicationName;
+        private readonly Uri latestReleaseAddress;
 
         public GithubReleaseClient(string applicationName, Uri latestRelease)
         {

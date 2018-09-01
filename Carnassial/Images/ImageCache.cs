@@ -13,13 +13,13 @@ namespace Carnassial.Images
     {
         private int combinedDifferencesCalculated;
         private TimeSpan combinedDifferenceTime;
-        private Dictionary<ImageDifference, CachedImage> differenceCache;
+        private readonly Dictionary<ImageDifference, CachedImage> differenceCache;
         private int differencesCalculated;
         private TimeSpan differenceTime;
         private bool disposed;
-        private MostRecentlyUsedList<long> mostRecentlyUsedIDs;
-        private ConcurrentDictionary<long, Task> prefetechesByID;
-        private ConcurrentDictionary<long, CachedImage> unalteredImagesByID;
+        private readonly MostRecentlyUsedList<long> mostRecentlyUsedIDs;
+        private readonly ConcurrentDictionary<long, Task> prefetechesByID;
+        private readonly ConcurrentDictionary<long, CachedImage> unalteredImagesByID;
 
         public ImageDifference CurrentDifferenceState { get; private set; }
 

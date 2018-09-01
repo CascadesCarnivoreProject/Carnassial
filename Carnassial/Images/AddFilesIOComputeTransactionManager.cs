@@ -14,7 +14,7 @@ namespace Carnassial.Images
     internal class AddFilesIOComputeTransactionManager : FileIOComputeTransactionManager<FileLoadStatus>
     {
         private bool disposed;
-        private SortedDictionary<string, List<string>> filesToLoadByRelativeFolderPath;
+        private readonly SortedDictionary<string, List<string>> filesToLoadByRelativeFolderPath;
 
         public int FilesToLoad { get; private set; }
         public List<string> FolderPaths { get; private set; }

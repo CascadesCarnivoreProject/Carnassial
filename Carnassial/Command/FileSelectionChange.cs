@@ -1,17 +1,16 @@
 ﻿using Carnassial.Control;
 using Carnassial.Data;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Carnassial.Command
 {
     internal class FileSelectionChange : UndoableCommandAsync<CarnassialWindow>
     {
-        private long newFileID;
-        private FileSelection newSelection;
+        private readonly long newFileID;
+        private readonly FileSelection newSelection;
 
-        private long previousFileID;
-        private FileSelection previousSelection;
+        private readonly long previousFileID;
+        private readonly FileSelection previousSelection;
 
         public FileSelectionChange(DataEntryHandler dataHandler, FileSelection previousSelection, long previousFileID)
         {

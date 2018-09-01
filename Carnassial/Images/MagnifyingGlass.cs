@@ -15,16 +15,16 @@ namespace Carnassial.Images
     {
         // current angle of the lens only
         private double lensAngle;
-        private Canvas lensCanvas;
+        private readonly Canvas lensCanvas;
 
-        private Ellipse magnifierLens;
+        private readonly Ellipse magnifierLens;
         // current angle of the entire magnifying glass
         private double magnifyingGlassAngle;
 
-        private FileDisplayWithMarkers parent;
+        private readonly FileDisplayWithMarkers parent;
 
-        private RotateTransform rotation;
-        private TranslateTransform translation;
+        private readonly RotateTransform rotation;
+        private readonly TranslateTransform translation;
 
         /// <summary>Gets or sets the diameter of the image shown in the magnifying glass's lens in pixels.</summary>
         /// <remarks>

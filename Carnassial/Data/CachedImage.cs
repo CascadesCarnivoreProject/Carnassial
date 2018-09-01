@@ -48,6 +48,7 @@ namespace Carnassial.Data
             {
                 this.Image.Dispose();
             }
+            this.disposed = true;
         }
     }
 }

@@ -9,8 +9,8 @@ namespace Carnassial.Command
 {
     internal class FileMultipleFieldChange : FileChange
     {
-        private Dictionary<string, object> newValuesByPropertyName;
-        private Dictionary<string, object> previousValuesByPropertyName;
+        private readonly Dictionary<string, object> newValuesByPropertyName;
+        private readonly Dictionary<string, object> previousValuesByPropertyName;
 
         public FileMultipleFieldChange(FileTableEnumerator fileEnumerator, Dictionary<string, object> newValuesByPropertyName)
             : base(fileEnumerator.Current.ID)

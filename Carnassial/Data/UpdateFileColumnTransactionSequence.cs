@@ -9,7 +9,7 @@ namespace Carnassial.Data
 {
     public class UpdateFileColumnTransactionSequence : WindowedTransactionSequence<FileLoad>
     {
-        private string dataLabel;
+        private readonly string dataLabel;
         private bool disposed;
         private SQLiteCommand updateFiles;
 

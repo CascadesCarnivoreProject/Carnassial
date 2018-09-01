@@ -8,8 +8,8 @@ namespace Carnassial.Data
 {
     public class ControlTransactionSequence : TransactionSequence
     {
-        private SQLiteCommand insertOrUpdateControls;
-        private bool isInsert;
+        private readonly SQLiteCommand insertOrUpdateControls;
+        private readonly bool isInsert;
 
         protected ControlTransactionSequence(StringBuilder command, SQLiteDatabase database, SQLiteTransaction transaction)
             : base(database, transaction)

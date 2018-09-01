@@ -16,7 +16,7 @@ namespace Carnassial.Images
         private static readonly List<JpegSegmentType> JpegSegmentTypes;
 
         private bool disposed;
-        private UnbufferedSequentialReader reader;
+        private readonly UnbufferedSequentialReader reader;
 
         public IReadOnlyList<MetadataDirectory> Metadata { get; private set; }
 

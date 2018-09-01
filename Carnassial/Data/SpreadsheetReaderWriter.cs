@@ -14,7 +14,7 @@ namespace Carnassial.Data
     /// </summary>
     public class SpreadsheetReaderWriter
     {
-        private SpreadsheetReadWriteStatus status;
+        private readonly SpreadsheetReadWriteStatus status;
         private List<string> xlsxRow;
 
         public SpreadsheetReaderWriter(Action<SpreadsheetReadWriteStatus> onProgressUpdate, TimeSpan desiredProgressUpdateInterval)

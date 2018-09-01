@@ -6,8 +6,8 @@ namespace Carnassial.Util
 {
     public class MostRecentlyUsedList<TElement> : IEnumerable<TElement>
     {
-        private LinkedList<TElement> list;
-        private int maximumItems;
+        private readonly LinkedList<TElement> list;
+        private readonly int maximumItems;
 
         public MostRecentlyUsedList(int maximumItems)
         {

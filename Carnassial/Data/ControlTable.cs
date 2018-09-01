@@ -14,7 +14,7 @@ namespace Carnassial.Data
     // WPF's DataGrid requires IList as it does not support IList<T>.
     public class ControlTable : SQLiteTable<ControlRow>, IList, INotifyCollectionChanged
     {
-        private Dictionary<string, ControlRow> controlsByDataLabel;
+        private readonly Dictionary<string, ControlRow> controlsByDataLabel;
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 

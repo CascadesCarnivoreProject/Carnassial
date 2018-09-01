@@ -6,8 +6,8 @@ namespace Carnassial.Control
 {
     internal class HorizontalLineAdorner : Adorner
     {
-        private AdornerLayer adornerLayer;
-        private DataEntryControls dataEntryControls;
+        private readonly AdornerLayer adornerLayer;
+        private readonly DataEntryControls dataEntryControls;
         private Point position;
 
         public HorizontalLineAdorner(DataEntryControls dataEntryControls) :

@@ -8,8 +8,8 @@ namespace Carnassial.Data
 {
     public class ImageSetTransactionSequence : TransactionSequence
     {
-        private SQLiteCommand insertOrUpdateImageSet;
-        private bool isInsert;
+        private readonly SQLiteCommand insertOrUpdateImageSet;
+        private readonly bool isInsert;
 
         protected ImageSetTransactionSequence(StringBuilder command, SQLiteDatabase database, SQLiteTransaction transaction)
             : base(database, transaction)

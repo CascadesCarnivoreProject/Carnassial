@@ -8,7 +8,7 @@ namespace Carnassial.Dialog
 {
     internal class ObservableArray<T> : IList<T>, IList, INotifyCollectionChanged
     {
-        private T[] array;
+        private readonly T[] array;
         private int previousCreateIndex;
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;

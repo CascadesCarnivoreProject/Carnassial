@@ -4,8 +4,8 @@ namespace Carnassial.Command
 {
     internal class CustomSelectionChange : UndoableCommand<CarnassialWindow>
     {
-        private CustomSelection newSelection;
-        private CustomSelection previousSelection;
+        private readonly CustomSelection newSelection;
+        private readonly CustomSelection previousSelection;
 
         public CustomSelectionChange(CustomSelection previousSelection, CustomSelection currentSelection)
         {

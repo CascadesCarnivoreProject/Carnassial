@@ -7,8 +7,8 @@ namespace Carnassial.Command
 {
     internal class FileMarkerChange : FileChange
     {
-        private bool isCreation;
-        private Marker marker;
+        private readonly bool isCreation;
+        private readonly Marker marker;
 
         public FileMarkerChange(long fileID, MarkerCreatedOrDeletedEventArgs markerChange)
             : base(fileID)

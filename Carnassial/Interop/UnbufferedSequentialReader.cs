@@ -17,8 +17,8 @@ namespace Carnassial.Interop
         private bool disposed;
         private SafeFileHandle file;
         private int filePosition;
-        private Lazy<long> length;
-        private Lazy<string> pathRoot;
+        private readonly Lazy<long> length;
+        private readonly Lazy<string> pathRoot;
 
         public byte[] Buffer { get; private set; }
 

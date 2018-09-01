@@ -5,7 +5,7 @@ namespace Carnassial.Command
 {
     public class UndoRedoChain<TParameter>
     {
-        private LinkedList<UndoableCommand<TParameter>> chain;
+        private readonly LinkedList<UndoableCommand<TParameter>> chain;
         private LinkedListNode<UndoableCommand<TParameter>> position;
 
         public UndoRedoChain()

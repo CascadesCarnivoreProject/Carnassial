@@ -5,8 +5,8 @@ namespace Carnassial.Command
 {
     internal class FileNavigation : UndoableCommandAsync<CarnassialWindow>
     {
-        private int newFileIndex;
-        private int previousFileIndex;
+        private readonly int newFileIndex;
+        private readonly int previousFileIndex;
 
         public FileNavigation(FileTableEnumerator fileEnumerator, int previousFileIndex)
         {

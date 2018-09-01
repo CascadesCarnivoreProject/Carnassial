@@ -10,7 +10,7 @@ namespace Carnassial.Data
     public class FileTransactionSequence : TransactionSequence
     {
         private bool disposed;
-        private FileTable fileTable;
+        private readonly FileTable fileTable;
         private SQLiteCommand insertOrUpdateFiles;
 
         protected FileTransactionSequence(StringBuilder command, SQLiteDatabase database, FileTable fileTable)
