@@ -32,7 +32,7 @@ namespace Carnassial.Util
 
         public static TimeSpan ParseDatabaseUtcOffsetString(string utcOffsetAsString)
         {
-            TimeSpan utcOffset = TimeSpan.FromHours(double.Parse(utcOffsetAsString));
+            TimeSpan utcOffset = TimeSpan.FromHours(double.Parse(utcOffsetAsString, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture));
             if ((utcOffset < Constant.Time.MinimumUtcOffset) ||
                 (utcOffset > Constant.Time.MaximumUtcOffset))
             {
@@ -157,7 +157,7 @@ namespace Carnassial.Util
 
         public static bool TryParseDatabaseUtcOffsetString(string utcOffsetAsString, out TimeSpan utcOffset)
         {
-            if (double.TryParse(utcOffsetAsString, out double utcOffsetAsDouble))
+            if (double.TryParse(utcOffsetAsString, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out double utcOffsetAsDouble))
             {
                 utcOffset = TimeSpan.FromHours(utcOffsetAsDouble);
                 return (utcOffset >= Constant.Time.MinimumUtcOffset) &&

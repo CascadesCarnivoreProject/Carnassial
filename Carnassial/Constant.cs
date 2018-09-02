@@ -175,6 +175,7 @@ namespace Carnassial
         public static class Excel
         {
             public const string Extension = ".xlsx";
+            public const char False = '0';
             public const string FileDataWorksheetName = "file data";
             public const string Filter = "Excel workbook (*.xlsx)|*.xlsx";
             public const char MarkerCoordinateSeparator = ',';
@@ -183,6 +184,7 @@ namespace Carnassial
             public const double MaximumColumnWidth = 40.0;
             public const double MinimumColumnWidth = 5.0;
             public const int MaximumRowsToIncludeInAutoFit = 250;
+            public const char True = '1';
         }
 
         public static class Exif
@@ -344,6 +346,30 @@ namespace Carnassial
             public const int BushnellInfoBarHeight = 100;
             public const string Reconyx = "Reconyx";
             public const int ReconyxInfoBarHeight = 32;
+        }
+
+        public static class OpenXml
+        {
+            public static class Attribute
+            {
+                public const string CellReference = "r";
+                public const string CellType = "t";
+                public const string CountAttribute = "count";
+            }
+
+            public static class AttributeValue
+            {
+                public const string SharedStringAttribute = "s";
+            }
+
+            public static class Element
+            {
+                public const string Cell = "c";
+                public const string CellValue = "v";
+                public const string Row = "row";
+                public const string SharedString = "si";
+                public const string SharedStringText = "t";
+            }
         }
 
         public static class Registry

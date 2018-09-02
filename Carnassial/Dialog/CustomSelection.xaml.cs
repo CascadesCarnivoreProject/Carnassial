@@ -4,6 +4,7 @@ using Carnassial.Database;
 using Carnassial.Util;
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -423,7 +424,7 @@ namespace Carnassial.Dialog
             SearchTerm searchTerm = this.fileDatabase.CustomSelection.SearchTerms[row - 1];
             if (searchTerm.ControlType == ControlType.Counter)
             {
-                searchTerm.DatabaseValue = Int32.Parse(textBox.Text);
+                searchTerm.DatabaseValue = Int32.Parse(textBox.Text, NumberStyles.AllowLeadingSign);
             }
             else
             {

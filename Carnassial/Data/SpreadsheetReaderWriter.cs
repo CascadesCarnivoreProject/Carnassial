@@ -1,11 +1,16 @@
 ﻿using Carnassial.Interop;
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Spreadsheet;
 using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Xml;
 
 namespace Carnassial.Data
 {
@@ -91,7 +96,7 @@ namespace Carnassial.Data
         /// </summary>
         public void ExportFileDataToXlsx(FileDatabase database, string xlsxFilePath)
         {
-            this.status.BeginExcelWorksheetLoad();
+            this.status.BeginExcelLoad(0);
             using (ExcelPackage xlsxFile = new ExcelPackage(new FileInfo(xlsxFilePath)))
             {
                 List<string> columns = new List<string>(database.Controls.RowCount);
@@ -104,37 +109,38 @@ namespace Carnassial.Data
                     }
                 }
 
-                ExcelWorksheet worksheet = this.GetOrCreateTrimmedWorksheet(xlsxFile, Constant.Excel.FileDataWorksheetName, database.Files.RowCount, columns);
-
-                this.status.BeginWrite(database.Files.RowCount);
-                for (int fileIndex = 0; fileIndex < database.Files.RowCount; ++fileIndex)
+                using (ExcelWorksheet worksheet = this.GetOrCreateTrimmedWorksheet(xlsxFile, Constant.Excel.FileDataWorksheetName, database.Files.RowCount, columns))
                 {
-                    ImageRow file = database.Files[fileIndex];
-                    for (int columnIndex = 0; columnIndex < columns.Count; ++columnIndex)
+                    this.status.BeginWrite(database.Files.RowCount);
+                    for (int fileIndex = 0; fileIndex < database.Files.RowCount; ++fileIndex)
                     {
-                        string column = columns[columnIndex];
-                        // Profiling shows comparable speed for ExcelWorksheet.Cells[] and ExcelWorksheet.SetValue() but suggests
-                        // .Cells may be somewhat preferable.  Code review of the two paths is ambiguous so use .Cells for now.
-                        worksheet.Cells[fileIndex + 2, columnIndex + 1].Value = file.GetExcelString(column);
-                        // worksheet.SetValue(fileIndex + 2, columnIndex + 1, file.GetExcelString(column));
+                        ImageRow file = database.Files[fileIndex];
+                        for (int columnIndex = 0; columnIndex < columns.Count; ++columnIndex)
+                        {
+                            string column = columns[columnIndex];
+                            // Profiling shows comparable speed for ExcelWorksheet.Cells[] and ExcelWorksheet.SetValue() but suggests
+                            // .Cells may be somewhat preferable.  Code review of the two paths is ambiguous so use .Cells for now.
+                            worksheet.Cells[fileIndex + 2, columnIndex + 1].Value = file.GetExcelString(column);
+                            // worksheet.SetValue(fileIndex + 2, columnIndex + 1, file.GetExcelString(column));
+                        }
+
+                        if (this.status.ShouldReport())
+                        {
+                            this.status.Report(fileIndex);
+                        }
                     }
 
-                    if (this.status.ShouldReport())
-                    {
-                        this.status.Report(fileIndex);
-                    }
+                    // make a reasonable effort at matching column widths to content
+                    // For performance, the number of rows included in autofitting is restricted.  More intelligent algorithms can be
+                    // adopted if needed; see https://github.com/JanKallman/EPPlus/issues/191.
+                    ExcelAddressBase dimension = worksheet.Dimension;
+                    int rowsToAutoFit = Math.Min(dimension.Rows, Constant.Excel.MaximumRowsToIncludeInAutoFit);
+                    worksheet.Cells[1, 1, rowsToAutoFit, dimension.Columns].AutoFitColumns(Constant.Excel.MinimumColumnWidth, Constant.Excel.MaximumColumnWidth);
+
+                    this.status.BeginExcelSave();
+                    xlsxFile.Save();
+                    this.status.EndExcelWorkbookSave();
                 }
-
-                // make a reasonable effort at matching column widths to content
-                // For performance, the number of rows included in autofitting is restricted.  More intelligent algorithms can be
-                // adopted if needed; see https://github.com/JanKallman/EPPlus/issues/191.
-                ExcelAddressBase dimension = worksheet.Dimension;
-                int rowsToAutoFit = Math.Min(dimension.Rows, Constant.Excel.MaximumRowsToIncludeInAutoFit);
-                worksheet.Cells[1, 1, rowsToAutoFit, dimension.Columns].AutoFitColumns(Constant.Excel.MinimumColumnWidth, Constant.Excel.MaximumColumnWidth);
-
-                this.status.BeginExcelWorkbookSave();
-                xlsxFile.Save();
-                this.status.EndExcelWorkbookSave();
             }
         }
 
@@ -280,50 +286,101 @@ namespace Carnassial.Data
             return parsedLine;
         }
 
-        protected List<string> ReadXlsxRow(ExcelWorksheet worksheet, ExcelAddressBase dimension, int row)
+        protected List<string> ReadXlsxRow(XmlReader worksheetReader, Stream worksheetStream, List<string> sharedStrings)
         {
-            if (dimension.Rows < row)
+            while (worksheetReader.EOF == false)
             {
-                return null;
-            }
-
-            int columns = dimension.Columns;
-            if (this.xlsxRow == null)
-            {
-                // if the Excel row list hasn't been initialized, populate it
-                // Using a pre-populated row list avoids calling into GC on each row and calling List<>.Add() on each field. 
-                // Row storage can be made thread safe if multithreaded Excel reads become supported.
-                this.xlsxRow = new List<string>(columns);
-                for (int column = 1; column <= columns; ++column)
+                if (worksheetReader.IsStartElement(Constant.OpenXml.Element.Row))
                 {
-                    this.xlsxRow.Add(null);
+                    // new row encountered; clear any existing data in row
+                    for (int index = 0; index < this.xlsxRow.Count; ++index)
+                    {
+                        this.xlsxRow[index] = String.Empty;
+                    }
+
+                    using (XmlReader rowReader = worksheetReader.ReadSubtree())
+                    {
+                        while (rowReader.EOF == false)
+                        {
+                            if (rowReader.NodeType != XmlNodeType.Element)
+                            {
+                                rowReader.Read();
+                            }
+                            else if (String.Equals(rowReader.Name, Constant.OpenXml.Element.Cell, StringComparison.Ordinal))
+                            {
+                                string cellReference = rowReader.GetAttribute(Constant.OpenXml.Attribute.CellReference);
+                                Debug.Assert(cellReference.Length > 1, "Cell references must have at least two characters.");
+
+                                // get cell's column
+                                // The XML is sparse in the sense empty cells are omitted, so this is required to correctly output
+                                // rows.
+                                int column = cellReference[0] - 'A';
+                                if ((cellReference[1] > '9') || (cellReference[1] < '0'))
+                                {
+                                    Debug.Assert(cellReference.Length > 2, "Cell references beyond column Z must contain at least three characters.");
+                                    column = 26 * column + cellReference[1] - 'A';
+                                    if ((cellReference[2] > '9') && (cellReference[2] < '0'))
+                                    {
+                                        // as of Excel 2017, the maximum column is XFD
+                                        // So no need to check more than the first three characters of the cell reference.  Within
+                                        // Carnassial's scope it's unlikely to exceed column Z.  Column ZZ is column 676 and even less
+                                        // likely to be exceeded.
+                                        Debug.Assert(cellReference.Length > 3, "Cell references beyond column ZZ must contain at least three characters.");
+                                        column = 26 * column + cellReference[2] - 'A';
+                                    }
+                                }
+
+                                // get cell's value
+                                bool isSharedString = String.Equals(rowReader.GetAttribute(Constant.OpenXml.Attribute.CellType), Constant.OpenXml.AttributeValue.SharedStringAttribute, StringComparison.Ordinal);
+                                rowReader.ReadToDescendant(Constant.OpenXml.Element.CellValue);
+                                string value = rowReader.ReadElementContentAsString();
+
+                                if (isSharedString)
+                                {
+                                    int sharedStringIndex = 0;
+                                    for (int index = 0; index < value.Length; ++index)
+                                    {
+                                        char character = value[index];
+                                        if ((character > '9') || (character < '0'))
+                                        {
+                                            throw new FormatException("Shared string index '" + value + "' is not an integer greater than or equal to zero.");
+                                        }
+                                        sharedStringIndex = 10 * sharedStringIndex + character - '0';
+                                    }
+                                    value = sharedStrings[sharedStringIndex];
+                                }
+
+                                // add cell's value to row
+                                if (this.xlsxRow.Count <= column)
+                                {
+                                    for (int index = this.xlsxRow.Count - 1; index < column; ++index)
+                                    {
+                                        this.xlsxRow.Add(String.Empty);
+                                    }
+                                }
+                                this.xlsxRow[column] = value;
+                                rowReader.ReadEndElement();
+                            }
+                            else
+                            {
+                                rowReader.Read();
+                            }
+                        }
+                    }
+                    worksheetReader.ReadEndElement();
+
+                    if (this.status.ShouldReport())
+                    {
+                        this.status.Report(worksheetStream.Position);
+                    }
+                    return this.xlsxRow;
+                }
+                else
+                {
+                    worksheetReader.Read();
                 }
             }
-
-            for (int column = 1; column <= columns; ++column)
-            {
-                // As of EPPlus 4.5.2.1, profiling ranks these data access approaches from fastest to slowest:
-                //   1) ExcelWorksheet.GetValue<string>()
-                //   2) ExcelWorksheet.GetValue() followed by minor manipulation in Carnassial
-                //   3) ExcelWorksheet.Cells[row, column].Text
-                //   4) ExcelWorksheet.Cells[row, column].Value
-                // The performance advantage of avoiding .Cells is roughly 25%.  GetValue<string>() is 3-4% faster than GetValue().
-                string value = worksheet.GetValue<string>(row, column);
-                if (value == null)
-                {
-                    // null and String.Empty are equivalent but, for now, alias nulls to String.Empty
-                    // This provides back compat with Carnassial versions before 2.2.0.3 which called Cells[].Text and therefore
-                    // received String.Empty as the cell value from EPPlus rather than null.
-                    value = String.Empty;
-                }
-                this.xlsxRow[column - 1] = value;
-            }
-
-            if (this.status.ShouldReport())
-            {
-                this.status.Report(row);
-            }
-            return this.xlsxRow;
+            return null;
         }
 
         private FileImportResult TryImportFileData(FileDatabase fileDatabase, Func<List<string>> readLine, string spreadsheetFilePath)
@@ -361,31 +418,36 @@ namespace Carnassial.Data
             List<string> columnsInDatabaseButNotInHeader = columnsInDatabase.Except(columnsFromFileHeader).ToList();
             foreach (string column in columnsInDatabaseButNotInHeader)
             {
-                result.Errors.Add("- The column '" + column + "' is present in the image set but not in the spreadsheet file." + Environment.NewLine);
+                result.Errors.Add("- The column '" + column + "' is present in the image set but not in the spreadsheet file.");
             }
 
             List<string> columnsInHeaderButNotDatabase = columnsFromFileHeader.Except(columnsInDatabase).ToList();
             foreach (string column in columnsInHeaderButNotDatabase)
             {
-                result.Errors.Add("- The column '" + column + "' is present in the spreadsheet file but not in the image set." + Environment.NewLine);
+                result.Errors.Add("- The column '" + column + "' is present in the spreadsheet file but not in the image set.");
+            }
+
+            if (result.Errors.Count > 0)
+            {
+                return result;
             }
 
             FileTableSpreadsheetMap spreadsheetMap = fileDatabase.Files.IndexSpreadsheetColumns(columnsFromFileHeader);
             if (spreadsheetMap.FileNameIndex == -1)
             {
-                result.Errors.Add("- The column '" + Constant.FileColumn.File + "' must be present in the spreadsheet file." + Environment.NewLine);
+                result.Errors.Add("- The column '" + Constant.FileColumn.File + "' must be present in the spreadsheet file.");
             }
             if (spreadsheetMap.RelativePathIndex == -1)
             {
-                result.Errors.Add("- The column '" + Constant.FileColumn.RelativePath + "' must be present in the spreadsheet file." + Environment.NewLine);
+                result.Errors.Add("- The column '" + Constant.FileColumn.RelativePath + "' must be present in the spreadsheet file.");
             }
             if (spreadsheetMap.DateTimeIndex == -1)
             {
-                result.Errors.Add("- The column '" + Constant.FileColumn.DateTime + "' must be present in the spreadsheet file." + Environment.NewLine);
+                result.Errors.Add("- The column '" + Constant.FileColumn.DateTime + "' must be present in the spreadsheet file.");
             }
             if (spreadsheetMap.UtcOffsetIndex == -1)
             {
-                result.Errors.Add("- The column '" + Constant.FileColumn.UtcOffset + "' must be present in the spreadsheet file." + Environment.NewLine);
+                result.Errors.Add("- The column '" + Constant.FileColumn.UtcOffset + "' must be present in the spreadsheet file.");
             }
 
             if (result.Errors.Count > 0)
@@ -511,7 +573,7 @@ namespace Carnassial.Data
             {
                 using (StreamReader csvReader = new StreamReader(stream))
                 {
-                    this.status.BeginCsvRead(csvReader.BaseStream.Length);
+                    this.status.BeginRead(csvReader.BaseStream.Length);
                     FileImportResult result = this.TryImportFileData(fileDatabase, () => { return this.ReadAndParseCsvLine(csvReader); }, csvFilePath);
                     return result;
                 }
@@ -522,27 +584,75 @@ namespace Carnassial.Data
         {
             try
             {
-                using (ExcelPackage xlsxFile = new ExcelPackage(new FileInfo(xlsxFilePath)))
+                using (FileStream xlsxStream = new FileStream(xlsxFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
-                    this.status.BeginExcelWorksheetLoad();
-                    ExcelWorksheet worksheet = xlsxFile.Workbook.Worksheets[Constant.Excel.FileDataWorksheetName];
-                    if (worksheet == null)
+                    using (SpreadsheetDocument xlsx = SpreadsheetDocument.Open(xlsxStream, false))
                     {
-                        FileImportResult worksheetNotFound = new FileImportResult();
-                        worksheetNotFound.Errors.Add(String.Format("Worksheet {0} not found.", Constant.Excel.FileDataWorksheetName));
-                        return worksheetNotFound;
+                        // find worksheet
+                        WorkbookPart workbook = xlsx.WorkbookPart;
+                        Sheet worksheetInfo = workbook.Workbook.Sheets.Elements<Sheet>().FirstOrDefault(sheet => String.Equals(sheet.Name, Constant.Excel.FileDataWorksheetName, StringComparison.Ordinal));
+                        if (worksheetInfo == null)
+                        {
+                            FileImportResult worksheetNotFound = new FileImportResult();
+                            worksheetNotFound.Errors.Add(String.Format("Worksheet {0} not found.", Constant.Excel.FileDataWorksheetName));
+                            return worksheetNotFound;
+                        }
+                        WorksheetPart worksheet = (WorksheetPart)workbook.GetPartById(worksheetInfo.Id);
+
+                        // load shared strings
+                        List<string> sharedStrings = new List<string>();
+                        using (Stream sharedStringStream = workbook.SharedStringTablePart.GetStream())
+                        {
+                            using (XmlReader reader = XmlReader.Create(sharedStringStream))
+                            {
+                                reader.MoveToContent();
+                                int sharedStringCount = Int32.Parse(reader.GetAttribute(Constant.OpenXml.Attribute.CountAttribute), NumberStyles.None, CultureInfo.InvariantCulture);
+                                this.status.BeginExcelLoad(sharedStringCount);
+
+                                while (reader.EOF == false)
+                                {
+                                    if (reader.NodeType != XmlNodeType.Element)
+                                    {
+                                        reader.Read();
+                                    }
+                                    else if (String.Equals(reader.Name, Constant.OpenXml.Element.SharedString, StringComparison.Ordinal))
+                                    {
+                                        reader.ReadToDescendant(Constant.OpenXml.Element.SharedStringText);
+                                        sharedStrings.Add(reader.ReadElementContentAsString());
+                                        reader.ReadEndElement();
+
+                                        if (this.status.ShouldReport())
+                                        {
+                                            this.status.Report(sharedStrings.Count);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        reader.Read();
+                                    }
+                                }
+                            }
+                        }
+
+                        // read data from worksheet
+                        if (this.xlsxRow == null)
+                        {
+                            // if the Excel row list hasn't been initialized, populate it
+                            // Using a pre-populated row list avoids calling into GC on each row and calling List<>.Add() on each field. 
+                            // Row storage can be made thread safe if multithreaded Excel reads become supported.
+                            this.xlsxRow = new List<string>();
+                        }
+
+                        using (Stream worksheetStream = worksheet.GetStream())
+                        {
+                            this.status.BeginRead(worksheetStream.Length);
+                            using (XmlReader reader = XmlReader.Create(worksheetStream))
+                            {
+                                FileImportResult result = this.TryImportFileData(fileDatabase, () => { return this.ReadXlsxRow(reader, worksheetStream, sharedStrings); }, xlsxFilePath);
+                                return result;
+                            }
+                        }
                     }
-
-                    // cache worksheet dimensions
-                    // Profiling shows EPPlus 4.5.2.1 doesn't cache the worksheet's size, so keep it on the heap for efficiency. 
-                    // ExcelWorksheet.Cells.{Columns, Rows} can't be used for this purpose these properties indicate the maximum
-                    // worksheet size rather than the range populated with data.
-                    ExcelAddressBase dimension = worksheet.Dimension;
-
-                    this.status.BeginExcelWorkbookRead(dimension.Rows);
-                    int row = 0;
-                    FileImportResult result = this.TryImportFileData(fileDatabase, () => { return this.ReadXlsxRow(worksheet, dimension, ++row); }, xlsxFilePath);
-                    return result;
                 }
             }
             catch (IOException ioException)

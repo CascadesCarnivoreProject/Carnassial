@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -356,7 +357,7 @@ namespace Carnassial.Editor
         {
             TextBox textBox = (TextBox)sender;
             int rowIndex = (int)textBox.Tag;
-            if (Int32.TryParse(textBox.Text, out int newWidth))
+            if (Int32.TryParse(textBox.Text, NumberStyles.None, CultureInfo.CurrentUICulture, out int newWidth))
             {
                 // immediately propagate change in width to underlying data table so user sees control width adjust as they type
                 ControlRow control = this.templateDatabase.Controls[rowIndex];

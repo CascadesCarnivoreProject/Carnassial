@@ -1,5 +1,6 @@
 ﻿using Carnassial.Util;
 using System;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -92,7 +93,7 @@ namespace Carnassial.Dialog
                 return;
             }
 
-            this.FileIndex = Int32.Parse(this.FileIndexAsText.Text) - 1;
+            this.FileIndex = Int32.Parse(this.FileIndexAsText.Text, NumberStyles.None) - 1;
             this.OkButton.IsEnabled = (this.FileIndex > Constant.Database.InvalidRow) && (this.FileIndex < this.selectedFiles);
         }
 

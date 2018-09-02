@@ -60,7 +60,7 @@ namespace Carnassial.Util
             string valueAsString = registryKey.ReadString(subKeyPath);
             if (valueAsString != null)
             {
-                if (Double.TryParse(valueAsString, out double value))
+                if (Double.TryParse(valueAsString, NumberStyles.AllowLeadingSign | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out double value))
                 {
                     return value;
                 }
@@ -104,7 +104,7 @@ namespace Carnassial.Util
 
             if (value is string)
             {
-                return Int32.Parse((string)value);
+                return Int32.Parse((string)value, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture);
             }
 
             throw new NotSupportedException(String.Format("Registry key {0}\\{1} has unhandled type {2}.", registryKey.Name, subKeyPath, value.GetType().FullName));

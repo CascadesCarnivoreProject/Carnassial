@@ -11,9 +11,11 @@ namespace Carnassial.Util
     {
         private static readonly List<string> CarnassialRequiredBinaries = new List<string>()
         {
+            "DocumentFormat.OpenXml.dll", // OpenXML SDK
             "EPPlus.dll", // xlsx
             "Microsoft.WindowsAPICodePack.dll", // required by Microsoft.WindowsAPICodePack.Shell.dll
-            "Microsoft.WindowsAPICodePack.Shell.dll" // just for CarnassialWindow's use of CommonOpenFileDialog
+            "Microsoft.WindowsAPICodePack.Shell.dll", // just for CarnassialWindow's use of CommonOpenFileDialog
+            "System.IO.Packaging.dll" // OpenXML SDK (System.IO.FileSystem.Primitives.dll not currently needed)
         };
 
         private static readonly List<string> CommonRequiredBinaries = new List<string>()

@@ -6,78 +6,63 @@ namespace Carnassial.Data
 {
     public class SpreadsheetReadWriteStatus
     {
-        private double csvReadPositionDivisor;
-        private string csvReadPositionUnit;
         private double currentPosition;
         private double endPosition;
-        private bool isCsvRead;
-        private bool isExcelWorkbookSave;
-        private bool isExcelWorksheetLoad;
-        private bool isExcelWorksheetRead;
+        private bool isExcelSave;
+        private bool isExcelLoad;
+        private bool isRead;
         private bool isTransactionCommit;
         private ulong mostRecentStatusUpdate;
         private readonly IProgress<SpreadsheetReadWriteStatus> progress;
         private readonly ulong progressUpdateIntervalInMilliseconds;
+        private double spreadsheetReadPositionDivisor;
+        private string spreadsheetReadPositionUnit;
 
         public SpreadsheetReadWriteStatus(Action<SpreadsheetReadWriteStatus> onProgressUpdate, TimeSpan progressUpdateInterval)
         {
             this.ClearFlags();
-            this.csvReadPositionDivisor = -1.0;
-            this.csvReadPositionUnit = null;
             this.currentPosition = 0.0;
             this.endPosition = -1.0;
             this.mostRecentStatusUpdate = 0;
             this.progress = new Progress<SpreadsheetReadWriteStatus>(onProgressUpdate);
             this.progressUpdateIntervalInMilliseconds = (UInt64)progressUpdateInterval.TotalMilliseconds;
+            this.spreadsheetReadPositionDivisor = -1.0;
+            this.spreadsheetReadPositionUnit = null;
         }
 
-        public void BeginCsvRead(long bytesToRead)
+        public void BeginRead(long bytesToRead)
         {
             Debug.Assert(bytesToRead >= 0, "Expected bytes to read.");
 
             this.ClearFlags();
             this.endPosition = (double)bytesToRead;
-            this.csvReadPositionDivisor = 1024.0;
-            this.csvReadPositionUnit = "kB";
-            this.isCsvRead = true;
+            this.isRead = true;
+            this.spreadsheetReadPositionDivisor = 1024.0;
+            this.spreadsheetReadPositionUnit = "kB";
 
             if (bytesToRead > 1024 * 1024)
             {
-                this.csvReadPositionDivisor = 1024.0 * 1024.0;
-                this.csvReadPositionUnit = "MB";
+                this.spreadsheetReadPositionDivisor = 1024.0 * 1024.0;
+                this.spreadsheetReadPositionUnit = "MB";
             }
 
             this.Report(0);
         }
 
-        public void BeginExcelWorksheetLoad()
+        public void BeginExcelLoad(int sharedStringsToRead)
         {
             this.ClearFlags();
-            this.endPosition = 1.0;
-            this.isExcelWorksheetLoad = true;
+            this.endPosition = sharedStringsToRead;
+            this.isExcelLoad = true;
 
             this.Report(0);
         }
 
-        public void BeginExcelWorkbookRead(int rowsToRead)
-        {
-            Debug.Assert(rowsToRead >= 0, "Expected rows to read.");
-
-            this.endPosition = (double)rowsToRead;
-            this.isCsvRead = false;
-            this.isExcelWorksheetLoad = false;
-            this.isExcelWorksheetRead = true;
-            this.isExcelWorkbookSave = false;
-            this.isTransactionCommit = false;
-
-            this.Report(0);
-        }
-
-        public void BeginExcelWorkbookSave()
+        public void BeginExcelSave()
         {
             this.ClearFlags();
             this.endPosition = 1.0;
-            this.isExcelWorkbookSave = true;
+            this.isExcelSave = true;
 
             this.Report(0);
         }
@@ -105,10 +90,9 @@ namespace Carnassial.Data
 
         private void ClearFlags()
         {
-            this.isCsvRead = false;
-            this.isExcelWorkbookSave = false;
-            this.isExcelWorksheetLoad = false;
-            this.isExcelWorksheetRead = false;
+            this.isExcelSave = false;
+            this.isExcelLoad = false;
+            this.isRead = false;
             this.isTransactionCommit = false;
         }
 
@@ -119,21 +103,17 @@ namespace Carnassial.Data
 
         public string GetMessage()
         {
-            if (this.isCsvRead)
-            {
-                return String.Format("Read {0:0.0} of {1:0.0}{2}...", this.currentPosition / this.csvReadPositionDivisor, this.endPosition / this.csvReadPositionDivisor, this.csvReadPositionUnit);
-            }
-            if (this.isExcelWorkbookSave)
+            if (this.isExcelSave)
             {
                 return "Saving Excel file...";
             }
-            if (this.isExcelWorksheetLoad)
+            if (this.isExcelLoad)
             {
-                return "Loading worksheet from Excel file...";
+                return "Loading Excel file...";
             }
-            if (this.isExcelWorksheetRead)
+            if (this.isRead)
             {
-                return String.Format("Read {0:0} of {1:0} rows...", this.currentPosition, this.endPosition);
+                return String.Format("Read {0:0.0} of {1:0.0}{2}...", this.currentPosition / this.spreadsheetReadPositionDivisor, this.endPosition / this.spreadsheetReadPositionDivisor, this.spreadsheetReadPositionUnit);
             }
             if (this.isTransactionCommit)
             {

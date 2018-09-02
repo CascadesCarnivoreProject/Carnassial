@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -567,7 +568,7 @@ namespace Carnassial.Data
             }
             else
             {
-                if (Int32.TryParse(fileNameWithoutExtension, out int fileNumber) == false)
+                if (Int32.TryParse(fileNameWithoutExtension, NumberStyles.None, CultureInfo.InvariantCulture, out int fileNumber) == false)
                 {
                     return false;
                 }
@@ -609,12 +610,12 @@ namespace Carnassial.Data
                 }
                 else
                 {
-                    result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1} of file {2}.  Neither the file's date time nor UTC offset will be updated.", row[spreadsheetMap.UtcOffsetIndex], Constant.FileColumn.UtcOffset, fileName));
+                    result.Errors.Add(String.Format("Value '{0}' is not a valid UTC offset.  Neither the file's date time nor UTC offset will be updated.", row[spreadsheetMap.UtcOffsetIndex]));
                 }
             }
             else
             {
-                result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1} of file {2}.  File's UTC offset will be ignored and neither its date time nor UTC offset will be updated.", row[spreadsheetMap.DateTimeIndex], Constant.FileColumn.DateTime, fileName));
+                result.Errors.Add(String.Format("Value '{0}' is not a valid date time.  File's UTC offset will be ignored and neither its date time nor UTC offset will be updated.", row[spreadsheetMap.DateTimeIndex]));
             }
 
             // remaining standard controls
@@ -626,19 +627,36 @@ namespace Carnassial.Data
                 }
                 else
                 {
-                    result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1}.", row[spreadsheetMap.ClassificationIndex], Constant.FileColumn.Classification));
+                    result.Errors.Add(String.Format("Value '{0}' is not a valid file classification.", row[spreadsheetMap.ClassificationIndex]));
                 }
             }
 
             if (spreadsheetMap.DeleteFlagIndex != -1)
             {
-                if (Boolean.TryParse(row[spreadsheetMap.DeleteFlagIndex], out bool deleteFlag))
+                // .csv uses "False" and "True", Excel uses "0" and "1"
+                string flagAsString = row[spreadsheetMap.DeleteFlagIndex];
+                if (flagAsString.Length == 1)
                 {
-                    this.DeleteFlag = deleteFlag;
+                    if (flagAsString[0] == Constant.Excel.False)
+                    {
+                        this.DeleteFlag = false;
+                    }
+                    else if (flagAsString[0] == Constant.Excel.True)
+                    {
+                        this.DeleteFlag = true;
+                    }
+                    else
+                    {
+                        result.Errors.Add(String.Format("Value '{0}' is not a valid delete flag.", flagAsString, Constant.FileColumn.DeleteFlag));
+                    }
+                }
+                else if (Boolean.TryParse(flagAsString, out bool flag))
+                {
+                    this.DeleteFlag = flag;
                 }
                 else
                 {
-                    result.Errors.Add(String.Format("Value '{0}' is not valid for the column {1}.", row[spreadsheetMap.DeleteFlagIndex], Constant.FileColumn.DeleteFlag));
+                    result.Errors.Add(String.Format("Value '{0}' is not a valid delete flag.", flagAsString, Constant.FileColumn.DeleteFlag));
                 }
             }
 
@@ -671,7 +689,7 @@ namespace Carnassial.Data
             {
                 int countIndex = spreadsheetMap.UserCounterIndices[dataIndex];
                 string countAsString = row[countIndex];
-                if (Int32.TryParse(countAsString, out int count))
+                if (Int32.TryParse(countAsString, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out int count))
                 {
                     if (this.UserCounters[dataIndex] != count)
                     {
@@ -709,13 +727,25 @@ namespace Carnassial.Data
                 string flagAsString = row[flagIndex];
 
                 bool flag;
-                if (String.Equals(flagAsString, Boolean.FalseString, StringComparison.OrdinalIgnoreCase))
+                if (flagAsString.Length == 1)
                 {
-                    flag = false;
+                    if (String.Equals(flagAsString, Constant.Sql.FalseString, StringComparison.OrdinalIgnoreCase))
+                    {
+                        flag = false;
+                    }
+                    else if (String.Equals(flagAsString, Constant.Sql.TrueString, StringComparison.OrdinalIgnoreCase))
+                    {
+                        flag = true;
+                    }
+                    else
+                    {
+                        result.Errors.Add(String.Format("'{0}' is not a valid value for the flag column {1}.  Flags must be either true or false, case insensitive.", flagAsString, spreadsheetMap.UserCounters[dataIndex].Control.DataLabel));
+                        continue;
+                    }
                 }
-                else if (String.Equals(flagAsString, Boolean.TrueString, StringComparison.OrdinalIgnoreCase))
+                else if (Boolean.TryParse(flagAsString, out flag))
                 {
-                    flag = true;
+                    // nothing further to do
                 }
                 else
                 {
