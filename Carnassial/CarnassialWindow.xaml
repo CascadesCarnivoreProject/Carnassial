@@ -51,13 +51,13 @@
                                 <Image Source="Resources/Menu/ExportFile_16x.png" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Name="MenuFileExportXlsxAndOpen" Header="to an .xlsx file and o_pen..." Click="MenuFileExportSpreadsheet_Click" ToolTip="Exports data for the selected files to an .xlsx (Excel) file and opens it in the program associated with the .xlsx extension, which is usually Excel." />
+                        <MenuItem Name="MenuFileExportXlsxAndOpen" Header="to an .xlsx file and _open..." Click="MenuFileExportSpreadsheet_Click" ToolTip="Exports data for the selected files to an .xlsx (Excel) file and opens it in the program associated with the .xlsx extension, which is usually Excel." />
                         <MenuItem Name="MenuFileExportCsv" Header="to a ._csv file" Click="MenuFileExportSpreadsheet_Click" ToolTip="Export data for the selected files to a .csv (comma separated value) file.">
                             <MenuItem.Icon>
                                 <Image Source="Resources/Menu/ExportFile_16x.png" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Name="MenuFileExportCsvAndOpen" Header="to a ._csv file and open..." Click="MenuFileExportSpreadsheet_Click" ToolTip="Export data for the selected files to a .csv (comma separated value) file and opens it in the program associated with the .csv extension, which is usually Excel." />
+                        <MenuItem Name="MenuFileExportCsvAndOpen" Header="to a .csv file and o_pen..." Click="MenuFileExportSpreadsheet_Click" ToolTip="Export data for the selected files to a .csv (comma separated value) file and opens it in the program associated with the .csv extension, which is usually Excel." />
                     </MenuItem>
                     <MenuItem Name="MenuFileImport" Header="I_mport data..." IsEnabled="False" Click="MenuFileImportSpreadsheet_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Import data from a .csv (comma separated value) or .xlsx (Excel) file.">
                         <MenuItem.Icon>

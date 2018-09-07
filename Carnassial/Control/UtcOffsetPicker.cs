@@ -7,8 +7,8 @@ namespace Carnassial.Control
         public UtcOffsetPicker()
         {
             this.Format = Constant.Time.UtcOffsetDisplayFormat;
-            this.Maximum = Constant.Time.MaximumUtcOffset;
-            this.Minimum = Constant.Time.MinimumUtcOffset;
+            this.Maximum = TimeSpan.FromHours(Constant.Time.MaximumUtcOffsetInHours);
+            this.Minimum = TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours);
         }
 
         protected override TimeSpan ConvertIncrementOrDecrementToTimeSpan(char partFormat, int incrementOrDecrement)
@@ -18,7 +18,7 @@ namespace Carnassial.Control
                 case 'h':
                     return TimeSpan.FromHours(incrementOrDecrement);
                 case 'm':
-                    return TimeSpan.FromTicks(incrementOrDecrement * Constant.Time.UtcOffsetGranularity.Ticks);
+                    return TimeSpan.FromMinutes(incrementOrDecrement * Constant.Time.UtcOffsetGranularityInMinutes);
                 default:
                     throw new NotSupportedException(String.Format("Unhandled part format {0}.", partFormat));
             }

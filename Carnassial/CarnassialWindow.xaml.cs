@@ -996,8 +996,11 @@ namespace Carnassial
         {
             MenuItem menuItem = (MenuItem)sender;
             bool exportXlsx = (sender == this.MenuFileExportXlsxAndOpen) || (sender == this.MenuFileExportXlsx);
-            bool openFile = (sender == this.MenuFileExportXlsxAndOpen) || (sender == this.MenuFileExportCsvAndOpen);
-
+            if (exportXlsx && (this.DataHandler.FileDatabase.Files.RowCount > Constant.Excel.MaximumRowsInWorksheet))
+            {
+                this.SetStatusMessage("The current selection contains {0} files, which exceeds Excel's limit of {1} rows in a worksheet.  Consider direct database access, exporting to .csv, using smaller selections with multiple Excel files.", this.DataHandler.FileDatabase.Files.RowCount, Constant.Excel.MaximumRowsInWorksheet);
+                return;
+            }
             string spreadsheetFileExtension = exportXlsx ? Constant.File.ExcelFileExtension : Constant.File.CsvFileExtension;
             string spreadsheetFileFilter = exportXlsx ? Constant.Excel.Filter : Constant.File.CsvFilter;
 
@@ -1023,6 +1026,7 @@ namespace Carnassial
             stopwatch.Start();
 
             this.SetStatusMessage("Exporting spreadsheet...");
+            bool openFileAfterExport = (sender == this.MenuFileExportXlsxAndOpen) || (sender == this.MenuFileExportCsvAndOpen);
             string spreadsheetFileName = Path.GetFileName(saveFileDialog.FileName);
             string spreadsheetFilePath = saveFileDialog.FileName;
             SpreadsheetReaderWriter spreadsheetWriter = new SpreadsheetReaderWriter(this.UpdateSpreadsheetProgress, this.State.Throttles.GetDesiredProgressUpdateInterval());
@@ -1040,7 +1044,7 @@ namespace Carnassial
                     }
                     stopwatch.Stop();
 
-                    if (openFile)
+                    if (openFileAfterExport)
                     {
                         // show the exported file in whatever program is associated with its extension
                         Process process = new Process();
@@ -1083,7 +1087,7 @@ namespace Carnassial
                 messageBox.Message.Solution += "\u2022 Flag data must be 'true' or 'false', case insensitive." + Environment.NewLine;
                 messageBox.Message.Solution += "\u2022 FixedChoice data must be a string that exactly matches one of the FixedChoice menu options or the field's default value." + Environment.NewLine;
                 messageBox.Message.Solution += String.Format("\u2022 DateTime must be in '{0}' format.{1}", Constant.Time.DateTimeDatabaseFormat, Environment.NewLine);
-                messageBox.Message.Solution += String.Format("\u2022 UtcOffset must be a floating point number between {0} and {1}, inclusive.{2}", DateTimeHandler.ToDatabaseUtcOffsetString(Constant.Time.MinimumUtcOffset), DateTimeHandler.ToDatabaseUtcOffsetString(Constant.Time.MinimumUtcOffset), Environment.NewLine);
+                messageBox.Message.Solution += String.Format("\u2022 UtcOffset must be a floating point number between {0} and {1}, inclusive.{2}", DateTimeHandler.ToDatabaseUtcOffsetString(TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours)), DateTimeHandler.ToDatabaseUtcOffsetString(TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours)), Environment.NewLine);
                 messageBox.Message.Solution += "Changing these things either doesn't work or is best done with care:" + Environment.NewLine;
                 messageBox.Message.Solution += "\u2022 FileName and RelativePath identify the file updates are applied to.  Changing them causes a different file to be updated or a new file to be added." + Environment.NewLine;
                 messageBox.Message.Solution += "\u2022 RelativePath is interpreted relative to the spreadsheet file.  Make sure it's in the right place!" + Environment.NewLine;
@@ -1176,13 +1180,17 @@ namespace Carnassial
                 messageBox.ShowDialog();
             }
 
-            // reload the in memory file table to pick up newly added files
-            // Also triggers an update to the enable/disable state of the user interface to match.
-            await this.SelectFilesAndShowFileAsync(originalSelection);
+            if (importResult.FilesChanged > 0)
+            {
+                // reload the in memory file table to put files in the appropriate sort order
+                // Also triggers an update to the enable/disable state of the user interface to match.
+                await this.SelectFilesAndShowFileAsync(originalSelection);
 
-            // clear undo/redo state as bulk edits aren't undoable
+                // clear undo/redo state as bulk edits aren't undoable
+                this.OnBulkEdit(this, null);
+            }
+
             this.HideLongRunningOperationFeedback();
-            this.OnBulkEdit(this, null);
             if (stopwatch.IsRunning)
             {
                 stopwatch.Stop();

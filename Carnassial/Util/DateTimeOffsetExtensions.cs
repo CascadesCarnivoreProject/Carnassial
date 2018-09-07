@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace Carnassial.Util
 {
@@ -6,7 +7,8 @@ namespace Carnassial.Util
     {
         public static DateTimeOffset SetOffset(this DateTimeOffset dateTime, TimeSpan offset)
         {
-            return new DateTimeOffset(dateTime.DateTime.AsUnspecifed(), offset);
+            Debug.Assert(dateTime.DateTime.Kind == DateTimeKind.Unspecified, "Expected unspecified date time.");
+            return new DateTimeOffset(dateTime.DateTime, offset);
         }
     }
 }

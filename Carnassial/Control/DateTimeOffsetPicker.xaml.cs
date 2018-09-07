@@ -308,8 +308,8 @@ namespace Carnassial.Control
                 case 'z':
                     bool nextPartAvailable = this.parts.Count > this.currentPartIndex + 1;
                     bool isOffsetHoursPart = (partFormat == 'z') || (nextPartAvailable && this.parts[this.currentPartIndex + 1].Format == Constant.Time.DateTimeOffsetPart);
-                    TimeSpan incrementAsTimeSpan = isOffsetHoursPart ? TimeSpan.FromHours(increment) : TimeSpan.FromTicks(increment * Constant.Time.UtcOffsetGranularity.Ticks);
-                    TimeSpan offset = Utilities.Limit(newValue.Offset + incrementAsTimeSpan, Constant.Time.MinimumUtcOffset, Constant.Time.MaximumUtcOffset);
+                    TimeSpan incrementAsTimeSpan = isOffsetHoursPart ? TimeSpan.FromHours(increment) : TimeSpan.FromMinutes(increment * Constant.Time.UtcOffsetGranularityInMinutes);
+                    TimeSpan offset = Utilities.Limit(newValue.Offset + incrementAsTimeSpan, TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours), TimeSpan.FromHours(Constant.Time.MaximumUtcOffsetInHours));
                     newValue = newValue.SetOffset(offset);
                     break;
                 case 'm':

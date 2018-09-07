@@ -606,16 +606,13 @@ namespace Carnassial.UnitTests
             // database format roundtrips
             string dateTimeAsDatabaseString = DateTimeHandler.ToDatabaseDateTimeString(dateTimeOffset);
             DateTime dateTimeParse = DateTimeHandler.ParseDatabaseDateTimeString(dateTimeAsDatabaseString);
-            Assert.IsTrue(DateTimeHandler.TryParseDatabaseDateTime(dateTimeAsDatabaseString, out DateTime dateTimeTryParse));
+            Assert.IsTrue(DateTimeHandler.TryParseSpreadsheetDateTime(dateTimeAsDatabaseString, out DateTime dateTimeTryParse));
 
             Assert.IsTrue(dateTimeParse == dateTimeOffset.UtcDateTime);
             Assert.IsTrue(dateTimeTryParse == dateTimeOffset.UtcDateTime);
 
             string utcOffsetAsDatabaseString = DateTimeHandler.ToDatabaseUtcOffsetString(dateTimeOffset.Offset);
-            TimeSpan utcOffsetParse = DateTimeHandler.ParseDatabaseUtcOffsetString(utcOffsetAsDatabaseString);
-            Assert.IsTrue(DateTimeHandler.TryParseDatabaseUtcOffsetString(utcOffsetAsDatabaseString, out TimeSpan utcOffsetTryParse));
-
-            Assert.IsTrue(utcOffsetParse == dateTimeOffset.Offset);
+            Assert.IsTrue(DateTimeHandler.TryParseSpreadsheetUtcOffset(utcOffsetAsDatabaseString, out TimeSpan utcOffsetTryParse));
             Assert.IsTrue(utcOffsetTryParse == dateTimeOffset.Offset);
 
             // display format roundtrips
@@ -1039,20 +1036,6 @@ namespace Carnassial.UnitTests
                 // force SQLite to release its handle on the database file
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
-            }
-        }
-
-        /// <summary>
-        /// Backwards compatibility test against editor 2.0.1.5 template database.
-        /// </summary>
-        [TestMethod]
-        public void TemplateDatabase2015()
-        {
-            // load database
-            string templateDatabaseBaseFileName = TestConstant.File.DefaultTemplateDatabaseFileName;
-            using (TemplateDatabase templateDatabase = this.CloneTemplateDatabase(templateDatabaseBaseFileName))
-            {
-                this.VerifyTemplateDatabase(templateDatabase, templateDatabaseBaseFileName);
             }
         }
 

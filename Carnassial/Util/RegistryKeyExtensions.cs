@@ -52,7 +52,7 @@ namespace Carnassial.Util
                 return defaultValue;
             }
 
-            return DateTime.ParseExact(value, Constant.Time.DateTimeDatabaseFormat, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
+            return DateTimeHandler.ParseDatabaseDateTimeString(value);
         }
 
         public static double ReadDouble(this RegistryKey registryKey, string subKeyPath, double defaultValue)

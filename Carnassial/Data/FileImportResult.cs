@@ -19,5 +19,10 @@ namespace Carnassial.Data
             this.FilesProcessed = 0;
             this.FilesUpdated = 0;
         }
+
+        public int FilesChanged
+        {
+            get { return this.FilesAdded + this.FilesUpdated; }
+        }
     }
 }

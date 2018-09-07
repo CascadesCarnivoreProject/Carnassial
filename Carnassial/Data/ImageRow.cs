@@ -602,9 +602,9 @@ namespace Carnassial.Data
         public void SetValuesFromSpreadsheet(FileTableSpreadsheetMap spreadsheetMap, List<string> row, FileImportResult result)
         {
             // obtain file's date time and UTC offset
-            if (DateTimeHandler.TryParseDatabaseDateTime(row[spreadsheetMap.DateTimeIndex], out DateTime dateTime))
+            if (DateTimeHandler.TryParseSpreadsheetDateTime(row[spreadsheetMap.DateTimeIndex], out DateTime dateTime))
             {
-                if (DateTimeHandler.TryParseDatabaseUtcOffsetString(row[spreadsheetMap.UtcOffsetIndex], out TimeSpan utcOffset))
+                if (DateTimeHandler.TryParseSpreadsheetUtcOffset(row[spreadsheetMap.UtcOffsetIndex], out TimeSpan utcOffset))
                 {
                     this.DateTimeOffset = DateTimeHandler.FromDatabaseDateTimeOffset(dateTime, utcOffset);
                 }

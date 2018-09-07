@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Carnassial.Util
+namespace Carnassial.UnitTests
 {
     internal static class DateTimeExtensions
     {

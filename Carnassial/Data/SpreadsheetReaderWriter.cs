@@ -1,5 +1,4 @@
 ﻿using Carnassial.Interop;
-using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using OfficeOpenXml;
@@ -17,31 +16,62 @@ namespace Carnassial.Data
     /// <summary>
     /// Import and export .csv and .xlsx files.
     /// </summary>
+    // Approximate performance, Carnassial 2.2.0.3 @ 65k rows, 16 cells/row:
+    // import .csv  - 240k rows/second
+    //        .xlsx - 33k rows/second
+    // export .csv  - 125k rows/second
+    //        .xlsx - 5.7k rows/second
     public class SpreadsheetReaderWriter
     {
+        private readonly List<string> currentRow;
         private readonly SpreadsheetReadWriteStatus status;
-        private List<string> xlsxRow;
 
         public SpreadsheetReaderWriter(Action<SpreadsheetReadWriteStatus> onProgressUpdate, TimeSpan desiredProgressUpdateInterval)
         {
+            // a pre-populated row list avoids calling into GC on each row and calling List<>.Add() for each column
+            // Multiple rows can be used for thread safety if multithreaded reads become supported.
+            this.currentRow = new List<string>();
             this.status = new SpreadsheetReadWriteStatus(onProgressUpdate, desiredProgressUpdateInterval);
-            this.xlsxRow = null;
         }
 
-        private string AddColumnValue(string value)
+        private unsafe string EscapeForCsv(string value)
         {
             if (value == null)
             {
-                return ",";
-            }
-            if (value.IndexOfAny("\",\x0A\x0D".ToCharArray()) > -1)
-            {
-                // commas, double quotation marks, line feeds (\x0A), and carriage returns (\x0D) require leading and ending double quotation marks be added
-                // double quotation marks within the field also have to be escaped as double quotes
-                return "\"" + value.Replace("\"", "\"\"") + "\"" + ",";
+                return null;
             }
 
-            return value + ",";
+            fixed (char* valueCharacters = value)
+            {
+                bool escape = false;
+                bool replaceQuotes = false;
+                for (int index = 0; index < value.Length; ++index)
+                {
+                    // commas, double quotation marks, line feeds (\n), and carriage returns (\r) require leading and ending double quotation marks be added
+                    // double quotation marks within the field also have to be escaped as double quotes
+                    // Carriage returns and line feeds are rare and often not supported in .csv code.
+                    char character = *(valueCharacters + index);
+                    escape |= (character == '"') || (character == ',') || (character == '\n') || (character == '\r');
+                    replaceQuotes |= character == '"';
+                    if (replaceQuotes)
+                    {
+                        // in most cases escaping is not required and this loop will run to the full length of the string
+                        // There's therefore little to negative value in more complicated logic which would allow breaking on non-quote
+                        // characters.
+                        break;
+                    }
+                }
+
+                if (replaceQuotes)
+                {
+                    value = value.Replace("\"", "\"\"");
+                }
+                if (escape)
+                {
+                    return "\"" + value + "\"";
+                }
+                return value;
+            }
         }
 
         /// <summary>
@@ -55,35 +85,40 @@ namespace Carnassial.Data
             {
                 // write the header as defined by the data labels in the template file
                 // The append sequence results in a trailing comma which is retained when writing the line.
-                StringBuilder header = new StringBuilder();
                 List<string> columns = new List<string>(database.Controls.RowCount);
                 foreach (ControlRow control in database.Controls.InSpreadsheetOrder())
                 {
                     columns.Add(control.DataLabel);
-                    header.Append(this.AddColumnValue(control.DataLabel));
+                    fileWriter.Write(this.EscapeForCsv(control.DataLabel));
+                    fileWriter.Write(',');
 
                     if (control.Type == ControlType.Counter)
                     {
                         string markerColumn = FileTable.GetMarkerPositionColumnName(control.DataLabel);
                         columns.Add(markerColumn);
-                        header.Append(this.AddColumnValue(markerColumn));
+                        fileWriter.Write(this.EscapeForCsv(markerColumn));
+                        fileWriter.Write(',');
                     }
                 }
-                fileWriter.WriteLine(header.ToString());
+                fileWriter.Write(fileWriter.NewLine);
 
-                for (int fileIndex = 0; fileIndex < database.Files.RowCount; ++fileIndex)
+                for (int fileIndex = 0, mostRecentReportCheck = 0; fileIndex < database.Files.RowCount; ++fileIndex)
                 {
                     ImageRow file = database.Files[fileIndex];
-                    StringBuilder csvRow = new StringBuilder();
                     foreach (string dataLabel in columns)
                     {
-                        csvRow.Append(this.AddColumnValue(file.GetExcelString(dataLabel)));
+                        fileWriter.Write(this.EscapeForCsv(file.GetExcelString(dataLabel)));
+                        fileWriter.Write(',');
                     }
-                    fileWriter.WriteLine(csvRow.ToString());
+                    fileWriter.Write(fileWriter.NewLine);
 
-                    if (this.status.ShouldReport())
+                    if (fileIndex - mostRecentReportCheck > Constant.File.RowsBetweenStatusReportChecks)
                     {
-                        this.status.Report(fileIndex);
+                        if (this.status.ShouldReport())
+                        {
+                            this.status.Report(fileIndex);
+                        }
+                        mostRecentReportCheck = fileIndex;
                     }
                 }
             }
@@ -94,13 +129,13 @@ namespace Carnassial.Data
         /// <summary>
         /// Export all data for the selected files to the .xlsx file indicated.
         /// </summary>
-        public void ExportFileDataToXlsx(FileDatabase database, string xlsxFilePath)
+        public void ExportFileDataToXlsx(FileDatabase fileDatabase, string xlsxFilePath)
         {
             this.status.BeginExcelLoad(0);
             using (ExcelPackage xlsxFile = new ExcelPackage(new FileInfo(xlsxFilePath)))
             {
-                List<string> columns = new List<string>(database.Controls.RowCount);
-                foreach (ControlRow control in database.Controls.InSpreadsheetOrder())
+                List<string> columns = new List<string>(fileDatabase.Controls.RowCount);
+                foreach (ControlRow control in fileDatabase.Controls.InSpreadsheetOrder())
                 {
                     columns.Add(control.DataLabel);
                     if (control.Type == ControlType.Counter)
@@ -109,12 +144,12 @@ namespace Carnassial.Data
                     }
                 }
 
-                using (ExcelWorksheet worksheet = this.GetOrCreateTrimmedWorksheet(xlsxFile, Constant.Excel.FileDataWorksheetName, database.Files.RowCount, columns))
+                using (ExcelWorksheet worksheet = this.GetOrCreateTrimmedWorksheet(xlsxFile, Constant.Excel.FileDataWorksheetName, fileDatabase.Files.RowCount, columns))
                 {
-                    this.status.BeginWrite(database.Files.RowCount);
-                    for (int fileIndex = 0; fileIndex < database.Files.RowCount; ++fileIndex)
+                    this.status.BeginWrite(fileDatabase.Files.RowCount);
+                    for (int fileIndex = 0; fileIndex < fileDatabase.Files.RowCount; ++fileIndex)
                     {
-                        ImageRow file = database.Files[fileIndex];
+                        ImageRow file = fileDatabase.Files[fileIndex];
                         for (int columnIndex = 0; columnIndex < columns.Count; ++columnIndex)
                         {
                             string column = columns[columnIndex];
@@ -142,6 +177,27 @@ namespace Carnassial.Data
                     this.status.EndExcelWorkbookSave();
                 }
             }
+        }
+
+        private int GetExcelColumnIndex(string cellReference)
+        {
+            Debug.Assert(cellReference.Length > 1, "Cell references must contain at least two characters.");
+            int index = cellReference[0] - 'A';
+            if ((cellReference[1] > '9') || (cellReference[1] < '0'))
+            {
+                Debug.Assert(cellReference.Length > 2, "Cell references beyond column Z must contain at least three characters.");
+                index = 26 * index + cellReference[1] - 'A';
+                if ((cellReference[2] > '9') && (cellReference[2] < '0'))
+                {
+                    // as of Excel 2017, the maximum column is XFD
+                    // So no need to check more than the first three characters of the cell reference.  Within
+                    // Carnassial's scope it's unlikely to exceed column Z.  Column ZZ is column 676 and even less
+                    // likely to be exceeded.
+                    Debug.Assert(cellReference.Length > 3, "Cell references beyond column ZZ must contain at least three characters.");
+                    index = 26 * index + cellReference[2] - 'A';
+                }
+            }
+            return index;
         }
 
         protected ExcelWorksheet GetOrCreateTrimmedWorksheet(ExcelPackage xlsxFile, string worksheetName, int dataRows, List<string> columnHeaders)
@@ -187,15 +243,15 @@ namespace Carnassial.Data
             return worksheet;
         }
 
-        private List<string> ReadAndParseCsvLine(StreamReader csvReader)
+        private bool ReadAndParseCsvLine(StreamReader csvReader)
         {
             string unparsedLine = csvReader.ReadLine();
             if (unparsedLine == null)
             {
-                return null;
+                return false;
             }
 
-            List<string> parsedLine = new List<string>();
+            this.currentRow.Clear();
             bool isFieldEscaped = false;
             int fieldStart = 0;
             bool inField = false;
@@ -216,7 +272,7 @@ namespace Carnassial.Data
                         // promote null values to empty values to prevent the presence of SQNull objects in data tables
                         // much Carnassial code assumes data table fields can be blindly cast to string and breaks once the data table has been
                         // refreshed after null values are inserted
-                        parsedLine.Add(String.Empty);
+                        this.currentRow.Add(String.Empty);
                         continue;
                     }
                     else
@@ -234,7 +290,7 @@ namespace Carnassial.Data
                         // end of unescaped field
                         inField = false;
                         string field = unparsedLine.Substring(fieldStart, index - fieldStart);
-                        parsedLine.Add(field);
+                        this.currentRow.Add(field);
                     }
                     else if (currentCharacter == '\"' && isFieldEscaped)
                     {
@@ -252,7 +308,7 @@ namespace Carnassial.Data
                                 isFieldEscaped = false;
                                 string field = unparsedLine.Substring(fieldStart, index - fieldStart);
                                 field = field.Replace("\"\"", "\"");
-                                parsedLine.Add(field);
+                                this.currentRow.Add(field);
                                 ++index;
                             }
                             else if (unparsedLine[nextIndex] == '"')
@@ -275,27 +331,22 @@ namespace Carnassial.Data
                 {
                     field = field.Replace("\"\"", "\"");
                 }
-                parsedLine.Add(field);
+                this.currentRow.Add(field);
             }
 
-            if (this.status.ShouldReport())
-            {
-                this.status.Report(csvReader.BaseStream.Position);
-            }
-
-            return parsedLine;
+            return true;
         }
 
-        protected List<string> ReadXlsxRow(XmlReader worksheetReader, Stream worksheetStream, List<string> sharedStrings)
+        protected bool ReadXlsxRow(XmlReader worksheetReader, Stream worksheetStream, List<string> sharedStrings)
         {
             while (worksheetReader.EOF == false)
             {
                 if (worksheetReader.IsStartElement(Constant.OpenXml.Element.Row))
                 {
                     // new row encountered; clear any existing data in row
-                    for (int index = 0; index < this.xlsxRow.Count; ++index)
+                    for (int index = 0; index < this.currentRow.Count; ++index)
                     {
-                        this.xlsxRow[index] = String.Empty;
+                        this.currentRow[index] = String.Empty;
                     }
 
                     using (XmlReader rowReader = worksheetReader.ReadSubtree())
@@ -314,21 +365,7 @@ namespace Carnassial.Data
                                 // get cell's column
                                 // The XML is sparse in the sense empty cells are omitted, so this is required to correctly output
                                 // rows.
-                                int column = cellReference[0] - 'A';
-                                if ((cellReference[1] > '9') || (cellReference[1] < '0'))
-                                {
-                                    Debug.Assert(cellReference.Length > 2, "Cell references beyond column Z must contain at least three characters.");
-                                    column = 26 * column + cellReference[1] - 'A';
-                                    if ((cellReference[2] > '9') && (cellReference[2] < '0'))
-                                    {
-                                        // as of Excel 2017, the maximum column is XFD
-                                        // So no need to check more than the first three characters of the cell reference.  Within
-                                        // Carnassial's scope it's unlikely to exceed column Z.  Column ZZ is column 676 and even less
-                                        // likely to be exceeded.
-                                        Debug.Assert(cellReference.Length > 3, "Cell references beyond column ZZ must contain at least three characters.");
-                                        column = 26 * column + cellReference[2] - 'A';
-                                    }
-                                }
+                                int column = this.GetExcelColumnIndex(cellReference);
 
                                 // get cell's value
                                 bool isSharedString = String.Equals(rowReader.GetAttribute(Constant.OpenXml.Attribute.CellType), Constant.OpenXml.AttributeValue.SharedStringAttribute, StringComparison.Ordinal);
@@ -351,14 +388,7 @@ namespace Carnassial.Data
                                 }
 
                                 // add cell's value to row
-                                if (this.xlsxRow.Count <= column)
-                                {
-                                    for (int index = this.xlsxRow.Count - 1; index < column; ++index)
-                                    {
-                                        this.xlsxRow.Add(String.Empty);
-                                    }
-                                }
-                                this.xlsxRow[column] = value;
+                                this.currentRow[column] = value;
                                 rowReader.ReadEndElement();
                             }
                             else
@@ -368,22 +398,17 @@ namespace Carnassial.Data
                         }
                     }
                     worksheetReader.ReadEndElement();
-
-                    if (this.status.ShouldReport())
-                    {
-                        this.status.Report(worksheetStream.Position);
-                    }
-                    return this.xlsxRow;
+                    return true;
                 }
                 else
                 {
                     worksheetReader.Read();
                 }
             }
-            return null;
+            return false;
         }
 
-        private FileImportResult TryImportFileData(FileDatabase fileDatabase, Func<List<string>> readLine, string spreadsheetFilePath)
+        private FileImportResult TryImportFileData(FileDatabase fileDatabase, Func<bool> readLine, Func<long> getPosition, string spreadsheetFilePath)
         {
             if (fileDatabase.ImageSet.FileSelection != FileSelection.All)
             {
@@ -401,7 +426,8 @@ namespace Carnassial.Data
             }
 
             // validate file header against the database
-            List<string> columnsFromFileHeader = readLine.Invoke();
+            readLine.Invoke();
+            List<string> columnsFromFileHeader = new List<string>(this.currentRow);
             List<string> columnsInDatabase = new List<string>(fileDatabase.Controls.RowCount);
             foreach (ControlRow control in fileDatabase.Controls)
             {
@@ -460,32 +486,35 @@ namespace Carnassial.Data
             List<ImageRow> filesToInsert = new List<ImageRow>();
             List<ImageRow> filesToUpdate = new List<ImageRow>();
             int filesUnchanged = 0;
+            int mostRecentReportCheck = 0;
+            int rowsWritten = 0;
             this.status.Report(0);
-            for (List<string> row = readLine.Invoke(); row != null; row = readLine.Invoke())
+            while (readLine.Invoke())
             {
-                if (row.Count == columnsInDatabase.Count - 1)
+                if (this.currentRow.Count == columnsInDatabase.Count - 1)
                 {
                     // .csv files are ambiguous in the sense a trailing comma may or may not be present at the end of the line
                     // if the final field has a value this case isn't a concern, but if the final field has no value then there's
                     // no way for the parser to know the exact number of fields in the line
-                    row.Add(String.Empty);
+                    this.currentRow.Add(String.Empty);
                 }
-                else if (row.Count != columnsInDatabase.Count)
+                else if (this.currentRow.Count != columnsInDatabase.Count)
                 {
-                    Debug.Fail(String.Format("Expected {0} fields in line {1} but found {2}.", columnsInDatabase.Count, String.Join(",", row), row.Count));
+                    result.Errors.Add(String.Format("Expected {0} fields in row '{1}' but found {2}.  Row skipped, database will not be updated for this file.", columnsInDatabase.Count, String.Join(",", this.currentRow), this.currentRow.Count));
+                    continue;
                 }
 
                 // determine whether a new file needs to be added or if this row corresponds to a file already in the image set
                 // For now, it's assumed all renames or moves are done through Carnassial and hence relative path + file name form 
                 // an immutable (and unique) ID.
-                string fileName = row[spreadsheetMap.FileNameIndex];
+                string fileName = this.currentRow[spreadsheetMap.FileNameIndex];
                 if (String.IsNullOrWhiteSpace(fileName))
                 {
-                    result.Errors.Add(String.Format("No file name found in row {0}.  Row skipped, database will not be updated.", row));
+                    result.Errors.Add(String.Format("No file name found in row {0}.  Row skipped, database will not be updated for this file.", filesToInsert.Count + filesToUpdate.Count + filesUnchanged + 1));
                     continue;
                 }
 
-                string relativePath = row[spreadsheetMap.RelativePathIndex];
+                string relativePath = this.currentRow[spreadsheetMap.RelativePathIndex];
                 if (relativePathFromDatabaseToSpreadsheet != null)
                 {
                     relativePath = Path.Combine(relativePathFromDatabaseToSpreadsheet, relativePath);
@@ -501,7 +530,7 @@ namespace Carnassial.Data
                 Debug.Assert(addFile || (file.HasChanges == false), "Existing file unexpectedly has changes.");
 
                 // move row data into file
-                file.SetValuesFromSpreadsheet(spreadsheetMap, row, result);
+                file.SetValuesFromSpreadsheet(spreadsheetMap, this.currentRow, result);
 
                 if (addFile)
                 {
@@ -514,6 +543,16 @@ namespace Carnassial.Data
                 else
                 {
                     ++filesUnchanged;
+                }
+
+                ++rowsWritten;
+                if (rowsWritten - mostRecentReportCheck > Constant.File.RowsBetweenStatusReportChecks)
+                {
+                    if (this.status.ShouldReport())
+                    {
+                        this.status.Report(getPosition.Invoke());
+                    }
+                    mostRecentReportCheck = rowsWritten;
                 }
             }
 
@@ -574,7 +613,10 @@ namespace Carnassial.Data
                 using (StreamReader csvReader = new StreamReader(stream))
                 {
                     this.status.BeginRead(csvReader.BaseStream.Length);
-                    FileImportResult result = this.TryImportFileData(fileDatabase, () => { return this.ReadAndParseCsvLine(csvReader); }, csvFilePath);
+                    FileImportResult result = this.TryImportFileData(fileDatabase, 
+                        () => { return this.ReadAndParseCsvLine(csvReader); }, 
+                        () => { return stream.Position; },
+                        csvFilePath);
                     return result;
                 }
             }
@@ -635,20 +677,34 @@ namespace Carnassial.Data
                         }
 
                         // read data from worksheet
-                        if (this.xlsxRow == null)
-                        {
-                            // if the Excel row list hasn't been initialized, populate it
-                            // Using a pre-populated row list avoids calling into GC on each row and calling List<>.Add() on each field. 
-                            // Row storage can be made thread safe if multithreaded Excel reads become supported.
-                            this.xlsxRow = new List<string>();
-                        }
-
                         using (Stream worksheetStream = worksheet.GetStream())
                         {
                             this.status.BeginRead(worksheetStream.Length);
                             using (XmlReader reader = XmlReader.Create(worksheetStream))
                             {
-                                FileImportResult result = this.TryImportFileData(fileDatabase, () => { return this.ReadXlsxRow(reader, worksheetStream, sharedStrings); }, xlsxFilePath);
+                                // match the length of the pre-populated Excel row to the current worksheet
+                                reader.MoveToContent();
+                                reader.ReadToDescendant(Constant.OpenXml.Element.Dimension);
+                                string dimension = reader.GetAttribute(Constant.OpenXml.Attribute.Reference);
+                                string[] range = dimension.Split(':');
+                                int maximumColumnIndex = this.GetExcelColumnIndex(range[1]);
+
+                                if (this.currentRow.Count <= maximumColumnIndex)
+                                {
+                                    for (int index = this.currentRow.Count; index <= maximumColumnIndex; ++index)
+                                    {
+                                        this.currentRow.Add(String.Empty);
+                                    }
+                                }
+                                else if (this.currentRow.Count > maximumColumnIndex + 1)
+                                {
+                                    this.currentRow.RemoveRange(maximumColumnIndex + 1, this.currentRow.Count - maximumColumnIndex - 1);
+                                }
+
+                                FileImportResult result = this.TryImportFileData(fileDatabase,
+                                    () => { return this.ReadXlsxRow(reader, worksheetStream, sharedStrings); },
+                                    () => { return worksheetStream.Position; },
+                                    xlsxFilePath);
                                 return result;
                             }
                         }

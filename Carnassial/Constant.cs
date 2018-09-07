@@ -183,6 +183,7 @@ namespace Carnassial
             public const char MarkerPositionSeparator = '|';
             public const double MaximumColumnWidth = 40.0;
             public const double MinimumColumnWidth = 5.0;
+            public const int MaximumRowsInWorksheet = 1048576;
             public const int MaximumRowsToIncludeInAutoFit = 250;
             public const char True = '1';
         }
@@ -198,6 +199,7 @@ namespace Carnassial
             public const string AviFileExtension = ".avi";
             public const string CsvFileExtension = ".csv";
             public const string CsvFilter = "CSV UTF-8 (comma delimited) (*.csv)|*.csv";
+            public const int RowsBetweenStatusReportChecks = 500;
             public const string DefaultFileDatabaseFileName = "CarnassialData.ddb";
             public const string DefaultTemplateDatabaseFileName = "CarnassialTemplate.tdb";
             public const string ExcelFileExtension = ".xlsx";
@@ -355,6 +357,7 @@ namespace Carnassial
                 public const string CellReference = "r";
                 public const string CellType = "t";
                 public const string CountAttribute = "count";
+                public const string Reference = "ref";
             }
 
             public static class AttributeValue
@@ -366,6 +369,7 @@ namespace Carnassial
             {
                 public const string Cell = "c";
                 public const string CellValue = "v";
+                public const string Dimension = "dimension";
                 public const string Row = "row";
                 public const string SharedString = "si";
                 public const string SharedStringText = "t";
@@ -480,19 +484,19 @@ namespace Carnassial
             public const string DateTimeOffsetFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
             public const string DateTimeOffsetDisplayFormat = "dd-MMM-yyyy HH:mm:ss K";
             public const char DateTimeOffsetPart = 'K';
+            public const double MaximumUtcOffsetInHours = 14.0;
+            public const double MinimumUtcOffsetInHours = -12.0;
             public const int MonthsInYear = 12;
             public const string TimeFormat = "HH:mm:ss";
             public const string TimeSpanDisplayFormat = @"hh\:mm\:ss";
             public const string UtcOffsetDatabaseFormat = "0.00";
             public const string UtcOffsetDisplayFormat = @"hh\:mm";
+            public const int UtcOffsetGranularityInMinutes = 15;
             public const string VideoPositionFormat = @"mm\:ss";
 
             public static readonly TimeSpan DateTimeDatabaseResolution = TimeSpan.FromMilliseconds(1.0);
             public static readonly ReadOnlyCollection<char> DateTimeFieldCharacters = new List<char>() { 'd', 'f', 'h', 'H', 'K', 'm', 'M', 's', 't', 'y' }.AsReadOnly();
-            public static readonly TimeSpan MaximumUtcOffset = TimeSpan.FromHours(14.0);
-            public static readonly TimeSpan MinimumUtcOffset = TimeSpan.FromHours(-12.0);
             public static readonly ReadOnlyCollection<char> TimeSpanFieldCharacters = new List<char>() { 'd', 'f', 'F', 'h', 's', 'm' }.AsReadOnly();
-            public static readonly TimeSpan UtcOffsetGranularity = TimeSpan.FromTicks(9000000000); // 15 minutes
 
             public static readonly string[] DateTimeMetadataFormats =
             {

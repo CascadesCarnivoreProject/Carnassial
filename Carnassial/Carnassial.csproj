@@ -306,7 +306,6 @@
     <Compile Include="Interop\SIGDN.cs" />
     <Compile Include="Util\CarnassialConfigurationSettings.cs" />
     <Compile Include="Util\DataGridExtensions.cs" />
-    <Compile Include="Util\DateTimeExtensions.cs" />
     <Compile Include="Util\DateTimeOffsetExtensions.cs" />
     <Compile Include="Github\GithubAuthor.cs" />
     <Compile Include="Github\GithubRelease.cs" />
