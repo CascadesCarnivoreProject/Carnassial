@@ -29,7 +29,7 @@ namespace Carnassial.Dialog
             this.selectedFiles = selectedFiles;
 
             this.FileIndex = currentFileIndex;
-            this.FileIndexAsText.Text = (currentFileIndex + 1).ToString();
+            this.FileIndexAsText.Text = (currentFileIndex + 1).ToString(Constant.InvariantCulture);
             this.FileIndexAsText.SelectionStart = 0;
             this.FileIndexAsText.SelectionLength = this.FileIndexAsText.Text.Length;
             this.FileIndexAsText.TextChanged += this.FileIndexAsText_TextChanged;

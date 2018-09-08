@@ -119,9 +119,6 @@
     <Reference Include="DocumentFormat.OpenXml, Version=2.8.1.0, Culture=neutral, PublicKeyToken=8fb06cb64d019a17, processorArchitecture=MSIL">
       <HintPath>..\packages\DocumentFormat.OpenXml.2.8.1\lib\net46\DocumentFormat.OpenXml.dll</HintPath>
     </Reference>
-    <Reference Include="EPPlus, Version=4.5.2.1, Culture=neutral, PublicKeyToken=ea159fdaa78159a1, processorArchitecture=MSIL">
-      <HintPath>..\packages\EPPlus.4.5.2.1\lib\net40\EPPlus.dll</HintPath>
-    </Reference>
     <Reference Include="MetadataExtractor, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MetadataExtractor.2.0.0\lib\net45\MetadataExtractor.dll</HintPath>
       <Private>True</Private>
@@ -214,6 +211,8 @@
     <Compile Include="Data\ImageSetTransactionSequence.cs" />
     <Compile Include="Data\ControlTransactionSequence.cs" />
     <Compile Include="Data\FileTransactionSequence.cs" />
+    <Compile Include="Spreadsheet\SharedStringIndex.cs" />
+    <Compile Include="Spreadsheet\OpenXmlStylesheet.cs" />
     <Compile Include="Util\ControlTypeConverter.cs" />
     <Compile Include="Util\WellKnownValueConverter.cs" />
     <Compile Include="Database\IndexedPropertyChangedEventArgs.cs" />
@@ -239,7 +238,7 @@
     <Compile Include="Data\ControlRow.cs" />
     <Compile Include="Database\LogicalOperator.cs" />
     <Compile Include="Data\FileClassification.cs" />
-    <Compile Include="Data\FileDataType.cs" />
+    <Compile Include="Database\SqlDataType.cs" />
     <Compile Include="Data\FileImportResult.cs" />
     <Compile Include="Data\FileTable.cs" />
     <Compile Include="Database\TransactionSequence.cs" />
@@ -249,7 +248,7 @@
     <Compile Include="Database\SQLiteTable.cs" />
     <Compile Include="Database\Select.cs" />
     <Compile Include="Data\ImageSetTable.cs" />
-    <Compile Include="Data\SpreadsheetReadWriteStatus.cs" />
+    <Compile Include="Spreadsheet\SpreadsheetReadWriteStatus.cs" />
     <Compile Include="Data\UpdateFileDateTimeOffsetTransactionSequence.cs" />
     <Compile Include="Data\UpdateFileColumnTransactionSequence.cs" />
     <Compile Include="Data\FileTableUserColumn.cs" />
@@ -515,7 +514,7 @@
     <Compile Include="Control\DataEntryFlag.cs" />
     <Compile Include="Control\DataEntryNote.cs" />
     <Compile Include="Interop\NativeMethods.cs" />
-    <Compile Include="Data\SpreadsheetReaderWriter.cs" />
+    <Compile Include="Spreadsheet\SpreadsheetReaderWriter.cs" />
     <Compile Include="Dialog\DateTimeFixedCorrection.xaml.cs">
       <DependentUpon>DateTimeFixedCorrection.xaml</DependentUpon>
     </Compile>

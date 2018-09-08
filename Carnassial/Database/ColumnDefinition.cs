@@ -61,7 +61,7 @@ namespace Carnassial.Database
         {
             return new ColumnDefinition(name, Constant.SQLiteAffninity.Integer)
             {
-                DefaultValue = 0.ToString(),
+                DefaultValue = 0.ToString(Constant.InvariantCulture),
                 NotNull = true
             };
         }

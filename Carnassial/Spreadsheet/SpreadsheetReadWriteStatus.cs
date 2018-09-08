@@ -2,7 +2,7 @@
 using System;
 using System.Diagnostics;
 
-namespace Carnassial.Data
+namespace Carnassial.Spreadsheet
 {
     public class SpreadsheetReadWriteStatus
     {
@@ -61,7 +61,12 @@ namespace Carnassial.Data
         public void BeginExcelSave()
         {
             this.ClearFlags();
-            this.endPosition = 1.0;
+            // the OpenXML SDK doesn't provide progress information during save so the choice of end position is rather arbitrary
+            // However, progress is available from SharedStringIndex.Write().  For now, Write() calls Report(1) when it finishes
+            // and shared string writing is assumed to be 15% of the total save cost.  Uncompressed, shared strings are estimated
+            // as 8% of the total footprint of a workbook based on actual files.  It's assumed the XML writes to the shared string 
+            // table doubles this cost compared to that of writing completed shared string and workbook parts to disk.
+            this.endPosition = 6.0;
             this.isExcelSave = true;
 
             this.Report(0);

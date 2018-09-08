@@ -20,7 +20,7 @@ namespace Carnassial.Data
 
         public ControlTable()
         {
-            this.controlsByDataLabel = new Dictionary<string, ControlRow>();
+            this.controlsByDataLabel = new Dictionary<string, ControlRow>(StringComparer.Ordinal);
         }
 
         int ICollection.Count
@@ -100,7 +100,7 @@ namespace Carnassial.Data
             schema.ColumnDefinitions.Add(ColumnDefinition.CreateBoolean(Constant.ControlColumn.Visible));
             schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.MaxWidth, Constant.SQLiteAffninity.Integer)
             {
-                DefaultValue = Constant.ControlDefault.MaxWidth.ToString(),
+                DefaultValue = Constant.ControlDefault.MaxWidth.ToString(Constant.InvariantCulture),
                 NotNull = true
             });
             return schema;

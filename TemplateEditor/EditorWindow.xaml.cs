@@ -902,8 +902,7 @@ namespace Carnassial.Editor
                 Regex alphanumdash = new Regex("^[a-zA-Z0-9_]*$");
                 Regex alpha = new Regex("^[a-zA-Z]*$");
 
-                string firstCharacter = dataLabel[0].ToString();
-
+                string firstCharacter = dataLabel[0].ToString(Constant.InvariantCulture);
                 if (!(alpha.IsMatch(firstCharacter) && alphanumdash.IsMatch(dataLabel)))
                 {
                     string replacementDataLabel = dataLabel;

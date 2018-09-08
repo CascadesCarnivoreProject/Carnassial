@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Media.Imaging;
 
@@ -23,6 +24,7 @@ namespace Carnassial
         public const double PageUpDownNavigationFraction = 0.1;
 
         public static readonly TimeSpan CheckForUpdateInterval = TimeSpan.FromDays(1.25);
+        public static readonly CultureInfo InvariantCulture = CultureInfo.InvariantCulture;
         public static readonly Version Windows8MinimumVersion = new Version(6, 2, 0, 0);
 
         public static class ApplicationSettings
@@ -174,6 +176,8 @@ namespace Carnassial
 
         public static class Excel
         {
+            public const int AutoFilterDropdownWidth = 15;
+            public const int CalibriCharacterWidth11Point = 7;
             public const string Extension = ".xlsx";
             public const char False = '0';
             public const string FileDataWorksheetName = "file data";
@@ -352,27 +356,56 @@ namespace Carnassial
 
         public static class OpenXml
         {
+            public const string Namespace = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
+
             public static class Attribute
             {
+                public const string ActiveCell = "activeCell";
+                public const string ActivePane = "activePane";
                 public const string CellReference = "r";
+                public const string CellStyle = "s";
                 public const string CellType = "t";
                 public const string CountAttribute = "count";
+                public const string CustomWidth = "customWidth";
+                public const string DefaultRowHeight = "defaultRowHeight";
+                public const string Maximum = "max";
+                public const string Minimum = "min";
+                public const string Pane = "pane";
                 public const string Reference = "ref";
+                public const string Sqref = "sqref";
+                public const string State = "state";
+                public const string TopLeftCell = "topLeftCell";
+                public const string UniqueCountAttribute = "uniqueCount";
+                public const string Width = "width";
+                public const string WorkbookViewId = "workbookViewId";
+                public const string YSplit = "ySplit";
             }
 
-            public static class AttributeValue
+            public static class CellType
             {
-                public const string SharedStringAttribute = "s";
+                public const string Boolean = "b";
+                public const string InlineString = "inlineStr";
+                public const string SharedString = "s";
             }
 
             public static class Element
             {
+                public const string AutoFilter = "autoFilter";
                 public const string Cell = "c";
                 public const string CellValue = "v";
+                public const string Column = "col";
+                public const string Columns = "cols";
                 public const string Dimension = "dimension";
+                public const string Pane = "pane";
                 public const string Row = "row";
+                public const string Selection = "selection";
                 public const string SharedString = "si";
                 public const string SharedStringText = "t";
+                public const string SheetData = "sheetData";
+                public const string SheetFormatProperties = "sheetFormatPr";
+                public const string SheetView = "sheetView";
+                public const string SheetViews = "sheetViews";
+                public const string Worksheet = "worksheet";
             }
         }
 

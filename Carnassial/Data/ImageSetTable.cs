@@ -27,7 +27,7 @@ namespace Carnassial.Data
             });
             schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.MostRecentFileID, Constant.SQLiteAffninity.Integer)
             {
-                DefaultValue = Constant.Database.DefaultFileID.ToString(),
+                DefaultValue = Constant.Database.DefaultFileID.ToString(Constant.InvariantCulture),
                 NotNull = true
             });
             schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.TimeZone, Constant.SQLiteAffninity.Text)

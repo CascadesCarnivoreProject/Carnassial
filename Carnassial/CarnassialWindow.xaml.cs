@@ -5,6 +5,7 @@ using Carnassial.Database;
 using Carnassial.Dialog;
 using Carnassial.Github;
 using Carnassial.Images;
+using Carnassial.Spreadsheet;
 using Carnassial.Util;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
@@ -1025,10 +1026,10 @@ namespace Carnassial
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
-            this.SetStatusMessage("Exporting spreadsheet...");
             bool openFileAfterExport = (sender == this.MenuFileExportXlsxAndOpen) || (sender == this.MenuFileExportCsvAndOpen);
             string spreadsheetFileName = Path.GetFileName(saveFileDialog.FileName);
             string spreadsheetFilePath = saveFileDialog.FileName;
+            this.SetStatusMessage("Exporting data to {0}...", spreadsheetFileName);
             SpreadsheetReaderWriter spreadsheetWriter = new SpreadsheetReaderWriter(this.UpdateSpreadsheetProgress, this.State.Throttles.GetDesiredProgressUpdateInterval());
             try
             {
@@ -1998,14 +1999,14 @@ namespace Carnassial
         private void SetCurrentFile(int fileIndex)
         {
             StatusBarItem currentFile = (StatusBarItem)this.FileNavigation.Items[1];
-            currentFile.Content = Utilities.ToDisplayIndex(fileIndex).ToString();
+            currentFile.Content = Utilities.ToDisplayIndex(fileIndex).ToString(Constant.InvariantCulture);
         }
 
         // set the total number of files
         private void SetFileCount(int selectedFileCount)
         {
             StatusBarItem numberOfFiles = (StatusBarItem)this.FileNavigation.Items[3];
-            numberOfFiles.Content = selectedFileCount.ToString();
+            numberOfFiles.Content = selectedFileCount.ToString(Constant.InvariantCulture);
         }
 
         private void SetStatusMessage(string format, params object[] args)

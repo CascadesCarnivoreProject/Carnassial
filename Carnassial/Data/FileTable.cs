@@ -4,13 +4,13 @@ using Carnassial.Util;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
-using System.Diagnostics;
 using System.Linq;
 
 namespace Carnassial.Data
 {
     public class FileTable : SQLiteTable<ImageRow>
     {
+        public Dictionary<string, SqlDataType> StandardColumnDataTypesByName { get; private set; }
         public Dictionary<string, FileTableUserColumn> UserColumnsByName { get; private set; }
         public int UserCounters { get; private set; }
         public int UserFlags { get; private set; }
@@ -18,6 +18,15 @@ namespace Carnassial.Data
 
         public FileTable()
         {
+            this.StandardColumnDataTypesByName = new Dictionary<string, SqlDataType>(StringComparer.Ordinal)
+            {
+                { Constant.FileColumn.Classification, SqlDataType.String },
+                { Constant.FileColumn.DateTime, SqlDataType.DateTime },
+                { Constant.FileColumn.DeleteFlag, SqlDataType.Boolean },
+                { Constant.FileColumn.File, SqlDataType.String },
+                { Constant.FileColumn.RelativePath, SqlDataType.String },
+                { Constant.FileColumn.UtcOffset, SqlDataType.Real }
+            };
             this.UserColumnsByName = new Dictionary<string, FileTableUserColumn>(StringComparer.Ordinal);
         }
 
@@ -212,11 +221,11 @@ namespace Carnassial.Data
                     switch (userColumn.Control.Type)
                     {
                         case ControlType.Counter:
-                            if (userColumn.DataType == FileDataType.Integer)
+                            if (userColumn.DataType == SqlDataType.Integer)
                             {
                                 spreadsheetMap.UserCounterIndices.Add(columnIndex);
                             }
-                            else if (userColumn.DataType == FileDataType.ByteArray)
+                            else if (userColumn.DataType == SqlDataType.Blob)
                             {
                                 spreadsheetMap.UserMarkerIndices.Add(columnIndex);
                             }
@@ -321,19 +330,19 @@ namespace Carnassial.Data
                         int dataIndex;
                         switch (userColumn.DataType)
                         {
-                            case FileDataType.Boolean:
+                            case SqlDataType.Boolean:
                                 dataIndex = ++userFlag;
                                 userFlagSqlIndices[dataIndex] = columnIndex;
                                 break;
-                            case FileDataType.ByteArray:
+                            case SqlDataType.Blob:
                                 dataIndex = ++userMarkerPosition;
                                 userMarkerPositionSqlIndices[dataIndex] = columnIndex;
                                 break;
-                            case FileDataType.Integer:
+                            case SqlDataType.Integer:
                                 dataIndex = ++userCounter;
                                 userCounterSqlIndices[dataIndex] = columnIndex;
                                 break;
-                            case FileDataType.String:
+                            case SqlDataType.String:
                                 dataIndex = ++userNoteOrChoice;
                                 userNoteAndChoiceSqlIndices[dataIndex] = columnIndex;
                                 break;
@@ -379,11 +388,11 @@ namespace Carnassial.Data
                 {
                     switch (userColumn.DataType)
                     {
-                        case FileDataType.Boolean:
+                        case SqlDataType.Boolean:
                             int sqlIndex = userFlagSqlIndices[userColumn.DataIndex];
                             file.UserFlags[userColumn.DataIndex] = reader.GetBoolean(sqlIndex);
                             break;
-                        case FileDataType.ByteArray:
+                        case SqlDataType.Blob:
                             sqlIndex = userMarkerPositionSqlIndices[userColumn.DataIndex];
                             byte[] value;
                             if (reader.IsDBNull(sqlIndex))
@@ -404,11 +413,11 @@ namespace Carnassial.Data
                             }
                             file.UserMarkerPositions[userColumn.DataIndex] = value;
                             break;
-                        case FileDataType.Integer:
+                        case SqlDataType.Integer:
                             sqlIndex = userCounterSqlIndices[userColumn.DataIndex];
                             file.UserCounters[userColumn.DataIndex] = reader.GetInt32(sqlIndex);
                             break;
-                        case FileDataType.String:
+                        case SqlDataType.String:
                             sqlIndex = userNoteAndChoiceSqlIndices[userColumn.DataIndex];
                             file.UserNotesAndChoices[userColumn.DataIndex] = reader.GetString(sqlIndex);
                             break;
@@ -438,7 +447,7 @@ namespace Carnassial.Data
                             string markerColumnName = FileTable.GetMarkerPositionColumnName(control.DataLabel);
                             FileTableUserColumn markerColumn = new FileTableUserColumn(control)
                             {
-                                DataType = FileDataType.ByteArray
+                                DataType = SqlDataType.Blob
                             };
                             this.UserColumnsByName.Add(markerColumnName, markerColumn);
                             ++this.UserCounters;

@@ -214,7 +214,7 @@ namespace Carnassial.Data
         {
             if (typeof(TColumnType) == typeof(bool))
             {
-                int valueAsInt = Int32.Parse(value, NumberStyles.None, CultureInfo.InvariantCulture);
+                int valueAsInt = Int32.Parse(value, NumberStyles.None, Constant.InvariantCulture);
                 if ((valueAsInt != 0) && (valueAsInt != 1))
                 {
                     throw new ArgumentOutOfRangeException(nameof(value), "Valid integer values for boolean database columns are 0 and 1.");
@@ -235,7 +235,7 @@ namespace Carnassial.Data
             }
             if (typeof(TColumnType) == typeof(int))
             {
-                return Int32.Parse(value, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture);
+                return Int32.Parse(value, NumberStyles.AllowLeadingSign, Constant.InvariantCulture);
             }
             if (typeof(TColumnType) == typeof(string))
             {

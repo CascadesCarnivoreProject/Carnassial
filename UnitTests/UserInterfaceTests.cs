@@ -555,7 +555,7 @@ namespace Carnassial.UnitTests
                         // verify availability of database strings
                         foreach (string dataLabel in databaseExpectation.ExpectedColumns)
                         {
-                            string databaseString = firstFile.GetExcelString(dataLabel);
+                            string databaseString = firstFile.GetSpreadsheetString(dataLabel);
                         }
                     }
 

@@ -61,7 +61,7 @@ namespace Carnassial.Database
                     }
                     else
                     {
-                        string parameterName = "@" + clause.Column + clausesEncounteredForThisColumn.ToString();
+                        string parameterName = "@" + clause.Column + clausesEncounteredForThisColumn.ToString(Constant.InvariantCulture);
                         whereClauses.Add(clause.Column + " " + clause.Operator + " " + parameterName);
                         whereParameters.Add(new SQLiteParameter(parameterName, clause.Value));
                     }

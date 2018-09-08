@@ -120,7 +120,7 @@ namespace Carnassial.Database
             {
                 return new ColumnDefinition(column, Constant.SQLiteAffninity.Integer)
                 {
-                    DefaultValue = 0.ToString(),
+                    DefaultValue = 0.ToString(Constant.InvariantCulture),
                     NotNull = true
                 };
             },
@@ -142,7 +142,7 @@ namespace Carnassial.Database
                             continue;
                         }
 
-                        integerParameter.Value = value.ToInt32(CultureInfo.InvariantCulture);
+                        integerParameter.Value = value.ToInt32(Constant.InvariantCulture);
                         stringParameter.Value = name;
                         command.ExecuteNonQuery();
                         Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
@@ -762,7 +762,7 @@ namespace Carnassial.Database
             }
 
             int versionAsInt = (version.Major << 24) | (version.Minor << 16) | (version.Build << 8) | version.Revision;
-            using (SQLiteCommand command = new SQLiteCommand("PRAGMA USER_VERSION(" + versionAsInt.ToString() + ")", this.Connection, transaction))
+            using (SQLiteCommand command = new SQLiteCommand("PRAGMA USER_VERSION(" + versionAsInt.ToString(Constant.InvariantCulture) + ")", this.Connection, transaction))
             {
                 command.ExecuteNonQuery();
                 Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");

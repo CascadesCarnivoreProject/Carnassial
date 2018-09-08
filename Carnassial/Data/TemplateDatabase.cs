@@ -64,11 +64,11 @@ namespace Carnassial.Data
 
             // if the candidate data label exists, increment the count until a unique data label is found
             int dataLabelUniqueIdentifier = 0;
-            string nextDataLabel = dataLabelPrefix + dataLabelUniqueIdentifier.ToString();
+            string nextDataLabel = dataLabelPrefix + dataLabelUniqueIdentifier.ToString(Constant.InvariantCulture);
             while (dataLabels.Contains(nextDataLabel, StringComparer.Ordinal))
             {
                 ++dataLabelUniqueIdentifier;
-                nextDataLabel = dataLabelPrefix + dataLabelUniqueIdentifier.ToString();
+                nextDataLabel = dataLabelPrefix + dataLabelUniqueIdentifier.ToString(Constant.InvariantCulture);
             }
 
             return nextDataLabel;
@@ -492,7 +492,7 @@ namespace Carnassial.Data
                     {
                         ColumnDefinition analysisLabel = new ColumnDefinition(Constant.ControlColumn.AnalysisLabel, Constant.SQLiteAffninity.Integer)
                         {
-                            DefaultValue = 0.ToString(),
+                            DefaultValue = 0.ToString(Constant.InvariantCulture),
                             NotNull = true
                         };
                         this.AddColumnToTable(transaction, Constant.DatabaseTable.Controls, 6, analysisLabel);
@@ -501,7 +501,7 @@ namespace Carnassial.Data
                     {
                         ColumnDefinition index = new ColumnDefinition(Constant.ControlColumn.IndexInFileTable, Constant.SQLiteAffninity.Integer)
                         {
-                            DefaultValue = 0.ToString(),
+                            DefaultValue = 0.ToString(Constant.InvariantCulture),
                             NotNull = true
                         };
                         this.AddColumnToTable(transaction, Constant.DatabaseTable.Controls, 11, index);
@@ -528,7 +528,7 @@ namespace Carnassial.Data
                         this.RenameColumn(transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.Width, Constant.ControlColumn.MaxWidth, (ColumnDefinition columnWithNameChanged) =>
                         #pragma warning restore CS0618 // Type or member is obsolete
                         {
-                            columnWithNameChanged.DefaultValue = Constant.ControlDefault.MaxWidth.ToString();
+                            columnWithNameChanged.DefaultValue = Constant.ControlDefault.MaxWidth.ToString(Constant.InvariantCulture);
                             columnWithNameChanged.NotNull = true;
                         });
                     }

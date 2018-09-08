@@ -148,9 +148,7 @@ namespace Carnassial.Dialog
             {
                 index = (bool)directionForward ? this.ambiguousDatesListIndex + 1 : this.ambiguousDatesListIndex - 1;
             }
-
-            // It shouldn't be out of range, but if it is, return false
-            if (index > this.ambiguousDatesList.Count || index < 0)
+            if ((index < 0) || (index > this.ambiguousDatesList.Count))
             {
                 return false;
             }

@@ -2,6 +2,7 @@
 using Carnassial.Database;
 using Carnassial.Dialog;
 using Carnassial.Images;
+using Carnassial.Spreadsheet;
 using Carnassial.Util;
 using MetadataExtractor.Formats.Exif;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -438,9 +439,9 @@ namespace Carnassial.UnitTests
                     ControlRow defaultValueControl = templateDatabase.Controls[defaultValueIndex];
                     Assert.IsTrue(defaultValueControl.Type == ControlType.Flag); // check
                     int modifiedDefaultValue = 1;
-                    defaultValueControl.DefaultValue = modifiedDefaultValue.ToString();
+                    defaultValueControl.DefaultValue = modifiedDefaultValue.ToString(Constant.InvariantCulture);
                     templateDatabase.TrySyncControlToDatabase(defaultValueControl);
-                    Assert.IsTrue(String.Equals(templateDatabase.Controls[defaultValueIndex].DefaultValue, modifiedDefaultValue.ToString(), StringComparison.Ordinal));
+                    Assert.IsTrue(String.Equals(templateDatabase.Controls[defaultValueIndex].DefaultValue, modifiedDefaultValue.ToString(Constant.InvariantCulture), StringComparison.Ordinal));
 
                     int labelIndex = numberOfStandardControls + (3 * iterations) - 3;
                     ControlRow labelControl = templateDatabase.Controls[labelIndex];
@@ -492,7 +493,7 @@ namespace Carnassial.UnitTests
                         Assert.IsTrue(templateDatabaseReopened.Controls.RowCount == expectedControlCount);
                         this.VerifyControls(templateDatabaseReopened);
                         Assert.IsTrue(templateDatabaseReopened.Controls[copyableIndex].Copyable == modifiedCopyable);
-                        Assert.IsTrue(String.Equals(templateDatabaseReopened.Controls[defaultValueIndex].DefaultValue, modifiedDefaultValue.ToString(), StringComparison.Ordinal));
+                        Assert.IsTrue(String.Equals(templateDatabaseReopened.Controls[defaultValueIndex].DefaultValue, modifiedDefaultValue.ToString(Constant.InvariantCulture), StringComparison.Ordinal));
                         Assert.IsTrue(templateDatabaseReopened.Controls[labelIndex].Label == modifiedLabel);
                         Assert.IsTrue(templateDatabaseReopened.Controls[listIndex].WellKnownValues == modifiedList);
                         Assert.IsTrue(templateDatabaseReopened.Controls[tooltipIndex].Tooltip == modifiedTooltip);
@@ -508,7 +509,7 @@ namespace Carnassial.UnitTests
                             Assert.IsTrue(fileDatabaseReopened.Controls.RowCount == expectedControlCount);
                             this.VerifyControls(fileDatabaseReopened);
                             Assert.IsTrue(fileDatabaseReopened.Controls[copyableIndex].Copyable == modifiedCopyable);
-                            Assert.IsTrue(String.Equals(fileDatabaseReopened.Controls[defaultValueIndex].DefaultValue, modifiedDefaultValue.ToString(), StringComparison.Ordinal));
+                            Assert.IsTrue(String.Equals(fileDatabaseReopened.Controls[defaultValueIndex].DefaultValue, modifiedDefaultValue.ToString(Constant.InvariantCulture), StringComparison.Ordinal));
                             Assert.IsTrue(fileDatabaseReopened.Controls[labelIndex].Label == modifiedLabel);
                             Assert.IsTrue(fileDatabaseReopened.Controls[listIndex].WellKnownValues == modifiedList);
                             Assert.IsTrue(fileDatabaseReopened.Controls[tooltipIndex].Tooltip == modifiedTooltip);

@@ -195,13 +195,13 @@ namespace Carnassial.Data
                         FileTableUserColumn userColumn = this.table.UserColumnsByName[propertyName];
                         switch (userColumn.DataType)
                         {
-                            case FileDataType.Boolean:
+                            case SqlDataType.Boolean:
                                 return this.UserFlags[userColumn.DataIndex];
-                            case FileDataType.ByteArray:
+                            case SqlDataType.Blob:
                                 return this.UserMarkerPositions[userColumn.DataIndex];
-                            case FileDataType.Integer:
+                            case SqlDataType.Integer:
                                 return this.UserCounters[userColumn.DataIndex];
-                            case FileDataType.String:
+                            case SqlDataType.String:
                                 return this.UserNotesAndChoices[userColumn.DataIndex];
                             default:
                                 throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataIndex));
@@ -243,22 +243,22 @@ namespace Carnassial.Data
                         bool valueDifferent = false;
                         switch (userColumn.DataType)
                         {
-                            case FileDataType.Boolean:
+                            case SqlDataType.Boolean:
                                 bool valueAsBool = (bool)value;
                                 valueDifferent = this.UserFlags[userColumn.DataIndex] != valueAsBool;
                                 this.UserFlags[userColumn.DataIndex] = valueAsBool;
                                 break;
-                            case FileDataType.ByteArray:
+                            case SqlDataType.Blob:
                                 byte[] valueAsByteArray = (byte[])value;
                                 valueDifferent = this.ByteArraysEqual(this.UserMarkerPositions[userColumn.DataIndex], valueAsByteArray) == false;
                                 this.UserMarkerPositions[userColumn.DataIndex] = valueAsByteArray;
                                 break;
-                            case FileDataType.Integer:
+                            case SqlDataType.Integer:
                                 int valueAsInt = (int)value;
                                 valueDifferent = this.UserCounters[userColumn.DataIndex] != valueAsInt;
                                 this.UserCounters[userColumn.DataIndex] = valueAsInt;
                                 break;
-                            case FileDataType.String:
+                            case SqlDataType.String:
                                 string valueAsString = (string)value;
                                 valueDifferent = String.Equals(this.UserNotesAndChoices[userColumn.DataIndex], valueAsString, StringComparison.Ordinal) == false;
                                 this.UserNotesAndChoices[userColumn.DataIndex] = valueAsString;
@@ -299,6 +299,27 @@ namespace Carnassial.Data
             return currentValue.SequenceEqual(newValue);
         }
 
+        private string ClassificationToString()
+        {
+            switch (this.Classification)
+            {
+                case FileClassification.Color:
+                    return "Color";
+                case FileClassification.Corrupt:
+                    return "Corrupt";
+                case FileClassification.Dark:
+                    return "Dark";
+                case FileClassification.Greyscale:
+                    return "Greyscale";
+                case FileClassification.NoLongerAvailable:
+                    return "NoLongerAvailable";
+                case FileClassification.Video:
+                    return "Video";
+                default:
+                    throw new NotSupportedException(String.Format("Unhandled classification {0}.", this.Classification));
+            }
+        }
+
         public object GetDatabaseValue(string dataLabel)
         {
             switch (dataLabel)
@@ -323,13 +344,13 @@ namespace Carnassial.Data
                     FileTableUserColumn userColumn = this.table.UserColumnsByName[dataLabel];
                     switch (userColumn.DataType)
                     {
-                        case FileDataType.Boolean:
+                        case SqlDataType.Boolean:
                             return this.UserFlags[userColumn.DataIndex];
-                        case FileDataType.ByteArray:
+                        case SqlDataType.Blob:
                             return this.UserMarkerPositions[userColumn.DataIndex];
-                        case FileDataType.Integer:
+                        case SqlDataType.Integer:
                             return this.UserCounters[userColumn.DataIndex];
-                        case FileDataType.String:
+                        case SqlDataType.String:
                             return this.UserNotesAndChoices[userColumn.DataIndex];
                         default:
                             throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataIndex));
@@ -390,9 +411,9 @@ namespace Carnassial.Data
                 case nameof(this.FileName):
                     return this.FileName;
                 case Constant.DatabaseColumn.ID:
-                    return this.ID.ToString();
+                    return this.ID.ToString(Constant.InvariantCulture);
                 case Constant.FileColumn.Classification:
-                    return this.Classification.ToString();
+                    return this.ClassificationToString();
                 case Constant.FileColumn.RelativePath:
                     return this.RelativePath;
                 case Constant.FileColumn.UtcOffset:
@@ -401,56 +422,13 @@ namespace Carnassial.Data
                     FileTableUserColumn userColumn = this.table.UserColumnsByName[control.DataLabel];
                     switch (userColumn.DataType)
                     {
-                        case FileDataType.Boolean:
+                        case SqlDataType.Boolean:
                             return this.UserFlags[userColumn.DataIndex] ? Boolean.TrueString : Boolean.FalseString;
-                        case FileDataType.Integer:
-                            return this.UserCounters[userColumn.DataIndex].ToString();
-                        case FileDataType.String:
+                        case SqlDataType.Integer:
+                            return this.UserCounters[userColumn.DataIndex].ToString(Constant.InvariantCulture);
+                        case SqlDataType.String:
                             return this.UserNotesAndChoices[userColumn.DataIndex];
-                        case FileDataType.ByteArray:
-                        default:
-                            throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataType));
-                    }
-            }
-        }
-
-        public string GetExcelString(string dataLabel)
-        {
-            switch (dataLabel)
-            {
-                case Constant.FileColumn.DateTime:
-                    return DateTimeHandler.ToDatabaseDateTimeString(this.UtcDateTime);
-                case Constant.FileColumn.DeleteFlag:
-                    return this.DeleteFlag ? Boolean.TrueString : Boolean.FalseString;
-                case nameof(this.DateTimeOffset):
-                    throw new NotSupportedException(String.Format("Unexpected data label {0}.", nameof(this.DateTimeOffset)));
-                case Constant.FileColumn.File:
-                    return this.FileName;
-                case Constant.DatabaseColumn.ID:
-                    return this.ID.ToString();
-                case Constant.FileColumn.Classification:
-                    return this.Classification.ToString();
-                case Constant.FileColumn.RelativePath:
-                    return this.RelativePath;
-                case Constant.FileColumn.UtcOffset:
-                    return DateTimeHandler.ToDatabaseUtcOffsetString(this.UtcOffset);
-                default:
-                    FileTableUserColumn userColumn = this.table.UserColumnsByName[dataLabel];
-                    switch (userColumn.DataType)
-                    {
-                        case FileDataType.Boolean:
-                            return this.UserFlags[userColumn.DataIndex] ? Boolean.TrueString : Boolean.FalseString;
-                        case FileDataType.ByteArray:
-                            byte[] value = this.UserMarkerPositions[userColumn.DataIndex];
-                            if (value == null)
-                            {
-                                return null;
-                            }
-                            return MarkersForCounter.MarkerPositionsToExcelString(value);
-                        case FileDataType.Integer:
-                            return this.UserCounters[userColumn.DataIndex].ToString();
-                        case FileDataType.String:
-                            return this.UserNotesAndChoices[userColumn.DataIndex];
+                        case SqlDataType.Blob:
                         default:
                             throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataType));
                     }
@@ -503,6 +481,49 @@ namespace Carnassial.Data
             return Path.Combine(this.RelativePath, this.FileName);
         }
 
+        public string GetSpreadsheetString(string dataLabel)
+        {
+            switch (dataLabel)
+            {
+                case Constant.FileColumn.DateTime:
+                    return DateTimeHandler.ToDatabaseDateTimeString(this.UtcDateTime);
+                case Constant.FileColumn.DeleteFlag:
+                    return this.DeleteFlag ? Constant.Sql.TrueString : Constant.Sql.FalseString;
+                case nameof(this.DateTimeOffset):
+                    throw new NotSupportedException(String.Format("Unexpected data label {0}.", nameof(this.DateTimeOffset)));
+                case Constant.FileColumn.File:
+                    return this.FileName;
+                case Constant.DatabaseColumn.ID:
+                    return this.ID.ToString(Constant.InvariantCulture);
+                case Constant.FileColumn.Classification:
+                    return this.ClassificationToString();
+                case Constant.FileColumn.RelativePath:
+                    return this.RelativePath;
+                case Constant.FileColumn.UtcOffset:
+                    return DateTimeHandler.ToDatabaseUtcOffsetString(this.UtcOffset);
+                default:
+                    FileTableUserColumn userColumn = this.table.UserColumnsByName[dataLabel];
+                    switch (userColumn.DataType)
+                    {
+                        case SqlDataType.Boolean:
+                            return this.UserFlags[userColumn.DataIndex] ? Constant.Sql.TrueString : Constant.Sql.FalseString;
+                        case SqlDataType.Blob:
+                            byte[] value = this.UserMarkerPositions[userColumn.DataIndex];
+                            if (value == null)
+                            {
+                                return null;
+                            }
+                            return MarkersForCounter.MarkerPositionsToExcelString(value);
+                        case SqlDataType.Integer:
+                            return this.UserCounters[userColumn.DataIndex].ToString(Constant.InvariantCulture);
+                        case SqlDataType.String:
+                            return this.UserNotesAndChoices[userColumn.DataIndex];
+                        default:
+                            throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataType));
+                    }
+            }
+        }
+
         public Dictionary<string, object> GetValues()
         {
             // UtcDateTime and UtcOffset aren't included as they're portions of DateTimeOffset
@@ -521,16 +542,16 @@ namespace Carnassial.Data
                 object value;
                 switch (userColumn.DataType)
                 {
-                    case FileDataType.Boolean:
+                    case SqlDataType.Boolean:
                         value = this.UserFlags[userColumn.DataIndex];
                         break;
-                    case FileDataType.ByteArray:
+                    case SqlDataType.Blob:
                         value = this.UserMarkerPositions[userColumn.DataIndex];
                         break;
-                    case FileDataType.Integer:
+                    case SqlDataType.Integer:
                         value = this.UserCounters[userColumn.DataIndex];
                         break;
-                    case FileDataType.String:
+                    case SqlDataType.String:
                         value = this.UserNotesAndChoices[userColumn.DataIndex];
                         break;
                     default:
@@ -568,7 +589,7 @@ namespace Carnassial.Data
             }
             else
             {
-                if (Int32.TryParse(fileNameWithoutExtension, NumberStyles.None, CultureInfo.InvariantCulture, out int fileNumber) == false)
+                if (Int32.TryParse(fileNameWithoutExtension, NumberStyles.None, Constant.InvariantCulture, out int fileNumber) == false)
                 {
                     return false;
                 }
@@ -633,21 +654,22 @@ namespace Carnassial.Data
 
             if (spreadsheetMap.DeleteFlagIndex != -1)
             {
-                // .csv uses "False" and "True", Excel uses "0" and "1"
+                // Excel uses "0" and "1", as does Carnassial .csv export.  "False" and "True" are also allowed, case insensitive.
                 string flagAsString = row[spreadsheetMap.DeleteFlagIndex];
                 if (flagAsString.Length == 1)
                 {
-                    if (flagAsString[0] == Constant.Excel.False)
+                    char flagAsCharacter = flagAsString[0];
+                    if (flagAsCharacter == Constant.Excel.False)
                     {
                         this.DeleteFlag = false;
                     }
-                    else if (flagAsString[0] == Constant.Excel.True)
+                    else if (flagAsCharacter == Constant.Excel.True)
                     {
                         this.DeleteFlag = true;
                     }
                     else
                     {
-                        result.Errors.Add(String.Format("Value '{0}' is not a valid delete flag.", flagAsString, Constant.FileColumn.DeleteFlag));
+                        result.Errors.Add(String.Format("Value '{0}' is not a valid delete flag.", flagAsString));
                     }
                 }
                 else if (Boolean.TryParse(flagAsString, out bool flag))
@@ -656,7 +678,7 @@ namespace Carnassial.Data
                 }
                 else
                 {
-                    result.Errors.Add(String.Format("Value '{0}' is not a valid delete flag.", flagAsString, Constant.FileColumn.DeleteFlag));
+                    result.Errors.Add(String.Format("Value '{0}' is not a valid delete flag.", flagAsString));
                 }
             }
 
@@ -689,7 +711,7 @@ namespace Carnassial.Data
             {
                 int countIndex = spreadsheetMap.UserCounterIndices[dataIndex];
                 string countAsString = row[countIndex];
-                if (Int32.TryParse(countAsString, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out int count))
+                if (Int32.TryParse(countAsString, NumberStyles.AllowLeadingSign, Constant.InvariantCulture, out int count))
                 {
                     if (this.UserCounters[dataIndex] != count)
                     {
@@ -729,11 +751,12 @@ namespace Carnassial.Data
                 bool flag;
                 if (flagAsString.Length == 1)
                 {
-                    if (String.Equals(flagAsString, Constant.Sql.FalseString, StringComparison.OrdinalIgnoreCase))
+                    char flagAsCharacter = flagAsString[0];
+                    if (flagAsCharacter == Constant.Excel.False)
                     {
                         flag = false;
                     }
-                    else if (String.Equals(flagAsString, Constant.Sql.TrueString, StringComparison.OrdinalIgnoreCase))
+                    else if (flagAsCharacter == Constant.Excel.True)
                     {
                         flag = true;
                     }

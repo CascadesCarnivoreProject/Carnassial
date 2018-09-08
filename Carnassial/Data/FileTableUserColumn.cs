@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Carnassial.Database;
+using System;
 
 namespace Carnassial.Data
 {
@@ -6,7 +7,7 @@ namespace Carnassial.Data
     {
         public ControlRow Control { get; private set; }
         public int DataIndex { get; set; }
-        public FileDataType DataType { get; set; }
+        public SqlDataType DataType { get; set; }
 
         public FileTableUserColumn(ControlRow control)
         {
@@ -16,15 +17,15 @@ namespace Carnassial.Data
             switch (control.Type)
             {
                 case ControlType.Counter:
-                    this.DataType = FileDataType.Integer;
+                    this.DataType = SqlDataType.Integer;
                     // FileDataType.ByteArray is set by FileTable when needed
                     break;
                 case ControlType.FixedChoice:
                 case ControlType.Note:
-                    this.DataType = FileDataType.String;
+                    this.DataType = SqlDataType.String;
                     break;
                 case ControlType.Flag:
-                    this.DataType = FileDataType.Boolean;
+                    this.DataType = SqlDataType.Boolean;
                     break;
                 case ControlType.DateTime:
                 case ControlType.UtcOffset:

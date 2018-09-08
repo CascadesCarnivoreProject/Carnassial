@@ -6,13 +6,18 @@ namespace Carnassial.Util
 {
     public class DateTimeHandler
     {
+        private static readonly char[] DateTimeToSpreadsheetBuffer;
+        private static readonly char[] UtcOffsetToDatabaseBuffer;
         private static readonly int[] MaximumDaysInMonth;
 
         static DateTimeHandler()
         {
-            Debug.Assert(String.Equals(Constant.Time.DateTimeDatabaseFormat, "yyyy-MM-ddTHH:mm:ss.fffZ", StringComparison.Ordinal), nameof(DateTimeHandler.TryParseSpreadsheetDateTime) + "() needs to be updated for change in spreadsheet date time format.");
+            Debug.Assert(String.Equals(Constant.Time.DateTimeDatabaseFormat, "yyyy-MM-ddTHH:mm:ss.fffZ", StringComparison.Ordinal), nameof(DateTimeHandler.ToDatabaseDateTimeString) + "() and " + nameof(DateTimeHandler.TryParseSpreadsheetDateTime) + "() need to be updated for change in spreadsheet date time format.");
+
+            DateTimeHandler.DateTimeToSpreadsheetBuffer = new char[] { 'y', 'y', 'y', 'y', '-', 'M', 'M', '-', 'd', 'd', 'T', 'H', 'H', ':', 'm', 'm', ':', 's', 's', '.', 'f', 'f', 'f', 'Z' };
             ////                                             1   2   3   4   5   6   7   8   9   10  11  12
             DateTimeHandler.MaximumDaysInMonth = new int[] { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+            DateTimeHandler.UtcOffsetToDatabaseBuffer = new char[6];
         }
 
         public static DateTimeOffset CreateDateTimeOffset(DateTime dateTime, TimeZoneInfo imageSetTimeZone)
@@ -37,12 +42,12 @@ namespace Carnassial.Util
 
         public static DateTime ParseDatabaseDateTimeString(string dateTimeAsString)
         {
-            return DateTime.ParseExact(dateTimeAsString, Constant.Time.DateTimeDatabaseFormat, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal);
+            return DateTime.ParseExact(dateTimeAsString, Constant.Time.DateTimeDatabaseFormat, Constant.InvariantCulture, DateTimeStyles.AdjustToUniversal);
         }
 
         public static DateTime ParseDisplayDateTimeString(string dateTimeAsString)
         {
-            return DateTime.ParseExact(dateTimeAsString, Constant.Time.DateTimeDisplayFormat, CultureInfo.InvariantCulture);
+            return DateTime.ParseExact(dateTimeAsString, Constant.Time.DateTimeDisplayFormat, Constant.InvariantCulture);
         }
 
         public static TimeSpan ParseDisplayUtcOffsetString(string utcOffsetAsString)
@@ -54,7 +59,7 @@ namespace Carnassial.Util
                 utcOffsetAsString = utcOffsetAsString.Substring(1);
             }
 
-            TimeSpan utcOffset = TimeSpan.ParseExact(utcOffsetAsString, Constant.Time.UtcOffsetDisplayFormat, CultureInfo.InvariantCulture);
+            TimeSpan utcOffset = TimeSpan.ParseExact(utcOffsetAsString, Constant.Time.UtcOffsetDisplayFormat, Constant.InvariantCulture);
             if (negative)
             {
                 utcOffset = utcOffset.Negate();
@@ -62,19 +67,88 @@ namespace Carnassial.Util
             return utcOffset;
         }
 
-        public static string ToDatabaseDateTimeString(DateTimeOffset dateTime)
+        public static unsafe string ToDatabaseDateTimeString(DateTimeOffset dateTime)
         {
-            return dateTime.UtcDateTime.ToString(Constant.Time.DateTimeDatabaseFormat);
+            fixed (char* dateTimeCharacters = DateTimeHandler.DateTimeToSpreadsheetBuffer)
+            {
+                DateTime utcDateTime = dateTime.UtcDateTime;
+                int year = utcDateTime.Year;
+                *(dateTimeCharacters + 0) = (char)(year / 1000 + '0');
+                *(dateTimeCharacters + 1) = (char)(year / 100 % 10 + '0');
+                *(dateTimeCharacters + 2) = (char)(year / 10 % 10 + '0');
+                *(dateTimeCharacters + 3) = (char)(year % 10 + '0');
+
+                int month = utcDateTime.Month;
+                *(dateTimeCharacters + 5) = (char)(month / 10 + '0');
+                *(dateTimeCharacters + 6) = (char)(month % 10 + '0');
+
+                int day = utcDateTime.Day;
+                *(dateTimeCharacters + 8) = (char)(day / 10 + '0');
+                *(dateTimeCharacters + 9) = (char)(day % 10 + '0');
+
+                int hour = utcDateTime.Hour;
+                *(dateTimeCharacters + 11) = (char)(hour / 10 + '0');
+                *(dateTimeCharacters + 12) = (char)(hour % 10 + '0');
+
+                int minute = utcDateTime.Minute;
+                *(dateTimeCharacters + 14) = (char)(minute / 10 + '0');
+                *(dateTimeCharacters + 15) = (char)(minute % 10 + '0');
+
+                int second = utcDateTime.Second;
+                *(dateTimeCharacters + 17) = (char)(second / 10 + '0');
+                *(dateTimeCharacters + 18) = (char)(second % 10 + '0');
+
+                int millisecond = utcDateTime.Millisecond;
+                *(dateTimeCharacters + 20) = (char)(millisecond / 100 + '0');
+                *(dateTimeCharacters + 21) = (char)(millisecond / 10 % 10 + '0');
+                *(dateTimeCharacters + 22) = (char)(millisecond % 10 + '0');
+            }
+            return new String(DateTimeHandler.DateTimeToSpreadsheetBuffer);
         }
 
-        public static double ToDatabaseUtcOffset(TimeSpan timeSpan)
+        public static double ToDatabaseUtcOffset(TimeSpan utcOffset)
         {
-            return timeSpan.TotalHours;
+            return utcOffset.TotalHours;
         }
 
-        public static string ToDatabaseUtcOffsetString(TimeSpan timeSpan)
+        public static unsafe string ToDatabaseUtcOffsetString(TimeSpan utcOffset)
         {
-            return DateTimeHandler.ToDatabaseUtcOffset(timeSpan).ToString(Constant.Time.UtcOffsetDatabaseFormat);
+            int length = 1;
+            fixed (char* utcOffsetCharacters = DateTimeHandler.UtcOffsetToDatabaseBuffer)
+            {
+                int index = 0;
+
+                bool isNegative = utcOffset.TotalHours < 0.0;
+                if (isNegative)
+                {
+                    ++length;
+                    *(utcOffsetCharacters + index++) = '-';
+                }
+
+                int hours = utcOffset.Hours;
+                if (hours < 0)
+                {
+                    hours *= -1;
+                }
+                if (hours > 9)
+                {
+                    *(utcOffsetCharacters + index++) = (char)(hours / 10 + '0');
+                    hours -= 10;
+                    ++length;
+                }
+                *(utcOffsetCharacters + index++) = (char)(hours + '0');
+
+                int minutes = utcOffset.Minutes;
+                if (minutes != 0)
+                {
+                    length += 3;
+                    int minutesAsFractionOfHour = 100 * utcOffset.Minutes / 60;
+                    *(utcOffsetCharacters + index++) = '.';
+                    *(utcOffsetCharacters + index++) = (char)(minutesAsFractionOfHour / 10 + '0');
+                    *(utcOffsetCharacters + index++) = (char)(minutesAsFractionOfHour % 10 + '0');
+                }
+            }
+            return new String(DateTimeHandler.UtcOffsetToDatabaseBuffer, 0, length);
         }
 
         /// <summary>
@@ -125,7 +199,7 @@ namespace Carnassial.Util
 
         public static bool TryParseDatabaseDateTime(string dateTimeOffsetAsString, out DateTimeOffset dateTimeOffset)
         {
-            return DateTimeOffset.TryParseExact(dateTimeOffsetAsString, Constant.Time.DateTimeDatabaseFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeOffset);
+            return DateTimeOffset.TryParseExact(dateTimeOffsetAsString, Constant.Time.DateTimeDatabaseFormat, Constant.InvariantCulture, DateTimeStyles.None, out dateTimeOffset);
         }
 
         /// <summary>
@@ -136,12 +210,12 @@ namespace Carnassial.Util
         /// <returns>true if string was in the date time display format, false otherwise</returns>
         public static bool TryParseDisplayDateTime(string dateTimeAsString, out DateTime dateTime)
         {
-            return DateTime.TryParseExact(dateTimeAsString, Constant.Time.DateTimeDisplayFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTime);
+            return DateTime.TryParseExact(dateTimeAsString, Constant.Time.DateTimeDisplayFormat, Constant.InvariantCulture, DateTimeStyles.None, out dateTime);
         }
 
         public static bool TryParseDisplayDateTime(string dateTimeAsString, out DateTimeOffset dateTimeOffset)
         {
-            return DateTimeOffset.TryParseExact(dateTimeAsString, Constant.Time.DateTimeDisplayFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeOffset);
+            return DateTimeOffset.TryParseExact(dateTimeAsString, Constant.Time.DateTimeDisplayFormat, Constant.InvariantCulture, DateTimeStyles.None, out dateTimeOffset);
         }
 
         public static bool TryParseDateTaken(string dateTimeAsString, TimeZoneInfo imageSetTimeZone, out DateTimeOffset dateTimeOffset)
@@ -159,7 +233,7 @@ namespace Carnassial.Util
 
         public static bool TryParseMetadataDateTaken(string dateTimeAsString, TimeZoneInfo imageSetTimeZone, out DateTimeOffset dateTimeOffset)
         {
-            if (DateTime.TryParseExact(dateTimeAsString, Constant.Time.DateTimeMetadataFormats, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTime) == false)
+            if (DateTime.TryParseExact(dateTimeAsString, Constant.Time.DateTimeMetadataFormats, Constant.InvariantCulture, DateTimeStyles.None, out DateTime dateTime) == false)
             {
                 dateTimeOffset = DateTimeOffset.MinValue;
                 return false;

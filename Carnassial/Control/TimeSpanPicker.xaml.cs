@@ -362,11 +362,11 @@ namespace Carnassial.Control
 
         private bool TryParseTimeSpan(out TimeSpan timeSpan)
         {
-            if (TimeSpan.TryParseExact(this.TimeSpanDisplay.Text, this.Format, CultureInfo.InvariantCulture, TimeSpanStyles.None, out timeSpan))
+            if (TimeSpan.TryParseExact(this.TimeSpanDisplay.Text, this.Format, Constant.InvariantCulture, TimeSpanStyles.None, out timeSpan))
             {
                 return true;
             }
-            return TimeSpan.TryParseExact(this.TimeSpanDisplay.Text, @"\-" + this.Format, CultureInfo.InvariantCulture, TimeSpanStyles.AssumeNegative, out timeSpan);
+            return TimeSpan.TryParseExact(this.TimeSpanDisplay.Text, @"\-" + this.Format, Constant.InvariantCulture, TimeSpanStyles.AssumeNegative, out timeSpan);
         }
 
         private bool TrySelectCurrentPart()
