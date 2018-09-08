@@ -171,7 +171,7 @@ namespace Carnassial
         }
 
         /// <summary>When the user selects a counter update the color and emphasis of its markers.</summary>
-        private void DataEntryCounter_Click(object sender, RoutedEventArgs e)
+        private void DataEntryCounter_LabelClick(object sender, RoutedEventArgs e)
         {
             this.RefreshDisplayedMarkers();
         }
@@ -1704,9 +1704,6 @@ namespace Carnassial
                 await this.ShowFileAsync(this.DataHandler.FileDatabase.GetFileOrNextFileIndex(mostRecentFileID), false);
             }
 
-            // if needed, change to the image set tab
-            this.MenuViewShowFiles_Click(this, null);
-
             // clear undo/redo chain as opening a .ddb or adding files is not an undoable operation
             this.OnBulkEdit(this, null);
 
@@ -2315,7 +2312,7 @@ namespace Carnassial
                 this.SetStatusMessage("Loading folders (if this is slower than you like and file classification isn't needed you can select Skip classification in the Options menu right now)...");
             }
 
-            // change to the files tab
+            // if it's not already being displayed, change to the files tab so the long running progress bar is visible
             this.MenuViewShowFiles_Click(this, null);
 
             // ensure all files are selected
@@ -2448,14 +2445,23 @@ namespace Carnassial
                 return false;
             }
 
-            // before running from an existing file database, verify the controls in the template database are compatible with those
-            // of the file database
+            // update status and, if it's not already displayed, change to the image set tab
+            // In the event opening the file database is a long running operation this provides visual feedback the user's 
+            // request to open an image set is being processed since the user can see the tab change and controls render.
             imageSetLoadAndSetupTime.Start();
+            string fileDatabaseFileName = Path.GetFileName(fileDatabaseFilePath);
+            this.SetStatusMessage("Opening " + fileDatabaseFileName + "...");
+            this.MenuViewShowFiles_Click(this, null);
+
+            // open file database
             bool fileDatabaseCreatedOrOpened = FileDatabase.TryCreateOrOpen(fileDatabaseFilePath, templateDatabase, this.State.OrderFilesByDateTime, this.State.CustomSelectionTermCombiningOperator, out FileDatabase fileDatabase);
             templateDatabase.Dispose();
-            imageSetLoadAndSetupTime.Stop();
             if (fileDatabaseCreatedOrOpened == false)
             {
+                imageSetLoadAndSetupTime.Stop();
+
+                // before running from an existing file database, verify the controls in the template database are compatible with those
+                // of the file database
                 if ((fileDatabase != null) && (fileDatabase.ControlSynchronizationIssues.Count > 0))
                 {
                     // notify user the template and database are out of sync
@@ -2467,13 +2473,15 @@ namespace Carnassial
                         Application.Current.Shutdown();
                         return false;
                     }
-                    // user indicated to run with the stale copy of the template found in the file database
+
+                    // user indicated to proceed with the stale copy of the template found in the file database
+                    imageSetLoadAndSetupTime.Start();
                 }
                 else
                 {
                     // notify user the database couldn't be loaded
                     MessageBox messageBox = new MessageBox("Carnassial could not load the database.", this);
-                    messageBox.Message.Problem = "Carnassial could not load " + Path.GetFileName(fileDatabaseFilePath) + Environment.NewLine;
+                    messageBox.Message.Problem = "Carnassial could not load " + fileDatabaseFileName + Environment.NewLine;
                     messageBox.Message.Reason = "\u2022 The database was created with Timelapse instead of Carnassial." + Environment.NewLine;
                     messageBox.Message.Reason = "\u2022 The database may be corrupted or somehow otherwise invalid.";
                     messageBox.Message.Solution = "You may have to recreate the database, restore it from a backup (Carnassial makes one automatically), or use another copy of it if you have one.";
@@ -2489,10 +2497,17 @@ namespace Carnassial
                 }
             }
 
-            // valid template and file database loaded
-            // Generate and render the data entry controls regardless of whether there are actually any files in the file database.
-            // DataEntryHandler takes ownership of fileDatabase and is responsible for disposing it.
-            imageSetLoadAndSetupTime.Start();
+            // since database open was successful, update recent image set state
+            this.State.MostRecentFileAddFolderPath = fileDatabase.FolderPath;
+            this.State.MostRecentImageSets.SetMostRecent(templateDatabasePath);
+            this.Title = fileDatabaseFileName + " - " + Constant.MainWindowBaseTitle;
+            this.MenuFileRecentImageSets_Refresh();
+
+            // generate and render the data entry controls regardless of whether there are files in the database
+            // DataEntryHandler takes ownership of fileDatabase and is responsible for disposing it.  Control generation is done 
+            // prior to selecting files so the user can see the controls while files are being read from the database if that is
+            // a long running operation.  Also, startup latency is noticeably reduced as control rendering is somewhat expensive 
+            // and can proceed in parallel on the UI thread during file loading.
             this.DataHandler = new DataEntryHandler(fileDatabase);
             this.DataHandler.BulkEdit += this.OnBulkEdit;
             this.DataEntryControls.CreateControls(fileDatabase, this.DataHandler, (string dataLabel) => { return fileDatabase.GetDistinctValuesInFileDataColumn(dataLabel); });
@@ -2500,18 +2515,20 @@ namespace Carnassial
             // add event handlers for marker effects which can't be handled by DataEntryHandler
             foreach (DataEntryControl control in this.DataEntryControls.Controls)
             {
-                if (control is DataEntryCounter counter)
+                if (control.Type == ControlType.Counter)
                 {
+                    DataEntryCounter counter = (DataEntryCounter)control;
                     counter.Container.MouseEnter += this.DataEntryCounter_MouseEnter;
                     counter.Container.MouseLeave += this.DataEntryCounter_MouseLeave;
-                    counter.LabelControl.Click += this.DataEntryCounter_Click;
+                    counter.LabelControl.Click += this.DataEntryCounter_LabelClick;
                 }
             }
 
-            this.MenuFileRecentImageSets_Refresh();
-            this.State.MostRecentFileAddFolderPath = fileDatabase.FolderPath;
-            this.State.MostRecentImageSets.SetMostRecent(templateDatabasePath);
-            this.Title = Path.GetFileName(fileDatabase.FilePath) + " - " + Constant.MainWindowBaseTitle;
+            // load files from image set
+            await Task.Run(() =>
+            {
+                this.DataHandler.FileDatabase.SelectFiles(this.DataHandler.FileDatabase.ImageSet.FileSelection);
+            });
             imageSetLoadAndSetupTime.Stop();
 
             bool filesAdded = false;

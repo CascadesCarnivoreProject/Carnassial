@@ -590,10 +590,11 @@ namespace Carnassial.Data
 
                 // load the updated controls table
                 this.GetControlsSortedByControlOrder();
-
-                // load in memory file table
                 this.Files.SetUserControls(this.Controls);
-                this.SelectFiles(this.ImageSet.FileSelection);
+
+                // however, don't read files from the database into in memory file table
+                // For large databases this is a long running operation and a better user experience is provided if it is deferred
+                // until later Carnassial's image set opening sequence.
             }
 
             // return true if there are synchronization issues as the database was still opened successfully

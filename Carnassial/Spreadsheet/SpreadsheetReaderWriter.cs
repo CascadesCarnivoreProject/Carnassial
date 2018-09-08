@@ -20,6 +20,7 @@ namespace Carnassial.Spreadsheet
     // Approximate performance, Carnassial 2.2.0.3 @ 65k rows, 16 cells/row:
     // import .csv  - 240k rows/second
     //        .xlsx - 33k rows/second
+    //        .ddb - 65k rows/second in FileTable.Load()
     // export .csv  - 125k rows/second
     //        .xlsx - 29k rows/second
     public class SpreadsheetReaderWriter

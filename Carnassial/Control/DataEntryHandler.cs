@@ -203,7 +203,7 @@ namespace Carnassial.Control
                         Tag = DataEntryControlContextMenuItemType.PropagateFromLastValue
                     };
                     menuItemPropagateFromLastValue.Click += this.MenuContextPropagateFromLastValue_Click;
-                    if (dataEntryControl is DataEntryCounter)
+                    if (dataEntryControl.Type == ControlType.Counter)
                     {
                         menuItemPropagateFromLastValue.Header = "Propagate from the _last non-zero value to here...";
                     }
@@ -458,7 +458,7 @@ namespace Carnassial.Control
         /// <summary>Copy the current value of this control to all files.</summary>
         public bool TryCopyToAll(DataEntryControl control)
         {
-            bool checkForZero = control is DataEntryCounter;
+            bool checkForZero = control.Type == ControlType.Counter;
             int filesAffected = this.FileDatabase.CurrentlySelectedFileCount;
             string displayValueForConfirm = this.ImageCache.Current.GetDisplayString(control);
             if (this.ConfirmCopyCurrentValueToAll(displayValueForConfirm, filesAffected, checkForZero) != true)
