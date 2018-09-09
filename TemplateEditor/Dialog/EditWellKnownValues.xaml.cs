@@ -48,7 +48,7 @@ namespace Carnassial.Editor.Dialog
                 }
             }
 
-            Utilities.TryFitWindowInWorkingArea(this);
+            CommonUserInterface.TryFitWindowInWorkingArea(this);
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)

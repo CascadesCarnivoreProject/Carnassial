@@ -424,7 +424,7 @@ namespace Carnassial.Dialog
             SearchTerm searchTerm = this.fileDatabase.CustomSelection.SearchTerms[row - 1];
             if (searchTerm.ControlType == ControlType.Counter)
             {
-                searchTerm.DatabaseValue = Int32.Parse(textBox.Text, NumberStyles.AllowLeadingSign);
+                searchTerm.DatabaseValue = Int32.Parse(textBox.Text, NumberStyles.AllowLeadingSign, CultureInfo.CurrentCulture);
             }
             else
             {
@@ -472,15 +472,15 @@ namespace Carnassial.Dialog
 
             int count = this.fileDatabase.GetFileCount(FileSelection.Custom);
             this.OkButton.IsEnabled = count > 0 ? true : false;
-            this.QueryMatches.Text = count > 0 ? count.ToString() : "0";
+            this.QueryMatches.Text = count > 0 ? count.ToString(CultureInfo.CurrentCulture) : "0";
 
             this.Reset.IsEnabled = lastExpression == false;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Utilities.SetDefaultDialogPosition(this);
-            Utilities.TryFitWindowInWorkingArea(this);
+            CommonUserInterface.SetDefaultDialogPosition(this);
+            CommonUserInterface.TryFitWindowInWorkingArea(this);
         }
     }
 }

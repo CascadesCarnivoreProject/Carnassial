@@ -35,14 +35,6 @@ namespace Carnassial.Dialog
             this.TimeZones.SelectionChanged += this.TimeZones_SelectionChanged;
         }
 
-        private async void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            Utilities.SetDefaultDialogPosition(this);
-            Utilities.TryFitWindowInWorkingArea(this);
-
-            await this.FileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.imageCache);
-        }
-
         private void PreviewDateTimeChanges()
         {
             TimeZoneInfo newTimeZone = this.TimeZones.TimeZonesByDisplayIdentifier[(string)this.TimeZones.SelectedItem];
@@ -111,6 +103,14 @@ namespace Carnassial.Dialog
         private void TimeZones_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             this.ChangesButton.IsEnabled = true;
+        }
+
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            CommonUserInterface.SetDefaultDialogPosition(this);
+            CommonUserInterface.TryFitWindowInWorkingArea(this);
+
+            await this.FileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.imageCache);
         }
     }
 }

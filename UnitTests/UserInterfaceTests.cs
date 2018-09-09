@@ -9,6 +9,7 @@ using Carnassial.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -35,11 +36,17 @@ namespace Carnassial.UnitTests
         public static void ClassCleanup()
         {
             UserInterfaceTests.App.Shutdown();
+            CarnassialTest.TryRevertToDefaultCultures();
         }
         
         [ClassInitialize]
         public static void ClassInitialize(TestContext testContext)
         {
+            #if DEBUG
+            CarnassialWindow.UseCurrentCulture = true;
+            #endif
+            CarnassialTest.TryChangeToTestCultures();
+
             // Carnassial and the editor need an application instance to be created to load resources from
             // WPF allows only one Application per app domain, so make instance persistent so it can be reused across multiple Carnassial
             // and editor window lifetimes.  This works because Carnassial and the editor use very similar styling, allowing the editor 

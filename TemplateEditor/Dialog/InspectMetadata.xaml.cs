@@ -21,12 +21,6 @@ namespace Carnassial.Editor.Dialog
             this.Owner = owner;
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            Utilities.SetDefaultDialogPosition(this);
-            Utilities.TryFitWindowInWorkingArea(this);
-        }
-
         private void OkayButton_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = true;
@@ -35,7 +29,7 @@ namespace Carnassial.Editor.Dialog
         private void OpenFile_Click(object sender, RoutedEventArgs e)
         {
             string filter = String.Format("Images and videos (*{0};*{1};*{2})|*{0};*{1};*{2}", Constant.File.JpgFileExtension, Constant.File.AviFileExtension, Constant.File.Mp4FileExtension);
-            if (Utilities.TryGetFileFromUser("Select a typical file to inspect", ".", filter, out this.filePath))
+            if (CommonUserInterface.TryGetFileFromUser("Select a typical file to inspect", ".", filter, out this.filePath))
             {
                 this.ImageName.Content = Path.GetFileName(this.filePath);
                 if (JpegImage.IsJpeg(this.filePath))
@@ -49,6 +43,12 @@ namespace Carnassial.Editor.Dialog
                 }
                 this.DataGrid.Items.Refresh();
             }
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            CommonUserInterface.SetDefaultDialogPosition(this);
+            CommonUserInterface.TryFitWindowInWorkingArea(this);
         }
     }
 }

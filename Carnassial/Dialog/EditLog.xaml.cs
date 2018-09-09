@@ -17,7 +17,6 @@ namespace Carnassial.Dialog
         public EditLog(string text, Window owner)
         {
             this.InitializeComponent();
-            Utilities.TryFitWindowInWorkingArea(this);
             this.Owner = owner;
 
             this.Log.Text = text;
@@ -41,8 +40,8 @@ namespace Carnassial.Dialog
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Utilities.SetDefaultDialogPosition(this);
-            Utilities.TryFitWindowInWorkingArea(this);
+            CommonUserInterface.SetDefaultDialogPosition(this);
+            CommonUserInterface.TryFitWindowInWorkingArea(this);
         }
     }
 }

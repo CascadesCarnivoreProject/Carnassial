@@ -21,6 +21,18 @@ namespace Carnassial.UnitTests
     [TestClass]
     public class DatabaseTests : CarnassialTest
     {
+        [ClassCleanup]
+        public static void ClassCleanup()
+        {
+            CarnassialTest.TryRevertToDefaultCultures();
+        }
+
+        [ClassInitialize]
+        public static void ClassInitialize(TestContext testContext)
+        {
+            CarnassialTest.TryChangeToTestCultures();
+        }
+
         [TestMethod]
         public void CreateReuseDefaultFileDatabase()
         {
@@ -582,7 +594,7 @@ namespace Carnassial.UnitTests
             DateTime nowWithoutMilliseconds = new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, now.Second, DateTimeKind.Local);
             foreach (string format in new List<string>() { "yyyy:MM:dd HH:mm:ss", "ddd MMM dd HH:mm:ss K yyyy" })
             {
-                string metadataDateAsString = now.ToString(format);
+                string metadataDateAsString = now.ToString(format, Constant.InvariantCulture);
                 Assert.IsTrue(DateTimeHandler.TryParseMetadataDateTaken(metadataDateAsString, TimeZoneInfo.Local, out DateTimeOffset metadataDateParsed));
                 Assert.IsTrue((metadataDateParsed.Date == nowWithoutMilliseconds.Date) &&
                               (metadataDateParsed.TimeOfDay == nowWithoutMilliseconds.TimeOfDay) &&
@@ -619,12 +631,10 @@ namespace Carnassial.UnitTests
             // display format roundtrips
             string dateTimeAsDisplayString = DateTimeHandler.ToDisplayDateTimeString(dateTimeOffset);
             dateTimeParse = DateTimeHandler.ParseDisplayDateTimeString(dateTimeAsDisplayString);
-            Assert.IsTrue(DateTimeHandler.TryParseDisplayDateTime(dateTimeAsDisplayString, out dateTimeTryParse));
 
             DateTimeOffset dateTimeOffsetWithoutMilliseconds = new DateTimeOffset(new DateTime(dateTimeOffset.Year, dateTimeOffset.Month, dateTimeOffset.Day, dateTimeOffset.Hour, dateTimeOffset.Minute, dateTimeOffset.Second), dateTimeOffset.Offset);
             Assert.IsTrue(dateTimeParse == dateTimeOffsetWithoutMilliseconds.DateTime);
-            Assert.IsTrue(dateTimeTryParse == dateTimeOffsetWithoutMilliseconds.DateTime);
-
+            
             // display only formats
             string dateTimeOffsetAsDisplayString = DateTimeHandler.ToDisplayDateTimeUtcOffsetString(dateTimeOffset);
             string utcOffsetAsDisplayString = DateTimeHandler.ToDisplayUtcOffsetString(dateTimeOffset.Offset);

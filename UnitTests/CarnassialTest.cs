@@ -14,6 +14,19 @@ namespace Carnassial.UnitTests
 {
     public class CarnassialTest
     {
+        private static bool CultureChanged;
+        private static object CultureLock;
+        private static CultureInfo CurrentCulture;
+        private static CultureInfo CurrentUICulture;
+        private static CultureInfo DefaultThreadCurrentCulture;
+        private static CultureInfo DefaultThreadCurrentUICulture;
+
+        static CarnassialTest()
+        {
+            CarnassialTest.CultureLock = new object();
+            CarnassialTest.CultureChanged = false;
+        }
+
         protected CarnassialTest()
         {
             this.WorkingDirectory = Environment.CurrentDirectory;
@@ -38,6 +51,55 @@ namespace Carnassial.UnitTests
         /// Gets the path to the root folder under which all tests execute.
         /// </summary>
         protected string WorkingDirectory { get; private set; }
+
+        protected static bool TryRevertToDefaultCultures()
+        {
+            lock (CarnassialTest.CultureLock)
+            {
+                if (CarnassialTest.CultureChanged == false)
+                {
+                    return false;
+                }
+
+                CultureInfo.CurrentCulture = UserInterfaceTests.CurrentCulture;
+                CultureInfo.CurrentUICulture = UserInterfaceTests.CurrentUICulture;
+                CultureInfo.DefaultThreadCurrentCulture = UserInterfaceTests.DefaultThreadCurrentCulture;
+                CultureInfo.DefaultThreadCurrentUICulture = UserInterfaceTests.DefaultThreadCurrentUICulture;
+                CarnassialTest.CultureChanged = false;
+                return true;
+            }
+        }
+
+        protected static bool TryChangeToTestCultures()
+        {
+            lock (CarnassialTest.CultureLock)
+            {
+                if (CarnassialTest.CultureChanged)
+                {
+                    return false;
+                }
+
+                CarnassialTest.CurrentCulture = CultureInfo.CurrentCulture;
+                CarnassialTest.CurrentUICulture = CultureInfo.CurrentUICulture;
+                CarnassialTest.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentCulture;
+                CarnassialTest.DefaultThreadCurrentUICulture = CultureInfo.DefaultThreadCurrentUICulture;
+
+                // change to a culture other than the developer's to provide sanity coverage
+                string cultureName = TestConstant.Globalization.DefaultUITestCultureNames[(int)DateTime.UtcNow.DayOfWeek];
+                if (CultureInfo.CurrentCulture.Name.StartsWith(cultureName, StringComparison.Ordinal))
+                {
+                    cultureName = TestConstant.Globalization.AlternateUITestCultureName;
+                }
+
+                CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(cultureName);
+                CultureInfo.CurrentUICulture = CultureInfo.CurrentCulture;
+                CultureInfo.DefaultThreadCurrentCulture = CultureInfo.CurrentCulture;
+                CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CurrentCulture;
+
+                CarnassialTest.CultureChanged = true;
+                return true;
+            }
+        }
 
         /// <summary>
         /// Clones the specified template and image databases and opens the image database's clone.

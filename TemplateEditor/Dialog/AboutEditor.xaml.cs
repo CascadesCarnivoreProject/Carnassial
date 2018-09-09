@@ -17,7 +17,6 @@ namespace Carnassial.Editor.Dialog
         public AboutEditor(Window owner)
         {
             this.InitializeComponent();
-            Utilities.TryFitWindowInWorkingArea(this);
 
             this.latestReleaseAddress = CarnassialConfigurationSettings.GetLatestReleaseApiAddress();
             this.MostRecentCheckForUpdate = null;
@@ -69,8 +68,8 @@ namespace Carnassial.Editor.Dialog
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Utilities.SetDefaultDialogPosition(this);
-            Utilities.TryFitWindowInWorkingArea(this);
+            CommonUserInterface.SetDefaultDialogPosition(this);
+            CommonUserInterface.TryFitWindowInWorkingArea(this);
         }
     }
 }

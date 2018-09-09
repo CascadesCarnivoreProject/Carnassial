@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -82,10 +83,10 @@ namespace Carnassial.Control
             if (this.Video.NaturalDuration.HasTimeSpan)
             {
                 this.VideoPosition.Maximum = this.Video.NaturalDuration.TimeSpan.TotalSeconds;
-                this.TimeFromEnd.Text = (this.Video.NaturalDuration.TimeSpan - this.Video.Position).ToString(Constant.Time.VideoPositionFormat);
+                this.TimeFromEnd.Text = (this.Video.NaturalDuration.TimeSpan - this.Video.Position).ToString(Constant.Time.VideoPositionFormat, CultureInfo.CurrentCulture);
                 this.VideoPosition.TickFrequency = this.VideoPosition.Maximum / 10.0;
             }
-            this.TimeFromStart.Text = this.Video.Position.ToString(Constant.Time.VideoPositionFormat);
+            this.TimeFromStart.Text = this.Video.Position.ToString(Constant.Time.VideoPositionFormat, CultureInfo.CurrentCulture);
             this.VideoPosition.Value = this.Video.Position.TotalSeconds;
             this.isProgrammaticUpdate = false;
         }

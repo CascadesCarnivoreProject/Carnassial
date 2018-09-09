@@ -60,5 +60,12 @@ namespace Carnassial.Data
             Point point = new Point(ratio.X * width, ratio.Y * height);
             return point;
         }
+
+        public string GetSpreadsheetPositionString()
+        {
+            string x = this.Position.X.ToString(Constant.Excel.MarkerCoordinateFormat, Constant.InvariantCulture);
+            string y = this.Position.Y.ToString(Constant.Excel.MarkerCoordinateFormat, Constant.InvariantCulture);
+            return x + Constant.Excel.MarkerCoordinateSeparator + y;
+        }
     }
 }

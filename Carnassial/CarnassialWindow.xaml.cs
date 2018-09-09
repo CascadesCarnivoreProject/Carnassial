@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -32,14 +33,37 @@ namespace Carnassial
     /// </summary>
     public partial class CarnassialWindow : WindowWithSystemMenu, IDisposable
     {
+        #if DEBUG
+        // hook to allow tests to set culture
+        internal static bool UseCurrentCulture { get; set; }
+        #endif
+
         private bool disposed;
         private SpeechSynthesizer speechSynthesizer;
 
         public DataEntryHandler DataHandler { get; private set; }
         public CarnassialState State { get; private set; }
 
+        #if DEBUG
+        static CarnassialWindow()
+        {
+            CarnassialWindow.UseCurrentCulture = false;
+        }
+        #endif
+
         public CarnassialWindow()
         {
+            #if DEBUG
+            if (CarnassialWindow.UseCurrentCulture == false)
+            {
+                string debugCultureName = CultureInfo.CurrentCulture.Name.StartsWith("es", StringComparison.Ordinal) ? "en-IN" : "es-CL";
+                CultureInfo testCulture = CultureInfo.GetCultureInfo(debugCultureName);
+                CultureInfo.CurrentCulture = testCulture;
+                CultureInfo.CurrentUICulture = testCulture;
+                CultureInfo.DefaultThreadCurrentCulture = testCulture;
+                CultureInfo.DefaultThreadCurrentUICulture = testCulture;
+            }
+            #endif
             AppDomain.CurrentDomain.UnhandledException += this.OnUnhandledException;
             this.InitializeComponent();
 
@@ -90,7 +114,7 @@ namespace Carnassial
             this.Left = this.State.CarnassialWindowPosition.X;
             this.Height = this.State.CarnassialWindowPosition.Height;
             this.Width = this.State.CarnassialWindowPosition.Width;
-            Utilities.TryFitWindowInWorkingArea(this);
+            CommonUserInterface.TryFitWindowInWorkingArea(this);
 
             this.FileDisplay.Display(Constant.Images.NoSelectableFileMessage);
         }
@@ -419,15 +443,10 @@ namespace Carnassial
 
         private async void Instructions_Drop(object sender, DragEventArgs dropEvent)
         {
-            if (Utilities.IsSingleTemplateFileDrag(dropEvent, out string templateDatabaseFilePath))
+            if (this.IsSingleTemplateFileDrag(dropEvent, out string templateDatabaseFilePath))
             {
                 dropEvent.Handled = await this.TryOpenTemplateAndFileDatabaseAsync(templateDatabaseFilePath);
             }
-        }
-
-        private void Instructions_PreviewDrag(object sender, DragEventArgs dragEvent)
-        {
-            Utilities.OnInstructionsPreviewDrag(dragEvent);
         }
 
         public bool IsFileAvailable()
@@ -1115,10 +1134,10 @@ namespace Carnassial
             }
 
             string defaultSpreadsheetFileName = Path.GetFileNameWithoutExtension(this.DataHandler.FileDatabase.FileName) + Constant.File.ExcelFileExtension;
-            if (Utilities.TryGetFileFromUser("Select a file to merge into the current image set",
-                                             Path.Combine(this.DataHandler.FileDatabase.FolderPath, defaultSpreadsheetFileName),
-                                             String.Format("Spreadsheet files (*{0};*{1})|*{0};*{1}", Constant.File.CsvFileExtension, Constant.File.ExcelFileExtension),
-                                             out string spreadsheetFilePath) == false)
+            if (CommonUserInterface.TryGetFileFromUser("Select a file to merge into the current image set",
+                                                       Path.Combine(this.DataHandler.FileDatabase.FolderPath, defaultSpreadsheetFileName),
+                                                       String.Format("Spreadsheet files (*{0};*{1})|*{0};*{1}", Constant.File.CsvFileExtension, Constant.File.ExcelFileExtension),
+                                                       out string spreadsheetFilePath) == false)
             {
                 return;
             }
@@ -1804,14 +1823,14 @@ namespace Carnassial
             // after a selection change update the file navigatior slider's range and tick space
             this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(false);
             this.FileNavigatorSlider.Maximum = this.DataHandler.FileDatabase.CurrentlySelectedFileCount;  // slider is one based so no - 1 on the count
-            Utilities.ConfigureNavigatorSliderTick(this.FileNavigatorSlider);
+            CommonUserInterface.ConfigureNavigatorSliderTick(this.FileNavigatorSlider);
 
             this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(true);
         }
 
         private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            Utilities.ShowExceptionReportingDialog("Carnassial needs to close.", e, this);
+            this.ShowExceptionReportingDialog("Carnassial needs to close.", e, this);
         }
 
         private void PasteAnalysis_Click(object sender, int analsisSlot)
@@ -1996,14 +2015,14 @@ namespace Carnassial
         private void SetCurrentFile(int fileIndex)
         {
             StatusBarItem currentFile = (StatusBarItem)this.FileNavigation.Items[1];
-            currentFile.Content = Utilities.ToDisplayIndex(fileIndex).ToString(Constant.InvariantCulture);
+            currentFile.Content = this.ToDisplayIndex(fileIndex).ToString(CultureInfo.CurrentCulture);
         }
 
         // set the total number of files
         private void SetFileCount(int selectedFileCount)
         {
             StatusBarItem numberOfFiles = (StatusBarItem)this.FileNavigation.Items[3];
-            numberOfFiles.Content = selectedFileCount.ToString(Constant.InvariantCulture);
+            numberOfFiles.Content = selectedFileCount.ToString(CultureInfo.CurrentCulture);
         }
 
         private void SetStatusMessage(string format, params object[] args)
@@ -2139,7 +2158,7 @@ namespace Carnassial
             this.ClearStatusMessage();
 
             // update nav slider thumb's position to the current file
-            this.FileNavigatorSlider.Value = Utilities.ToDisplayIndex(fileIndex);
+            this.FileNavigatorSlider.Value = this.ToDisplayIndex(fileIndex);
 
             // display new file and update menu item enables if the file changed
             // This avoids unnecessary image reloads and refreshes in cases where ShowFile() is just being called to refresh controls.
@@ -2180,7 +2199,7 @@ namespace Carnassial
         internal async Task ShowFileWithoutSliderCallbackAsync(bool forward, ModifierKeys modifiers)
         {
             // determine how far to move and in which direction
-            int increment = Utilities.GetIncrement(forward, modifiers);
+            int increment = CommonUserInterface.GetIncrement(forward, modifiers);
             int newFileIndex = this.DataHandler.ImageCache.CurrentRow + increment;
 
             await this.ShowFileWithoutSliderCallbackAsync(newFileIndex, increment);
@@ -2246,6 +2265,12 @@ namespace Carnassial
 
             folderPaths = null;
             return false;
+        }
+
+        private int ToDisplayIndex(int databaseIndex)
+        {
+            // +1 since database file indices are zero based but display file indices are ones based
+            return databaseIndex + 1;
         }
 
         private async Task ToggleCurrentFileDeleteFlagAsync()
@@ -2387,10 +2412,10 @@ namespace Carnassial
             // prompt user to select a template
             // default the template selection dialog to the most recently opened database
             this.State.MostRecentImageSets.TryGetMostRecent(out string defaultTemplateDatabasePath);
-            if (Utilities.TryGetFileFromUser("Select a template file, which should be located in the root folder containing your images and videos",
-                                             defaultTemplateDatabasePath,
-                                             String.Format("Template files (*{0})|*{0}", Constant.File.TemplateFileExtension),
-                                             out templateDatabasePath) == false)
+            if (CommonUserInterface.TryGetFileFromUser("Select a template file, which should be located in the root folder containing your images and videos",
+                                                       defaultTemplateDatabasePath,
+                                                       String.Format("Template files (*{0})|*{0}", Constant.File.TemplateFileExtension),
+                                                       out templateDatabasePath) == false)
             {
                 return false;
             }

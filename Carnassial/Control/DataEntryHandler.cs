@@ -4,6 +4,7 @@ using Carnassial.Interop;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -287,7 +288,7 @@ namespace Carnassial.Control
                 messageBox.Message.Result += "\u2022 copy the value '" + value + "' in this field from here to the last of the selected files.";
             }
             messageBox.Message.Result += Environment.NewLine + "\u2022 over-write any existing data values in those fields";
-            messageBox.Message.Result += Environment.NewLine + "\u2022 will affect " + filesAffected.ToString() + " files.";
+            messageBox.Message.Result += Environment.NewLine + "\u2022 will affect " + filesAffected.ToString(CultureInfo.CurrentCulture) + " files.";
             return messageBox.ShowDialog();
         }
 
@@ -300,11 +301,11 @@ namespace Carnassial.Control
             messageBox.Message.Result = "If you select yes, this operation will:" + Environment.NewLine;
             if (!checkForZero && value.Equals(String.Empty, StringComparison.Ordinal))
             {
-                messageBox.Message.Result += "\u2022 clear this field across all " + filesAffected.ToString() + " selected files.";
+                messageBox.Message.Result += "\u2022 clear this field across all " + filesAffected.ToString(CultureInfo.CurrentCulture) + " selected files.";
             }
             else
             {
-                messageBox.Message.Result += "\u2022 set this field to '" + value + "' across all " + filesAffected.ToString() + " selected files.";
+                messageBox.Message.Result += "\u2022 set this field to '" + value + "' across all " + filesAffected.ToString(CultureInfo.CurrentCulture) + " selected files.";
             }
             messageBox.Message.Result += Environment.NewLine + "\u2022 over-write any existing data values in those fields";
             return messageBox.ShowDialog();
@@ -316,10 +317,10 @@ namespace Carnassial.Control
             MessageBox messageBox = new MessageBox("Please confirm 'Propagate to Here' for this field.", Application.Current.MainWindow, MessageBoxButton.YesNo);
             messageBox.Message.StatusImage = MessageBoxImage.Question;
             messageBox.Message.What = "Propagate to here is not undoable and can overwrite existing values.";
-            messageBox.Message.Reason = "\u2022 The last non-empty value '" + value + "' was seen " + filesAffected.ToString() + " files back." + Environment.NewLine;
+            messageBox.Message.Reason = "\u2022 The last non-empty value '" + value + "' was seen " + filesAffected.ToString(CultureInfo.CurrentCulture) + " files back." + Environment.NewLine;
             messageBox.Message.Reason += "\u2022 That field's value will be copied to all files between that file and this one in the selection";
             messageBox.Message.Result = "If you select yes: " + Environment.NewLine;
-            messageBox.Message.Result = "\u2022 " + filesAffected.ToString() + " files will be affected.";
+            messageBox.Message.Result = "\u2022 " + filesAffected.ToString(CultureInfo.CurrentCulture) + " files will be affected.";
             return messageBox.ShowDialog();
         }
 

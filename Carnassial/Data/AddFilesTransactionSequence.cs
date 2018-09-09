@@ -30,8 +30,11 @@ namespace Carnassial.Data
                     switch (control.Type)
                     {
                         case ControlType.Counter:
+                            Debug.Assert(Utilities.IsDigits(control.DefaultValue), "Default values for counters should be numeric.");
+                            defaultValue = control.DefaultValue;
+                            break;
                         case ControlType.Flag:
-                            Debug.Assert(Utilities.IsDigits(control.DefaultValue), "Default values for counters and flags should be numeric.");
+                            Debug.Assert(String.Equals(control.DefaultValue, Constant.Sql.FalseString, StringComparison.Ordinal) || String.Equals(control.DefaultValue, Constant.Sql.TrueString, StringComparison.Ordinal), "Default values for flags should be binary.");
                             defaultValue = control.DefaultValue;
                             break;
                         case ControlType.FixedChoice:
@@ -129,7 +132,7 @@ namespace Carnassial.Data
             }
 
             // stopwatch.Stop();
-            // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
+            // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff", CultureInfo.CurrentCulture));
             return filesAdded;
         }
 

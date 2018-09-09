@@ -85,7 +85,7 @@ namespace Carnassial.UnitTests
 
         public static DateTimeOffset ParseDateTimeOffsetString(string dateTimeAsString)
         {
-            return DateTimeOffset.ParseExact(dateTimeAsString, TestConstant.DateTimeWithOffsetFormat, CultureInfo.InvariantCulture);
+            return DateTimeOffset.ParseExact(dateTimeAsString, TestConstant.DateTimeWithOffsetFormat, Constant.InvariantCulture);
         }
 
         public void Verify(ImageRow file, TimeZoneInfo timeZone)
@@ -154,7 +154,7 @@ namespace Carnassial.UnitTests
             int expectedCount = (int)this.UserControlsByDataLabel[dataLabel];
             Assert.IsTrue(markersForCounter.Count == expectedCount);
 
-            string actualPositions = markersForCounter.MarkerPositionsToExcelString();
+            string actualPositions = markersForCounter.MarkerPositionsToSpreadsheetString();
             string[] actualTokens = actualPositions == null ? new string[0] : actualPositions.Split(Constant.Excel.MarkerPositionSeparator);
 
             string markerColummn = FileTable.GetMarkerPositionColumnName(dataLabel);

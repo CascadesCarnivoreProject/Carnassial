@@ -6,8 +6,20 @@ using System;
 namespace Carnassial.UnitTests
 {
     [TestClass]
-    public class VersionTests
+    public class VersionTests : CarnassialTest
     {
+        [ClassCleanup]
+        public static void ClassCleanup()
+        {
+            CarnassialTest.TryRevertToDefaultCultures();
+        }
+
+        [ClassInitialize]
+        public static void ClassInitialize(TestContext testContext)
+        {
+            CarnassialTest.TryChangeToTestCultures();
+        }
+
         [TestMethod]
         public void CheckForUpdates()
         {

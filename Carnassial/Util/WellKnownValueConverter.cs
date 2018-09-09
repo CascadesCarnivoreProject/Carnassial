@@ -25,7 +25,7 @@ namespace Carnassial.Util
 
         public static string ConvertBack(IEnumerable<string> values)
         {
-            return String.Join(Constant.Control.WellKnownValuesDelimiter.ToString(), values);
+            return String.Join(Constant.Control.WellKnownValuesDelimiter.ToString(Constant.InvariantCulture), values);
         }
     }
 }

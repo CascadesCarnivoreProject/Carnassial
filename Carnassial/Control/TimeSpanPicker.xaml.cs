@@ -111,7 +111,7 @@ namespace Carnassial.Control
         private static object CoerceValue(DependencyObject d, object value)
         {
             TimeSpanPicker timeSpanPicker = (TimeSpanPicker)d;
-            return Utilities.Limit((TimeSpan)value, timeSpanPicker.Minimum, timeSpanPicker.Maximum);
+            return ((TimeSpan)value).Limit(timeSpanPicker.Minimum, timeSpanPicker.Maximum);
         }
 
         protected virtual TimeSpan ConvertIncrementOrDecrementToTimeSpan(char partFormat, int incrementOrDecrement)
@@ -141,7 +141,7 @@ namespace Carnassial.Control
                 timeSpan = this.Value;
             }
             timeSpan += this.ConvertIncrementOrDecrementToTimeSpan(this.parts[this.currentPartIndex].Format, incrementOrDecrement);
-            this.Value = Utilities.Limit(timeSpan, this.Minimum, this.Maximum);
+            this.Value = timeSpan.Limit(this.Minimum, this.Maximum);
             this.TrySelectCurrentPart();
         }
 
@@ -274,10 +274,10 @@ namespace Carnassial.Control
                     switch (e.Key)
                     {
                         case Key.Up:
-                            this.IncrementOrDecrement(Utilities.GetIncrement(true, Keyboard.Modifiers));
+                            this.IncrementOrDecrement(CommonUserInterface.GetIncrement(true, Keyboard.Modifiers));
                             break;
                         case Key.Down:
-                            this.IncrementOrDecrement(Utilities.GetIncrement(false, Keyboard.Modifiers));
+                            this.IncrementOrDecrement(CommonUserInterface.GetIncrement(false, Keyboard.Modifiers));
                             break;
                         case Key.Left:
                             if (Keyboard.Modifiers != ModifierKeys.None)
@@ -357,16 +357,16 @@ namespace Carnassial.Control
 
         private static string TimeSpanToString(TimeSpan value, string format)
         {
-            return (value < TimeSpan.Zero ? "-" : String.Empty) + value.ToString(format);
+            return (value < TimeSpan.Zero ? "-" : String.Empty) + value.ToString(format, CultureInfo.CurrentCulture);
         }
 
         private bool TryParseTimeSpan(out TimeSpan timeSpan)
         {
-            if (TimeSpan.TryParseExact(this.TimeSpanDisplay.Text, this.Format, Constant.InvariantCulture, TimeSpanStyles.None, out timeSpan))
+            if (TimeSpan.TryParseExact(this.TimeSpanDisplay.Text, this.Format, CultureInfo.CurrentCulture, TimeSpanStyles.None, out timeSpan))
             {
                 return true;
             }
-            return TimeSpan.TryParseExact(this.TimeSpanDisplay.Text, @"\-" + this.Format, Constant.InvariantCulture, TimeSpanStyles.AssumeNegative, out timeSpan);
+            return TimeSpan.TryParseExact(this.TimeSpanDisplay.Text, @"\-" + this.Format, CultureInfo.CurrentCulture, TimeSpanStyles.AssumeNegative, out timeSpan);
         }
 
         private bool TrySelectCurrentPart()

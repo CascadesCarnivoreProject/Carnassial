@@ -165,7 +165,18 @@ namespace Carnassial.UnitTests
                 };
             }
         }
-        
+
+        // approximate coverage of most widely spoken languages worldwide
+        //   1-6 as commonly estimated, from most to least spoken: Chinese, English, Hindi, Spanish, Arabic, Malay
+        //   7: estimates vary among Portuguese, Russian, and Bengali; Russian is chosen here for Cyrillic coverage
+        //   next most used: Japanese, German, Punjabi, Telgu, Javanese, Tamil, Urdu
+        public static class Globalization
+        {
+            public const string AlternateUITestCultureName = "ja";
+
+            public static readonly string[] DefaultUITestCultureNames = new string[] { "zh-Hans", "en", "hi", "es", "ar", "ms", "ru" };
+        }
+
         public static class TimeZone
         {
             public const string Alaska = "Alaskan Standard Time"; // UTC-9

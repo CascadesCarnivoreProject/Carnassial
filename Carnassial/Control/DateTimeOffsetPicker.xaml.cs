@@ -188,10 +188,10 @@ namespace Carnassial.Control
                     switch (e.Key)
                     {
                         case Key.Up:
-                            this.IncrementOrDecrement(Utilities.GetIncrement(true, Keyboard.Modifiers));
+                            this.IncrementOrDecrement(CommonUserInterface.GetIncrement(true, Keyboard.Modifiers));
                             break;
                         case Key.Down:
-                            this.IncrementOrDecrement(Utilities.GetIncrement(false, Keyboard.Modifiers));
+                            this.IncrementOrDecrement(CommonUserInterface.GetIncrement(false, Keyboard.Modifiers));
                             break;
                         case Key.Left:
                             if (Keyboard.Modifiers != ModifierKeys.None)
@@ -309,7 +309,7 @@ namespace Carnassial.Control
                     bool nextPartAvailable = this.parts.Count > this.currentPartIndex + 1;
                     bool isOffsetHoursPart = (partFormat == 'z') || (nextPartAvailable && this.parts[this.currentPartIndex + 1].Format == Constant.Time.DateTimeOffsetPart);
                     TimeSpan incrementAsTimeSpan = isOffsetHoursPart ? TimeSpan.FromHours(increment) : TimeSpan.FromMinutes(increment * Constant.Time.UtcOffsetGranularityInMinutes);
-                    TimeSpan offset = Utilities.Limit(newValue.Offset + incrementAsTimeSpan, TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours), TimeSpan.FromHours(Constant.Time.MaximumUtcOffsetInHours));
+                    TimeSpan offset = (newValue.Offset + incrementAsTimeSpan).Limit(TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours), TimeSpan.FromHours(Constant.Time.MaximumUtcOffsetInHours));
                     newValue = newValue.SetOffset(offset);
                     break;
                 case 'm':
@@ -442,7 +442,7 @@ namespace Carnassial.Control
             }
 
             // ensure displayed value uses current format
-            dateTimeOffsetPicker.DateTimeDisplay.Text = dateTimeOffsetPicker.Value.ToString(dateTimeOffsetPicker.Format);
+            dateTimeOffsetPicker.DateTimeDisplay.Text = dateTimeOffsetPicker.Value.ToString(dateTimeOffsetPicker.Format, CultureInfo.CurrentCulture);
         }
 
         private static void SetValue(DependencyObject obj, DependencyPropertyChangedEventArgs args)
@@ -452,7 +452,7 @@ namespace Carnassial.Control
             DateTimeOffset dateTimeOffset = (DateTimeOffset)args.NewValue;
             dateTimeOffsetPicker.Calendar.DisplayDate = dateTimeOffset.Date;
             dateTimeOffsetPicker.Calendar.SelectedDate = dateTimeOffset.Date;
-            dateTimeOffsetPicker.DateTimeDisplay.Text = dateTimeOffset.ToString(dateTimeOffsetPicker.Format);
+            dateTimeOffsetPicker.DateTimeDisplay.Text = dateTimeOffset.ToString(dateTimeOffsetPicker.Format, CultureInfo.CurrentCulture);
 
             if (dateTimeOffsetPicker.ValueChanged != null)
             {
@@ -462,7 +462,7 @@ namespace Carnassial.Control
 
         private bool TryParseDateTimeOffset(out DateTimeOffset dateTimeOffset)
         {
-            return DateTimeOffset.TryParseExact(this.DateTimeDisplay.Text, this.Format, CultureInfo.InvariantCulture, DateTimeStyles.None, out dateTimeOffset);
+            return DateTimeOffset.TryParseExact(this.DateTimeDisplay.Text, this.Format, CultureInfo.CurrentCulture, DateTimeStyles.None, out dateTimeOffset);
         }
 
         private bool TrySelectCurrentPart()

@@ -10,6 +10,18 @@ namespace Carnassial.UnitTests
     [TestClass]
     public class LowLevelTests : CarnassialTest
     {
+        [ClassCleanup]
+        public static void ClassCleanup()
+        {
+            CarnassialTest.TryRevertToDefaultCultures();
+        }
+
+        [ClassInitialize]
+        public static void ClassInitialize(TestContext testContext)
+        {
+            CarnassialTest.TryChangeToTestCultures();
+        }
+
         /// <summary>
         /// Basic functional validation of <see cref="MostRecentlyUsedList" />.
         /// </summary>

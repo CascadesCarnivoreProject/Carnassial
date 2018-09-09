@@ -209,7 +209,7 @@ namespace Carnassial.Dialog
         private async Task ShowFileWithoutSliderCallbackAsync(bool forward, ModifierKeys modifiers)
         {
             // determine how far to move and in which direction
-            int increment = Utilities.GetIncrement(forward, modifiers);
+            int increment = CommonUserInterface.GetIncrement(forward, modifiers);
             int newFileIndex = this.fileEnumerator.CurrentRow + increment;
 
             await this.ShowFileWithoutSliderCallbackAsync(newFileIndex);
@@ -264,14 +264,14 @@ namespace Carnassial.Dialog
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // make sure the title bar of the dialog box is on the screen. For small screens it may default to being off the screen
-            Utilities.SetDefaultDialogPosition(this);
-            Utilities.TryFitWindowInWorkingArea(this);
+            CommonUserInterface.SetDefaultDialogPosition(this);
+            CommonUserInterface.TryFitWindowInWorkingArea(this);
 
             this.DarkLuminosityThresholdPercent.Value = 100.0 * this.userSettings.DarkLuminosityThreshold;
 
             this.FileNavigatorSlider.Minimum = 0;
             this.FileNavigatorSlider.Maximum = this.fileDatabase.CurrentlySelectedFileCount - 1;
-            Utilities.ConfigureNavigatorSliderTick(this.FileNavigatorSlider);
+            CommonUserInterface.ConfigureNavigatorSliderTick(this.FileNavigatorSlider);
             this.FileNavigatorSlider.Value = this.fileEnumerator.CurrentRow;
             this.FileNavigatorSlider_ValueChanged(this, null);
             this.FileNavigatorSlider.ValueChanged += this.FileNavigatorSlider_ValueChanged;

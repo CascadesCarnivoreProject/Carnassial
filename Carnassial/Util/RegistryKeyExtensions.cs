@@ -38,7 +38,7 @@ namespace Carnassial.Util
 
             if (value is string)
             {
-                return Byte.Parse((string)value);
+                return Byte.Parse((string)value, CultureInfo.InvariantCulture);
             }
 
             throw new NotSupportedException(String.Format("Registry key {0}\\{1} has unhandled type {2}.", registryKey.Name, subKeyPath, value.GetType().FullName));
@@ -159,12 +159,12 @@ namespace Carnassial.Util
 
         public static void Write(this RegistryKey registryKey, string subKeyPath, DateTime value)
         {
-            registryKey.Write(subKeyPath, value.ToString(Constant.Time.DateTimeDatabaseFormat));
+            registryKey.Write(subKeyPath, value.ToString(Constant.Time.DateTimeDatabaseFormat, Constant.InvariantCulture));
         }
 
         public static void Write(this RegistryKey registryKey, string subKeyPath, double value)
         {
-            registryKey.Write(subKeyPath, value.ToString());
+            registryKey.Write(subKeyPath, value.ToString(Constant.InvariantCulture));
         }
 
         public static void Write(this RegistryKey registryKey, string subKeyPath, MostRecentlyUsedList<string> values)

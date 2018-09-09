@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Carnassial.Util;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -80,7 +81,7 @@ namespace Carnassial.Data
             }
         }
 
-        public string MarkerPositionsToExcelString()
+        public string MarkerPositionsToSpreadsheetString()
         {
             if (this.Markers.Count < 1)
             {
@@ -88,16 +89,16 @@ namespace Carnassial.Data
             }
 
             Marker marker = this.Markers[0];
-            StringBuilder pointList = new StringBuilder(marker.Position.X.ToString(Constant.Excel.MarkerPositionFormat) + Constant.Excel.MarkerCoordinateSeparator + marker.Position.Y.ToString(Constant.Excel.MarkerPositionFormat));
+            StringBuilder pointList = new StringBuilder(marker.GetSpreadsheetPositionString());
             for (int index = 1; index < this.Markers.Count; ++index)
             {
                 marker = this.Markers[index];
-                pointList.Append(Constant.Excel.MarkerPositionSeparator + marker.Position.X.ToString(Constant.Excel.MarkerPositionFormat) + "," + marker.Position.Y.ToString(Constant.Excel.MarkerPositionFormat));
+                pointList.Append(Constant.Excel.MarkerPositionSeparator + marker.GetSpreadsheetPositionString());
             }
             return pointList.ToString();
         }
 
-        public static string MarkerPositionsToExcelString(byte[] packedFloats)
+        public static string MarkerPositionsToSpreadsheetString(byte[] packedFloats)
         {
             if ((packedFloats == null) || (packedFloats.Length == 0))
             {
@@ -110,12 +111,16 @@ namespace Carnassial.Data
 
             float x = BitConverter.ToSingle(packedFloats, 0);
             float y = BitConverter.ToSingle(packedFloats, sizeof(float));
-            StringBuilder pointList = new StringBuilder(x.ToString(Constant.Excel.MarkerPositionFormat) + Constant.Excel.MarkerCoordinateSeparator + y.ToString(Constant.Excel.MarkerPositionFormat));
+            string xAsString = x.ToString(Constant.Excel.MarkerCoordinateFormat, Constant.InvariantCulture);
+            string yAsString = y.ToString(Constant.Excel.MarkerCoordinateFormat, Constant.InvariantCulture);
+            StringBuilder pointList = new StringBuilder(xAsString + Constant.Excel.MarkerCoordinateSeparator + yAsString);
             for (int index = 2 * sizeof(float); index < packedFloats.Length; index += 2 * sizeof(float))
             {
                 x = BitConverter.ToSingle(packedFloats, index);
                 y = BitConverter.ToSingle(packedFloats, index + sizeof(float));
-                pointList.Append(Constant.Excel.MarkerPositionSeparator + x.ToString(Constant.Excel.MarkerPositionFormat) + "," + y.ToString(Constant.Excel.MarkerPositionFormat));
+                xAsString = x.ToString(Constant.Excel.MarkerCoordinateFormat, Constant.InvariantCulture);
+                yAsString = y.ToString(Constant.Excel.MarkerCoordinateFormat, Constant.InvariantCulture);
+                pointList.Append(Constant.Excel.MarkerPositionSeparator + xAsString + Constant.Excel.MarkerCoordinateSeparator + yAsString);
             }
             return pointList.ToString();
         }
@@ -158,11 +163,11 @@ namespace Carnassial.Data
                 {
                     return false;
                 }
-                if (float.TryParse(xy[0], out float x) == false)
+                if (Utilities.TryParseFixedPointInvariant(xy[0], out float x) == false)
                 {
                     return false;
                 }
-                if (float.TryParse(xy[1], out float y) == false)
+                if (Utilities.TryParseFixedPointInvariant(xy[1], out float y) == false)
                 {
                     return false;
                 }

@@ -647,7 +647,7 @@ namespace Carnassial.Data
             // persist the current selection
             this.ImageSet.FileSelection = selection;
             // stopwatch.Stop();
-            // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
+            // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff", CultureInfo.CurrentCulture));
         }
 
         public static bool TryCreateOrOpen(string filePath, TemplateDatabase templateDatabase, bool orderFilesByDate, LogicalOperator customSelectionTermCombiningOperator, out FileDatabase fileDatabase)
@@ -748,7 +748,7 @@ namespace Carnassial.Data
             {
                 this.RenameColumn(transaction, Constant.DatabaseTable.Files, Constant.FileColumn.ImageQuality, Constant.FileColumn.Classification, (ColumnDefinition newColumnDefinition) =>
                 {
-                    newColumnDefinition.DefaultValue = ((int)default(FileClassification)).ToString();
+                    newColumnDefinition.DefaultValue = ((int)default(FileClassification)).ToString(Constant.InvariantCulture);
                     newColumnDefinition.NotNull = true;
                 });
                 #pragma warning restore CS0618 // Type or member is obsolete

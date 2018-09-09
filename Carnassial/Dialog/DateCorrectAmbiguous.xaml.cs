@@ -2,6 +2,7 @@
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -49,8 +50,8 @@ namespace Carnassial.Dialog
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Utilities.SetDefaultDialogPosition(this);
-            Utilities.TryFitWindowInWorkingArea(this);
+            CommonUserInterface.SetDefaultDialogPosition(this);
+            CommonUserInterface.TryFitWindowInWorkingArea(this);
 
             await this.MoveToAmbiguousDateAsync(null); // go to first ambiguous date
             // If the caller invokes Show with Abort = true (i.e., count = 0), this will at least show an empty dialog.
@@ -161,7 +162,7 @@ namespace Carnassial.Dialog
 
             this.SwappedDateLabel.Content = DateTimeHandler.TrySwapDayMonth(file.DateTimeOffset, out DateTimeOffset swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(file.DateTimeOffset);
 
-            this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
+            this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString(CultureInfo.CurrentCulture);
 
             await this.FileDisplay.DisplayAsync(this.database.FolderPath, file);
             this.FileName.Content = file.FileName;
@@ -183,7 +184,7 @@ namespace Carnassial.Dialog
 
                 this.SwappedDateLabel.Content = DateTimeHandler.TrySwapDayMonth(file.DateTimeOffset, out DateTimeOffset swappedDate) ? DateTimeHandler.ToDisplayDateTimeString(swappedDate) : DateTimeHandler.ToDisplayDateTimeString(file.DateTimeOffset);
 
-                this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString();
+                this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString(CultureInfo.CurrentCulture);
 
                 await this.FileDisplay.DisplayAsync(this.database.FolderPath, file);
                 this.FileName.Content = file.FileName;
@@ -227,7 +228,7 @@ namespace Carnassial.Dialog
                 }
 
                 string status = ambiguousDate.Swapped ? "Swapped: " : "Unchanged: ";
-                status += ambiguousDate.Count.ToString() + " images with same date";
+                status += ambiguousDate.Count.ToString(CultureInfo.CurrentCulture) + " images with same date";
                 this.DateChangeFeedback.AddFeedbackRow(file.FileName, status, DateTimeHandler.ToDisplayDateString(file.DateTimeOffset), newDate, null);
             }
 

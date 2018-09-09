@@ -203,7 +203,7 @@ namespace Carnassial
 			writeableBitmap->AddDirtyRect(Int32Rect(0, 0, this->PixelWidth, this->PixelHeight));
 			writeableBitmap->Unlock();
 			//stopwatch->Stop();
-			//Trace::WriteLine(stopwatch->Elapsed.ToString("s\\.fffffff"));
+			//Trace::WriteLine(stopwatch->Elapsed.ToString("s\\.fffffff", CultureInfo.CurrentCulture));
 		}
 
 		bool MemoryImage::TryDecode(array<unsigned __int8>^ jpeg, __int32 offset, __int32 length, Nullable<__int32>^ requestedWidth)

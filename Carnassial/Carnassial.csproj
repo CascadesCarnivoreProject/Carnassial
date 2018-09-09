@@ -213,7 +213,9 @@
     <Compile Include="Data\FileTransactionSequence.cs" />
     <Compile Include="Spreadsheet\SharedStringIndex.cs" />
     <Compile Include="Spreadsheet\OpenXmlStylesheet.cs" />
+    <Compile Include="Util\CommonUserInterface.cs" />
     <Compile Include="Util\ControlTypeConverter.cs" />
+    <Compile Include="Util\TimeSpanExtensions.cs" />
     <Compile Include="Util\WellKnownValueConverter.cs" />
     <Compile Include="Database\IndexedPropertyChangedEventArgs.cs" />
     <Compile Include="Database\SecondaryIndex.cs" />

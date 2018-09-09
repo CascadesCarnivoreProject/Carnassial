@@ -110,8 +110,8 @@ namespace Carnassial.Dialog
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Utilities.SetDefaultDialogPosition(this);
-            Utilities.TryFitWindowInWorkingArea(this);
+            CommonUserInterface.SetDefaultDialogPosition(this);
+            CommonUserInterface.TryFitWindowInWorkingArea(this);
 
             await this.FileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.imageCache);
         }

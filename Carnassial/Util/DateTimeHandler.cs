@@ -47,7 +47,7 @@ namespace Carnassial.Util
 
         public static DateTime ParseDisplayDateTimeString(string dateTimeAsString)
         {
-            return DateTime.ParseExact(dateTimeAsString, Constant.Time.DateTimeDisplayFormat, Constant.InvariantCulture);
+            return DateTime.ParseExact(dateTimeAsString, Constant.Time.DateTimeDisplayFormat, CultureInfo.CurrentCulture);
         }
 
         public static TimeSpan ParseDisplayUtcOffsetString(string utcOffsetAsString)
@@ -156,23 +156,23 @@ namespace Carnassial.Util
         /// </summary>
         public static string ToDisplayDateString(DateTimeOffset date)
         {
-            return date.DateTime.ToString(Constant.Time.DateFormat);
+            return date.DateTime.ToString(Constant.Time.DateFormat, CultureInfo.CurrentCulture);
         }
 
         public static string ToDisplayDateTimeString(DateTimeOffset dateTime)
         {
-            return dateTime.DateTime.ToString(Constant.Time.DateTimeDisplayFormat);
+            return dateTime.DateTime.ToString(Constant.Time.DateTimeDisplayFormat, CultureInfo.CurrentCulture);
         }
 
         public static string ToDisplayDateTimeUtcOffsetString(DateTimeOffset dateTime)
         {
-            return dateTime.DateTime.ToString(Constant.Time.DateTimeDisplayFormat) + " " + DateTimeHandler.ToDisplayUtcOffsetString(dateTime.Offset);
+            return dateTime.DateTime.ToString(Constant.Time.DateTimeDisplayFormat, CultureInfo.CurrentCulture) + " " + DateTimeHandler.ToDisplayUtcOffsetString(dateTime.Offset);
         }
 
         public static string ToDisplayTimeSpanString(TimeSpan timeSpan)
         {
             string sign = (timeSpan < TimeSpan.Zero) ? "-" : null;
-            string timeSpanAsString = sign + timeSpan.ToString(Constant.Time.TimeSpanDisplayFormat);
+            string timeSpanAsString = sign + timeSpan.ToString(Constant.Time.TimeSpanDisplayFormat, CultureInfo.CurrentCulture);
 
             TimeSpan duration = timeSpan.Duration();
             if (duration.Days == 0)
@@ -184,12 +184,12 @@ namespace Carnassial.Util
                 return sign + "1 day " + timeSpanAsString;
             }
 
-            return sign + duration.Days.ToString("D") + " days " + timeSpanAsString;
+            return sign + duration.Days.ToString("D", CultureInfo.CurrentCulture) + " days " + timeSpanAsString;
         }
 
         public static string ToDisplayUtcOffsetString(TimeSpan utcOffset)
         {
-            string displayString = utcOffset.ToString(Constant.Time.UtcOffsetDisplayFormat);
+            string displayString = utcOffset.ToString(Constant.Time.UtcOffsetDisplayFormat, CultureInfo.CurrentCulture);
             if (utcOffset < TimeSpan.Zero)
             {
                 displayString = "-" + displayString;
@@ -202,33 +202,9 @@ namespace Carnassial.Util
             return DateTimeOffset.TryParseExact(dateTimeOffsetAsString, Constant.Time.DateTimeDatabaseFormat, Constant.InvariantCulture, DateTimeStyles.None, out dateTimeOffset);
         }
 
-        /// <summary>
-        /// Converts a display string to a DateTime of DateTimeKind.Unspecified.
-        /// </summary>
-        /// <param name="dateTimeAsString">string potentially containing a date time in display format</param>
-        /// <param name="dateTime">the date time in the string, if any</param>
-        /// <returns>true if string was in the date time display format, false otherwise</returns>
-        public static bool TryParseDisplayDateTime(string dateTimeAsString, out DateTime dateTime)
-        {
-            return DateTime.TryParseExact(dateTimeAsString, Constant.Time.DateTimeDisplayFormat, Constant.InvariantCulture, DateTimeStyles.None, out dateTime);
-        }
-
         public static bool TryParseDisplayDateTime(string dateTimeAsString, out DateTimeOffset dateTimeOffset)
         {
             return DateTimeOffset.TryParseExact(dateTimeAsString, Constant.Time.DateTimeDisplayFormat, Constant.InvariantCulture, DateTimeStyles.None, out dateTimeOffset);
-        }
-
-        public static bool TryParseDateTaken(string dateTimeAsString, TimeZoneInfo imageSetTimeZone, out DateTimeOffset dateTimeOffset)
-        {
-            // use current culture as BitmapMetadata.DateTaken is not invariant
-            if (DateTime.TryParse(dateTimeAsString, CultureInfo.CurrentCulture, DateTimeStyles.None, out DateTime dateTime) == false)
-            {
-                dateTimeOffset = DateTimeOffset.MinValue;
-                return false;
-            }
-
-            dateTimeOffset = DateTimeHandler.CreateDateTimeOffset(dateTime, imageSetTimeZone);
-            return true;
         }
 
         public static bool TryParseMetadataDateTaken(string dateTimeAsString, TimeZoneInfo imageSetTimeZone, out DateTimeOffset dateTimeOffset)
@@ -347,7 +323,7 @@ namespace Carnassial.Util
                     ++index;
                 }
 
-                double minuteDivisor = 0.1;
+                int minuteDivisor = 1;
                 int minutes = 0;
                 while (index < length)
                 {
@@ -356,12 +332,12 @@ namespace Carnassial.Util
                         utcOffset = TimeSpan.MinValue;
                         return false;
                     }
-                    minuteDivisor = 10.0 * minuteDivisor;
+                    minuteDivisor *= 10;
                     minutes = 10 * minutes + *(utcOffsetCharacters + index) - '0';
                     ++index;
                 }
 
-                double utcOffsetInHours = (double)(hour * (isNegative ? -1 : 1)) + (double)minutes / minuteDivisor;
+                double utcOffsetInHours = (double)(hour * (isNegative ? -1 : 1)) + (double)minutes / (double)minuteDivisor;
                 if ((utcOffsetInHours > Constant.Time.MaximumUtcOffsetInHours) ||
                     (utcOffsetInHours < Constant.Time.MinimumUtcOffsetInHours) ||
                     (minutes % Constant.Time.UtcOffsetGranularityInMinutes != 0))

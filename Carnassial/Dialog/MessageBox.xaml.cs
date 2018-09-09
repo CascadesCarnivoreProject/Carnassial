@@ -44,10 +44,9 @@ namespace Carnassial.Dialog
             }
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
-            Utilities.SetDefaultDialogPosition(this);
-            Utilities.TryFitWindowInWorkingArea(this);
+            this.DialogResult = false;
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
@@ -55,9 +54,10 @@ namespace Carnassial.Dialog
             this.DialogResult = true;
         }
 
-        private void CancelButton_Click(object sender, RoutedEventArgs e)
+        private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            this.DialogResult = false;
+            CommonUserInterface.SetDefaultDialogPosition(this);
+            CommonUserInterface.TryFitWindowInWorkingArea(this);
         }
     }
 }

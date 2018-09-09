@@ -13,7 +13,6 @@ namespace Carnassial.Dialog
         public DateTimeRereadFromFiles(FileDatabase fileDatabase, TimeSpan desiredStatusInterval, Window owner)
         {
             this.InitializeComponent();
-            Utilities.TryFitWindowInWorkingArea(this);
             this.desiredStatusInterval = desiredStatusInterval;
             this.fileDatabase = fileDatabase;
             this.Owner = owner;
@@ -59,8 +58,8 @@ namespace Carnassial.Dialog
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Utilities.SetDefaultDialogPosition(this);
-            Utilities.TryFitWindowInWorkingArea(this);
+            CommonUserInterface.SetDefaultDialogPosition(this);
+            CommonUserInterface.TryFitWindowInWorkingArea(this);
         }
     }
 }

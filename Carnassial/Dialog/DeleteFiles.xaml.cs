@@ -2,6 +2,7 @@
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -69,24 +70,24 @@ namespace Carnassial.Dialog
             else
             {
                 int numberOfFilesToDelete = this.filesToDelete.Count;
-                this.Message.Title = "Delete " + numberOfFilesToDelete.ToString() + " files marked for deletion in this selection?";
+                this.Message.Title = "Delete " + numberOfFilesToDelete.ToString(CultureInfo.CurrentCulture) + " files marked for deletion in this selection?";
                 this.Message.Result = String.Empty;
                 if (numberOfFilesToDelete > Constant.LargeNumberOfFilesToDelete)
                 {
-                    this.Message.Result += "\u2022 Deleting " + numberOfFilesToDelete.ToString() + " files will take a few moments. Please be patient." + Environment.NewLine;
+                    this.Message.Result += "\u2022 Deleting " + numberOfFilesToDelete.ToString(CultureInfo.CurrentCulture) + " files will take a few moments. Please be patient." + Environment.NewLine;
                 }
                 this.Message.Result += String.Format("\u2022 The deleted files will be moved to the Recycle Bin.{0}", Environment.NewLine);
 
                 if (deleteFileAndData == false)
                 {
                     // delete files which the delete flag set but not their data
-                    this.Message.What = "Deletes the " + numberOfFilesToDelete.ToString() + " files marked for deletion (shown below) in this selection, but not the data entered for them.";
+                    this.Message.What = "Deletes the " + numberOfFilesToDelete.ToString(CultureInfo.CurrentCulture) + " files marked for deletion (shown below) in this selection, but not the data entered for them.";
                     this.Message.Result += "\u2022 A placeholder image will be shown when you view a deleted file.";
                 }
                 else
                 {
                     // delete files which have the delete flag set and their data
-                    this.Message.Title = "Delete " + numberOfFilesToDelete.ToString() + " images and videos marked for deletion";
+                    this.Message.Title = "Delete " + numberOfFilesToDelete.ToString(CultureInfo.CurrentCulture) + " images and videos marked for deletion";
                     this.Message.What = "Deletes images and videos marked for deletion (shown below), along with the data entered for them.";
                     this.Message.Result += "\u2022 The data for these files will be permanently deleted.";
                 }
@@ -132,8 +133,8 @@ namespace Carnassial.Dialog
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Utilities.SetDefaultDialogPosition(this);
-            Utilities.TryFitWindowInWorkingArea(this);
+            CommonUserInterface.SetDefaultDialogPosition(this);
+            CommonUserInterface.TryFitWindowInWorkingArea(this);
         }
     }
 }

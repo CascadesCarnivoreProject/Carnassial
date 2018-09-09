@@ -49,7 +49,7 @@ namespace Carnassial.Editor
             this.AddNoteButton.Tag = ControlType.Note;
             this.DataEntryControls.AllowDrop = true;
             this.Title = EditorConstant.MainWindowBaseTitle;
-            Utilities.TryFitWindowInWorkingArea(this);
+            CommonUserInterface.TryFitWindowInWorkingArea(this);
 
             // abort if some of the required dependencies are missing
             if (Dependencies.AreRequiredBinariesPresent(EditorConstant.ApplicationName, Assembly.GetExecutingAssembly()) == false)
@@ -357,7 +357,7 @@ namespace Carnassial.Editor
         {
             TextBox textBox = (TextBox)sender;
             int rowIndex = (int)textBox.Tag;
-            if (Int32.TryParse(textBox.Text, NumberStyles.None, CultureInfo.CurrentUICulture, out int newWidth))
+            if (Int32.TryParse(textBox.Text, NumberStyles.None, CultureInfo.CurrentCulture, out int newWidth))
             {
                 // immediately propagate change in width to underlying data table so user sees control width adjust as they type
                 ControlRow control = this.templateDatabase.Controls[rowIndex];
@@ -517,15 +517,10 @@ namespace Carnassial.Editor
 
         private void Instructions_Drop(object sender, DragEventArgs dropEvent)
         {
-            if (Utilities.IsSingleTemplateFileDrag(dropEvent, out string templateDatabaseFilePath))
+            if (this.IsSingleTemplateFileDrag(dropEvent, out string templateDatabaseFilePath))
             {
                 this.InitializeDataGrid(templateDatabaseFilePath);
             }
-        }
-
-        private void Instructions_PreviewDrag(object sender, DragEventArgs dragEvent)
-        {
-            Utilities.OnInstructionsPreviewDrag(dragEvent);
         }
 
         private bool IsValidDataLabel(string dataLabel)
@@ -697,7 +692,7 @@ namespace Carnassial.Editor
             Dictionary<string, int> spreadsheetOrderByDataLabel = new Dictionary<string, int>(StringComparer.Ordinal);
             for (int control = 0; control < dataGrid.Columns.Count; control++)
             {
-                string dataLabelFromColumnHeader = dataGrid.Columns[control].Header.ToString();
+                string dataLabelFromColumnHeader = (string)dataGrid.Columns[control].Header;
                 int newSpreadsheetOrder = dataGrid.Columns[control].DisplayIndex + 1;
                 spreadsheetOrderByDataLabel.Add(dataLabelFromColumnHeader, newSpreadsheetOrder);
             }
@@ -707,7 +702,7 @@ namespace Carnassial.Editor
 
         private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            Utilities.ShowExceptionReportingDialog("The template editor needs to close.", e, this);
+            this.ShowExceptionReportingDialog("The template editor needs to close.", e, this);
         }
 
         private void RebuildControlPreview()

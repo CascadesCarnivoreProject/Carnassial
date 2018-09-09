@@ -12,7 +12,7 @@ namespace Carnassial.Data
             schema.ColumnDefinitions.Add(ColumnDefinition.CreatePrimaryKey());
             schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.FileSelection, Constant.SQLiteAffninity.Integer)
             {
-                DefaultValue = ((int)default(FileSelection)).ToString(),
+                DefaultValue = ((int)default(FileSelection)).ToString(Constant.InvariantCulture),
                 NotNull = true
             });
             schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.InitialFolderName, Constant.SQLiteAffninity.Text)
@@ -22,7 +22,7 @@ namespace Carnassial.Data
             schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.Log, Constant.SQLiteAffninity.Text));
             schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.Options, Constant.SQLiteAffninity.Integer)
             {
-                DefaultValue = ((int)default(ImageSetOptions)).ToString(),
+                DefaultValue = ((int)default(ImageSetOptions)).ToString(Constant.InvariantCulture),
                 NotNull = true
             });
             schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.MostRecentFileID, Constant.SQLiteAffninity.Integer)

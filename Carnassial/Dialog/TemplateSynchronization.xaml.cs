@@ -10,7 +10,6 @@ namespace Carnassial.Dialog
         public TemplateSynchronization(List<string> errors, Window owner)
         {
             this.InitializeComponent();
-            Utilities.TryFitWindowInWorkingArea(this);
 
             this.Owner = owner;
             foreach (string error in errors)
@@ -32,8 +31,8 @@ namespace Carnassial.Dialog
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Utilities.SetDefaultDialogPosition(this);
-            Utilities.TryFitWindowInWorkingArea(this);
+            CommonUserInterface.SetDefaultDialogPosition(this);
+            CommonUserInterface.TryFitWindowInWorkingArea(this);
         }
     }
 }

@@ -182,8 +182,8 @@ namespace Carnassial
             public const char False = '0';
             public const string FileDataWorksheetName = "file data";
             public const string Filter = "Excel workbook (*.xlsx)|*.xlsx";
+            public const string MarkerCoordinateFormat = "0.000000";
             public const char MarkerCoordinateSeparator = ',';
-            public const string MarkerPositionFormat = "0.000000";
             public const char MarkerPositionSeparator = '|';
             public const double MaximumColumnWidth = 40.0;
             public const double MinimumColumnWidth = 5.0;

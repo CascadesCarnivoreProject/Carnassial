@@ -19,6 +19,18 @@ namespace Carnassial.UnitTests
     [TestClass]
     public class FileTests : CarnassialTest
     {
+        [ClassCleanup]
+        public static void ClassCleanup()
+        {
+            CarnassialTest.TryRevertToDefaultCultures();
+        }
+
+        [ClassInitialize]
+        public static void ClassInitialize(TestContext testContext)
+        {
+            CarnassialTest.TryChangeToTestCultures();
+        }
+
         [TestMethod]
         public async Task Cache()
         {
@@ -153,9 +165,9 @@ namespace Carnassial.UnitTests
                 ExifIfd0Directory ifd0 = metadata.OfType<ExifIfd0Directory>().Single();
                 ExifSubIfdDirectory subIfd = metadata.OfType<ExifSubIfdDirectory>().Single();
 
-                Assert.IsTrue(DateTime.TryParseExact(ifd0.GetDescription(ExifIfd0Directory.TagDateTime), TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTime));
-                Assert.IsTrue(DateTime.TryParseExact(subIfd.GetDescription(ExifSubIfdDirectory.TagDateTimeDigitized), TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeDigitized));
-                Assert.IsTrue(DateTime.TryParseExact(subIfd.GetDescription(ExifSubIfdDirectory.TagDateTimeOriginal), TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeOriginal));
+                Assert.IsTrue(DateTime.TryParseExact(ifd0.GetDescription(ExifIfd0Directory.TagDateTime), TestConstant.Exif.DateTimeFormat, Constant.InvariantCulture, DateTimeStyles.None, out DateTime dateTime));
+                Assert.IsTrue(DateTime.TryParseExact(subIfd.GetDescription(ExifSubIfdDirectory.TagDateTimeDigitized), TestConstant.Exif.DateTimeFormat, Constant.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeDigitized));
+                Assert.IsTrue(DateTime.TryParseExact(subIfd.GetDescription(ExifSubIfdDirectory.TagDateTimeOriginal), TestConstant.Exif.DateTimeFormat, Constant.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeOriginal));
                 Assert.IsFalse(String.IsNullOrWhiteSpace(ifd0.GetDescription(ExifSubIfdDirectory.TagSoftware)));
             }
         }
@@ -177,7 +189,7 @@ namespace Carnassial.UnitTests
                 Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagBatteryVoltage)));
                 Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagBrightness)));
                 Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagContrast)));
-                Assert.IsTrue(DateTime.TryParseExact(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagDateTimeOriginal), TestConstant.Exif.DateTimeFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeOriginal));
+                Assert.IsTrue(DateTime.TryParseExact(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagDateTimeOriginal), TestConstant.Exif.DateTimeFormat, Constant.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeOriginal));
                 Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagEventNumber)));
                 Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagFirmwareVersion)));
                 Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagInfraredIlluminator)));

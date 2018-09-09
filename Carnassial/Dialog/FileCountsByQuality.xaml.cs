@@ -14,7 +14,6 @@ namespace Carnassial.Dialog
         public FileCountsByClassification(Dictionary<FileClassification, int> fileCountByClassification, Window owner)
         {
             this.InitializeComponent();
-            Utilities.TryFitWindowInWorkingArea(this);
             this.Owner = owner;
 
             // fill in the counts
@@ -42,8 +41,8 @@ namespace Carnassial.Dialog
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            Utilities.SetDefaultDialogPosition(this);
-            Utilities.TryFitWindowInWorkingArea(this);
+            CommonUserInterface.SetDefaultDialogPosition(this);
+            CommonUserInterface.TryFitWindowInWorkingArea(this);
         }
     }
 }

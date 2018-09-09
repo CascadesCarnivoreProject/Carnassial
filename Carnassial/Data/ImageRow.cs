@@ -513,7 +513,7 @@ namespace Carnassial.Data
                             {
                                 return null;
                             }
-                            return MarkersForCounter.MarkerPositionsToExcelString(value);
+                            return MarkersForCounter.MarkerPositionsToSpreadsheetString(value);
                         case SqlDataType.Integer:
                             return this.UserCounters[userColumn.DataIndex].ToString(Constant.InvariantCulture);
                         case SqlDataType.String:
@@ -593,7 +593,7 @@ namespace Carnassial.Data
                 {
                     return false;
                 }
-                previousFileNameWithoutExtension = (fileNumber - 1).ToString("00000000");
+                previousFileNameWithoutExtension = (fileNumber - 1).ToString("00000000", Constant.InvariantCulture);
             }
 
             string previousJpegName = previousFileNameWithoutExtension + Constant.File.JpgFileExtension;

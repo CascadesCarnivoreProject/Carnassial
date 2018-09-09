@@ -24,7 +24,6 @@ namespace Carnassial.Dialog
         public GoToFile(int currentFileIndex, int selectedFiles, Window owner)
         {
             this.InitializeComponent();
-            Utilities.TryFitWindowInWorkingArea(this);
             this.Owner = owner;
             this.selectedFiles = selectedFiles;
 
@@ -93,7 +92,7 @@ namespace Carnassial.Dialog
                 return;
             }
 
-            this.FileIndex = Int32.Parse(this.FileIndexAsText.Text, NumberStyles.None) - 1;
+            this.FileIndex = Int32.Parse(this.FileIndexAsText.Text, NumberStyles.None, CultureInfo.CurrentCulture) - 1;
             this.OkButton.IsEnabled = (this.FileIndex > Constant.Database.InvalidRow) && (this.FileIndex < this.selectedFiles);
         }
 
@@ -104,6 +103,8 @@ namespace Carnassial.Dialog
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            CommonUserInterface.TryFitWindowInWorkingArea(this);
+
             // marking the OK button IsDefault to associate it with dialog completion also gives it initial focus
             // It's more helpful to put focus on the file number.
             this.FileIndexAsText.Focus();
