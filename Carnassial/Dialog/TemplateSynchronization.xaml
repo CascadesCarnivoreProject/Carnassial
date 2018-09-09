@@ -15,10 +15,10 @@
         </Grid.RowDefinitions>
         <control:StockMessageControl x:Name="Message"
                             StatusImage="Warning"
-                            Title="Template and data file aren't compatible."
-                            Problem="The data file can't be updated with the data field definitions in the current template."
-                            Solution="You can still open the image set using its copy of the original template."
-                            Hint="When a template is edited Carnassial tries to automatically update the data file's copy of the template.  Many edits can be safely propagated but some types of changes aren't supported and applying certain other kinds of changes would result in data loss or an unusable data file.  The specific problems are listed below."
+                            Title="Template and data file are incompatible."
+                            Problem="The data file can't be updated to the data field definitions in the current template.  When a template is edited Carnassial automatically updates the data file to match. However, in this case changes are present which aren't supported our would result in data loss."
+                            Solution="Edit the template, data file, or both to resolve the issues listed below."
+                            Hint="You can still open the image set using the data file's copy of the original template."
                             Grid.Row="0" />
         <Rectangle Fill="#FF868686" Height="2" Grid.Row="1" />
         <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Grid.Row="2">

@@ -691,7 +691,8 @@ namespace Carnassial.UnitTests
                     FileInfo fileInfo = file.GetFileInfo(fileDatabase.FolderPath);
 
                     // template table synchronization
-                    // remove choices and change a note to a choice to produce a type failure
+                    // Remove choices in use and change a note to a choice to produce two synchronization issues.  Unused choices
+                    // are also removed to verify their removal doesn't raise a synchronization issue.
                     ControlRow choiceControl = templateDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice0];
                     choiceControl.WellKnownValues = "Choice0|Choice1|Choice2|Choice3|Choice4|Choice5|Choice6|Choice7";
                     templateDatabase.TrySyncControlToDatabase(choiceControl);
@@ -702,7 +703,9 @@ namespace Carnassial.UnitTests
                     Assert.IsFalse(FileDatabase.TryCreateOrOpen(fileDatabase.FileName, templateDatabase, false, LogicalOperator.And, out FileDatabase fileDatabaseReopened));
                     using (fileDatabaseReopened)
                     {
-                        Assert.IsTrue(fileDatabaseReopened.ControlSynchronizationIssues.Count == 4);
+                        Assert.IsTrue(fileDatabaseReopened.ControlSynchronizationIssues.Count == 2);
+                        Assert.IsTrue(fileDatabaseReopened.ControlSynchronizationIssues[0].IndexOf(TestConstant.DefaultDatabaseColumn.Choice0, StringComparison.Ordinal) != -1);
+                        Assert.IsTrue(fileDatabaseReopened.ControlSynchronizationIssues[1].IndexOf(TestConstant.DefaultDatabaseColumn.Note0, StringComparison.Ordinal) != -1);
                     }
                 }
             }

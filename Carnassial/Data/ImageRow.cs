@@ -299,27 +299,6 @@ namespace Carnassial.Data
             return currentValue.SequenceEqual(newValue);
         }
 
-        private string ClassificationToString()
-        {
-            switch (this.Classification)
-            {
-                case FileClassification.Color:
-                    return "Color";
-                case FileClassification.Corrupt:
-                    return "Corrupt";
-                case FileClassification.Dark:
-                    return "Dark";
-                case FileClassification.Greyscale:
-                    return "Greyscale";
-                case FileClassification.NoLongerAvailable:
-                    return "NoLongerAvailable";
-                case FileClassification.Video:
-                    return "Video";
-                default:
-                    throw new NotSupportedException(String.Format("Unhandled classification {0}.", this.Classification));
-            }
-        }
-
         public object GetDatabaseValue(string dataLabel)
         {
             switch (dataLabel)
@@ -413,7 +392,7 @@ namespace Carnassial.Data
                 case Constant.DatabaseColumn.ID:
                     return this.ID.ToString(Constant.InvariantCulture);
                 case Constant.FileColumn.Classification:
-                    return this.ClassificationToString();
+                    return ImageRow.ToString(this.Classification);
                 case Constant.FileColumn.RelativePath:
                     return this.RelativePath;
                 case Constant.FileColumn.UtcOffset:
@@ -496,7 +475,7 @@ namespace Carnassial.Data
                 case Constant.DatabaseColumn.ID:
                     return this.ID.ToString(Constant.InvariantCulture);
                 case Constant.FileColumn.Classification:
-                    return this.ClassificationToString();
+                    return ImageRow.ToString(this.Classification);
                 case Constant.FileColumn.RelativePath:
                     return this.RelativePath;
                 case Constant.FileColumn.UtcOffset:
@@ -797,6 +776,27 @@ namespace Carnassial.Data
                     this.UserNotesAndChoices[dataIndex] = note;
                     this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(spreadsheetMap.UserNotes[indexIndex].Control.DataLabel));
                 }
+            }
+        }
+
+        public static string ToString(FileClassification classification)
+        {
+            switch (classification)
+            {
+                case FileClassification.Color:
+                    return "Color";
+                case FileClassification.Corrupt:
+                    return "Corrupt";
+                case FileClassification.Dark:
+                    return "Dark";
+                case FileClassification.Greyscale:
+                    return "Greyscale";
+                case FileClassification.NoLongerAvailable:
+                    return "NoLongerAvailable";
+                case FileClassification.Video:
+                    return "Video";
+                default:
+                    throw new NotSupportedException(String.Format("Unhandled classification {0}.", classification));
             }
         }
 

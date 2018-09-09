@@ -478,7 +478,8 @@ namespace Carnassial.Data
             foreach (string dataLabel in dataLabelsInFileButNotTemplateDatabase)
             {
                 // columns dropped from the template
-                this.ControlSynchronizationIssues.Add("- A field with data label '" + dataLabel + "' was found in the file database, but nothing matches that in the template." + Environment.NewLine);
+                // Renames could be detected by checking for additions which match removals but this isn't currently supported.
+                this.ControlSynchronizationIssues.Add("The field " + dataLabel + " is present in the file database but has been removed from the template.");
             }
 
             // check existing controls for compatibility
@@ -489,17 +490,51 @@ namespace Carnassial.Data
 
                 if (fileDatabaseControl.Type != templateControl.Type)
                 {
-                    this.ControlSynchronizationIssues.Add(String.Format("- Field with data label '{0}' is of type '{1}' in the file database but of type '{2}' in the template.{3}", dataLabel, ControlTypeConverter.Convert(fileDatabaseControl.Type), ControlTypeConverter.Convert(templateControl.Type), Environment.NewLine));
+                    // controls are potentially interchangeable if their values are compatible
+                    // For example, any other control can be converted to a note and a note can be changed to a choice if the choices
+                    // include all values in use.  For now, however, such conversions aren't supported.
+                    this.ControlSynchronizationIssues.Add(String.Format("The field {0} is of type '{1}' in the file database but of type '{2}' in the template.", dataLabel, ControlTypeConverter.Convert(fileDatabaseControl.Type), ControlTypeConverter.Convert(templateControl.Type)));
                 }
 
                 if (fileDatabaseControl.Type == ControlType.FixedChoice)
                 {
                     List<string> fileDatabaseChoices = fileDatabaseControl.GetWellKnownValues();
                     List<string> templateChoices = templateControl.GetWellKnownValues();
-                    List<string> choiceValuesRemovedInTemplate = fileDatabaseChoices.Except(templateChoices).ToList();
-                    foreach (string removedValue in choiceValuesRemovedInTemplate)
+                    List<string> choicesRemovedFromTemplate = fileDatabaseChoices.Except(templateChoices).ToList();
+                    if (choicesRemovedFromTemplate.Count > 0)
                     {
-                        this.ControlSynchronizationIssues.Add(String.Format("- Choice with data label '{0}' allows the value '{1}' in the file database but not in the template.{2}", dataLabel, removedValue, Environment.NewLine));
+                        List<object> choicesInUse = this.GetDistinctValuesInColumn(Constant.DatabaseTable.Files, fileDatabaseControl.DataLabel);
+                        List<string> removedChoicesInUse = new List<string>();
+                        if (String.Equals(dataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal))
+                        {
+                            List<FileClassification> classificationsInUse = new List<FileClassification>(choicesInUse.Select(choice => (FileClassification)choice));
+                            foreach (string removedChoice in choicesRemovedFromTemplate)
+                            {
+                                if (ImageRow.TryParseFileClassification(removedChoice, out FileClassification classification))
+                                {
+                                    if (classificationsInUse.Contains(classification))
+                                    {
+                                        removedChoicesInUse.Add(ImageRow.ToString(classification));
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            List<string> choiceStringsInUse = new List<string>(choicesInUse.Select(choice => (string)choice));
+                            foreach (string removedChoice in choicesRemovedFromTemplate)
+                            {
+                                if (choiceStringsInUse.Contains(removedChoice, StringComparer.Ordinal))
+                                {
+                                    removedChoicesInUse.Add(removedChoice);
+                                }
+                            }
+                        }
+
+                        foreach (string removedChoice in removedChoicesInUse)
+                        {
+                            this.ControlSynchronizationIssues.Add(String.Format("Files have {0} set to the choice '{1}' but this value is removed from the template.", dataLabel, removedChoice));
+                        }
                     }
                 }
             }
