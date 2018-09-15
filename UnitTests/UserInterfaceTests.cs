@@ -419,6 +419,8 @@ namespace Carnassial.UnitTests
                     this.ShowDialog(new DateTimeSetTimeZone(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache, carnassial));
                     this.ShowDialog(new FileCountsByClassification(carnassial.DataHandler.FileDatabase.GetFileCountsByClassification(), carnassial));
                     this.ShowDialog(new EditLog(carnassial.DataHandler.FileDatabase.ImageSet.Log, carnassial));
+                    this.ShowDialog(new FindReplace(carnassial));
+                    this.ShowDialog(new GoToFile(carnassial.DataHandler.ImageCache.CurrentRow, carnassial.DataHandler.FileDatabase.Files.RowCount, carnassial));
 
                     this.ShowDialog(new PopulateFieldWithMetadata(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache.Current.GetFilePath(carnassial.DataHandler.FileDatabase.FolderPath), carnassial.State.Throttles.GetDesiredProgressUpdateInterval(), carnassial));
                     using (ReclassifyFiles reclassify = new ReclassifyFiles(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache, new CarnassialState(), carnassial))
@@ -456,7 +458,7 @@ namespace Carnassial.UnitTests
         }
 
         [TestMethod]
-        public void CreateReuseControlsAndPropagate()
+        public void DataEntryHandler()
         {
             List<DatabaseExpectations> databaseExpectations = new List<DatabaseExpectations>()
             {
@@ -531,20 +533,21 @@ namespace Carnassial.UnitTests
                             }
                         }
 
-                        // propagation methods not covered due to requirement of UX interaction
-                        // dataHandler.CopyForward(control);
-                        // dataHandler.CopyFromLastValue(control);
-                        // dataHandler.CopyToAll(control);
+                        // propagation methods
+                        // Currently no coverage due to need for UX interaction to confirm changes.
+                        // DataEntryControl noteControl = controls.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel];
+                        // Assert.IsTrue(dataHandler.ImageCache.TryMoveToFile(fileDatabase.Files.RowCount - 1));
+                        // Assert.IsTrue(dataHandler.TryCopyForward(noteControl) == false);
+                        // Assert.IsTrue(dataHandler.TryCopyFromLastNonEmptyValue(control, out object value) == false);
+                        // Assert.IsTrue(dataHandler.TryCopyToAll(control) == false);
 
                         // verify roundtrip of fields subject to copy/paste and analysis assignment
-                        // AsDictionary() returns a dictionary with one fewer values than there are columns as the DateTime and UtcOffset
+                        // GetValues() returns a dictionary with one fewer values than there are columns as the DateTime and UtcOffset
                         // columns are merged to DateTimeOffset.
                         Assert.IsTrue(dataHandler.ImageCache.TryMoveToFile(0));
                         ImageRow firstFile = fileDatabase.Files[0];
                         FileExpectations firstFileExpectations = fileExpectations[0];
 
-                        // DateTime and UtcOffset are merged into DateTime, so there should be one fewer value than there are columns
-                        // in the file table
                         Dictionary<string, object> firstFileValuesByPropertyName = firstFile.GetValues();
                         Assert.IsTrue(firstFileValuesByPropertyName.Count == databaseExpectation.ExpectedColumns.Count - 1);
                         foreach (KeyValuePair<string, object> singlePropertyEdit in firstFileValuesByPropertyName)
@@ -564,6 +567,114 @@ namespace Carnassial.UnitTests
                         {
                             string databaseString = firstFile.GetSpreadsheetString(dataLabel);
                         }
+
+                        // find and replace
+                        // no op/default state case
+                        Assert.IsTrue(dataHandler.TryFindNext(out int fileIndex) == false);
+                        Assert.IsTrue(dataHandler.TryFindPrevious(out fileIndex) == false);
+                        Assert.IsTrue(dataHandler.FindReplace.TryReplace(fileDatabase.Files[0]) == false);
+                        Assert.IsTrue(dataHandler.ReplaceAll() == 0);
+                        Assert.IsTrue(dataHandler.FindReplace != null);
+                        Assert.IsTrue(String.Equals(dataHandler.FindReplace.FindTerm1.DataLabel, Constant.FileColumn.File, StringComparison.Ordinal));
+                        Assert.IsTrue(dataHandler.FindReplace.FindTerm2 == null);
+                        Assert.IsTrue(dataHandler.FindReplace.ReplaceTerm == null);
+
+                        // single matching file
+                        ControlRow note = fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Note3];
+                        SearchTerm bobcatName = note.CreateSearchTerm();
+                        bobcatName.DatabaseValue = "bobcat";
+                        dataHandler.FindReplace.FindTerm1 = bobcatName;
+
+                        int bobcatFileIndex = (int)(fileExpectations.Single(expectation => String.Equals(expectation.FileName, TestConstant.FileExpectation.DaylightBobcatFileName, StringComparison.Ordinal)).ID - 1);
+                        ImageRow bobcatFile = fileDatabase.Files[bobcatFileIndex];
+                        Assert.IsTrue(dataHandler.TryFindNext(out fileIndex));
+                        Assert.IsTrue(bobcatFileIndex == fileIndex);
+                        Assert.IsTrue(dataHandler.TryFindPrevious(out fileIndex));
+                        Assert.IsTrue(bobcatFileIndex == fileIndex);
+                        Assert.IsTrue(dataHandler.FindReplace.TryReplace(bobcatFile) == false);
+                        Assert.IsTrue(dataHandler.ReplaceAll() == 0);
+
+                        // no matching files
+                        dataHandler.FindReplace.FindTerm2 = note.CreateSearchTerm();
+                        dataHandler.FindReplace.FindTerm2.DatabaseValue = "ocelot";
+                        Assert.IsTrue(dataHandler.TryFindNext(out fileIndex) == false);
+                        Assert.IsTrue(dataHandler.TryFindPrevious(out fileIndex) == false);
+                        Assert.IsTrue(dataHandler.FindReplace.TryReplace(bobcatFile) == false);
+                        Assert.IsTrue(dataHandler.ReplaceAll() == 0);
+
+                        // multiple matching files
+                        ControlRow classification = fileDatabase.Controls[Constant.FileColumn.Classification];
+                        SearchTerm color = classification.CreateSearchTerm();
+                        color.DatabaseValue = FileClassification.Color;
+                        dataHandler.FindReplace.FindTerm1 = color;
+                        dataHandler.FindReplace.FindTerm2 = null;
+
+                        Assert.IsTrue(dataHandler.TryFindNext(out fileIndex));
+                        Assert.IsTrue(fileIndex == bobcatFileIndex);
+                        Assert.IsTrue(dataHandler.ImageCache.TryMoveToFile(fileIndex));
+                        Assert.IsTrue(dataHandler.TryFindNext(out fileIndex));
+                        Assert.IsTrue(fileIndex == bobcatFileIndex + 1);
+                        Assert.IsTrue(dataHandler.ImageCache.TryMoveToFile(fileIndex));
+                        Assert.IsTrue(dataHandler.TryFindNext(out fileIndex));
+                        Assert.IsTrue(fileIndex == bobcatFileIndex + 2);
+                        Assert.IsTrue(dataHandler.ImageCache.TryMoveToFile(fileIndex));
+                        Assert.IsTrue(dataHandler.TryFindNext(out fileIndex));
+                        Assert.IsTrue(fileIndex == bobcatFileIndex);
+                        Assert.IsTrue(dataHandler.ImageCache.TryMoveToFile(fileIndex));
+
+                        Assert.IsTrue(dataHandler.TryFindPrevious(out fileIndex));
+                        Assert.IsTrue(fileIndex == bobcatFileIndex + 2);
+                        Assert.IsTrue(dataHandler.ImageCache.TryMoveToFile(fileIndex));
+                        Assert.IsTrue(dataHandler.TryFindPrevious(out fileIndex));
+                        Assert.IsTrue(fileIndex == bobcatFileIndex + 1);
+                        Assert.IsTrue(dataHandler.ImageCache.TryMoveToFile(fileIndex));
+                        Assert.IsTrue(dataHandler.TryFindPrevious(out fileIndex));
+                        Assert.IsTrue(fileIndex == bobcatFileIndex);
+                        Assert.IsTrue(dataHandler.ImageCache.TryMoveToFile(fileIndex));
+                        Assert.IsTrue(dataHandler.TryFindPrevious(out fileIndex));
+                        Assert.IsTrue(fileIndex == bobcatFileIndex + 2);
+                        Assert.IsTrue(dataHandler.ImageCache.TryMoveToFile(fileIndex));
+
+                        // multiple terms, one matching file
+                        dataHandler.FindReplace.FindTerm2 = bobcatName;
+                        Assert.IsTrue(dataHandler.TryFindPrevious(out fileIndex));
+                        Assert.IsTrue(fileIndex == bobcatFileIndex);
+                        Assert.IsTrue(dataHandler.TryFindNext(out fileIndex));
+                        Assert.IsTrue(fileIndex == bobcatFileIndex);
+
+                        // replace
+                        Assert.IsTrue(dataHandler.FindReplace.TryReplace(bobcatFile) == false);
+
+                        SearchTerm dark = classification.CreateSearchTerm();
+                        dark.DatabaseValue = FileClassification.Dark;
+                        dataHandler.FindReplace.ReplaceTerm = dark;
+                        Assert.IsTrue(dataHandler.FindReplace.TryReplace(bobcatFile));
+                        Assert.IsTrue(bobcatFile.Classification == FileClassification.Dark);
+
+                        dataHandler.FindReplace.FindTerm1 = dark;
+                        dataHandler.FindReplace.ReplaceTerm = color;
+                        Assert.IsTrue(dataHandler.FindReplace.TryReplace(bobcatFile));
+                        Assert.IsTrue(bobcatFile.Classification == FileClassification.Color);
+
+                        // replace all
+                        dataHandler.FindReplace.ReplaceTerm = null;
+                        Assert.IsTrue(dataHandler.ReplaceAll() == 0);
+
+                        // reclassify color files as dark
+                        dataHandler.FindReplace.FindTerm1 = color;
+                        dataHandler.FindReplace.FindTerm2 = null;
+                        dataHandler.FindReplace.ReplaceTerm = dark;
+                        int colorFiles = fileDatabase.Files.Count(file => file.Classification == FileClassification.Color);
+                        Assert.IsTrue(dataHandler.ReplaceAll() == colorFiles);
+                        int darkFiles = fileDatabase.Files.Count(file => file.Classification == FileClassification.Dark);
+                        Assert.IsTrue(darkFiles == colorFiles);
+
+                        // change dark files back to color
+                        dataHandler.FindReplace.FindTerm1 = dark;
+                        dataHandler.FindReplace.ReplaceTerm = color;
+                        Assert.IsTrue(dataHandler.ReplaceAll() == darkFiles);
+                        colorFiles = fileDatabase.Files.Count(file => file.Classification == FileClassification.Color);
+                        Assert.IsTrue(darkFiles == colorFiles);
                     }
 
                     // force SQLite to release its handle on the database file so that it can be deleted

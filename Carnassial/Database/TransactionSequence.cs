@@ -10,9 +10,10 @@ namespace Carnassial.Database
 
         protected SQLiteDatabase Database { get; private set; }
         protected bool IsInsert { get; set; }
-        protected int RowsCommitted { get; private set; }
         protected int RowsInCurrentTransaction { get; set; }
         protected SQLiteTransaction Transaction { get; set; }
+
+        public int RowsCommitted { get; private set; }
 
         protected TransactionSequence(SQLiteDatabase database)
         {

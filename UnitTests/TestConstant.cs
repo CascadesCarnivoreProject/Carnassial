@@ -107,6 +107,8 @@ namespace Carnassial.UnitTests
 
         public static class FileExpectation
         {
+            public const string DaylightBobcatFileName = "BushnellTrophyHD-119677C-20160805-926.JPG";
+
             public static readonly FileExpectations CorruptFieldScan;
             public static readonly FileExpectations DaylightBobcat;
             public static readonly FileExpectations DaylightCoyote;
@@ -130,7 +132,7 @@ namespace Carnassial.UnitTests
                 {
                     Luminosity = 0.22963220152779396,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2015-08-05T08:06:23.000-07:00"),
-                    FileName = "BushnellTrophyHD-119677C-20160805-926.JPG",
+                    FileName = FileExpectation.DaylightBobcatFileName,
                     Coloration = 0.072226041956181958,
                     Classification = FileClassification.Color
                 };

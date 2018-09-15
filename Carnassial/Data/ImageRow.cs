@@ -192,7 +192,7 @@ namespace Carnassial.Data
                     case Constant.FileColumn.UtcOffset:
                         throw new NotSupportedException("Access UtcOffset through DateTimeOffset.");
                     default:
-                        FileTableUserColumn userColumn = this.table.UserColumnsByName[propertyName];
+                        FileTableColumn userColumn = this.table.UserColumnsByName[propertyName];
                         switch (userColumn.DataType)
                         {
                             case SqlDataType.Boolean:
@@ -239,7 +239,7 @@ namespace Carnassial.Data
                         throw new NotSupportedException("UtcOffset must be set through DateTimeOffset.");
                     // user defined controls
                     default:
-                        FileTableUserColumn userColumn = this.table.UserColumnsByName[propertyName];
+                        FileTableColumn userColumn = this.table.UserColumnsByName[propertyName];
                         bool valueDifferent = false;
                         switch (userColumn.DataType)
                         {
@@ -320,7 +320,7 @@ namespace Carnassial.Data
                 case Constant.FileColumn.UtcOffset:
                     return DateTimeHandler.ToDatabaseUtcOffset(this.UtcOffset);
                 default:
-                    FileTableUserColumn userColumn = this.table.UserColumnsByName[dataLabel];
+                    FileTableColumn userColumn = this.table.UserColumnsByName[dataLabel];
                     switch (userColumn.DataType)
                     {
                         case SqlDataType.Boolean:
@@ -398,7 +398,7 @@ namespace Carnassial.Data
                 case Constant.FileColumn.UtcOffset:
                     return DateTimeHandler.ToDisplayUtcOffsetString(this.UtcOffset);
                 default:
-                    FileTableUserColumn userColumn = this.table.UserColumnsByName[control.DataLabel];
+                    FileTableColumn userColumn = this.table.UserColumnsByName[control.DataLabel];
                     switch (userColumn.DataType)
                     {
                         case SqlDataType.Boolean:
@@ -427,8 +427,8 @@ namespace Carnassial.Data
 
         public MarkersForCounter GetMarkersForCounter(string counterDataLabel)
         {
-            FileTableUserColumn counterColumn = this.table.UserColumnsByName[counterDataLabel];
-            FileTableUserColumn markerColumn = this.table.UserColumnsByName[FileTable.GetMarkerPositionColumnName(counterDataLabel)];
+            FileTableColumn counterColumn = this.table.UserColumnsByName[counterDataLabel];
+            FileTableColumn markerColumn = this.table.UserColumnsByName[FileTable.GetMarkerPositionColumnName(counterDataLabel)];
 
             MarkersForCounter markersForCounter = new MarkersForCounter(counterDataLabel, this.UserCounters[counterColumn.DataIndex]);
             markersForCounter.MarkerPositionsFromFloatArray(this.UserMarkerPositions[markerColumn.DataIndex]);
@@ -481,7 +481,7 @@ namespace Carnassial.Data
                 case Constant.FileColumn.UtcOffset:
                     return DateTimeHandler.ToDatabaseUtcOffsetString(this.UtcOffset);
                 default:
-                    FileTableUserColumn userColumn = this.table.UserColumnsByName[dataLabel];
+                    FileTableColumn userColumn = this.table.UserColumnsByName[dataLabel];
                     switch (userColumn.DataType)
                     {
                         case SqlDataType.Boolean:
@@ -515,9 +515,9 @@ namespace Carnassial.Data
                 { Constant.FileColumn.Classification, this.Classification },
                 { Constant.FileColumn.RelativePath, this.RelativePath },
             };
-            foreach (KeyValuePair<string, FileTableUserColumn> columnAndName in this.table.UserColumnsByName)
+            foreach (KeyValuePair<string, FileTableColumn> columnAndName in this.table.UserColumnsByName)
             {
-                FileTableUserColumn userColumn = columnAndName.Value;
+                FileTableColumn userColumn = columnAndName.Value;
                 object value;
                 switch (userColumn.DataType)
                 {

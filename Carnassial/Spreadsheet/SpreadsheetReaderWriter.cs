@@ -212,7 +212,7 @@ namespace Carnassial.Spreadsheet
                         }
                         else
                         {
-                            FileTableUserColumn userColumn = fileDatabase.Files.UserColumnsByName[dataLabel];
+                            FileTableColumn userColumn = fileDatabase.Files.UserColumnsByName[dataLabel];
                             columnDataTypes.Add(userColumn.DataType);
                         }
 

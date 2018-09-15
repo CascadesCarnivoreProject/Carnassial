@@ -17,16 +17,16 @@ namespace Carnassial.Data
 
         public List<int> UserChoiceDataIndices { get; private set; }
         public List<int> UserChoiceIndices { get; private set; }
-        public List<FileTableUserColumn> UserChoices { get; private set; }
+        public List<FileTableColumn> UserChoices { get; private set; }
         public List<List<string>> UserChoiceValues { get; private set; }
         public List<int> UserCounterIndices { get; private set; }
-        public List<FileTableUserColumn> UserCounters { get; private set; }
+        public List<FileTableColumn> UserCounters { get; private set; }
         public List<int> UserFlagIndices { get; private set; }
-        public List<FileTableUserColumn> UserFlags { get; private set; }
+        public List<FileTableColumn> UserFlags { get; private set; }
         public List<int> UserMarkerIndices { get; private set; }
         public List<int> UserNoteDataIndices { get; private set; }
         public List<int> UserNoteIndices { get; private set; }
-        public List<FileTableUserColumn> UserNotes { get; private set; }
+        public List<FileTableColumn> UserNotes { get; private set; }
 
         public FileTableSpreadsheetMap()
         {
@@ -39,18 +39,18 @@ namespace Carnassial.Data
 
             this.UserChoiceDataIndices = new List<int>();
             this.UserChoiceIndices = new List<int>();
-            this.UserChoices = new List<FileTableUserColumn>();
+            this.UserChoices = new List<FileTableColumn>();
             this.UserChoiceValues = new List<List<string>>();
 
             this.UserCounterIndices = new List<int>();
-            this.UserCounters = new List<FileTableUserColumn>();
+            this.UserCounters = new List<FileTableColumn>();
             this.UserFlagIndices = new List<int>();
-            this.UserFlags = new List<FileTableUserColumn>();
+            this.UserFlags = new List<FileTableColumn>();
             this.UserMarkerIndices = new List<int>();
 
             this.UserNoteDataIndices = new List<int>();
             this.UserNoteIndices = new List<int>();
-            this.UserNotes = new List<FileTableUserColumn>();
+            this.UserNotes = new List<FileTableColumn>();
         }
     }
 }

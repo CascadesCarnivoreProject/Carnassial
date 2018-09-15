@@ -262,7 +262,6 @@ namespace Carnassial
             this.MenuFileRenameFileDatabase.IsEnabled = filesSelected;
             // edit menu
             this.MenuEdit.IsEnabled = filesSelected;
-            this.MenuEditDeleteCurrentFile.IsEnabled = filesSelected;
             // view menu
             this.MenuView.IsEnabled = filesSelected;
             // select menu
@@ -564,24 +563,6 @@ namespace Carnassial
             this.FileDisplay.Markers = this.GetDisplayMarkers();
         }
 
-        private void MenuEdit_SubmenuOpened(object sender, RoutedEventArgs e)
-        {
-            if (this.IsFileAvailable())
-            {
-                this.MenuEditDeleteCurrentFile.IsEnabled = this.DataHandler.ImageCache.Current.Classification != FileClassification.NoLongerAvailable;
-                this.MenuEditDeleteCurrentFileAndData.IsEnabled = true;
-            }
-            else
-            {
-                this.MenuEditDeleteCurrentFile.IsEnabled = false;
-                this.MenuEditDeleteCurrentFileAndData.IsEnabled = false;
-            }
-
-            int deletedFiles = this.DataHandler.FileDatabase.Files.Count(file => file.DeleteFlag == true);
-            this.MenuEditDeleteFiles.IsEnabled = deletedFiles > 0;
-            this.MenuEditDeleteFilesAndData.IsEnabled = deletedFiles > 0;
-        }
-
         private void MenuEditCopy_Click(object sender, RoutedEventArgs e)
         {
             if (this.IsFileAvailable())
@@ -659,6 +640,24 @@ namespace Carnassial
             await this.ShowBulkFileEditDialogAsync(daylightSavingsCorrection);
         }
 
+        private void MenuEditDelete_SubmenuOpened(object sender, RoutedEventArgs e)
+        {
+            if (this.IsFileAvailable())
+            {
+                this.MenuEditDeleteCurrentFile.IsEnabled = this.DataHandler.ImageCache.Current.Classification != FileClassification.NoLongerAvailable;
+                this.MenuEditDeleteCurrentFileAndData.IsEnabled = true;
+            }
+            else
+            {
+                this.MenuEditDeleteCurrentFile.IsEnabled = false;
+                this.MenuEditDeleteCurrentFileAndData.IsEnabled = false;
+            }
+
+            int deletedFiles = this.DataHandler.FileDatabase.Files.Count(file => file.DeleteFlag == true);
+            this.MenuEditDeleteFiles.IsEnabled = deletedFiles > 0;
+            this.MenuEditDeleteFilesAndData.IsEnabled = deletedFiles > 0;
+        }
+
         /// <summary>Soft delete one or more files marked for deletion, and optionally the data associated with those files.</summary>
         private async void MenuEditDeleteFiles_Click(object sender, RoutedEventArgs e)
         {
@@ -726,6 +725,28 @@ namespace Carnassial
                     await this.ShowFileAsync(this.DataHandler.FileDatabase.GetFileOrNextFileIndex(currentFileID));
                 }
                 Mouse.OverrideCursor = null;
+            }
+        }
+
+        private void MenuEditFind_Click(object sender, RoutedEventArgs e)
+        {
+            FindReplace findReplace = new FindReplace(this);
+            findReplace.ShowDialog();
+        }
+
+        public async void MenuEditFindNext_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.DataHandler.TryFindNext(out int fileIndex))
+            {
+                await this.ShowFileAsync(fileIndex);
+            }
+        }
+
+        public async void MenuEditFindPrevious_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.DataHandler.TryFindPrevious(out int fileIndex))
+            {
+                await this.ShowFileAsync(fileIndex);
             }
         }
 
@@ -1688,7 +1709,7 @@ namespace Carnassial
             this.State.MostRecentlyFocusedControlIndex = -1;
         }
 
-        private void OnBulkEdit(object sender, EventArgs e)
+        public void OnBulkEdit(object sender, EventArgs e)
         {
             // clear undo/redo state as bulk edits aren't undoable
             this.ResetUndoRedoState();
@@ -2079,7 +2100,7 @@ namespace Carnassial
             this.FileNavigationGrid.Visibility = Visibility.Collapsed;
         }
 
-        private async Task ShowFileAsync(int fileIndex)
+        public async Task ShowFileAsync(int fileIndex)
         {
             await this.ShowFileAsync(fileIndex, true);
         }
@@ -2970,6 +2991,22 @@ namespace Carnassial
                 case Key.Escape:
                     this.FocusFileDisplay();
                     currentKey.Handled = true;
+                    break;
+                case Key.F:
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.MenuEditFind_Click(this, null);
+                    }
+                    break;
+                case Key.F3:
+                    if (Keyboard.Modifiers == ModifierKeys.Shift)
+                    {
+                        this.MenuEditFindNext_Click(this, null);
+                    }
+                    else
+                    {
+                        this.MenuEditFindPrevious_Click(this, null);
+                    }
                     break;
                 case Key.G:
                     if (Keyboard.Modifiers == ModifierKeys.Control)

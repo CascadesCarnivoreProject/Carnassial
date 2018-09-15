@@ -11,7 +11,7 @@ namespace Carnassial.Data
     public class FileTable : SQLiteTable<ImageRow>
     {
         public Dictionary<string, SqlDataType> StandardColumnDataTypesByName { get; private set; }
-        public Dictionary<string, FileTableUserColumn> UserColumnsByName { get; private set; }
+        public Dictionary<string, FileTableColumn> UserColumnsByName { get; private set; }
         public int UserCounters { get; private set; }
         public int UserFlags { get; private set; }
         public int UserNotesAndChoices { get; private set; }
@@ -20,14 +20,14 @@ namespace Carnassial.Data
         {
             this.StandardColumnDataTypesByName = new Dictionary<string, SqlDataType>(StringComparer.Ordinal)
             {
-                { Constant.FileColumn.Classification, SqlDataType.String },
+                { Constant.FileColumn.Classification, SqlDataType.Integer },
                 { Constant.FileColumn.DateTime, SqlDataType.DateTime },
                 { Constant.FileColumn.DeleteFlag, SqlDataType.Boolean },
                 { Constant.FileColumn.File, SqlDataType.String },
                 { Constant.FileColumn.RelativePath, SqlDataType.String },
                 { Constant.FileColumn.UtcOffset, SqlDataType.Real }
             };
-            this.UserColumnsByName = new Dictionary<string, FileTableUserColumn>(StringComparer.Ordinal);
+            this.UserColumnsByName = new Dictionary<string, FileTableColumn>(StringComparer.Ordinal);
         }
 
         public static SQLiteTableSchema CreateSchema(ControlTable controls)
@@ -217,7 +217,7 @@ namespace Carnassial.Data
                 }
                 else
                 {
-                    FileTableUserColumn userColumn = this.UserColumnsByName[column];
+                    FileTableColumn userColumn = this.UserColumnsByName[column];
                     switch (userColumn.Control.Type)
                     {
                         case ControlType.Counter:
@@ -326,7 +326,7 @@ namespace Carnassial.Data
                         utcOffsetIndex = columnIndex;
                         break;
                     default:
-                        FileTableUserColumn userColumn = this.UserColumnsByName[column];
+                        FileTableColumn userColumn = this.UserColumnsByName[column];
                         int dataIndex;
                         switch (userColumn.DataType)
                         {
@@ -384,7 +384,7 @@ namespace Carnassial.Data
                 file.DateTimeOffset = DateTimeHandler.FromDatabaseDateTimeOffset(reader.GetDateTime(dateTimeIndex), DateTimeHandler.FromDatabaseUtcOffset(utcOffset));
                 file.DeleteFlag = reader.GetBoolean(deleteFlagIndex);
                 file.ID = reader.GetInt64(idIndex);
-                foreach (FileTableUserColumn userColumn in this.UserColumnsByName.Values)
+                foreach (FileTableColumn userColumn in this.UserColumnsByName.Values)
                 {
                     switch (userColumn.DataType)
                     {
@@ -440,12 +440,12 @@ namespace Carnassial.Data
             {
                 if (control.IsUserControl())
                 {
-                    this.UserColumnsByName.Add(control.DataLabel, new FileTableUserColumn(control));
+                    this.UserColumnsByName.Add(control.DataLabel, new FileTableColumn(control));
                     switch (control.Type)
                     {
                         case ControlType.Counter:
                             string markerColumnName = FileTable.GetMarkerPositionColumnName(control.DataLabel);
-                            FileTableUserColumn markerColumn = new FileTableUserColumn(control)
+                            FileTableColumn markerColumn = new FileTableColumn(control)
                             {
                                 DataType = SqlDataType.Blob
                             };

@@ -268,7 +268,7 @@ namespace Carnassial.UnitTests
                 SearchTerm markedForDeletion = fileDatabase.CustomSelection.SearchTerms.Single(term => String.Equals(term.DataLabel, Constant.FileColumn.DeleteFlag, StringComparison.Ordinal));
                 markedForDeletion.UseForSearching = true;
                 markedForDeletion.Operator = Constant.SearchTermOperator.Equal;
-                markedForDeletion.DatabaseValue = 0;
+                markedForDeletion.DatabaseValue = false;
                 Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 4);
                 fileDatabase.SelectFiles(FileSelection.Custom);
                 Assert.IsTrue(fileDatabase.Files.RowCount == 1);

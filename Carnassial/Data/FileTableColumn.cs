@@ -3,13 +3,13 @@ using System;
 
 namespace Carnassial.Data
 {
-    public class FileTableUserColumn
+    public class FileTableColumn
     {
         public ControlRow Control { get; private set; }
         public int DataIndex { get; set; }
         public SqlDataType DataType { get; set; }
 
-        public FileTableUserColumn(ControlRow control)
+        public FileTableColumn(ControlRow control)
         {
             this.Control = control;
             this.DataIndex = -1;
@@ -28,7 +28,11 @@ namespace Carnassial.Data
                     this.DataType = SqlDataType.Boolean;
                     break;
                 case ControlType.DateTime:
+                    this.DataType = SqlDataType.DateTime;
+                    break;
                 case ControlType.UtcOffset:
+                    this.DataType = SqlDataType.Real;
+                    break;
                 default:
                     throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.Type));
             }

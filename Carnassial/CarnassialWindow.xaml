@@ -88,7 +88,23 @@
                 </MenuItem>
 
                 <!-- edit menu -->
-                <MenuItem Name="MenuEdit" Header="_Edit" IsEnabled="False" SubmenuOpened="MenuEdit_SubmenuOpened">
+                <MenuItem Name="MenuEdit" Header="_Edit" IsEnabled="False">
+                    <MenuItem Name="MenuEditFind" Header="_Find..." Click="MenuEditFind_Click" InputGestureText="Ctrl+F" Style="{StaticResource ApplicationMenuItem}" ToolTip="Find files matching specified criteria.">
+                        <MenuItem.Icon>
+                            <Image Source="Resources/Menu/QuickFind_16x.png" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Name="MenuEditFindNext" Header="Find _next" Click="MenuEditFindNext_Click" InputGestureText="F3" Style="{StaticResource ApplicationMenuItem}" ToolTip="Find the next file matching the current find criteria.">
+                        <MenuItem.Icon>
+                            <Image Source="Resources/Menu/FindNext_16x.png" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Name="MenuEditFindPrevious" Header="Find _previous" Click="MenuEditFindPrevious_Click" InputGestureText="Shift+F3" Style="{StaticResource ApplicationMenuItem}" ToolTip="Find the next file matching the current find criteria.">
+                        <MenuItem.Icon>
+                            <Image Source="Resources/Menu/FindPrevious_16x.png" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator />
                     <MenuItem Name="MenuEditUndo" Header="_Undo" Click="MenuEditUndo_Click" InputGestureText="Ctrl+Z" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="Undo navigation, selection, or changes to the current file.">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/Undo_16x.png" />
@@ -100,7 +116,7 @@
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Header="Values of the _current file" Style="{StaticResource ApplicationMenuItem}">
+                    <MenuItem Header="_Current file" Style="{StaticResource ApplicationMenuItem}">
                         <MenuItem Name="MenuEditCopy" Header="_Copy values" Click="MenuEditCopy_Click" InputGestureText="Ctrl+C" ToolTip="Copy data entered for the current file to the clipboard.">
                             <MenuItem.Icon>
                                 <Image Source="Resources/Menu/Copy_16x.png" />
@@ -134,7 +150,7 @@
                             </MenuItem.Icon>
                         </MenuItem>
                     </MenuItem>
-                    <MenuItem Header="Values of _multiple files" Style="{StaticResource ApplicationMenuItem}">
+                    <MenuItem Header="_Multiple files" Style="{StaticResource ApplicationMenuItem}">
                         <MenuItem Name="MenuEditRereadDateTimesfromFiles" Header="_Reread date/times from files..." Click="MenuEditRereadDateTimesFromFiles_Click" ToolTip="Reread dates and times from all selected files." />
                         <MenuItem Name="MenuEditDaylightSavingsTimeCorrection" Header="Adjust for _daylight savings time..." Click="MenuEditDaylightSavingsTimeCorrection_Click" ToolTip="Correct daylight saving time issues" />
                         <MenuItem Name="MenuEditDateTimeFixedCorrection" Header="Add a _fixed correction value to every date/time..." Click="MenuEditDateTimeFixedCorrection_Click" ToolTip="Correct for dates or times which are all off by a fixed amount, which happens if your camera was not set to the correct date/time." />
@@ -154,8 +170,8 @@
                         <MenuItem Name="MenuEditModifyAmbiguousDates" Header="Correct for ambi_guous dates..." Click="MenuEditCorrectAmbiguousDates_Click" ToolTip="Check and optionally correct ambiguous dates (day-month vs month-day)." />
                         <MenuItem Name="MenuEditSetTimeZone" Header="Set time _zone..." Click="MenuEditSetTimeZone_Click" ToolTip="Reassign the selected files to a particular time zone." />
                     </MenuItem>
-                    <MenuItem Header="_Delete files" Style="{StaticResource ApplicationMenuItem}">
-                        <MenuItem Name="MenuItemToggleCurrentFileDeleteFlag" Header="_Mark or unmark the current file for deletion" Click="MenuEditToggleCurrentFileDeleteFlag_Click" InputGestureText="Delete" ToolTip="Check or uncheck the current file's Delete? box.">
+                    <MenuItem Header="_Delete files" SubmenuOpened="MenuEditDelete_SubmenuOpened" Style="{StaticResource ApplicationMenuItem}">
+                        <MenuItem Name="MenuEditToggleCurrentFileDeleteFlag" Header="_Mark or unmark the current file for deletion" Click="MenuEditToggleCurrentFileDeleteFlag_Click" InputGestureText="Delete" ToolTip="Check or uncheck the current file's Delete? box.">
                             <MenuItem.Icon>
                                 <Image Source="Resources/Menu/ShowHideDeletedItem_16x.png" />
                             </MenuItem.Icon>
@@ -365,7 +381,7 @@
                         <control:AnalysisButtons x:Name="AnalysisButtons" Grid.Column="0" Grid.Row="1" 
                                                  MouseEnterButton="PasteButton_MouseEnter" MouseLeaveButton="PasteButton_MouseLeave" 
                                                  PasteAnalysis="PasteAnalysis_Click" PasteNext="PasteNextValues_Click" PastePrevious="PastePreviousValues_Click" />
-                        <TextBlock Name="MessageBar" Background="{StaticResource ApplicationBorderBackgroundBrush}"  Foreground="{StaticResource ApplicationBorderForegroundBrush}" Grid.Column="0" Grid.Row="2" MinHeight="60" Padding="10,5,2,5" TextWrapping="Wrap" />
+                        <TextBlock Name="MessageBar" Background="{StaticResource ApplicationBorderBackgroundBrush}" Foreground="{StaticResource ApplicationBorderForegroundBrush}" Grid.Column="0" Grid.Row="2" MinHeight="60" Padding="10,5,2,5" TextWrapping="Wrap" />
                     </Grid>
                 </Grid>
             </TabItem>

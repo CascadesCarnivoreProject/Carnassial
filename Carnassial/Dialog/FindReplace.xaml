@@ -1,0 +1,82 @@
+﻿<dialog:FindDialog x:Class="Carnassial.Dialog.FindReplace"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:dialog="clr-namespace:Carnassial.Dialog"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Find and Replace"
+        Loaded="Window_Loaded"
+        MinHeight="250" MinWidth="500" SizeToContent="WidthAndHeight" ShowInTaskbar="False">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TabControl Name="FindReplaceTabs" Margin="5,5,5,5" SelectionChanged="FindReplaceTabs_SelectionChanged" Grid.Column="0" Grid.Row="0">
+            <TabItem Header="Fin_d" Name="FindTab">
+                <Grid Name="FindGrid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Label Grid.Column="0" Grid.Row="0">Find</Label>
+                    <ComboBox Name="FindTerm1Label" SelectionChanged="FindField1Label_SelectionChanged" Grid.Column="1" Grid.Row="0" />
+                    <ComboBox Name="FindTerm1Operator" SelectionChanged="Operator_SelectionChanged" Grid.Column="2" Grid.Row="0" />
+                    <Label Name="FindFieldCombiningLabel" Content="and" Visibility="Hidden" Grid.Column="4" Grid.Row="0" />
+                    <ComboBox Name="FindTerm2Label" SelectionChanged="FindField2Label_SelectionChanged" Grid.Column="1" Grid.Row="1" />
+                    <ComboBox Name="FindTerm2Operator" SelectionChanged="Operator_SelectionChanged" Grid.Column="2" Grid.Row="1" />
+                    <!-- row 2 absorbs unused window height as whitespace and therefore contains no controls -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0" Grid.ColumnSpan="5" Grid.Row="3">
+                        <Button Name="FindPrevious" Padding="10" Margin="10,10,10,10" Click="FindPrevious_Click">Find _previous</Button>
+                        <Button Name="FindNext" IsDefault="True" Padding="10" Margin="10,10,10,10" Click="FindNext_Click">_Find next</Button>
+                        <Button Name="FindClose" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Padding="10" Margin="10,10,10,10" Click="CloseButton_Click">_Close</Button>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Re_place" Name="ReplaceTab">
+                <Grid Name="ReplaceGrid">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Label Grid.Column="0" Grid.Row="0">Find</Label>
+                    <ComboBox Name="ReplaceTerm1Label" SelectionChanged="ReplaceField1Label_SelectionChanged" Grid.Column="1" Grid.Row="0" />
+                    <ComboBox Name="ReplaceTerm1Operator" SelectionChanged="Operator_SelectionChanged" Grid.Column="2" Grid.Row="0" />
+                    <Label Name="ReplaceFieldCombiningLabel" Content="and" Visibility="Hidden" Grid.Column="4" Grid.Row="0" />
+                    <ComboBox Name="ReplaceTerm2Label" SelectionChanged="ReplaceField2Label_SelectionChanged" Grid.Column="1" Grid.Row="1" />
+                    <ComboBox Name="ReplaceTerm2Operator" SelectionChanged="Operator_SelectionChanged" Grid.Column="2" Grid.Row="1" />
+                    <Label Grid.Column="0" Grid.Row="2">Replace with</Label>
+                    <Label Name="ReplaceLabel" VerticalContentAlignment="Center" Grid.Column="1" Grid.Row="2" />
+                    <Label VerticalContentAlignment="Center" Grid.Column="2" Grid.Row="2">=</Label>
+                    <!-- row 3 absorbs unused window height as whitespace and therefore contains no controls -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0" Grid.ColumnSpan="5" Grid.Row="4" Grid.Column="2">
+                        <Button Name="ReplaceNext" IsDefault="True" Padding="10" Margin="10,10,10,10" Click="ReplaceNext_Click">_Replace next</Button>
+                        <Button Name="ReplaceAll" Padding="10" Margin="10,10,10,10" Click="ReplaceAll_Click">Replace _all</Button>
+                        <Button Name="ReplaceClose" IsCancel="True" Padding="10" Margin="10,10,10,10" Click="CloseButton_Click">_Close</Button>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+        <TextBlock Name="MessageBar" Background="{StaticResource ApplicationBorderBackgroundBrush}" Foreground="{StaticResource ApplicationBorderForegroundBrush}" Grid.Column="0" Grid.Row="1" Padding="10,5,5,5" TextWrapping="Wrap" />
+    </Grid>
+</dialog:FindDialog>

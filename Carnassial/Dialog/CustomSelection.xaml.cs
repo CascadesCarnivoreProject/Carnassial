@@ -1,33 +1,24 @@
-﻿using Carnassial.Control;
-using Carnassial.Data;
+﻿using Carnassial.Data;
 using Carnassial.Database;
 using Carnassial.Util;
 using System;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 
 namespace Carnassial.Dialog
 {
     /// <summary>
     /// A dialog allowing a user to create a custom selection by setting conditions on data fields.
     /// </summary>
-    public partial class CustomSelection : Window
+    public partial class CustomSelection : FindDialog
     {
-        private const int DefaultControlWidth = 200;
-        private const double DefaultSearchCriteriaWidth = Double.NaN; // Same as xaml Width = "Auto"
-        private const int ValueTextBoxHeight = 22;
-
         private const int LabelColumn = 0;
         private const int OperatorColumn = 1;
         private const int ValueColumn = 2;
         private const int SearchCriteriaColumn = 3;
         private const int DuplicateColumn = 4;
-
-        private static readonly Thickness GridCellMargin = new Thickness(5, 2, 5, 2);
 
         private FileDatabase fileDatabase;
         private TimeZoneInfo imageSetTimeZone;
@@ -39,6 +30,7 @@ namespace Carnassial.Dialog
             this.fileDatabase = database;
             this.imageSetTimeZone = this.fileDatabase.ImageSet.GetTimeZoneInfo();
             this.Owner = owner;
+            this.SearchTermValueChanged += this.UpdateSearchCriteriaFeedback;
             this.TermCombiningAnd.IsChecked = this.fileDatabase.CustomSelection.TermCombiningOperator == LogicalOperator.And;
             this.TermCombiningOr.IsChecked = !this.TermCombiningAnd.IsChecked;
             this.TermCombiningAnd.Checked += this.AndOrRadioButton_Checked;
@@ -68,7 +60,7 @@ namespace Carnassial.Dialog
             {
                 Content = "_" + searchTerm.Label,
                 ContextMenu = new ContextMenu(),
-                Margin = CustomSelection.GridCellMargin,
+                Margin = Constant.UserInterface.FindCellMargin,
                 VerticalAlignment = VerticalAlignment.Center,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 IsChecked = searchTerm.UseForSearching
@@ -87,55 +79,15 @@ namespace Carnassial.Dialog
             Grid.SetColumn(controlLabel, CustomSelection.LabelColumn);
             this.SearchTerms.Children.Add(controlLabel);
 
-            // operators allowed for search term
-            string[] termOperators;
-            switch (searchTerm.ControlType)
-            {
-                case ControlType.Counter:
-                case ControlType.DateTime:
-                case ControlType.FixedChoice:
-                    // no globs in Counters they use only numbers
-                    // no globs in Dates the date entries are constrained by the date picker
-                    // no globs in Fixed Choices as choice entries are constrained by menu selection
-                    termOperators = new string[]
-                    {
-                        Constant.SearchTermOperator.Equal,
-                        Constant.SearchTermOperator.NotEqual,
-                        Constant.SearchTermOperator.LessThan,
-                        Constant.SearchTermOperator.GreaterThan,
-                        Constant.SearchTermOperator.LessThanOrEqual,
-                        Constant.SearchTermOperator.GreaterThanOrEqual
-                    };
-                    break;
-                case ControlType.Flag:
-                    termOperators = new string[]
-                    {
-                        Constant.SearchTermOperator.Equal,
-                        Constant.SearchTermOperator.NotEqual
-                    };
-                    break;
-                default:
-                    termOperators = new string[]
-                    {
-                        Constant.SearchTermOperator.Equal,
-                        Constant.SearchTermOperator.NotEqual,
-                        Constant.SearchTermOperator.LessThan,
-                        Constant.SearchTermOperator.GreaterThan,
-                        Constant.SearchTermOperator.LessThanOrEqual,
-                        Constant.SearchTermOperator.GreaterThanOrEqual,
-                        Constant.SearchTermOperator.Glob
-                    };
-                    break;
-            }
-
             // term operator combo box
             ComboBox operatorsComboBox = new ComboBox()
             {
                 IsEnabled = searchTerm.UseForSearching,
-                ItemsSource = termOperators,
-                Margin = CustomSelection.GridCellMargin,
+                ItemsSource = this.GetOperators(searchTerm),
+                Margin = Constant.UserInterface.FindCellMargin,
                 SelectedValue = searchTerm.Operator,
-                Width = 60
+                Tag = searchTerm,
+                Width = Constant.UserInterface.FindOperatorWidth
             };
             operatorsComboBox.SelectionChanged += this.Operator_SelectionChanged; // Create the callback that is invoked whenever the user changes the expresison
 
@@ -144,113 +96,18 @@ namespace Carnassial.Dialog
             this.SearchTerms.Children.Add(operatorsComboBox);
 
             // value column: The value used for comparison in the search
-            ControlType controlType = searchTerm.ControlType;
-            switch (controlType)
-            {
-                case ControlType.Counter:
-                case ControlType.Note:
-                    AutocompleteTextBox textBoxValue = new AutocompleteTextBox()
-                    {
-                        AllowLeadingWhitespace = true,
-                        Autocompletions = this.fileDatabase.GetDistinctValuesInFileDataColumn(searchTerm.DataLabel),
-                        IsEnabled = searchTerm.UseForSearching,
-                        Text = searchTerm.DatabaseValue?.ToString(),
-                        Margin = CustomSelection.GridCellMargin,
-                        Width = CustomSelection.DefaultControlWidth,
-                        Height = CustomSelection.ValueTextBoxHeight,
-                        TextWrapping = TextWrapping.NoWrap,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        VerticalContentAlignment = VerticalAlignment.Center
-                    };
-
-                    textBoxValue.TextAutocompleted += this.SearchTermDatabaseValue_TextAutocompleted;
-                    if (controlType == ControlType.Counter)
-                    {
-                        // accept only numbers in counter text boxes
-                        textBoxValue.PreviewTextInput += this.Counter_PreviewTextInput;
-                        DataObject.AddPastingHandler(textBoxValue, this.Counter_Paste);
-                    }
-
-                    Grid.SetRow(textBoxValue, gridRowIndex);
-                    Grid.SetColumn(textBoxValue, CustomSelection.ValueColumn);
-                    this.SearchTerms.Children.Add(textBoxValue);
-                    break;
-                case ControlType.DateTime:
-                    DateTime dateTime = (DateTime)this.fileDatabase.CustomSelection.SearchTerms[gridRowIndex - 1].DatabaseValue;
-
-                    DateTimeOffsetPicker dateValue = new DateTimeOffsetPicker()
-                    {
-                        IsEnabled = searchTerm.UseForSearching,
-                        Value = dateTime,
-                        Width = CustomSelection.DefaultControlWidth
-                    };
-                    dateValue.ValueChanged += this.DateTime_ValueChanged;
-
-                    Grid.SetRow(dateValue, gridRowIndex);
-                    Grid.SetColumn(dateValue, CustomSelection.ValueColumn);
-                    this.SearchTerms.Children.Add(dateValue);
-                    break;
-                case ControlType.FixedChoice:
-                    ComboBox comboBoxValue = new ComboBox()
-                    {
-                        IsEnabled = searchTerm.UseForSearching,
-                        Width = CustomSelection.DefaultControlWidth,
-                        Margin = CustomSelection.GridCellMargin
-                    };
-
-                    // create the dropdown menu
-                    comboBoxValue.ItemsSource = searchTerm.WellKnownValues;
-                    comboBoxValue.SelectedItem = searchTerm.DatabaseValue;
-                    comboBoxValue.SelectionChanged += this.FixedChoice_SelectionChanged;
-                    Grid.SetRow(comboBoxValue, gridRowIndex);
-                    Grid.SetColumn(comboBoxValue, CustomSelection.ValueColumn);
-                    this.SearchTerms.Children.Add(comboBoxValue);
-                    break;
-                case ControlType.Flag:
-                    CheckBox flagCheckBox = new CheckBox()
-                    {
-                        Margin = CustomSelection.GridCellMargin,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        HorizontalAlignment = HorizontalAlignment.Left,
-                        IsChecked = (int)searchTerm.DatabaseValue == 1 ? true : false,
-                        IsEnabled = searchTerm.UseForSearching
-                    };
-                    flagCheckBox.Checked += this.Flag_CheckedOrUnchecked;
-                    flagCheckBox.Unchecked += this.Flag_CheckedOrUnchecked;
-
-                    Debug.Assert(flagCheckBox.IsChecked.HasValue, "Expected check box to be either checked or unchecked but it doesn't have a value.");
-                    searchTerm.DatabaseValue = flagCheckBox.IsChecked.Value ? 1 : 0;
-
-                    Grid.SetRow(flagCheckBox, gridRowIndex);
-                    Grid.SetColumn(flagCheckBox, CustomSelection.ValueColumn);
-                    this.SearchTerms.Children.Add(flagCheckBox);
-                    break;
-                case ControlType.UtcOffset:
-                    UtcOffsetPicker utcOffsetValue = new UtcOffsetPicker()
-                    {
-                        IsEnabled = searchTerm.UseForSearching,
-                        IsTabStop = true,
-                        Value = (TimeSpan)searchTerm.DatabaseValue,
-                        Width = CustomSelection.DefaultControlWidth
-                    };
-                    utcOffsetValue.ValueChanged += this.UtcOffset_ValueChanged;
-
-                    Grid.SetRow(utcOffsetValue, gridRowIndex);
-                    Grid.SetColumn(utcOffsetValue, CustomSelection.ValueColumn);
-                    this.SearchTerms.Children.Add(utcOffsetValue);
-                    break;
-                default:
-                    throw new NotSupportedException(String.Format("Unhandled control type '{0}'.", controlType));
-            }
+            UIElement valueControl = this.CreateValueControl(searchTerm, this.fileDatabase);
+            Grid.SetRow(valueControl, gridRowIndex);
+            Grid.SetColumn(valueControl, CustomSelection.ValueColumn);
+            this.SearchTerms.Children.Add(valueControl);
 
             // search criteria
             // Indicates the query expression for this term.
             TextBlock searchCriteria = new TextBlock()
             {
                 HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = CustomSelection.GridCellMargin,
+                Margin = Constant.UserInterface.FindCellMargin,
                 VerticalAlignment = VerticalAlignment.Center,
-                Width = CustomSelection.DefaultSearchCriteriaWidth
             };
 
             Grid.SetRow(searchCriteria, gridRowIndex);
@@ -269,67 +126,6 @@ namespace Carnassial.Dialog
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = false;
-        }
-
-        // accept only numbers in counter textboxes
-        private void Counter_Paste(object sender, DataObjectPastingEventArgs args)
-        {
-            bool isText = args.SourceDataObject.GetDataPresent(DataFormats.UnicodeText, true);
-            if (!isText)
-            {
-                args.CancelCommand();
-            }
-
-            string text = args.SourceDataObject.GetData(DataFormats.UnicodeText) as string;
-            if (Utilities.IsDigits(text) == false)
-            {
-                args.CancelCommand();
-            }
-        }
-
-        private void Counter_PreviewTextInput(object sender, TextCompositionEventArgs args)
-        {
-            // counters accept only numbers
-            args.Handled = !Utilities.IsDigits(args.Text);
-        }
-
-        private void DateTime_ValueChanged(DateTimeOffsetPicker datePicker, DateTimeOffset newDateTime)
-        {
-            int row = Grid.GetRow(datePicker);
-            this.fileDatabase.CustomSelection.SearchTerms[row - 1].DatabaseValue = datePicker.Value.UtcDateTime;
-            this.UpdateSearchCriteriaFeedback();
-        }
-
-        private void Duplicate_Click(object sender, RoutedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void FixedChoice_SelectionChanged(object sender, SelectionChangedEventArgs args)
-        {
-            ComboBox comboBox = sender as ComboBox;
-            int row = Grid.GetRow(comboBox);
-
-            SearchTerm searchTerm = this.fileDatabase.CustomSelection.SearchTerms[row - 1];
-            if (String.Equals(searchTerm.DataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal))
-            {
-                searchTerm.DatabaseValue = (int)comboBox.SelectedValue;
-            }
-            else
-            {
-                searchTerm.DatabaseValue = (string)comboBox.SelectedValue;
-            }
-            this.UpdateSearchCriteriaFeedback();
-        }
-
-        private void Flag_CheckedOrUnchecked(object sender, RoutedEventArgs e)
-        {
-            CheckBox checkBox = sender as CheckBox;
-            int row = Grid.GetRow(checkBox);
-
-            Debug.Assert(checkBox.IsChecked.Value, "Expected check box to be either checked or unchecked but it doesn't have a value.");
-            this.fileDatabase.CustomSelection.SearchTerms[row - 1].DatabaseValue = checkBox.IsChecked.Value ? 1 : 0;
-            this.UpdateSearchCriteriaFeedback();
         }
 
         // get the corresponding grid element from a given column, row
@@ -393,17 +189,6 @@ namespace Carnassial.Dialog
             this.UpdateSearchCriteriaFeedback();
         }
 
-        // Operator: The user has selected a new expression
-        // - set its corresponding search term in the searchList data structure
-        // - update the UI to show the search criteria 
-        private void Operator_SelectionChanged(object sender, SelectionChangedEventArgs args)
-        {
-            ComboBox comboBox = sender as ComboBox;
-            int row = Grid.GetRow(comboBox);
-            this.fileDatabase.CustomSelection.SearchTerms[row - 1].Operator = comboBox.SelectedValue.ToString(); // Set the corresponding expression to the current selection
-            this.UpdateSearchCriteriaFeedback();
-        }
-
         private void Reset_Click(object sender, RoutedEventArgs e)
         {
             // disable all search terms
@@ -414,34 +199,8 @@ namespace Carnassial.Dialog
             }
         }
 
-        // Value: The user has selected a new value
-        // - set its corresponding search term in the searchList data structure
-        // - update the UI to show the search criteria 
-        private void SearchTermDatabaseValue_TextAutocompleted(object sender, TextChangedEventArgs args)
-        {
-            TextBox textBox = sender as TextBox;
-            int row = Grid.GetRow(textBox);
-            SearchTerm searchTerm = this.fileDatabase.CustomSelection.SearchTerms[row - 1];
-            if (searchTerm.ControlType == ControlType.Counter)
-            {
-                searchTerm.DatabaseValue = Int32.Parse(textBox.Text, NumberStyles.AllowLeadingSign, CultureInfo.CurrentCulture);
-            }
-            else
-            {
-                searchTerm.DatabaseValue = textBox.Text;
-            }
-            this.UpdateSearchCriteriaFeedback();
-        }
-
-        private void UtcOffset_ValueChanged(TimeSpanPicker utcOffsetPicker, TimeSpan newTimeSpan)
-        {
-            int row = Grid.GetRow(utcOffsetPicker);
-            this.fileDatabase.CustomSelection.SearchTerms[row - 1].DatabaseValue = utcOffsetPicker.Value.TotalHours;
-            this.UpdateSearchCriteriaFeedback();
-        }
-
         // Updates the search criteria shown across all rows to reflect the contents of the search list,
-        // which also show or hides the search term feedback for that row.
+        // which also shows or hides the search term feedback for that row.
         private void UpdateSearchCriteriaFeedback()
         {
             // loop runs backwards for final term combining operator check
@@ -454,7 +213,7 @@ namespace Carnassial.Dialog
 
                 if (searchTerm.UseForSearching == false)
                 {
-                    // The search term is not used for searching, so clear the feedback field
+                    // search term is not used for searching, so clear the feedback field
                     searchCriteria.Text = String.Empty;
                     continue;
                 }
@@ -475,6 +234,11 @@ namespace Carnassial.Dialog
             this.QueryMatches.Text = count > 0 ? count.ToString(CultureInfo.CurrentCulture) : "0";
 
             this.Reset.IsEnabled = lastExpression == false;
+        }
+
+        private void UpdateSearchCriteriaFeedback(SearchTerm searchTerm)
+        {
+            this.UpdateSearchCriteriaFeedback();
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)

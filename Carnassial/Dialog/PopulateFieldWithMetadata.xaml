@@ -1,11 +1,7 @@
 ﻿<Window x:Class="Carnassial.Dialog.PopulateFieldWithMetadata"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:control="clr-namespace:Carnassial.Control"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        mc:Ignorable="d"
         Title="Populate a data field with metadata." 
         Loaded="Window_Loaded"
 		MinHeight="600" MinWidth="768" Height="856" Width="840" ShowInTaskbar="False">

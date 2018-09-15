@@ -188,15 +188,6 @@ namespace Carnassial.Data
                 return this.ConvertWellKnownValue((string)value);
             }
 
-            if (typeof(TColumnType) == typeof(bool))
-            {
-                int valueAsInt = (int)value;
-                if ((valueAsInt != 0) && (valueAsInt != 1))
-                {
-                    throw new ArgumentOutOfRangeException(nameof(value), "Valid integer values for boolean database columns are 0 and 1.");
-                }
-                return valueAsInt;
-            }
             if (typeof(TColumnType) == typeof(DateTime))
             {
                 DateTime dateTime = (DateTime)value;
@@ -215,11 +206,15 @@ namespace Carnassial.Data
             if (typeof(TColumnType) == typeof(bool))
             {
                 int valueAsInt = Int32.Parse(value, NumberStyles.None, Constant.InvariantCulture);
-                if ((valueAsInt != 0) && (valueAsInt != 1))
+                if (valueAsInt == 0)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(value), "Valid integer values for boolean database columns are 0 and 1.");
+                    return false;
                 }
-                return valueAsInt;
+                if (valueAsInt == 1)
+                {
+                    return true;
+                }
+                throw new ArgumentOutOfRangeException(nameof(value), "Valid integer values for boolean database columns are 0 and 1.");
             }
             if (typeof(TColumnType) == typeof(DateTime))
             {
@@ -254,7 +249,7 @@ namespace Carnassial.Data
             string displayValue;
             if (typeof(TColumnType) == typeof(bool))
             {
-                displayValue = (int)this.DatabaseValue == 1 ? Boolean.TrueString : Boolean.FalseString;
+                displayValue = (bool)this.DatabaseValue ? Boolean.TrueString : Boolean.FalseString;
             }
             else if (typeof(TColumnType) == typeof(DateTime))
             {

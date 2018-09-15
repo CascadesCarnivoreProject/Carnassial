@@ -3,7 +3,6 @@ using Carnassial.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Windows;
 
 namespace Carnassial.UnitTests

@@ -559,11 +559,14 @@ namespace Carnassial
             };
         }
 
-        public static class UndoRedo
+        public static class UserInterface
         {
-            public const string CustomSelection = "CustomSelection";
-            public const string FileIndex = "FileIndex";
-            public const string FileOrdering = "FileOrdering";
+            public const double FindOperatorWidth = 60.0;
+            public const int FindTextBoxHeight = 22;
+            public const int FindValueWidth = 200;
+            public const string NoFindValue = "(none)";
+
+            public static readonly Thickness FindCellMargin = new Thickness(5, 2, 5, 2);
         }
 
         [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1310:FieldNamesMustNotContainUnderscore", Justification = "Win32 naming.")]

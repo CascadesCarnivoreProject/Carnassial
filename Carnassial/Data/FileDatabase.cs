@@ -177,12 +177,12 @@ namespace Carnassial.Data
         }
 
         // drop the data (including markers) associated with the files identified by the list of IDs.
-        public void DeleteFiles(List<long> fileIDs)
+        public int DeleteFiles(List<long> fileIDs)
         {
             if (fileIDs.Count < 1)
             {
                 // nothing to do
-                return;
+                return 0;
             }
 
             using (SQLiteTransaction transaction = this.Connection.BeginTransaction())
@@ -204,6 +204,7 @@ namespace Carnassial.Data
                 transaction.Commit();
             }
             this.RowsDroppedSinceLastBackup += fileIDs.Count;
+            return fileIDs.Count;
         }
 
         // swap the days and months of all file dates between the start and end index
@@ -662,6 +663,25 @@ namespace Carnassial.Data
             this.Connection = this.OpenConnection(newFilePath);
         }
 
+        public int ReplaceAllInFiles(FileFindReplace findReplace)
+        {
+            using (FileTransactionSequence updateFiles = this.CreateUpdateFileTransaction())
+            {
+                foreach (ImageRow file in this.Files)
+                {
+                    if (findReplace.Matches(file))
+                    {
+                        if (findReplace.TryReplace(file))
+                        {
+                            updateFiles.AddFile(file);
+                        }
+                    }
+                }
+                updateFiles.Commit();
+                return updateFiles.RowsCommitted;
+            }
+        }
+
         /// <summary> 
         /// Rebuild the in memory file table with all files in the database table which match the specified selection.
         /// </summary>
@@ -734,12 +754,12 @@ namespace Carnassial.Data
         }
 
         // set one property on all rows in the selection to a given value
-        public void UpdateFiles(ImageRow valueSource, DataEntryControl control)
+        public int UpdateFiles(ImageRow valueSource, DataEntryControl control)
         {
-            this.UpdateFiles(valueSource, control, 0, this.CurrentlySelectedFileCount - 1);
+            return this.UpdateFiles(valueSource, control, 0, this.CurrentlySelectedFileCount - 1);
         }
 
-        public void UpdateFiles(ImageRow valueSource, DataEntryControl control, int fromIndex, int toIndex)
+        public int UpdateFiles(ImageRow valueSource, DataEntryControl control, int fromIndex, int toIndex)
         {
             if (fromIndex < 0)
             {
@@ -766,6 +786,7 @@ namespace Carnassial.Data
             {
                 updateFiles.UpdateFiles(filesToUpdate);
                 updateFiles.Commit();
+                return updateFiles.RowsCommitted;
             }
         }
 
