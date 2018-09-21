@@ -10,6 +10,7 @@
     <SolidColorBrush x:Key="ApplicationBorderForegroundBrush" Color="White" />
     <SolidColorBrush x:Key="ControlGridDisabledCellBackground" Color="LightGray" />
     <SolidColorBrush x:Key="ControlGridDisabledCellForeground" Color="Gray" />
+    <SolidColorBrush x:Key="DialogBackgroundBrush" Color="LightGray" />
     <SolidColorBrush x:Key="RedBrush" Color="Red" />
 
     <Style x:Key="ApplicationGrid" TargetType="Grid">
@@ -59,8 +60,8 @@
         <Setter Property="Text" Value="{Binding Path=Title, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType=Window}}" />
         <Setter Property="VerticalAlignment" Value="Bottom" />
     </Style>
-    
-    <Style x:Key="MainWindow" TargetType="Window">
+
+    <Style x:Key="ApplicationWindow" TargetType="Window">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Window">
@@ -84,6 +85,16 @@
                 <WindowChrome CornerRadius="0" GlassFrameThickness="0" />
             </Setter.Value>
         </Setter>
+    </Style>
+
+    <Style x:Key="DialogGrid" TargetType="Grid">
+        <Setter Property="Background" Value="{StaticResource DialogBackgroundBrush}" />
+        <Setter Property="Margin" Value="4,4,4,4" />
+    </Style>
+    <Style x:Key="DialogHorizontalRule" TargetType="Rectangle">
+        <Setter Property="Fill" Value="#FF868686" />
+        <Setter Property="Height" Value="1" />
+        <Setter Property="Margin" Value="0,3,0,3" />
     </Style>
 
     <Style x:Key="SystemCloseButton" TargetType="Button">

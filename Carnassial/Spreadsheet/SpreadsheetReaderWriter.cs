@@ -206,7 +206,11 @@ namespace Carnassial.Spreadsheet
                         string dataLabel = control.DataLabel;
                         columns.Add(dataLabel);
 
-                        if (fileDatabase.Files.StandardColumnDataTypesByName.TryGetValue(dataLabel, out SqlDataType dataType))
+                        if (String.Equals(dataLabel, Constant.FileColumn.Classification, StringComparison.OrdinalIgnoreCase))
+                        {
+                            columnDataTypes.Add(SqlDataType.String);
+                        }
+                        else if (fileDatabase.Files.StandardColumnDataTypesByName.TryGetValue(dataLabel, out SqlDataType dataType))
                         {
                             columnDataTypes.Add(dataType);
                         }
@@ -570,6 +574,7 @@ namespace Carnassial.Spreadsheet
                                 }
 
                                 // add cell's value to row
+                                Debug.Assert(value != null, "Value unexpectedly null.");
                                 this.currentRow[column] = value;
                                 rowReader.ReadEndElement();
                             }

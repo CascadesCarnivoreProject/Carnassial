@@ -177,6 +177,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ApplicationWindow.cs" />
     <Compile Include="Command\CustomSelectionChange.cs" />
     <Compile Include="Command\FileChange.cs" />
     <Compile Include="Command\FileMarkerChange.cs" />

@@ -6,7 +6,7 @@ using System.Windows.Controls;
 
 namespace Carnassial.Dialog
 {
-    public partial class RenameFileDatabaseFile : Window
+    public partial class RenameFileDatabaseFile : WindowWithSystemMenu
     {
         public string NewFileName { get; private set; }
 

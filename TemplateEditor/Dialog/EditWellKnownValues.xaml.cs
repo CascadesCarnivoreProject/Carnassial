@@ -7,7 +7,7 @@ using System.Windows.Controls;
 
 namespace Carnassial.Editor.Dialog
 {
-    public partial class EditWellKnownValues : Window
+    public partial class EditWellKnownValues : WindowWithSystemMenu
     {
         private static readonly string[] NewLineDelimiter = { Environment.NewLine };
 

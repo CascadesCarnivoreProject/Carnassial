@@ -1,6 +1,5 @@
 ﻿using Carnassial.Control;
 using Carnassial.Data;
-using Carnassial.Database;
 using Carnassial.Dialog;
 using Carnassial.Editor.Dialog;
 using Carnassial.Editor.Util;
@@ -28,7 +27,7 @@ using SaveFileDialog = System.Windows.Forms.SaveFileDialog;
 
 namespace Carnassial.Editor
 {
-    public partial class EditorWindow : WindowWithSystemMenu, IDisposable
+    public partial class EditorWindow : ApplicationWindow, IDisposable
     {
         // state tracking
         private bool controlDataGridBeingUpdatedByCode;
@@ -279,10 +278,23 @@ namespace Carnassial.Editor
                             e.Handled = !Utilities.IsDigits(e.Text);
                             break;
                         case ControlType.Flag:
+                            bool syncControl = false;
                             if (String.Equals(e.Text, Constant.Sql.FalseString, StringComparison.Ordinal) ||
                                 String.Equals(e.Text, Constant.Sql.TrueString, StringComparison.Ordinal))
                             {
                                 control.DefaultValue = e.Text;
+                                syncControl = true;
+                            }
+                            else if (Boolean.FalseString.StartsWith(e.Text, StringComparison.OrdinalIgnoreCase))
+                            {
+                                control.DefaultValue = Constant.Sql.FalseString;
+                            }
+                            else if (Boolean.TrueString.StartsWith(e.Text, StringComparison.OrdinalIgnoreCase))
+                            {
+                                control.DefaultValue = Constant.Sql.TrueString;
+                            }
+                            if (syncControl)
+                            {
                                 this.SyncControlToDatabaseAndPreviews(control);
                             }
                             e.Handled = true;
@@ -326,6 +338,22 @@ namespace Carnassial.Editor
         /// </summary>
         private void ControlDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            // depending on the bindings used DataGrid may not fire cell edit or row edit ending events
+            // In such cases, changes to the previous selection might not be synchronized.
+            if (e.RemovedItems != null)
+            {
+                foreach (object removedItem in e.RemovedItems)
+                {
+                    if (removedItem is ControlRow previouslySelectedControl)
+                    {
+                        if (previouslySelectedControl.HasChanges)
+                        {
+                            this.SyncControlToDatabaseAndPreviews(previouslySelectedControl);
+                        }
+                    }
+                }
+            }
+
             ControlRow control = (ControlRow)this.ControlDataGrid.SelectedItem;
             if (control == null)
             {
@@ -560,8 +588,15 @@ namespace Carnassial.Editor
 
         private void MenuFileCloseTemplate_Click(object sender, RoutedEventArgs e)
         {
-            // flush any pending edits to the currently selected row
+            // apply any pending edits, including those DataGrid may not fire cell or row edit ending events for
             this.ControlDataGrid.CommitEdit();
+            if (this.ControlDataGrid.SelectedItem is ControlRow selectedControl)
+            {
+                if (selectedControl != null)
+                {
+                    this.templateDatabase.TrySyncControlToDatabase(selectedControl);
+                }
+            }
 
             this.EnableOrDisableMenusAndControls(false);
         }
@@ -973,8 +1008,8 @@ namespace Carnassial.Editor
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            // apply any pending edits
-            this.ControlDataGrid.CommitEdit();
+            this.MenuFileCloseTemplate_Click(this, null);
+
             // persist state to registry
             this.userSettings.WriteToRegistry();
         }

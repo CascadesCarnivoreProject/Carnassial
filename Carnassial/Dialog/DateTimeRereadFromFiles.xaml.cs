@@ -5,7 +5,7 @@ using System.Windows;
 
 namespace Carnassial.Dialog
 {
-    public partial class DateTimeRereadFromFiles : Window
+    public partial class DateTimeRereadFromFiles : WindowWithSystemMenu
     {
         private FileDatabase fileDatabase;
         private TimeSpan desiredStatusInterval;

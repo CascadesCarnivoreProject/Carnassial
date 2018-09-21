@@ -1,6 +1,7 @@
 ﻿using Carnassial.Database;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Carnassial.Data
@@ -71,7 +72,9 @@ namespace Carnassial.Data
                 defaultControl = visibleControls[0];
             }
 
-            this.FindTerm1 = defaultControl.CreateSearchTerm();
+            SearchTerm findTerm1 = defaultControl.CreateSearchTerm();
+            findTerm1.UseForSearching = true;
+            this.FindTerm1 = findTerm1;
         }
 
         public SearchTerm FindTerm1
@@ -82,6 +85,7 @@ namespace Carnassial.Data
             }
             set
             {
+                Debug.Assert(value.UseForSearching, "Search term is disabled.");
                 this.findTerm1 = value;
                 this.matchTerm1 = this.GetMatch(value);
             }
@@ -95,6 +99,7 @@ namespace Carnassial.Data
             }
             set
             {
+                Debug.Assert((value == null) || value.UseForSearching, "Search term is disabled.");
                 this.findTerm2 = value;
                 this.matchTerm2 = this.GetMatch(value);
             }

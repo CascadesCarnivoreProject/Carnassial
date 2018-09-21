@@ -5,7 +5,7 @@ using System.Windows.Documents;
 
 namespace Carnassial.Dialog
 {
-    public partial class TemplateSynchronization : Window
+    public partial class TemplateSynchronization : WindowWithSystemMenu
     {
         public TemplateSynchronization(List<string> errors, Window owner)
         {

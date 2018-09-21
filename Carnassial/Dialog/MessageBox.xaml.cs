@@ -4,7 +4,7 @@ using System.Windows;
 
 namespace Carnassial.Dialog
 {
-    public partial class MessageBox : Window
+    public partial class MessageBox : WindowWithSystemMenu
     {
         public MessageBox(string title, Window owner)
             : this(title, owner, MessageBoxButton.OK)

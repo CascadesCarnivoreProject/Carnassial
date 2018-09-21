@@ -34,7 +34,7 @@ namespace Carnassial.Control
             DateTimeOffset value;
             if (valueAsObject is string)
             {
-                if (DateTimeHandler.TryParseDatabaseDateTime((string)valueAsObject, out value) == false)
+                if (DateTimeHandler.TryParseDateTimeOffset((string)valueAsObject, out value) == false)
                 {
                     if (DateTimeHandler.TryParseDisplayDateTime((string)valueAsObject, out value) == false)
                     {

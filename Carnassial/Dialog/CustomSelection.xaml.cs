@@ -2,10 +2,12 @@
 using Carnassial.Database;
 using Carnassial.Util;
 using System;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace Carnassial.Dialog
 {
@@ -30,7 +32,6 @@ namespace Carnassial.Dialog
             this.fileDatabase = database;
             this.imageSetTimeZone = this.fileDatabase.ImageSet.GetTimeZoneInfo();
             this.Owner = owner;
-            this.SearchTermValueChanged += this.UpdateSearchCriteriaFeedback;
             this.TermCombiningAnd.IsChecked = this.fileDatabase.CustomSelection.TermCombiningOperator == LogicalOperator.And;
             this.TermCombiningOr.IsChecked = !this.TermCombiningAnd.IsChecked;
             this.TermCombiningAnd.Checked += this.AndOrRadioButton_Checked;
@@ -38,9 +39,16 @@ namespace Carnassial.Dialog
 
             // create a new row for each search term. 
             // Each row specifies a particular control and how it can be searched
-            for (int searchTermIndex = 0; searchTermIndex < this.fileDatabase.CustomSelection.SearchTerms.Count; ++searchTermIndex)
+            for (int index = 0; index < this.fileDatabase.CustomSelection.SearchTerms.Count; ++index)
             {
-                this.AddSearchTermToGrid(this.fileDatabase.CustomSelection.SearchTerms[searchTermIndex], searchTermIndex);
+                SearchTerm searchTerm = this.fileDatabase.CustomSelection.SearchTerms[index];
+                this.AddSearchTermToGrid(searchTerm, index);
+
+                // creating UI controls for the search term triggers data binding calls which fire property change events
+                // Therefore, for efficiency, hook PropertyChanged after the term's UI objects are instantiated and call
+                // UpdateSearchCriteriaFeedback() once after terms are populated.  This also simplifies the feedback logic as
+                // it doesn't have to handle partially populated term UI.
+                searchTerm.PropertyChanged += this.UpdateSearchCriteriaFeedback;
             }
             this.UpdateSearchCriteriaFeedback();
         }
@@ -65,8 +73,8 @@ namespace Carnassial.Dialog
                 HorizontalAlignment = HorizontalAlignment.Left,
                 IsChecked = searchTerm.UseForSearching
             };
-            controlLabel.Checked += this.Select_CheckedOrUnchecked;
-            controlLabel.Unchecked += this.Select_CheckedOrUnchecked;
+            controlLabel.Checked += this.UseForSearching_CheckedOrUnchecked;
+            controlLabel.Unchecked += this.UseForSearching_CheckedOrUnchecked;
 
             MenuItem menuItemDuplicateSearchTerm = new MenuItem();
             menuItemDuplicateSearchTerm.Click += this.MenuItemDuplicateSearchTerm_Click;
@@ -82,14 +90,14 @@ namespace Carnassial.Dialog
             // term operator combo box
             ComboBox operatorsComboBox = new ComboBox()
             {
+                DataContext = searchTerm,
                 IsEnabled = searchTerm.UseForSearching,
                 ItemsSource = this.GetOperators(searchTerm),
                 Margin = Constant.UserInterface.FindCellMargin,
                 SelectedValue = searchTerm.Operator,
-                Tag = searchTerm,
                 Width = Constant.UserInterface.FindOperatorWidth
             };
-            operatorsComboBox.SelectionChanged += this.Operator_SelectionChanged; // Create the callback that is invoked whenever the user changes the expresison
+            BindingOperations.SetBinding(operatorsComboBox, ComboBox.SelectedItemProperty, new Binding(nameof(searchTerm.Operator)));
 
             Grid.SetRow(operatorsComboBox, gridRowIndex);
             Grid.SetColumn(operatorsComboBox, CustomSelection.OperatorColumn);
@@ -128,12 +136,6 @@ namespace Carnassial.Dialog
             this.DialogResult = false;
         }
 
-        // get the corresponding grid element from a given column, row
-        private TElement GetGridElement<TElement>(int column, int row) where TElement : UIElement
-        {
-            return (TElement)this.SearchTerms.Children.Cast<UIElement>().First(control => Grid.GetRow(control) == row && Grid.GetColumn(control) == column);
-        }
-
         private void MenuItemDuplicateSearchTerm_Click(object sender, RoutedEventArgs e)
         {
             // duplicate search term
@@ -151,8 +153,7 @@ namespace Carnassial.Dialog
             {
                 for (int column = 0; column < this.SearchTerms.ColumnDefinitions.Count; ++column)
                 {
-                    UIElement gridElement = this.GetGridElement<UIElement>(column, searchTermIndex + 1); // +1 for header row in grid
-                    this.SearchTerms.Children.Remove(gridElement);
+                    this.SearchTerms.TryRemoveChild(searchTermIndex + 1, column); // +1 for header row in grid
                 }
                 this.AddSearchTermToGrid(this.fileDatabase.CustomSelection.SearchTerms[searchTermIndex], searchTermIndex);
             }
@@ -165,36 +166,12 @@ namespace Carnassial.Dialog
             this.DialogResult = true;
         }
 
-        // Select: When the use checks or unchecks the checkbox for a row
-        // - activate or deactivate the search criteria for that row
-        // - update the searchterms to reflect the new status 
-        // - update the UI to activate or deactivate (or show or hide) its various search terms
-        private void Select_CheckedOrUnchecked(object sender, RoutedEventArgs args)
-        {
-            CheckBox select = sender as CheckBox;
-            int row = Grid.GetRow(select);  // And you have the row number...
-            bool state = select.IsChecked.Value;
-
-            SearchTerm searchTerm = this.fileDatabase.CustomSelection.SearchTerms[row - 1];
-            searchTerm.UseForSearching = select.IsChecked.Value;
-
-            CheckBox label = this.GetGridElement<CheckBox>(CustomSelection.LabelColumn, row);
-            ComboBox expression = this.GetGridElement<ComboBox>(CustomSelection.OperatorColumn, row);
-            UIElement value = this.GetGridElement<UIElement>(CustomSelection.ValueColumn, row);
-
-            label.FontWeight = select.IsChecked.Value ? FontWeights.Bold : FontWeights.Normal;
-            expression.IsEnabled = select.IsChecked.Value;
-            value.IsEnabled = select.IsChecked.Value;
-
-            this.UpdateSearchCriteriaFeedback();
-        }
-
         private void Reset_Click(object sender, RoutedEventArgs e)
         {
             // disable all search terms
             for (int row = 1; row <= this.fileDatabase.CustomSelection.SearchTerms.Count; row++)
             {
-                CheckBox label = this.GetGridElement<CheckBox>(CustomSelection.LabelColumn, row);
+                CheckBox label = this.SearchTerms.GetChild<CheckBox>(row, CustomSelection.LabelColumn);
                 label.IsChecked = false;
             }
         }
@@ -209,7 +186,7 @@ namespace Carnassial.Dialog
             {
                 int row = index + 1; // row 0 in the data grid is the header
                 SearchTerm searchTerm = this.fileDatabase.CustomSelection.SearchTerms[index];
-                TextBlock searchCriteria = this.GetGridElement<TextBlock>(CustomSelection.SearchCriteriaColumn, row);
+                TextBlock searchCriteria = this.SearchTerms.GetChild<TextBlock>(row, CustomSelection.SearchCriteriaColumn);
 
                 if (searchTerm.UseForSearching == false)
                 {
@@ -236,9 +213,42 @@ namespace Carnassial.Dialog
             this.Reset.IsEnabled = lastExpression == false;
         }
 
-        private void UpdateSearchCriteriaFeedback(SearchTerm searchTerm)
+        private void UpdateSearchCriteriaFeedback(object sender, PropertyChangedEventArgs e)
         {
             this.UpdateSearchCriteriaFeedback();
+        }
+
+        // When the user checks or unchecks the checkbox for a row
+        // - activate or deactivate the search criteria for that row
+        // - update the searchterms to reflect the new status 
+        // - update the UI to activate or deactivate (or show or hide) its various search terms
+        private void UseForSearching_CheckedOrUnchecked(object sender, RoutedEventArgs args)
+        {
+            CheckBox select = sender as CheckBox;
+            int row = Grid.GetRow(select);
+
+            SearchTerm searchTerm = this.fileDatabase.CustomSelection.SearchTerms[row - 1];
+            searchTerm.UseForSearching = select.IsChecked.Value;
+
+            CheckBox label = this.SearchTerms.GetChild<CheckBox>(row, CustomSelection.LabelColumn);
+            ComboBox expression = this.SearchTerms.GetChild<ComboBox>(row, CustomSelection.OperatorColumn);
+            UIElement value = this.SearchTerms.GetChild<UIElement>(row, CustomSelection.ValueColumn);
+
+            label.FontWeight = select.IsChecked.Value ? FontWeights.Bold : FontWeights.Normal;
+            expression.IsEnabled = select.IsChecked.Value;
+            value.IsEnabled = select.IsChecked.Value;
+
+            this.UpdateSearchCriteriaFeedback();
+        }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            // search terms are durable so unhook their property changed events
+            for (int index = 0; index < this.fileDatabase.CustomSelection.SearchTerms.Count; ++index)
+            {
+                SearchTerm searchTerm = this.fileDatabase.CustomSelection.SearchTerms[index];
+                searchTerm.PropertyChanged -= this.UpdateSearchCriteriaFeedback;
+            }
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)

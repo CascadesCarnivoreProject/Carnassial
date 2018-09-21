@@ -7,13 +7,13 @@
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="300">
     <Control.Resources>
-        <!-- focus style for checkbox https://ramontebar.wordpress.com/2010/02/26/wpf-custom-check-box-template/-->
-        <SolidColorBrush x:Key="InputBackgroundFocused" Color="Orange" />
-        <Style x:Key="CheckBoxFocusVisualStyle">
+        <!-- focus style for checkbox https://ramontebar.wordpress.com/2010/02/26/wpf-custom-check-box-template/ -->
+        <SolidColorBrush x:Key="FlagFocusBorderBrush" Color="IndianRed" />
+        <Style x:Key="FlagFocusVisualStyle">
             <Setter Property="Control.Template">
                 <Setter.Value>
                     <ControlTemplate>
-                        <Border CornerRadius="2" Margin="0,0,4,3" BorderThickness="2" BorderBrush="{StaticResource InputBackgroundFocused}" Background="Transparent"/>
+                        <Border CornerRadius="2" Margin="0,0,4,3" BorderThickness="2" BorderBrush="{StaticResource FlagFocusBorderBrush}" Background="Transparent"/>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -99,7 +99,7 @@
             <Setter Property="Grid.Column" Value="1" />
         </Style>
         <Style x:Key="FlagCheckBox" TargetType="CheckBox">
-            <Setter Property="FocusVisualStyle" Value="{StaticResource CheckBoxFocusVisualStyle}" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource FlagFocusVisualStyle}" />
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Grid.Column" Value="1" />
             <Setter Property="Height" Value="20" />

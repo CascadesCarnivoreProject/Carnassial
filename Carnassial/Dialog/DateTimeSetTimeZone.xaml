@@ -1,19 +1,52 @@
-﻿<Window x:Class="Carnassial.Dialog.DateTimeSetTimeZone"
+﻿<local:WindowWithSystemMenu x:Class="Carnassial.Dialog.DateTimeSetTimeZone"
 		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		Title="Date/time - Set the time zone of all files selected."
         Loaded="Window_Loaded"
-		MinHeight="826" MinWidth="768" Height="856" Width="768" ShowInTaskbar="False">
-    <Grid>
+		MinHeight="826" MinWidth="768" Height="856" Width="768" ShowInTaskbar="False" Style="{StaticResource ApplicationWindow}">
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static SystemCommands.CloseWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="CloseWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.MaximizeWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="MaximizeWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.MinimizeWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="MinimizeWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.RestoreWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="RestoreWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.ShowSystemMenuCommand}" CanExecute="CommandBinding_CanExecute" Executed="ShowSystemMenu_Execute" />
+    </Window.CommandBindings>
+    <Grid Style="{StaticResource ApplicationGrid}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="{Binding Source={x:Static SystemParameters.WindowCaptionHeight}}" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <control:StockMessageControl x:Name="Message" StatusImage="Question"
+
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <TextBlock Style="{StaticResource ApplicationTitle}" Grid.Column="0" />
+            <Button Style="{StaticResource SystemMinimizeButton}" Grid.Column="2" />
+            <Button Style="{StaticResource SystemMaximizeRestoreButton}" Grid.Column="3" />
+            <Button Style="{StaticResource SystemCloseButton}" Grid.Column="4" />
+        </Grid>
+
+        <Grid Grid.Row="1" Style="{StaticResource DialogGrid}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <control:StockMessageControl x:Name="Message" StatusImage="Question"
                             Title="Set the time zone of all files selected."
                             Problem="The UTC offset needs to be changed.  This could be because the camera is located in a different time zone from the image set's time zone, no metadata was available from the files (meaning local file times were used), or the wrong time zone was set when the files were added to the image set."
                             Solution="Your currently selected file is shown below.
@@ -22,42 +55,43 @@
 &#10;&#x2022; Click Apply Changes to apply those changes."
                             Result="The UTC offset of all images and videos selected will be set to the specified time zone.  The files' date and time of day will not change."
                             HideExplanationCheckboxIsVisible="True" Grid.Row="0" />
-        <Rectangle Fill="#FF868686" Height="1" Grid.Row="1" />
-        <Grid Name="PrimaryPanel" Grid.Row="2">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-            <Grid Grid.Row="0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+            <Rectangle Style="{StaticResource DialogHorizontalRule}" Grid.Row="1" />
+            <Grid Name="PrimaryPanel" Grid.Row="2">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <Label Grid.Column="0" Grid.Row="0" Content="File:" Margin="5,0,0,0" HorizontalContentAlignment="Left" FontWeight="Bold" />
-                <Label Grid.Column="0" Grid.Row="0" Content="[ --- file name --- ]" Margin="35,0,0,0" HorizontalContentAlignment="Left" FontWeight="Normal" x:Name="FileName" />
-                <Label Grid.Column="1" Grid.Row="0" Content="Original date/time and offset:" Margin="5,0,0,0" HorizontalContentAlignment="Left" FontWeight="Bold" />
-                <Label Grid.Column="1" Grid.Row="0" Name="OriginalDate" MinWidth="140" Margin="180,0,0,0" Content="dd-MMM-yyyy HH:mm:ss -HH:mm" FontWeight="Normal" HorizontalAlignment="Stretch" />
-                <Label Grid.Column="1" Grid.Row="1" Content="New time zone: " Margin="5,0,0,0" FontWeight="Bold" />
-                <control:TimeZonePicker Grid.Column="1" Grid.Row="1" x:Name="TimeZones" Margin="115,0,0,0" Width="375" />
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Label Grid.Column="0" Grid.Row="0" Content="File:" Margin="5,0,0,0" HorizontalContentAlignment="Left" FontWeight="Bold" />
+                    <Label Grid.Column="0" Grid.Row="0" Content="[ --- file name --- ]" Margin="35,0,0,0" HorizontalContentAlignment="Left" FontWeight="Normal" x:Name="FileName" />
+                    <Label Grid.Column="1" Grid.Row="0" Content="Original date/time and offset:" Margin="5,0,0,0" HorizontalContentAlignment="Left" FontWeight="Bold" />
+                    <Label Grid.Column="1" Grid.Row="0" Name="OriginalDate" MinWidth="140" Margin="180,0,0,0" Content="dd-MMM-yyyy HH:mm:ss -HH:mm" FontWeight="Normal" HorizontalAlignment="Stretch" />
+                    <Label Grid.Column="1" Grid.Row="1" Content="New time zone: " Margin="5,0,0,0" FontWeight="Bold" />
+                    <control:TimeZonePicker Grid.Column="1" Grid.Row="1" x:Name="TimeZones" Margin="115,0,0,0" Width="375" />
+                </Grid>
+                <control:FileDisplay x:Name="FileDisplay" HorizontalAlignment="Center" Grid.Row="1" />
             </Grid>
-            <control:FileDisplay x:Name="FileDisplay" HorizontalAlignment="Center" Grid.Row="1" />
+            <Grid Name="FeedbackPanel" Visibility="Collapsed" Grid.Row="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <Label FontWeight="Bold" Content="The following changes to dates and times will occur if you select Apply Changes." Grid.Row="0" />
+                <control:DateChangesFeedbackControl x:Name="TimeZoneUpdateFeedback" Grid.Row="1" />
+            </Grid>
+            <!-- Ok/Cancel buttons-->
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="3">
+                <Button Name="ChangesButton" IsDefault="True" AutomationProperties.AutomationId="ChangesButton" Padding="10" Margin="10,10,10,10" Click="ChangesButton_Click" IsEnabled="False">_Preview Changes</Button>
+                <Button Name="CancelButton" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
+            </StackPanel>
         </Grid>
-        <Grid Name="FeedbackPanel" Visibility="Collapsed" Grid.Row="2">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-            <Label FontWeight="Bold" Content="The following changes to dates and times will occur if you select Apply Changes." Grid.Row="0" />
-            <control:DateChangesFeedbackControl x:Name="TimeZoneUpdateFeedback" Grid.Row="1" />
-        </Grid>
-        <!-- Ok/Cancel buttons-->
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="3">
-            <Button Name="ChangesButton" IsDefault="True" AutomationProperties.AutomationId="ChangesButton" Padding="10" Margin="10,10,10,10" Click="ChangesButton_Click" IsEnabled="False">_Preview Changes</Button>
-            <Button Name="CancelButton" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
-        </StackPanel>
     </Grid>
-</Window>
+</local:WindowWithSystemMenu>

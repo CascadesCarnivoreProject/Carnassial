@@ -1,6 +1,7 @@
 ﻿using Carnassial.Data;
 using System;
 using System.Windows.Controls;
+using WpfControl = System.Windows.Controls.Control;
 
 namespace Carnassial.Editor.Util
 {
@@ -49,7 +50,7 @@ namespace Carnassial.Editor.Util
             return false;
         }
 
-        public static bool TryGetControl<TControl>(this DataGridCell cell, out TControl control) where TControl : System.Windows.Controls.Control
+        public static bool TryGetControl<TControl>(this DataGridCell cell, out TControl control) where TControl : WpfControl
         {
             control = cell.Content as TControl;
             return control != null;

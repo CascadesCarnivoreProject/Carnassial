@@ -1,4 +1,4 @@
-﻿<carnassial:WindowWithSystemMenu x:Class="Carnassial.Editor.EditorWindow"
+﻿<carnassial:ApplicationWindow x:Class="Carnassial.Editor.EditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:carnassial="clr-namespace:Carnassial;assembly=Carnassial"
@@ -6,7 +6,7 @@
         xmlns:editorUtil="clr-namespace:Carnassial.Editor.Util"
         xmlns:util="clr-namespace:Carnassial.Util;assembly=Carnassial"
         AutomationProperties.AutomationId="CarnassialTemplateEditor" Icon="Editor.ico" 
-        Closing="Window_Closing" Loaded="Window_Loaded" Style="{StaticResource MainWindow}"
+        Closing="Window_Closing" Loaded="Window_Loaded" Style="{StaticResource ApplicationWindow}"
         Height="860" Width="1488" MinHeight="560" MinWidth="800">
     <Window.CommandBindings>
         <CommandBinding Command="{x:Static SystemCommands.CloseWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="CloseWindow_Execute" />
@@ -24,13 +24,13 @@
             <util:WellKnownValueConverter x:Key="WellKnownValueConverter" />
 
             <DataTemplate x:Key="DefaultValueChoiceComboBox">
-                <ComboBox ItemsSource="{Binding Path=WellKnownValues, Converter={StaticResource WellKnownValueConverter}}" SelectedItem="{Binding Path=DefaultValue}" ToolTip="The value the field will be set to by default." ToolTipService.ShowOnDisabled="True" BorderThickness="0" />
+                <ComboBox ItemsSource="{Binding Path=WellKnownValues, Converter={StaticResource WellKnownValueConverter}}" SelectedItem="{Binding Path=DefaultValue, UpdateSourceTrigger=PropertyChanged}" ToolTip="The value the field will be set to by default." ToolTipService.ShowOnDisabled="True" BorderThickness="0" />
             </DataTemplate>
             <DataTemplate x:Key="DefaultValueFlagComboBox">
-                <ComboBox ItemsSource="{Binding Path=WellKnownValues, Converter={StaticResource FlagValueConverter}}" SelectedItem="{Binding Path=DefaultValue, Converter={StaticResource FlagValueConverter}}" ToolTip="The value the field will be set to by default." ToolTipService.ShowOnDisabled="True" BorderThickness="0" />
+                <ComboBox ItemsSource="{Binding Path=WellKnownValues, Converter={StaticResource FlagValueConverter}}" SelectedItem="{Binding Path=DefaultValue, Converter={StaticResource FlagValueConverter}, UpdateSourceTrigger=PropertyChanged}" ToolTip="The value the field will be set to by default." ToolTipService.ShowOnDisabled="True" BorderThickness="0" />
             </DataTemplate>
             <DataTemplate x:Key="DefaultValueTextBox">
-                <control:AutocompleteTextBox Autocompletions="{Binding Path=WellKnownValues, Converter={StaticResource WellKnownValueConverter}}" Text="{Binding Path=DefaultValue, Converter={StaticResource TrimmingConverter}}" ToolTip="The value the field will be set to by default." ToolTipService.ShowOnDisabled="True" BorderThickness="0" />
+                <control:AutocompleteTextBox Autocompletions="{Binding Path=WellKnownValues, Converter={StaticResource WellKnownValueConverter}}" Text="{Binding Path=DefaultValue, Converter={StaticResource TrimmingConverter}, UpdateSourceTrigger=PropertyChanged}" ToolTip="The value the field will be set to by default." ToolTipService.ShowOnDisabled="True" BorderThickness="0" />
             </DataTemplate>
         </ResourceDictionary>
     </Window.Resources>
@@ -58,8 +58,8 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Button Style="{StaticResource ApplicationIcon}" />
-            <Menu Style="{StaticResource ApplicationMenu}">
+            <Button Style="{StaticResource ApplicationIcon}" Grid.Column="0" />
+            <Menu Style="{StaticResource ApplicationMenu}" Grid.Column="1">
                 <!-- file menu -->
                 <MenuItem Name="FileMenu" Header="_File">
                     <MenuItem Name="MenuFileNewTemplate" Header="_New..." Click="MenuFileNewTemplate_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Create a new data template file.">
@@ -105,10 +105,10 @@
                     <MenuItem Header="_About..." Click="MenuHelpAbout_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Displays version information about this program and how to contact the developers."/>
                 </MenuItem>
             </Menu>
-            <TextBlock Style="{StaticResource ApplicationTitle}" />
-            <Button Style="{StaticResource SystemCloseButton}" />
-            <Button Style="{StaticResource SystemMaximizeRestoreButton}" />
-            <Button Style="{StaticResource SystemMinimizeButton}" />
+            <TextBlock Style="{StaticResource ApplicationTitle}" Grid.Column="2" />
+            <Button Style="{StaticResource SystemMinimizeButton}" Grid.Column="4" />
+            <Button Style="{StaticResource SystemMaximizeRestoreButton}" Grid.Column="5" />
+            <Button Style="{StaticResource SystemCloseButton}" Grid.Column="6" />
         </Grid>
         <control:TabControlWithoutHomeAndEnd x:Name="Tabs" Margin="4,4,4,4">
             <TabControl.Resources>
@@ -505,4 +505,4 @@
             </TabItem>
         </control:TabControlWithoutHomeAndEnd>
     </Grid>
-</carnassial:WindowWithSystemMenu>
+</carnassial:ApplicationWindow>

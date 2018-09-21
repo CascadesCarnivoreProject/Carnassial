@@ -568,6 +568,24 @@ namespace Carnassial.UnitTests
                             string databaseString = firstFile.GetSpreadsheetString(dataLabel);
                         }
 
+                        // verify availability of default values (used for resetting file values)
+                        Dictionary<string, object> defaultValuesByPropertyName = ImageRow.GetDefaultValues(fileDatabase);
+                        Assert.IsTrue(firstFileValuesByPropertyName.Count - 5 == defaultValuesByPropertyName.Count);
+                        foreach (string property in firstFileValuesByPropertyName.Keys)
+                        {
+                            if (String.Equals(property, nameof(ImageRow.DateTimeOffset), StringComparison.Ordinal) ||
+                                String.Equals(property, nameof(ImageRow.FileName), StringComparison.Ordinal) ||
+                                String.Equals(property, Constant.DatabaseColumn.ID, StringComparison.Ordinal) ||
+                                String.Equals(property, Constant.FileColumn.RelativePath, StringComparison.Ordinal) ||
+                                String.Equals(property, Constant.FileColumn.Classification, StringComparison.Ordinal))
+                            {
+                                continue;
+                            }
+                            Assert.IsTrue(defaultValuesByPropertyName.ContainsKey(property));
+                        }
+                        FileMultipleFieldChange resetChange = new FileMultipleFieldChange(dataHandler.ImageCache, defaultValuesByPropertyName);
+                        Assert.IsTrue(resetChange.Changes == 5);
+
                         // find and replace
                         // no op/default state case
                         Assert.IsTrue(dataHandler.TryFindNext(out int fileIndex) == false);
@@ -583,6 +601,7 @@ namespace Carnassial.UnitTests
                         ControlRow note = fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Note3];
                         SearchTerm bobcatName = note.CreateSearchTerm();
                         bobcatName.DatabaseValue = "bobcat";
+                        bobcatName.UseForSearching = true;
                         dataHandler.FindReplace.FindTerm1 = bobcatName;
 
                         int bobcatFileIndex = (int)(fileExpectations.Single(expectation => String.Equals(expectation.FileName, TestConstant.FileExpectation.DaylightBobcatFileName, StringComparison.Ordinal)).ID - 1);
@@ -595,8 +614,10 @@ namespace Carnassial.UnitTests
                         Assert.IsTrue(dataHandler.ReplaceAll() == 0);
 
                         // no matching files
-                        dataHandler.FindReplace.FindTerm2 = note.CreateSearchTerm();
-                        dataHandler.FindReplace.FindTerm2.DatabaseValue = "ocelot";
+                        SearchTerm ocelot = note.CreateSearchTerm();
+                        ocelot.DatabaseValue = "ocelot";
+                        ocelot.UseForSearching = true;
+                        dataHandler.FindReplace.FindTerm2 = ocelot;
                         Assert.IsTrue(dataHandler.TryFindNext(out fileIndex) == false);
                         Assert.IsTrue(dataHandler.TryFindPrevious(out fileIndex) == false);
                         Assert.IsTrue(dataHandler.FindReplace.TryReplace(bobcatFile) == false);
@@ -606,6 +627,7 @@ namespace Carnassial.UnitTests
                         ControlRow classification = fileDatabase.Controls[Constant.FileColumn.Classification];
                         SearchTerm color = classification.CreateSearchTerm();
                         color.DatabaseValue = FileClassification.Color;
+                        color.UseForSearching = true;
                         dataHandler.FindReplace.FindTerm1 = color;
                         dataHandler.FindReplace.FindTerm2 = null;
 
@@ -647,6 +669,7 @@ namespace Carnassial.UnitTests
 
                         SearchTerm dark = classification.CreateSearchTerm();
                         dark.DatabaseValue = FileClassification.Dark;
+                        dark.UseForSearching = true;
                         dataHandler.FindReplace.ReplaceTerm = dark;
                         Assert.IsTrue(dataHandler.FindReplace.TryReplace(bobcatFile));
                         Assert.IsTrue(bobcatFile.Classification == FileClassification.Dark);

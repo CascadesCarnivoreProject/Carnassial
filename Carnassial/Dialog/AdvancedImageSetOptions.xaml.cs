@@ -4,7 +4,7 @@ using System.Windows;
 
 namespace Carnassial.Dialog
 {
-    public partial class AdvancedImageSetOptions : Window
+    public partial class AdvancedImageSetOptions : WindowWithSystemMenu
     {
         private TimeZoneInfo currentImageSetTimeZone;
         private TemplateDatabase database;

@@ -4,7 +4,7 @@ using System.Windows;
 
 namespace Carnassial.Dialog
 {
-    public partial class AdvancedCarnassialOptions : Window
+    public partial class AdvancedCarnassialOptions : WindowWithSystemMenu
     {
         private CarnassialState carnassialState;
         private FileDisplayWithMarkers fileDisplay;

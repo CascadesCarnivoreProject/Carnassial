@@ -10,7 +10,7 @@ using System.Windows.Input;
 
 namespace Carnassial.Dialog
 {
-    public partial class ReclassifyFiles : Window, IDisposable
+    public partial class ReclassifyFiles : WindowWithSystemMenu, IDisposable
     {
         private const int MinimumDarkColorRectangleHeight = 10;
 

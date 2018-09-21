@@ -1,46 +1,71 @@
-﻿<Window x:Class="Carnassial.Dialog.About"
+﻿<local:WindowWithSystemMenu x:Class="Carnassial.Dialog.About"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Carnassial"
         xmlns:control="clr-namespace:Carnassial.Control"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Loaded="Window_Loaded"
         Title="About Carnassial" MaxHeight="860" MinHeight="450" SizeToContent="Height" Width="550"
-		ShowInTaskbar="False">
-    <Grid>
+		ShowInTaskbar="False" Style="{StaticResource ApplicationWindow}">
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static SystemCommands.CloseWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="CloseWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.MaximizeWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="MaximizeWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.MinimizeWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="MinimizeWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.RestoreWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="RestoreWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.ShowSystemMenuCommand}" CanExecute="CommandBinding_CanExecute" Executed="ShowSystemMenu_Execute" />
+    </Window.CommandBindings>
+    <Grid Style="{StaticResource ApplicationGrid}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="{Binding Source={x:Static SystemParameters.WindowCaptionHeight}}" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <control:StockMessageControl x:Name="Message" StatusImage="Information" Title="About Carnassial" Grid.Row="0" />
-        <StackPanel Orientation="Vertical" Grid.Row="1">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBlock HorizontalAlignment="Left" Margin="10,10,0,10" Grid.Column="0">
-                  <Run FontWeight="Bold" Text="Version: " />
-                  <Run x:Name="Version" />
-                </TextBlock>
-                <Button x:Name="CheckForNewerRelease" Content="_Check for newer release" Margin="10,0,10,0" Padding="5,0,5,0" Click="CheckForUpdate_Click" Grid.Column="1" />
-                <Button x:Name="ViewReleases" Content="_View releases" Margin="10,0,15,0" Padding="5,0,5,0" Click="VersionChanges_Click" Grid.Column="2" />
-            </Grid>
-            <TextBlock Margin="10,10,10,0">
-                <Run FontWeight="Bold" Text="Author: " /> 
-                <Run Text="Carnassial development team"/>
-            </TextBlock>
-            <TextBlock Margin="60,0,10,0">
-                Cascades Carnivore Project
-            </TextBlock>
-            <TextBlock Margin="10,10,10,0" FontWeight="Bold">Terms of use:</TextBlock>
-            <TextBlock Margin="60,0,10,5" TextWrapping="Wrap">
-                Carnassial is supplied as is as a volunteer extension of our regular work.  However, we'd like to it make it better for you too.  Submit comments, problems, or suggestions at <Hyperlink Name="IssuesLink" RequestNavigate="Hyperlink_RequestNavigate">https://github.com/Organization/Repo/issues</Hyperlink> or email <Hyperlink Name="EmailLink" RequestNavigate="Hyperlink_RequestNavigate">devteam@provider.net</Hyperlink>.  If you fork the repo to address your needs please submit a pull request after ensuring your changes meet the commit requirements described in the readme!
-            </TextBlock>
-            <TextBlock Margin="60,5,10,0" TextWrapping="Wrap">
-                Carnassial is licensed under the <Hyperlink NavigateUri="https://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International license</Hyperlink> and derives from <Hyperlink NavigateUri="http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.TimelapseVersions">Timelapse 2.0.2.4</Hyperlink>.
-            </TextBlock>
-        </StackPanel>
-        <Button Name="OkButton" IsCancel="True" IsDefault="True" AutomationProperties.AutomationId="OkButton" HorizontalAlignment="Right" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="True" Grid.Row="2">_Okay</Button>
+
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <TextBlock Style="{StaticResource ApplicationTitle}" Grid.Column="0" />
+            <Button Style="{StaticResource SystemMinimizeButton}" Grid.Column="2" />
+            <Button Style="{StaticResource SystemMaximizeRestoreButton}" Grid.Column="3" />
+            <Button Style="{StaticResource SystemCloseButton}" Grid.Column="4" />
+        </Grid>
+        <Grid Grid.Row="1" Style="{StaticResource DialogGrid}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <control:StockMessageControl x:Name="Message" HideExplanationCheckboxIsVisible="False" Margin="0,0,0,10" StatusImage="Information" Title="About Carnassial" Grid.Row="0" />
+            <StackPanel Orientation="Vertical" Grid.Row="1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock HorizontalAlignment="Left" Margin="10,10,0,10" Grid.Column="0">
+                <Run FontWeight="Bold" Text="Version: " />
+                <Run x:Name="Version" />
+                    </TextBlock>
+                    <Button x:Name="CheckForNewerRelease" Content="_Check for newer release" Margin="10,0,10,0" Padding="5,0,5,0" Click="CheckForUpdate_Click" Grid.Column="1" />
+                    <Button x:Name="ViewReleases" Content="_View releases" Margin="10,0,15,0" Padding="5,0,5,0" Click="VersionChanges_Click" Grid.Column="2" />
+                </Grid>
+                <TextBlock Margin="10,10,10,0"><Run FontWeight="Bold" Text="Author: " /><Run Text="Carnassial development team"/></TextBlock>
+                <TextBlock Margin="60,0,10,0">Cascades Carnivore Project</TextBlock>
+                <TextBlock Margin="10,10,10,0" FontWeight="Bold">Terms of use:</TextBlock>
+                <TextBlock Margin="60,0,10,5" TextWrapping="Wrap">Carnassial is supplied as is as a volunteer extension of our regular work.  However, we'd like to it make it better for you too.  Submit comments, problems, or suggestions at <Hyperlink Name="IssuesLink" RequestNavigate="Hyperlink_RequestNavigate">https://github.com/Organization/Repo/issues</Hyperlink> or email <Hyperlink Name="EmailLink" RequestNavigate="Hyperlink_RequestNavigate">devteam@provider.net</Hyperlink>.  If you fork the repo to address your needs please submit a pull request after ensuring your changes meet the commit requirements described in the readme!</TextBlock>
+                <TextBlock Margin="60,5,10,0" TextWrapping="Wrap">Carnassial is licensed under the <Hyperlink NavigateUri="https://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International license</Hyperlink> and derives from <Hyperlink NavigateUri="http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.TimelapseVersions">Timelapse 2.0.2.4</Hyperlink>.</TextBlock>
+            </StackPanel>
+            <Button Name="OkButton" IsCancel="True" IsDefault="True" AutomationProperties.AutomationId="OkButton" HorizontalAlignment="Right" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="True" Grid.Row="2">_Okay</Button>
+        </Grid>
     </Grid>
-</Window>
+</local:WindowWithSystemMenu>

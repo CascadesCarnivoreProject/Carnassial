@@ -11,7 +11,7 @@ namespace Carnassial.Editor.Dialog
     /// This dialog displays a list of metadata found in a selected image. 
     /// </summary>
     // Note: Lots of commonalities between this dialog and PopulateFieldWithMetadata, but its not clear if it's worth the effort of factoring the two.
-    public partial class InspectMetadata : Window
+    public partial class InspectMetadata : WindowWithSystemMenu
     {
         private string filePath;
 

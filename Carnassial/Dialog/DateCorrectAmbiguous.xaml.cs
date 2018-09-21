@@ -12,7 +12,7 @@ namespace Carnassial.Dialog
     /// <summary>
     /// Contract: the caller should not invoke DialogShow() if Abort is true.
     /// </summary>
-    public partial class DateCorrectAmbiguous : Window
+    public partial class DateCorrectAmbiguous : WindowWithSystemMenu
     {
         private List<AmbiguousDate> ambiguousDatesList; // all initial images containing ambiguous dates and their state
         private int ambiguousDatesListIndex;

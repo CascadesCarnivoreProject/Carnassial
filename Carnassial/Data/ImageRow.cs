@@ -372,6 +372,85 @@ namespace Carnassial.Data
             return propertyName;
         }
 
+        public static Dictionary<string, object> GetDefaultValues(FileDatabase fileDatabase)
+        {
+            Dictionary<string, object> defaultValues = new Dictionary<string, object>(StringComparer.Ordinal);
+            foreach (ControlRow control in fileDatabase.Controls)
+            {
+                if (String.Equals(control.DataLabel, Constant.DatabaseColumn.ID, StringComparison.Ordinal) ||
+                    String.Equals(control.DataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal) ||
+                    String.Equals(control.DataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal) ||
+                    String.Equals(control.DataLabel, Constant.FileColumn.File, StringComparison.Ordinal) ||
+                    String.Equals(control.DataLabel, Constant.FileColumn.RelativePath, StringComparison.Ordinal) ||
+                    String.Equals(control.DataLabel, Constant.FileColumn.UtcOffset, StringComparison.Ordinal))
+                {
+                    // primary key (ID), file name, relative path, and classification don't have default values
+                    // For now, date time and UTC offset are also excluded as they're perhaps more naturally reset by rereading 
+                    // file datetimes.
+                    continue;
+                }
+
+                if (fileDatabase.Files.StandardColumnDataTypesByName.TryGetValue(control.DataLabel, out SqlDataType dataType) == false)
+                {
+                    dataType = fileDatabase.Files.UserColumnsByName[control.DataLabel].DataType;
+                }
+                object defaultValue;
+                switch (dataType)
+                {
+                    case SqlDataType.Boolean:
+                        if (String.Equals(control.DefaultValue, Constant.Sql.FalseString, StringComparison.Ordinal))
+                        {
+                            defaultValue = false;
+                        }
+                        else if (String.Equals(control.DefaultValue, Constant.Sql.TrueString, StringComparison.Ordinal))
+                        {
+                            defaultValue = true;
+                        }
+                        else
+                        {
+                            throw new ArgumentOutOfRangeException(control.DataLabel, String.Format("'{0}' is not a valid classification.", control.DefaultValue));
+                        }
+                        break;
+                    // not currently supported
+                    // case SqlDataType.DateTime:
+                    //     dateTime = DateTimeHandler.ParseDatabaseDateTime(control.DefaultValue);
+                    //     continue;
+                    case SqlDataType.Integer:
+                        if (String.Equals(control.DataLabel, Constant.FileColumn.Classification))
+                        {
+                            // classification doesn't have a default value
+                            continue;
+                        }
+                        else
+                        {
+                            defaultValue = Int32.Parse(control.DefaultValue, NumberStyles.AllowLeadingSign, Constant.InvariantCulture);
+                        }
+                        break;
+                    // not currently supported
+                    // case SqlDataType.Real:
+                    //     if (DateTimeHandler.TryParseDatabaseUtcOffset(control.DefaultValue, out utcOffset) == false)
+                    //     {
+                    //         throw new ArgumentOutOfRangeException(control.DataLabel, String.Format("'{0}' is not a valid UTC offset.", control.DefaultValue));
+                    //     }
+                    //     continue;
+                    case SqlDataType.String:
+                        defaultValue = control.DefaultValue;
+                        break;
+                    case SqlDataType.Blob:
+                    default:
+                        throw new NotSupportedException(String.Format("Unhandled SQL data type {0} for column '{1}'.", dataType, control.DataLabel));
+                }
+
+                defaultValues.Add(control.DataLabel, defaultValue);
+                if (control.Type == ControlType.Counter)
+                {
+                    defaultValues.Add(FileTable.GetMarkerPositionColumnName(control.DataLabel), Constant.ControlDefault.MarkerPositions);
+                }
+            }
+
+            return defaultValues;
+        }
+
         public string GetDisplayDateTime()
         {
             return DateTimeHandler.ToDisplayDateTimeString(this.DateTimeOffset);
@@ -602,9 +681,9 @@ namespace Carnassial.Data
         public void SetValuesFromSpreadsheet(FileTableSpreadsheetMap spreadsheetMap, List<string> row, FileImportResult result)
         {
             // obtain file's date time and UTC offset
-            if (DateTimeHandler.TryParseSpreadsheetDateTime(row[spreadsheetMap.DateTimeIndex], out DateTime dateTime))
+            if (DateTimeHandler.TryParseDatabaseDateTime(row[spreadsheetMap.DateTimeIndex], out DateTime dateTime))
             {
-                if (DateTimeHandler.TryParseSpreadsheetUtcOffset(row[spreadsheetMap.UtcOffsetIndex], out TimeSpan utcOffset))
+                if (DateTimeHandler.TryParseDatabaseUtcOffset(row[spreadsheetMap.UtcOffsetIndex], out TimeSpan utcOffset))
                 {
                     this.DateTimeOffset = DateTimeHandler.FromDatabaseDateTimeOffset(dateTime, utcOffset);
                 }
@@ -663,12 +742,12 @@ namespace Carnassial.Data
 
             // get values of user defined columns
             // choices
-            for (int indexIndex = 0; indexIndex < spreadsheetMap.UserCounterIndices.Count; ++indexIndex)
+            for (int indexIndex = 0; indexIndex < spreadsheetMap.UserChoiceIndices.Count; ++indexIndex)
             {
-                int choiceIndex = spreadsheetMap.UserChoiceIndices[indexIndex];
+                int spreadsheetIndex = spreadsheetMap.UserChoiceIndices[indexIndex];
                 int dataIndex = spreadsheetMap.UserChoiceDataIndices[indexIndex];
                 List<string> choiceValues = spreadsheetMap.UserChoiceValues[indexIndex];
-                string choice = row[choiceIndex];
+                string choice = row[spreadsheetIndex];
 
                 if (choiceValues.Contains(choice, StringComparer.Ordinal))
                 {
@@ -688,8 +767,8 @@ namespace Carnassial.Data
             // counters
             for (int dataIndex = 0; dataIndex < spreadsheetMap.UserCounterIndices.Count; ++dataIndex)
             {
-                int countIndex = spreadsheetMap.UserCounterIndices[dataIndex];
-                string countAsString = row[countIndex];
+                int counterSpreadsheetIndex = spreadsheetMap.UserCounterIndices[dataIndex];
+                string countAsString = row[counterSpreadsheetIndex];
                 if (Int32.TryParse(countAsString, NumberStyles.AllowLeadingSign, Constant.InvariantCulture, out int count))
                 {
                     if (this.UserCounters[dataIndex] != count)
@@ -704,9 +783,9 @@ namespace Carnassial.Data
                     result.Errors.Add(String.Format("'{0}' is not an integer count for the column {1}.", countAsString, spreadsheetMap.UserCounters[dataIndex].Control.DataLabel));
                 }
 
-                int markerIndex = spreadsheetMap.UserMarkerIndices[dataIndex];
-                string markerAsString = row[markerIndex];
-                if (MarkersForCounter.TryParseExcelStringToPackedFloats(markerAsString, out byte[] packedFloats))
+                int markerSpreadsheetIndex = spreadsheetMap.UserMarkerIndices[dataIndex];
+                string positionsAsString = row[markerSpreadsheetIndex];
+                if (MarkersForCounter.TryParseExcelStringToPackedFloats(positionsAsString, out byte[] packedFloats))
                 {
                     if (this.ByteArraysEqual(this.UserMarkerPositions[dataIndex], packedFloats) == false)
                     {
@@ -717,15 +796,15 @@ namespace Carnassial.Data
                 }
                 else
                 {
-                    result.Errors.Add(String.Format("Marker position sequence '{0}' is not valid for the column {1}.", markerAsString, spreadsheetMap.UserCounters[dataIndex].Control.DataLabel));
+                    result.Errors.Add(String.Format("Marker position sequence '{0}' is not valid for the column {1}.", positionsAsString, spreadsheetMap.UserCounters[dataIndex].Control.DataLabel));
                 }
             }
 
             // flags
             for (int dataIndex = 0; dataIndex < spreadsheetMap.UserFlagIndices.Count; ++dataIndex)
             {
-                int flagIndex = spreadsheetMap.UserFlagIndices[dataIndex];
-                string flagAsString = row[flagIndex];
+                int spreadsheetIndexIndex = spreadsheetMap.UserFlagIndices[dataIndex];
+                string flagAsString = row[spreadsheetIndexIndex];
 
                 bool flag;
                 if (flagAsString.Length == 1)
@@ -767,9 +846,9 @@ namespace Carnassial.Data
             for (int indexIndex = 0; indexIndex < spreadsheetMap.UserNoteIndices.Count; ++indexIndex)
             {
                 int dataIndex = spreadsheetMap.UserNoteDataIndices[indexIndex];
-                int noteIndex = spreadsheetMap.UserNoteIndices[indexIndex];
+                int spreadsheetIndex = spreadsheetMap.UserNoteIndices[indexIndex];
 
-                string note = row[noteIndex];
+                string note = row[spreadsheetIndex];
                 if (String.Equals(this.UserNotesAndChoices[dataIndex], note, StringComparison.Ordinal) == false)
                 {
                     this.HasChanges |= true;
@@ -924,34 +1003,52 @@ namespace Carnassial.Data
                 return MetadataReadResult.None;
             }
 
-            if (exifSubIfd.TryGetDateTime(ExifSubIfdDirectory.TagDateTimeOriginal, out DateTime dateTimeOriginal) == false)
+            object dateTimeOriginalAsObject = exifSubIfd.GetObject(ExifSubIfdDirectory.TagDateTimeOriginal);
+            if (dateTimeOriginalAsObject == null)
             {
                 // camera doesn't provide an EXIF standard DateTimeOriginal
                 // check for a Reconyx makernote
-                bool reconyxDateTimeOriginalFound = false;
                 ReconyxHyperFireMakernoteDirectory hyperfireMakernote = metadataDirectories.OfType<ReconyxHyperFireMakernoteDirectory>().FirstOrDefault();
                 if (hyperfireMakernote != null)
                 {
-                    reconyxDateTimeOriginalFound = hyperfireMakernote.TryGetDateTime(ReconyxHyperFireMakernoteDirectory.TagDateTimeOriginal, out dateTimeOriginal);
+                    dateTimeOriginalAsObject = hyperfireMakernote.GetObject(ReconyxHyperFireMakernoteDirectory.TagDateTimeOriginal);
                 }
                 else
                 {
                     ReconyxUltraFireMakernoteDirectory ultrafireMakernote = metadataDirectories.OfType<ReconyxUltraFireMakernoteDirectory>().FirstOrDefault();
                     if (ultrafireMakernote != null)
                     {
-                        reconyxDateTimeOriginalFound = ultrafireMakernote.TryGetDateTime(ReconyxUltraFireMakernoteDirectory.TagDateTimeOriginal, out dateTimeOriginal);
+                        dateTimeOriginalAsObject = ultrafireMakernote.GetObject(ReconyxUltraFireMakernoteDirectory.TagDateTimeOriginal);
                     }
                 }
+            }
 
-                if (reconyxDateTimeOriginalFound == false)
+            // work around https://github.com/drewnoakes/metadata-extractor-dotnet/issues/138
+            if (dateTimeOriginalAsObject == null)
+            {
+                return MetadataReadResult.None;
+            }
+            else if (dateTimeOriginalAsObject is DateTime dateTimeOriginalAsDateTime)
+            {
+                this.DateTimeOffset = DateTimeHandler.CreateDateTimeOffset(dateTimeOriginalAsDateTime, imageSetTimeZone);
+                return MetadataReadResult.DateTime;
+            }
+            else if (dateTimeOriginalAsObject is StringValue dateTimeOriginalAsStringValue)
+            {
+                if (DateTimeHandler.TryParseMetadataDateTaken(dateTimeOriginalAsStringValue.ToString(), imageSetTimeZone, out DateTimeOffset dateTimeOriginal))
+                {
+                    this.DateTimeOffset = dateTimeOriginal;
+                    return MetadataReadResult.DateTime;
+                }
+                else
                 {
                     return MetadataReadResult.None;
                 }
             }
-
-            // measure the extent to which the file's current date time offset and image taken metadata are consistent
-            this.DateTimeOffset = DateTimeHandler.CreateDateTimeOffset(dateTimeOriginal, imageSetTimeZone);
-            return MetadataReadResult.DateTime;
+            else
+            {
+                throw new NotSupportedException("Unhandled DateTimeOriginal type " + dateTimeOriginalAsObject.GetType() + ".");
+            }
         }
     }
 }

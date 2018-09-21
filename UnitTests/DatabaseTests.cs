@@ -618,14 +618,14 @@ namespace Carnassial.UnitTests
         {
             // database format roundtrips
             string dateTimeAsDatabaseString = DateTimeHandler.ToDatabaseDateTimeString(dateTimeOffset);
-            DateTime dateTimeParse = DateTimeHandler.ParseDatabaseDateTimeString(dateTimeAsDatabaseString);
-            Assert.IsTrue(DateTimeHandler.TryParseSpreadsheetDateTime(dateTimeAsDatabaseString, out DateTime dateTimeTryParse));
+            DateTime dateTimeParse = DateTimeHandler.ParseDatabaseDateTime(dateTimeAsDatabaseString);
+            Assert.IsTrue(DateTimeHandler.TryParseDatabaseDateTime(dateTimeAsDatabaseString, out DateTime dateTimeTryParse));
 
             Assert.IsTrue(dateTimeParse == dateTimeOffset.UtcDateTime);
             Assert.IsTrue(dateTimeTryParse == dateTimeOffset.UtcDateTime);
 
             string utcOffsetAsDatabaseString = DateTimeHandler.ToDatabaseUtcOffsetString(dateTimeOffset.Offset);
-            Assert.IsTrue(DateTimeHandler.TryParseSpreadsheetUtcOffset(utcOffsetAsDatabaseString, out TimeSpan utcOffsetTryParse));
+            Assert.IsTrue(DateTimeHandler.TryParseDatabaseUtcOffset(utcOffsetAsDatabaseString, out TimeSpan utcOffsetTryParse));
             Assert.IsTrue(utcOffsetTryParse == dateTimeOffset.Offset);
 
             // display format roundtrips

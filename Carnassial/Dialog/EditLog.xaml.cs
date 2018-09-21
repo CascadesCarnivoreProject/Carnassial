@@ -8,7 +8,7 @@ namespace Carnassial.Dialog
     /// This dialog lets the user edit text notes attached to this image set, ideally to keep a log of what is going on, if needed.
     /// The log is persisted.
     /// </summary>
-    public partial class EditLog : Window
+    public partial class EditLog : WindowWithSystemMenu
     {
         /// <summary>
         /// Raise a dialog that lets the user edit text given to it as a parameter  

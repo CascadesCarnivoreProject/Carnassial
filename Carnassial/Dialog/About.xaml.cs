@@ -7,7 +7,7 @@ using System.Windows.Navigation;
 
 namespace Carnassial.Dialog
 {
-    public partial class About : Window
+    public partial class About : WindowWithSystemMenu
     {
         private Uri latestReleaseAddress;
         private Uri releasesAddress;

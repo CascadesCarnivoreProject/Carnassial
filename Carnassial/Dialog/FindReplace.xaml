@@ -3,80 +3,116 @@
         xmlns:dialog="clr-namespace:Carnassial.Dialog"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Find and Replace"
-        Loaded="Window_Loaded"
-        MinHeight="250" MinWidth="500" SizeToContent="WidthAndHeight" ShowInTaskbar="False">
-    <Grid>
+        Loaded="Window_Loaded" Closing="Window_Closing"
+        MinHeight="200" Width="450" 
+        SizeToContent="Height" ShowInTaskbar="False" Style="{StaticResource ApplicationWindow}">
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static SystemCommands.CloseWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="CloseWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.MaximizeWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="MaximizeWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.MinimizeWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="MinimizeWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.RestoreWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="RestoreWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.ShowSystemMenuCommand}" CanExecute="CommandBinding_CanExecute" Executed="ShowSystemMenu_Execute" />
+    </Window.CommandBindings>
+    <Grid Style="{StaticResource ApplicationGrid}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
+            <RowDefinition Height="{Binding Source={x:Static SystemParameters.WindowCaptionHeight}}" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TabControl Name="FindReplaceTabs" Margin="5,5,5,5" SelectionChanged="FindReplaceTabs_SelectionChanged" Grid.Column="0" Grid.Row="0">
-            <TabItem Header="Fin_d" Name="FindTab">
-                <Grid Name="FindGrid">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <Label Grid.Column="0" Grid.Row="0">Find</Label>
-                    <ComboBox Name="FindTerm1Label" SelectionChanged="FindField1Label_SelectionChanged" Grid.Column="1" Grid.Row="0" />
-                    <ComboBox Name="FindTerm1Operator" SelectionChanged="Operator_SelectionChanged" Grid.Column="2" Grid.Row="0" />
-                    <Label Name="FindFieldCombiningLabel" Content="and" Visibility="Hidden" Grid.Column="4" Grid.Row="0" />
-                    <ComboBox Name="FindTerm2Label" SelectionChanged="FindField2Label_SelectionChanged" Grid.Column="1" Grid.Row="1" />
-                    <ComboBox Name="FindTerm2Operator" SelectionChanged="Operator_SelectionChanged" Grid.Column="2" Grid.Row="1" />
-                    <!-- row 2 absorbs unused window height as whitespace and therefore contains no controls -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0" Grid.ColumnSpan="5" Grid.Row="3">
-                        <Button Name="FindPrevious" Padding="10" Margin="10,10,10,10" Click="FindPrevious_Click">Find _previous</Button>
-                        <Button Name="FindNext" IsDefault="True" Padding="10" Margin="10,10,10,10" Click="FindNext_Click">_Find next</Button>
-                        <Button Name="FindClose" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Padding="10" Margin="10,10,10,10" Click="CloseButton_Click">_Close</Button>
-                    </StackPanel>
-                </Grid>
-            </TabItem>
-            <TabItem Header="Re_place" Name="ReplaceTab">
-                <Grid Name="ReplaceGrid">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <Label Grid.Column="0" Grid.Row="0">Find</Label>
-                    <ComboBox Name="ReplaceTerm1Label" SelectionChanged="ReplaceField1Label_SelectionChanged" Grid.Column="1" Grid.Row="0" />
-                    <ComboBox Name="ReplaceTerm1Operator" SelectionChanged="Operator_SelectionChanged" Grid.Column="2" Grid.Row="0" />
-                    <Label Name="ReplaceFieldCombiningLabel" Content="and" Visibility="Hidden" Grid.Column="4" Grid.Row="0" />
-                    <ComboBox Name="ReplaceTerm2Label" SelectionChanged="ReplaceField2Label_SelectionChanged" Grid.Column="1" Grid.Row="1" />
-                    <ComboBox Name="ReplaceTerm2Operator" SelectionChanged="Operator_SelectionChanged" Grid.Column="2" Grid.Row="1" />
-                    <Label Grid.Column="0" Grid.Row="2">Replace with</Label>
-                    <Label Name="ReplaceLabel" VerticalContentAlignment="Center" Grid.Column="1" Grid.Row="2" />
-                    <Label VerticalContentAlignment="Center" Grid.Column="2" Grid.Row="2">=</Label>
-                    <!-- row 3 absorbs unused window height as whitespace and therefore contains no controls -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0" Grid.ColumnSpan="5" Grid.Row="4" Grid.Column="2">
-                        <Button Name="ReplaceNext" IsDefault="True" Padding="10" Margin="10,10,10,10" Click="ReplaceNext_Click">_Replace next</Button>
-                        <Button Name="ReplaceAll" Padding="10" Margin="10,10,10,10" Click="ReplaceAll_Click">Replace _all</Button>
-                        <Button Name="ReplaceClose" IsCancel="True" Padding="10" Margin="10,10,10,10" Click="CloseButton_Click">_Close</Button>
-                    </StackPanel>
-                </Grid>
-            </TabItem>
-        </TabControl>
-        <TextBlock Name="MessageBar" Background="{StaticResource ApplicationBorderBackgroundBrush}" Foreground="{StaticResource ApplicationBorderForegroundBrush}" Grid.Column="0" Grid.Row="1" Padding="10,5,5,5" TextWrapping="Wrap" />
+
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <TextBlock Style="{StaticResource ApplicationTitle}" Grid.Column="0" />
+            <Button Style="{StaticResource SystemMinimizeButton}" Grid.Column="2" />
+            <Button Style="{StaticResource SystemMaximizeRestoreButton}" Grid.Column="3" />
+            <Button Style="{StaticResource SystemCloseButton}" Grid.Column="4" />
+        </Grid>
+
+        <Grid Grid.Row="1" Style="{StaticResource DialogGrid}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TabControl Name="FindReplaceTabs" Grid.Column="0" Grid.Row="0">
+                <TabItem Header="Fin_d" Name="FindTab">
+                    <Grid Name="FindGrid" KeyboardNavigation.TabNavigation="Contained">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Label Grid.Column="0" Grid.Row="0">Find</Label>
+                        <ComboBox Name="FindTerm1Label" SelectionChanged="FindTerm1Label_SelectionChanged" TabIndex="0" Grid.Column="1" Grid.Row="0" />
+                        <ComboBox Name="FindTerm1Operator" SelectedItem="{Binding Path=Operator}" TabIndex="1" Grid.Column="2" Grid.Row="0" />
+                        <Label Name="FindFieldCombiningLabel" Content="and" Visibility="Hidden" Grid.Column="4" Grid.Row="0" />
+                        <ComboBox Name="FindTerm2Label" SelectionChanged="FindTerm2Label_SelectionChanged" TabIndex="3" Grid.Column="1" Grid.Row="1" />
+                        <ComboBox Name="FindTerm2Operator" SelectedItem="{Binding Path=Operator}" TabIndex="4" Grid.Column="2" Grid.Row="1" />
+                        <!-- row 2 absorbs unused window height as whitespace and therefore contains no controls -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0" Grid.ColumnSpan="5" Grid.Row="3">
+                            <Button Name="FindPrevious" Click="FindPrevious_Click" Margin="5,5,5,5" Padding="10" TabIndex="6">Find _previous</Button>
+                            <Button Name="FindNext" Click="FindNext_Click" IsDefault="True" Margin="5,5,5,5" Padding="10" TabIndex="7">_Find next</Button>
+                            <Button Name="FindClose" Click="CloseButton_Click" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Padding="10" Margin="5,5,5,5" TabIndex="8">_Close</Button>
+                        </StackPanel>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="Re_place" Name="ReplaceTab">
+                    <Grid Name="ReplaceGrid" KeyboardNavigation.TabNavigation="Contained">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Label Grid.Column="0" Grid.Row="0">Find</Label>
+                        <ComboBox Name="ReplaceTerm1Label" SelectionChanged="ReplaceTerm1Label_SelectionChanged" TabIndex="10" Grid.Column="1" Grid.Row="0" />
+                        <ComboBox Name="ReplaceTerm1Operator" SelectedItem="{Binding Path=Operator}" TabIndex="11" Grid.Column="2" Grid.Row="0" />
+                        <Label Name="ReplaceFieldCombiningLabel" Content="and" Visibility="Hidden" Grid.Column="4" Grid.Row="0" />
+                        <ComboBox Name="ReplaceTerm2Label" SelectionChanged="ReplaceTerm2Label_SelectionChanged" TabIndex="13" Grid.Column="1" Grid.Row="1" />
+                        <ComboBox Name="ReplaceTerm2Operator" SelectedItem="{Binding Path=Operator}" TabIndex="14" Grid.Column="2" Grid.Row="1" />
+                        <Label Grid.Column="0" Grid.Row="2">Replace with</Label>
+                        <Label Name="ReplaceLabel" Content="{Binding Path=Label}" VerticalContentAlignment="Center" Grid.Column="1" Grid.Row="2" />
+                        <Label VerticalContentAlignment="Center" Grid.Column="2" Grid.Row="2">=</Label>
+                        <!-- row 3 absorbs unused window height as whitespace and therefore contains no controls -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.ColumnSpan="5" Grid.Row="4">
+                            <Button Name="ReplaceFindNext" Click="FindNext_Click" IsDefault="True" Margin="5,5,5,5" Padding="10" TabIndex="17">_Find next</Button>
+                            <Button Name="Replace" Click="Replace_Click" IsDefault="True" Margin="5,5,5,5" Padding="10" TabIndex="18">_Replace</Button>
+                            <Button Name="ReplaceAll" Click="ReplaceAll_Click" Margin="5,5,5,5" Padding="10" TabIndex="19">Replace _all</Button>
+                            <Button Name="ReplaceClose" Click="CloseButton_Click" IsCancel="True" Margin="5,5,5,5" Padding="10" TabIndex="20">_Close</Button>
+                        </StackPanel>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+            <TextBlock Name="MessageBar" Background="{StaticResource ApplicationBorderBackgroundBrush}" Foreground="{StaticResource ApplicationBorderForegroundBrush}" Grid.Column="0" Grid.Row="1" Padding="10,5,5,5" TextWrapping="Wrap" />
+        </Grid>
     </Grid>
 </dialog:FindDialog>

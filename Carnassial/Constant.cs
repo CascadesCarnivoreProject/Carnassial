@@ -121,6 +121,8 @@ namespace Carnassial
             public const string FlagTooltip = "Toggle between true and false";
             public const string FlagValue = "0";
             public const string FlagWellKnownValues = "0|1";
+
+            public const byte[] MarkerPositions = null;
             public const string NoteTooltip = "Write a textual note";
 
             // standard controls
@@ -139,7 +141,9 @@ namespace Carnassial
 
             public const string UtcOffsetTooltip = "Universal Time offset of the time zone for date and time taken";
 
-            public static readonly DateTimeOffset DateTimeValue = new DateTimeOffset(1900, 1, 1, 12, 0, 0, 0, TimeSpan.Zero);
+            // UmAlQuraCalendar does not support dates before 1900-04-30T00:00:00 so default to a later date
+            // (see also Annus mirabilis)
+            public static readonly DateTimeOffset DateTimeValue = new DateTimeOffset(1905, 6, 30, 12, 0, 0, 0, TimeSpan.Zero);
         }
 
         public static class Database
@@ -493,7 +497,7 @@ namespace Carnassial
             public const double DesiredMaximumImageRendersPerSecondLowerBound = 1.0;
             public const double DesiredMaximumImageRendersPerSecondDefault = 5.0;
             public const double DesiredMaximumImageRendersPerSecondUpperBound = 12.0;
-            public const double ImageClassificationSlowdownDefault = 2.2;
+            public const double ImageClassificationSlowdownDefault = 2.4;
             public const double ImageClassificationSlowdownMaximum = 5.0;
             public const double ImageClassificationSlowdownMinimum = 0.0;
             public const int MaximumBlackFrameAttempts = 5;

@@ -31,7 +31,7 @@ namespace Carnassial
     /// <summary>
     /// main window for Carnassial
     /// </summary>
-    public partial class CarnassialWindow : WindowWithSystemMenu, IDisposable
+    public partial class CarnassialWindow : ApplicationWindow, IDisposable
     {
         #if DEBUG
         // hook to allow tests to set culture
@@ -346,7 +346,7 @@ namespace Carnassial
 
         private async void FilePlay_TimerTick(object sender, EventArgs e)
         {
-            await this.ShowFileWithoutSliderCallbackAsync(true, Keyboard.Modifiers);
+            await this.ShowFileWithoutSliderCallbackAsync(true, ModifierKeys.None);
             if (this.DataHandler.ImageCache.CurrentRow == (this.DataHandler.FileDatabase.Files.RowCount - 1))
             {
                 // stop playing files since the end of the image set's been reached
@@ -863,14 +863,7 @@ namespace Carnassial
                 return;
             }
 
-            Dictionary<string, object> defaultValues = new Dictionary<string, object>(StringComparer.Ordinal);
-            foreach (ControlRow control in this.DataHandler.FileDatabase.Controls)
-            {
-                if (control.Copyable)
-                {
-                    defaultValues.Add(control.DataLabel, control.DefaultValue);
-                }
-            }
+            Dictionary<string, object> defaultValues = ImageRow.GetDefaultValues(this.DataHandler.FileDatabase);
             this.MaybeExecuteMultipleFieldEdit(new FileMultipleFieldChange(this.DataHandler.ImageCache, defaultValues));
         }
 
@@ -1910,6 +1903,8 @@ namespace Carnassial
         private void PasteValuesToCurrentFileWithUndo(Dictionary<string, object> values)
         {
             this.MaybeExecuteMultipleFieldEdit(new FileMultipleFieldChange(this.DataHandler.ImageCache, values));
+            // remove any existing status message as it won't apply to the paste
+            this.ClearStatusMessage();
         }
 
         private void ResetUndoRedoState()
@@ -2459,10 +2454,10 @@ namespace Carnassial
         /// in unit tests.</remarks>
         public async Task<bool> TryOpenTemplateAndFileDatabaseAsync(string templateDatabasePath)
         {
-            Stopwatch imageSetLoadAndSetupTime = new Stopwatch();
-            imageSetLoadAndSetupTime.Start();
+            Stopwatch imageSetSetupTime = new Stopwatch();
+            imageSetSetupTime.Start();
             bool templateLoadedOrCreated = TemplateDatabase.TryCreateOrOpen(templateDatabasePath, out TemplateDatabase templateDatabase);
-            imageSetLoadAndSetupTime.Stop();
+            imageSetSetupTime.Stop();
             if (templateLoadedOrCreated == false)
             {
                 // notify the user the template couldn't be loaded
@@ -2494,7 +2489,7 @@ namespace Carnassial
             // update status and, if it's not already displayed, change to the image set tab
             // In the event opening the file database is a long running operation this provides visual feedback the user's 
             // request to open an image set is being processed since the user can see the tab change and controls render.
-            imageSetLoadAndSetupTime.Start();
+            imageSetSetupTime.Start();
             string fileDatabaseFileName = Path.GetFileName(fileDatabaseFilePath);
             this.SetStatusMessage("Opening " + fileDatabaseFileName + "...");
             this.MenuViewShowFiles_Click(this, null);
@@ -2504,7 +2499,7 @@ namespace Carnassial
             templateDatabase.Dispose();
             if (fileDatabaseCreatedOrOpened == false)
             {
-                imageSetLoadAndSetupTime.Stop();
+                imageSetSetupTime.Stop();
 
                 // before running from an existing file database, verify the controls in the template database are compatible with those
                 // of the file database
@@ -2521,7 +2516,7 @@ namespace Carnassial
                     }
 
                     // user indicated to proceed with the stale copy of the template found in the file database
-                    imageSetLoadAndSetupTime.Start();
+                    imageSetSetupTime.Start();
                 }
                 else
                 {
@@ -2571,11 +2566,14 @@ namespace Carnassial
             }
 
             // load files from image set
+            Stopwatch fileLoadTime = new Stopwatch();
             await Task.Run(() =>
             {
+                fileLoadTime.Start();
                 this.DataHandler.FileDatabase.SelectFiles(this.DataHandler.FileDatabase.ImageSet.FileSelection);
+                fileLoadTime.Stop();
             });
-            imageSetLoadAndSetupTime.Stop();
+            imageSetSetupTime.Stop();
 
             bool filesAdded = false;
             if (tryAddFiles)
@@ -2587,7 +2585,7 @@ namespace Carnassial
             if (filesAdded == false)
             {
                 await this.OnFileDatabaseOpenedOrFilesAddedAsync(filesAdded);
-                this.SetStatusMessage("Image set opened in {0:0.000}s ({1:0} files/second).", imageSetLoadAndSetupTime.Elapsed.TotalSeconds, this.DataHandler.FileDatabase.CurrentlySelectedFileCount / imageSetLoadAndSetupTime.Elapsed.TotalSeconds);
+                this.SetStatusMessage("Image set opened in {0:0.000}s ({1:0} files/second for {2:0.000}s).", imageSetSetupTime.Elapsed.TotalSeconds, this.DataHandler.FileDatabase.CurrentlySelectedFileCount / fileLoadTime.Elapsed.TotalSeconds, fileLoadTime.Elapsed.TotalSeconds);
             }
             return true;
         }
@@ -3001,11 +2999,11 @@ namespace Carnassial
                 case Key.F3:
                     if (Keyboard.Modifiers == ModifierKeys.Shift)
                     {
-                        this.MenuEditFindNext_Click(this, null);
+                        this.MenuEditFindPrevious_Click(this, null);
                     }
                     else
                     {
-                        this.MenuEditFindPrevious_Click(this, null);
+                        this.MenuEditFindNext_Click(this, null);
                     }
                     break;
                 case Key.G:

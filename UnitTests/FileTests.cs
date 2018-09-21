@@ -141,71 +141,7 @@ namespace Carnassial.UnitTests
         }
 
         [TestMethod]
-        public async Task CorruptFileAsync()
-        {
-            using (FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultFileDatabaseFileName))
-            {
-                TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
-                ImageRow corruptFile = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.CorruptFieldScan, out MetadataReadResult corruptMetadataRead);
-                using (CachedImage corruptImage = await corruptFile.TryLoadImageAsync(fileDatabase.FolderPath))
-                {
-                    Assert.IsTrue(corruptImage.ImageNotDecodable == false);
-                    Assert.IsTrue(corruptImage.FileNoLongerAvailable == false);
-                    Assert.IsTrue(corruptImage.Image.DecodeError);
-                }
-            }
-        }
-
-        [TestMethod]
-        public void ExifBushnell()
-        {
-            using (FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constant.File.DefaultFileDatabaseFileName))
-            {
-                IReadOnlyCollection<MetadataDirectory> metadata = this.LoadMetadata(fileDatabase, TestConstant.FileExpectation.InfraredMarten);
-                ExifIfd0Directory ifd0 = metadata.OfType<ExifIfd0Directory>().Single();
-                ExifSubIfdDirectory subIfd = metadata.OfType<ExifSubIfdDirectory>().Single();
-
-                Assert.IsTrue(DateTime.TryParseExact(ifd0.GetDescription(ExifIfd0Directory.TagDateTime), TestConstant.Exif.DateTimeFormat, Constant.InvariantCulture, DateTimeStyles.None, out DateTime dateTime));
-                Assert.IsTrue(DateTime.TryParseExact(subIfd.GetDescription(ExifSubIfdDirectory.TagDateTimeDigitized), TestConstant.Exif.DateTimeFormat, Constant.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeDigitized));
-                Assert.IsTrue(DateTime.TryParseExact(subIfd.GetDescription(ExifSubIfdDirectory.TagDateTimeOriginal), TestConstant.Exif.DateTimeFormat, Constant.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeOriginal));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(ifd0.GetDescription(ExifSubIfdDirectory.TagSoftware)));
-            }
-        }
-
-        [TestMethod]
-        public void ExifReconyxHyperfire()
-        {
-            using (FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constant.File.DefaultFileDatabaseFileName))
-            {
-                IReadOnlyCollection<MetadataDirectory> metadata = this.LoadMetadata(fileDatabase, TestConstant.FileExpectation.DaylightMartenPair);
-                ExifIfd0Directory ifd0 = metadata.OfType<ExifIfd0Directory>().Single();
-                ExifSubIfdDirectory subIfd = metadata.OfType<ExifSubIfdDirectory>().Single();
-                ReconyxHyperFireMakernoteDirectory hyperfire = metadata.OfType<ReconyxHyperFireMakernoteDirectory>().Single();
-
-                Assert.IsFalse(String.IsNullOrWhiteSpace(subIfd.GetDescription(ExifSubIfdDirectory.TagExposureTime)));
-
-                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagAmbientTemperature)));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagAmbientTemperatureFahrenheit)));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagBatteryVoltage)));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagBrightness)));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagContrast)));
-                Assert.IsTrue(DateTime.TryParseExact(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagDateTimeOriginal), TestConstant.Exif.DateTimeFormat, Constant.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeOriginal));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagEventNumber)));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagFirmwareVersion)));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagInfraredIlluminator)));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagMakernoteVersion)));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagMoonPhase)));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagSaturation)));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagSequence)));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagSerialNumber)));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagSharpness)));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagTriggerMode)));
-                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagUserLabel)));
-            }
-        }
-
-        [TestMethod]
-        public async Task ImageQuality()
+        public async Task Classification()
         {
             List<FileExpectations> fileExpectations = new List<FileExpectations>()
             {
@@ -318,6 +254,70 @@ namespace Carnassial.UnitTests
                     break;
                 default:
                     throw new NotSupportedException(String.Format("Unhandled result {0}.", result));
+            }
+        }
+
+        [TestMethod]
+        public async Task CorruptFileAsync()
+        {
+            using (FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultFileDatabaseFileName))
+            {
+                TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
+                ImageRow corruptFile = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.CorruptFieldScan, out MetadataReadResult corruptMetadataRead);
+                using (CachedImage corruptImage = await corruptFile.TryLoadImageAsync(fileDatabase.FolderPath))
+                {
+                    Assert.IsTrue(corruptImage.ImageNotDecodable == false);
+                    Assert.IsTrue(corruptImage.FileNoLongerAvailable == false);
+                    Assert.IsTrue(corruptImage.Image.DecodeError);
+                }
+            }
+        }
+
+        [TestMethod]
+        public void ExifBushnell()
+        {
+            using (FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constant.File.DefaultFileDatabaseFileName))
+            {
+                IReadOnlyCollection<MetadataDirectory> metadata = this.LoadMetadata(fileDatabase, TestConstant.FileExpectation.InfraredMarten);
+                ExifIfd0Directory ifd0 = metadata.OfType<ExifIfd0Directory>().Single();
+                ExifSubIfdDirectory subIfd = metadata.OfType<ExifSubIfdDirectory>().Single();
+
+                Assert.IsTrue(DateTime.TryParseExact(ifd0.GetDescription(ExifIfd0Directory.TagDateTime), TestConstant.Exif.DateTimeFormat, Constant.InvariantCulture, DateTimeStyles.None, out DateTime dateTime));
+                Assert.IsTrue(DateTime.TryParseExact(subIfd.GetDescription(ExifSubIfdDirectory.TagDateTimeDigitized), TestConstant.Exif.DateTimeFormat, Constant.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeDigitized));
+                Assert.IsTrue(DateTime.TryParseExact(subIfd.GetDescription(ExifSubIfdDirectory.TagDateTimeOriginal), TestConstant.Exif.DateTimeFormat, Constant.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeOriginal));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(ifd0.GetDescription(ExifSubIfdDirectory.TagSoftware)));
+            }
+        }
+
+        [TestMethod]
+        public void ExifReconyxHyperfire()
+        {
+            using (FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, Constant.File.DefaultFileDatabaseFileName))
+            {
+                IReadOnlyCollection<MetadataDirectory> metadata = this.LoadMetadata(fileDatabase, TestConstant.FileExpectation.DaylightMartenPair);
+                ExifIfd0Directory ifd0 = metadata.OfType<ExifIfd0Directory>().Single();
+                ExifSubIfdDirectory subIfd = metadata.OfType<ExifSubIfdDirectory>().Single();
+                ReconyxHyperFireMakernoteDirectory hyperfire = metadata.OfType<ReconyxHyperFireMakernoteDirectory>().Single();
+
+                Assert.IsFalse(String.IsNullOrWhiteSpace(subIfd.GetDescription(ExifSubIfdDirectory.TagExposureTime)));
+
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagAmbientTemperature)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagAmbientTemperatureFahrenheit)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagBatteryVoltage)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagBrightness)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagContrast)));
+                Assert.IsTrue(DateTime.TryParseExact(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagDateTimeOriginal), TestConstant.Exif.DateTimeFormat, Constant.InvariantCulture, DateTimeStyles.None, out DateTime dateTimeOriginal));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagEventNumber)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagFirmwareVersion)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagInfraredIlluminator)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagMakernoteVersion)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagMoonPhase)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagSaturation)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagSequence)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagSerialNumber)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagSharpness)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagTriggerMode)));
+                Assert.IsFalse(String.IsNullOrWhiteSpace(hyperfire.GetDescription(ReconyxHyperFireMakernoteDirectory.TagUserLabel)));
             }
         }
 

@@ -14,7 +14,7 @@ namespace Carnassial.Dialog
     /// This is useful if (say) the camera was not initialized to the correct date and time.
     /// It assumes that Carnassial is configured to display all files, and the its currently displaying a valid file and thus a valid date.
     /// </summary>
-    public partial class DateTimeFixedCorrection : Window
+    public partial class DateTimeFixedCorrection : WindowWithSystemMenu
     {
         private readonly FileDatabase fileDatabase;
         private readonly ImageCache imageCache;

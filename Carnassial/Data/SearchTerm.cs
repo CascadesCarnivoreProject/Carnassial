@@ -2,6 +2,8 @@
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
@@ -10,16 +12,18 @@ namespace Carnassial.Data
     /// <summary>
     /// A SearchTerm stores the search criteria for a field.
     /// </summary>
-    public abstract class SearchTerm
+    public abstract class SearchTerm : INotifyPropertyChanged
     {
         private object databaseValue;
-        private Lazy<List<object>> wellKnownValues;
+        private string op;
+        private Lazy<ObservableCollection<object>> wellKnownValues;
+        private bool useForSearching;
 
         public ControlType ControlType { get; private set; }
         public string DataLabel { get; private set; }
         public string Label { get; private set; }
-        public string Operator { get; set; }
-        public bool UseForSearching { get; set; }
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         protected SearchTerm(ControlRow control)
         {
@@ -27,9 +31,9 @@ namespace Carnassial.Data
             this.databaseValue = null;
             this.DataLabel = control.DataLabel;
             this.Label = control.Label;
-            this.Operator = Constant.SearchTermOperator.Equal;
-            this.UseForSearching = false;
-            this.wellKnownValues = new Lazy<List<object>>(() =>
+            this.op = Constant.SearchTermOperator.Equal;
+            this.useForSearching = false;
+            this.wellKnownValues = new Lazy<ObservableCollection<object>>(() =>
             {
                 List<string> wellKnownStrings = control.GetWellKnownValues();
                 if (String.Equals(this.DataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal))
@@ -38,7 +42,7 @@ namespace Carnassial.Data
                     wellKnownStrings.Remove(FileClassification.Color.ToString());
                 }
 
-                List<object> wellKnownValues = new List<object>(wellKnownStrings.Count);
+                ObservableCollection<object> wellKnownValues = new ObservableCollection<object>();
                 foreach (string wellKnownString in wellKnownStrings)
                 {
                     wellKnownValues.Add(this.ConvertWellKnownValue(wellKnownString));
@@ -60,11 +64,44 @@ namespace Carnassial.Data
 
         public object DatabaseValue
         {
-            get { return this.databaseValue; }
-            set { this.databaseValue = this.ConvertDatabaseValue(value); }
+            get
+            {
+                return this.databaseValue;
+            }
+            set
+            {
+                this.databaseValue = this.ConvertDatabaseValue(value);
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.DatabaseValue)));
+            }
         }
 
-        public List<object> WellKnownValues
+        public string Operator
+        {
+            get
+            {
+                return this.op;
+            }
+            set
+            {
+                this.op = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Operator)));
+            }
+        }
+
+        public bool UseForSearching
+        {
+            get
+            {
+                return this.useForSearching;
+            }
+            set
+            {
+                this.useForSearching = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.UseForSearching)));
+            }
+        }
+
+        public ObservableCollection<object> WellKnownValues
         {
             get { return this.wellKnownValues.Value; }
         }
@@ -218,7 +255,7 @@ namespace Carnassial.Data
             }
             if (typeof(TColumnType) == typeof(DateTime))
             {
-                return DateTimeHandler.ParseDatabaseDateTimeString(value);
+                return DateTimeHandler.ParseDatabaseDateTime(value);
             }
             if (typeof(TColumnType) == typeof(FileClassification))
             {

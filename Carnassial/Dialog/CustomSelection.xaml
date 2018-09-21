@@ -4,64 +4,98 @@
         xmlns:dialog="clr-namespace:Carnassial.Dialog"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Create a custom selection."
-        Loaded="Window_Loaded"
-        MinHeight="500" MinWidth="700" Height="900" Width="768" ShowInTaskbar="False">
-    <Grid>
+        Closed="Window_Closed" Loaded="Window_Loaded"
+        MinHeight="500" MinWidth="700" Height="900" Width="768" ShowInTaskbar="False" Style="{StaticResource ApplicationWindow}">
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static SystemCommands.CloseWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="CloseWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.MaximizeWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="MaximizeWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.MinimizeWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="MinimizeWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.RestoreWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="RestoreWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.ShowSystemMenuCommand}" CanExecute="CommandBinding_CanExecute" Executed="ShowSystemMenu_Execute" />
+    </Window.CommandBindings>
+    <Grid Style="{StaticResource ApplicationGrid}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="{Binding Source={x:Static SystemParameters.WindowCaptionHeight}}" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <control:StockMessageControl x:Name="Message" StatusImage="Question"
+
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <TextBlock Style="{StaticResource ApplicationTitle}" Grid.Column="0" />
+            <Button Style="{StaticResource SystemMinimizeButton}" Grid.Column="2" />
+            <Button Style="{StaticResource SystemMaximizeRestoreButton}" Grid.Column="3" />
+            <Button Style="{StaticResource SystemCloseButton}" Grid.Column="4" />
+        </Grid>
+
+        <Grid Grid.Row="1" Style="{StaticResource DialogGrid}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <control:StockMessageControl x:Name="Message" StatusImage="Question"
                             Title="Create a custom selection."
                             What="You may want to view only a subset of your images and videos which fit some criteria of interest to you."
                             Solution="Specify the search terms which describe your criteria. Each row below reflects one of your data fields.  Select one or more data fields that you want to use as part of your search, select the expresson you want to use, and select or enter the value you want to use to compare against the data field's contents."
                             Result="Only those files matching your search criteria will be displayed."
                             Hint="Like expressions are case insensitive and allow wildcards as follows:&#10;&#x2022; * matches any number of characters and ? matches any single character&#10;&#x2022; [abc] matches one of the indicated characters; [a-z] matches one character in the range of indicated characters.&#10;More complex queries can be created by right clicking on a label and duplicating the term."
                             HideExplanationCheckboxIsVisible="True" Grid.Row="0"/>
-        <StackPanel Orientation="Vertical" VerticalAlignment="Stretch" Grid.Row="1">
-            <Rectangle Fill="#FF868686" Height="1" />
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Margin="10" FontWeight="Bold" VerticalAlignment="Center" Text="Combine searches using: "/>
-                <StackPanel Orientation="Vertical">
-                    <StackPanel Orientation="Horizontal">
-                        <RadioButton VerticalAlignment="Center" Name="TermCombiningAnd" Margin="3,3,0,3 " FontWeight="Bold" Content="_And" GroupName="LogicalOperators" IsChecked="True"/>
-                        <TextBlock VerticalAlignment="Center" Margin="3,3,0,3" Text="to select images and videos matching all search terms"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <RadioButton Name="TermCombiningOr" VerticalAlignment="Center" Margin="3,1,0,3" FontWeight="Bold" Content="O_r" GroupName="LogicalOperators"  />
-                        <TextBlock VerticalAlignment="Center" Margin="3,0,0,3" Text="   to select images and videos matching any one of the search terms"/>
+            <StackPanel Orientation="Vertical" VerticalAlignment="Stretch" Grid.Row="1">
+                <Rectangle Style="{StaticResource DialogHorizontalRule}" />
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Margin="10" FontWeight="Bold" VerticalAlignment="Center" Text="Combine searches using: "/>
+                    <StackPanel Orientation="Vertical">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton VerticalAlignment="Center" Name="TermCombiningAnd" Margin="3,3,0,3 " FontWeight="Bold" Content="_And" GroupName="LogicalOperators" IsChecked="True"/>
+                            <TextBlock VerticalAlignment="Center" Margin="3,3,0,3" Text="to select images and videos matching all search terms"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton Name="TermCombiningOr" VerticalAlignment="Center" Margin="3,1,0,3" FontWeight="Bold" Content="O_r" GroupName="LogicalOperators"  />
+                            <TextBlock VerticalAlignment="Center" Margin="3,0,0,3" Text="   to select images and videos matching any one of the search terms"/>
+                        </StackPanel>
                     </StackPanel>
                 </StackPanel>
+                <Rectangle Style="{StaticResource DialogHorizontalRule}" />
             </StackPanel>
-            <Rectangle Fill="#FF868686" Height="1" />
-        </StackPanel>
-        <ScrollViewer HorizontalScrollBarVisibility="Disabled" Grid.Row="2">
-            <Grid Name="SearchTerms">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-                <TextBlock Padding="10,0,5,0" FontWeight="Bold" Text="Label" Grid.Row="0" Grid.Column="0"/>
-                <TextBlock Padding="5,0,5,0" FontWeight="Bold" Text="Expression" Grid.Row="0" Grid.Column="1"/>
-                <TextBlock Padding="5,0,5,0" FontWeight="Bold" Text="Value" Grid.Row="0" Grid.Column="2"/>
-                <TextBlock Padding="5,0,5,0" FontWeight="Bold" Text="Database Query" Grid.Row="0" Grid.Column="3"/>
-            </Grid>
-        </ScrollViewer>
-        <DockPanel Grid.Row="3">
-            <Button Name="Reset" Content="_Reset" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="10,0,0,0" Padding="10" Click="Reset_Click" IsEnabled="False"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <TextBlock Name="QueryMatches" HorizontalAlignment="Left"  Margin="10,5,0,5" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0" FontWeight="DemiBold"><Run Text="0  "/></TextBlock>
-                <TextBlock HorizontalAlignment="Left"  Margin="0,5,0,5" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0"><Run Text=" files match your query "/></TextBlock>
-                <Button Name="OkButton" Grid.Column="1" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">_Okay</Button>
-                <Button Name="CancelButton" Grid.Column="0" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" AutomationProperties.AutomationId="CancelButton" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
-            </StackPanel>
-        </DockPanel>
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled" Grid.Row="2">
+                <Grid Name="SearchTerms">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Padding="10,0,5,0" FontWeight="Bold" Text="Label" Grid.Row="0" Grid.Column="0"/>
+                    <TextBlock Padding="5,0,5,0" FontWeight="Bold" Text="Expression" Grid.Row="0" Grid.Column="1"/>
+                    <TextBlock Padding="5,0,5,0" FontWeight="Bold" Text="Value" Grid.Row="0" Grid.Column="2"/>
+                    <TextBlock Padding="5,0,5,0" FontWeight="Bold" Text="Database Query" Grid.Row="0" Grid.Column="3"/>
+                </Grid>
+            </ScrollViewer>
+            <DockPanel Grid.Row="3">
+                <Button Name="Reset" Content="_Reset" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="10,0,0,0" Padding="10" Click="Reset_Click" IsEnabled="False"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <TextBlock Name="QueryMatches" HorizontalAlignment="Left"  Margin="10,5,0,5" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0" FontWeight="DemiBold"><Run Text="0  "/></TextBlock>
+                    <TextBlock HorizontalAlignment="Left"  Margin="0,5,0,5" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0"><Run Text=" files match your query "/></TextBlock>
+                    <Button Name="OkButton" Grid.Column="1" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">_Okay</Button>
+                    <Button Name="CancelButton" Grid.Column="0" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" AutomationProperties.AutomationId="CancelButton" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
+                </StackPanel>
+            </DockPanel>
+        </Grid>
     </Grid>
 </dialog:FindDialog>

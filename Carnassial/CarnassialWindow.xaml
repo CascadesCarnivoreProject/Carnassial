@@ -1,10 +1,10 @@
-﻿<local:WindowWithSystemMenu x:Class="Carnassial.CarnassialWindow"
+﻿<local:ApplicationWindow x:Class="Carnassial.CarnassialWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         AutomationProperties.AutomationId="Carnassial" Icon="Carnassial.ico"
-        Closing="Window_Closing" ContentRendered="Window_ContentRendered" KeyDown="Window_KeyDown" SourceInitialized="Window_SourceInitialized" Style="{StaticResource MainWindow}"
+        Closing="Window_Closing" ContentRendered="Window_ContentRendered" KeyDown="Window_KeyDown" SourceInitialized="Window_SourceInitialized" Style="{StaticResource ApplicationWindow}"
         Height="860" Width="1388">
     <Window.CommandBindings>
         <CommandBinding Command="{x:Static SystemCommands.CloseWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="CloseWindow_Execute" />
@@ -29,8 +29,8 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Button Style="{StaticResource ApplicationIcon}" />
-            <Menu Name="Menu" Style="{StaticResource ApplicationMenu}">
+            <Button Style="{StaticResource ApplicationIcon}" Grid.Column="0" />
+            <Menu Name="Menu" Style="{StaticResource ApplicationMenu}" Grid.Column="1">
                 <!-- file menu -->
                 <MenuItem Header="_File" SubmenuOpened="MenuFile_SubmenuOpened">
                     <MenuItem Name="MenuFileLoadImageSet" Header="_Open template, images, and videos..." Click="MenuFileLoadImageSet_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Asks for a template and then opens an existing database or creates a new database.">
@@ -312,10 +312,10 @@
                     <MenuItem Name="MenuHelpAbout" Header="_About..." Click="MenuHelpAbout_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Displays version information about this program and how to contact the development team." />
                 </MenuItem>
             </Menu>
-            <TextBlock Style="{StaticResource ApplicationTitle}" />
-            <Button Style="{StaticResource SystemCloseButton}" />
-            <Button Style="{StaticResource SystemMaximizeRestoreButton}" />
-            <Button Style="{StaticResource SystemMinimizeButton}" />
+            <TextBlock Style="{StaticResource ApplicationTitle}" Grid.Column="2" />
+            <Button Style="{StaticResource SystemMinimizeButton}" Grid.Column="4" />
+            <Button Style="{StaticResource SystemMaximizeRestoreButton}" Grid.Column="5" />
+            <Button Style="{StaticResource SystemCloseButton}" Grid.Column="6" />
         </Grid>
 
         <control:TabControlWithoutHomeAndEnd x:Name="Tabs">
@@ -387,4 +387,4 @@
             </TabItem>
         </control:TabControlWithoutHomeAndEnd>
     </Grid>
-</local:WindowWithSystemMenu>
+</local:ApplicationWindow>

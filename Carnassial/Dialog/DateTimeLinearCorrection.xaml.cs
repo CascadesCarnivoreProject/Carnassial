@@ -11,7 +11,7 @@ namespace Carnassial.Dialog
     /// This dialog lets the user specify a corrected date and time of a file. All other dates and times are then corrected by the same amount.
     /// This is useful if (say) the camera was not initialized to the correct date and time.
     /// </summary>
-    public partial class DateTimeLinearCorrection : Window
+    public partial class DateTimeLinearCorrection : WindowWithSystemMenu
     {
         private readonly DateTimeOffset earliestFileDateTimeUncorrected;
         private readonly ImageRow earliestFile;

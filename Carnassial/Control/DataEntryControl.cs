@@ -5,7 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using SwcControl = System.Windows.Controls.Control;
+using WpfControl = System.Windows.Controls.Control;
 
 namespace Carnassial.Control
 {
@@ -144,10 +144,10 @@ namespace Carnassial.Control
     // - another control for displaying / entering data at a given width
     [SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1402:FileMayOnlyContainASingleClass", Justification = "StyleCop limitation.")]
     public abstract class DataEntryControl<TContent, TLabel> : DataEntryControl
-        where TContent : SwcControl, new()
+        where TContent : WpfControl, new()
         where TLabel : ContentControl, new()
     {
-        private static readonly DependencyProperty Background = SwcControl.BackgroundProperty;
+        private static readonly DependencyProperty Background = WpfControl.BackgroundProperty;
 
         public TContent ContentControl { get; private set; }
 

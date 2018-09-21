@@ -1,6 +1,5 @@
 ﻿using Carnassial.Data;
 using Carnassial.Images;
-using Carnassial.Native;
 using Carnassial.Util;
 using System;
 using System.Windows;
@@ -8,7 +7,7 @@ using System.Windows.Controls;
 
 namespace Carnassial.Dialog
 {
-    public partial class DateTimeSetTimeZone : Window
+    public partial class DateTimeSetTimeZone : WindowWithSystemMenu
     {
         private readonly FileDatabase fileDatabase;
         private readonly ImageCache imageCache;

@@ -1,32 +1,66 @@
-﻿<Window x:Class="Carnassial.Dialog.ChooseFileDatabase"
+﻿<local:WindowWithSystemMenu x:Class="Carnassial.Dialog.ChooseFileDatabase"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
         Title="Select the data file to use." Height="550" Width="650" MinHeight="500" MinWidth="600"
-        Loaded="Window_Loaded">
-    <Grid>
+        Loaded="Window_Loaded" Style="{StaticResource ApplicationWindow}">
+    <Window.CommandBindings>
+        <CommandBinding Command="{x:Static SystemCommands.CloseWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="CloseWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.MaximizeWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="MaximizeWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.MinimizeWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="MinimizeWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.RestoreWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="RestoreWindow_Execute" />
+        <CommandBinding Command="{x:Static SystemCommands.ShowSystemMenuCommand}" CanExecute="CommandBinding_CanExecute" Executed="ShowSystemMenu_Execute" />
+    </Window.CommandBindings>
+    <Grid Style="{StaticResource ApplicationGrid}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="{Binding Source={x:Static SystemParameters.WindowCaptionHeight}}" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <control:StockMessageControl x:Name="Message" Grid.Row="0" StatusImage="Question"
+
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <TextBlock Style="{StaticResource ApplicationTitle}" Grid.Column="0" />
+            <Button Style="{StaticResource SystemMinimizeButton}" Grid.Column="2" />
+            <Button Style="{StaticResource SystemMaximizeRestoreButton}" Grid.Column="3" />
+            <Button Style="{StaticResource SystemCloseButton}" Grid.Column="4" />
+        </Grid>
+
+        <Grid Grid.Row="1" Style="{StaticResource DialogGrid}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <control:StockMessageControl x:Name="Message" Grid.Row="0" StatusImage="Question"
                             Title="Choose a data file."
                             Problem="There are multiple Carnassial database files (.ddb) in the same directory as the template."
                             Solution="Choose the Carnassial file you want to use."
                             Result="Carnassial will read data from and save data to the chosen file." />
-        <Rectangle Fill="#FF868686" Height="1" Grid.Row="1" />
-        <Label FontWeight="Bold" Content="Select a data file:" Grid.Row="2" Margin="5,0,0,0" />
-        <ListBox Name="FileDatabases" MouseDoubleClick="FileDatabases_MouseDoubleClick" SelectionChanged="FileDatabases_SelectionChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" Grid.Row="3" Margin="10,0,10,5" />
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="4">
-            <Button Name="OkButton" IsDefault="True" Click="OkButton_Click" IsEnabled="False" Margin="10,10,10,10" Padding="10" AutomationProperties.AutomationId="OkButton">_Okay</Button>
-            <Button Name="CancelButton" IsCancel="True" Click="CancelButton_Click" AutomationProperties.AutomationId="CancelButton" Margin="10,10,10,10" Padding="10">_Cancel</Button>
-        </StackPanel>
+            <Rectangle Style="{StaticResource DialogHorizontalRule}" Grid.Row="1" />
+            <Label FontWeight="Bold" Content="Select a data file:" Grid.Row="2" Margin="5,0,0,0" />
+            <ListBox Name="FileDatabases" MouseDoubleClick="FileDatabases_MouseDoubleClick" SelectionChanged="FileDatabases_SelectionChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" Grid.Row="3" Margin="10,0,10,5" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="4">
+                <Button Name="OkButton" IsDefault="True" Click="OkButton_Click" IsEnabled="False" Margin="10,10,10,10" Padding="10" AutomationProperties.AutomationId="OkButton">_Okay</Button>
+                <Button Name="CancelButton" IsCancel="True" Click="CancelButton_Click" AutomationProperties.AutomationId="CancelButton" Margin="10,10,10,10" Padding="10">_Cancel</Button>
+            </StackPanel>
+        </Grid>
     </Grid>
-</Window>
+</local:WindowWithSystemMenu>

@@ -14,7 +14,7 @@ namespace Carnassial.Dialog
     /// This dialog box asks the user if he/she wants to delete the files (and possibly the data) of file data rows.  Files are soft deleted and the no
     /// longer available placeholder used.  Data is hard deleted.
     /// </summary>
-    public partial class DeleteFiles : Window
+    public partial class DeleteFiles : WindowWithSystemMenu
     {
         // these variables will hold the values of the passed in parameters
         private bool deleteFileAndData;

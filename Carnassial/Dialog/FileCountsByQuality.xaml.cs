@@ -9,7 +9,7 @@ namespace Carnassial.Dialog
     /// <summary>
     /// Displays breakdown of file classifications.
     /// </summary>
-    public partial class FileCountsByClassification : Window
+    public partial class FileCountsByClassification : WindowWithSystemMenu
     {
         public FileCountsByClassification(Dictionary<FileClassification, int> fileCountByClassification, Window owner)
         {

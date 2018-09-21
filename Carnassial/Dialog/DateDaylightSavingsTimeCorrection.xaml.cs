@@ -9,7 +9,7 @@ namespace Carnassial.Dialog
     /// <summary>
     /// This dialog lets a user enter a time change correction of +/-1 hour, which is propagated backwards or forwards.
     /// </summary>
-    public partial class DateDaylightSavingsTimeCorrection : Window
+    public partial class DateDaylightSavingsTimeCorrection : WindowWithSystemMenu
     {
         private readonly int currentFileIndex;
         private readonly FileDatabase fileDatabase;

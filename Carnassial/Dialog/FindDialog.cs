@@ -7,14 +7,14 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Input;
+using WpfControl = System.Windows.Controls.Control;
 
 namespace Carnassial.Dialog
 {
-    public class FindDialog : Window
+    public class FindDialog : WindowWithSystemMenu
     {
-        protected event Action<SearchTerm> SearchTermValueChanged;
-
         // accept only numbers in counter textboxes
         private void Counter_Paste(object sender, DataObjectPastingEventArgs args)
         {
@@ -37,7 +37,7 @@ namespace Carnassial.Dialog
             args.Handled = !Utilities.IsDigits(args.Text);
         }
 
-        protected System.Windows.Controls.Control CreateValueControl(SearchTerm searchTerm, FileDatabase fileDatabase)
+        protected WpfControl CreateValueControl(SearchTerm searchTerm, FileDatabase fileDatabase)
         {
             ControlType controlType = searchTerm.ControlType;
             switch (controlType)
@@ -48,18 +48,25 @@ namespace Carnassial.Dialog
                     {
                         AllowLeadingWhitespace = true,
                         Autocompletions = fileDatabase.GetDistinctValuesInFileDataColumn(searchTerm.DataLabel),
+                        DataContext = searchTerm,
                         Height = Constant.UserInterface.FindTextBoxHeight,
                         IsEnabled = searchTerm.UseForSearching,
                         Margin = Constant.UserInterface.FindCellMargin,
-                        Tag = searchTerm,
-                        Text = searchTerm.DatabaseValue?.ToString(),
                         TextWrapping = TextWrapping.NoWrap,
                         VerticalAlignment = VerticalAlignment.Center,
                         VerticalContentAlignment = VerticalAlignment.Center,
                         Width = Constant.UserInterface.FindValueWidth
                     };
+                    Binding binding = new Binding(nameof(searchTerm.DatabaseValue))
+                    {
+                        UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+                    };
+                    if (searchTerm.ControlType == ControlType.Counter)
+                    {
+                        binding.Converter = new IntegerConverter();
+                    }
+                    BindingOperations.SetBinding(textBox, AutocompleteTextBox.TextProperty, binding);
 
-                    textBox.TextAutocompleted += this.SearchTermDatabaseValue_TextAutocompleted;
                     if (controlType == ControlType.Counter)
                     {
                         // accept only numbers in counter text boxes
@@ -68,87 +75,64 @@ namespace Carnassial.Dialog
                     }
                     return textBox;
                 case ControlType.DateTime:
-                    DateTimeOffsetPicker dateTimePicker = new DateTimeOffsetPicker()
+                    DateTimeOffsetPicker dateTimeOffset = new DateTimeOffsetPicker()
                     {
+                        DataContext = searchTerm,
                         IsEnabled = searchTerm.UseForSearching,
-                        Tag = searchTerm,
                         Value = (DateTime)searchTerm.DatabaseValue,
                         Width = Constant.UserInterface.FindValueWidth
                     };
-                    dateTimePicker.ValueChanged += this.DateTime_ValueChanged;
-                    return dateTimePicker;
+                    BindingOperations.SetBinding(dateTimeOffset, DateTimeOffsetPicker.ValueProperty, new Binding(nameof(searchTerm.DatabaseValue))
+                    {
+                        Converter = new DateTimeOffsetConverter(),
+                        UpdateSourceTrigger = UpdateSourceTrigger.PropertyChanged
+                    });
+                    return dateTimeOffset;
                 case ControlType.FixedChoice:
                     ComboBox comboBox = new ComboBox()
                     {
+                        DataContext = searchTerm,
                         IsEnabled = searchTerm.UseForSearching,
                         ItemsSource = searchTerm.WellKnownValues,
                         Margin = Constant.UserInterface.FindCellMargin,
                         SelectedItem = searchTerm.DatabaseValue,
-                        Tag = searchTerm,
                         Width = Constant.UserInterface.FindValueWidth
                     };
-                    comboBox.SelectionChanged += this.FixedChoice_SelectionChanged;
+                    binding = new Binding(nameof(searchTerm.DatabaseValue));
+                    BindingOperations.SetBinding(comboBox, ComboBox.SelectedItemProperty, binding);
                     return comboBox;
                 case ControlType.Flag:
                     CheckBox checkBox = new CheckBox()
                     {
+                        DataContext = searchTerm,
                         HorizontalAlignment = HorizontalAlignment.Left,
                         IsChecked = (bool)searchTerm.DatabaseValue,
                         IsEnabled = searchTerm.UseForSearching,
                         Margin = Constant.UserInterface.FindCellMargin,
-                        Tag = searchTerm,
                         VerticalAlignment = VerticalAlignment.Center
                     };
-                    checkBox.Checked += this.Flag_CheckedOrUnchecked;
-                    checkBox.Unchecked += this.Flag_CheckedOrUnchecked;
+                    BindingOperations.SetBinding(checkBox, CheckBox.IsCheckedProperty, new Binding(nameof(searchTerm.DatabaseValue))
+                    {
+                        Converter = new BooleanConverter()
+                    });
                     return checkBox;
                 case ControlType.UtcOffset:
-                    UtcOffsetPicker utcOffsetPicker = new UtcOffsetPicker()
+                    UtcOffsetPicker utcOffset = new UtcOffsetPicker()
                     {
+                        DataContext = searchTerm,
                         IsEnabled = searchTerm.UseForSearching,
                         IsTabStop = true,
-                        Tag = searchTerm,
                         Value = (TimeSpan)searchTerm.DatabaseValue,
                         Width = Constant.UserInterface.FindValueWidth
                     };
-                    utcOffsetPicker.ValueChanged += this.UtcOffset_ValueChanged;
-                    return utcOffsetPicker;
+                    BindingOperations.SetBinding(utcOffset, UtcOffsetPicker.ValueProperty, new Binding(nameof(searchTerm.DatabaseValue))
+                    {
+                        Converter = new UtcOffsetConverter()
+                    });
+                    return utcOffset;
                 default:
                     throw new NotSupportedException(String.Format("Unhandled control type '{0}'.", controlType));
             }
-        }
-
-        private void DateTime_ValueChanged(DateTimeOffsetPicker datePicker, DateTimeOffset newDateTime)
-        {
-            SearchTerm searchTerm = (SearchTerm)datePicker.Tag;
-            searchTerm.DatabaseValue = datePicker.Value.UtcDateTime;
-            this.SearchTermValueChanged?.Invoke(searchTerm);
-        }
-
-        private void FixedChoice_SelectionChanged(object sender, SelectionChangedEventArgs args)
-        {
-            ComboBox comboBox = sender as ComboBox;
-            SearchTerm searchTerm = (SearchTerm)comboBox.Tag;
-            if (String.Equals(searchTerm.DataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal))
-            {
-                searchTerm.DatabaseValue = (int)comboBox.SelectedValue;
-            }
-            else
-            {
-                searchTerm.DatabaseValue = (string)comboBox.SelectedValue;
-            }
-
-            this.SearchTermValueChanged?.Invoke(searchTerm);
-        }
-
-        private void Flag_CheckedOrUnchecked(object sender, RoutedEventArgs e)
-        {
-            CheckBox checkBox = sender as CheckBox;
-            SearchTerm searchTerm = (SearchTerm)checkBox.Tag;
-
-            Debug.Assert(checkBox.IsChecked.HasValue, "Expected check box to be either checked or unchecked but it doesn't have a value.");
-            searchTerm.DatabaseValue = checkBox.IsChecked.Value;
-            this.SearchTermValueChanged?.Invoke(searchTerm);
         }
 
         protected List<string> GetOperators(SearchTerm searchTerm)
@@ -192,42 +176,77 @@ namespace Carnassial.Dialog
             }
         }
 
-        protected void Operator_SelectionChanged(object sender, SelectionChangedEventArgs args)
+        protected class BooleanConverter : IValueConverter
         {
-            ComboBox comboBox = sender as ComboBox;
-            SearchTerm searchTerm = (SearchTerm)comboBox.Tag;
-            searchTerm.Operator = (string)comboBox.SelectedValue;
-            this.SearchTermValueChanged?.Invoke(searchTerm);
+            public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            {
+                Debug.Assert(targetType == typeof(Nullable<bool>), "Expected to convert to Nullable<bool>.");
+                return new Nullable<bool>((bool)value);
+            }
+
+            public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            {
+                Debug.Assert(targetType == typeof(object), "Expected request to convert bool to object.");
+                return ((Nullable<bool>)value).Value;
+            }
         }
 
-        private void SearchTermDatabaseValue_TextAutocompleted(object sender, TextChangedEventArgs args)
+        protected class DateTimeOffsetConverter : IValueConverter
         {
-            TextBox textBox = sender as TextBox;
-            SearchTerm searchTerm = (SearchTerm)textBox.Tag;
-            if (searchTerm.ControlType == ControlType.Counter)
+            public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
             {
-                if (String.IsNullOrEmpty(textBox.Text))
+                Debug.Assert(targetType == typeof(DateTimeOffset), "Expected to convert to DateTimeOffset.");
+                return new DateTimeOffset((DateTime)value);
+            }
+
+            public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            {
+                Debug.Assert(targetType == typeof(object), "Expected request to convert DateTimeOffset to object.");
+                return ((DateTimeOffset)value).UtcDateTime;
+            }
+        }
+
+        protected class IntegerConverter : IValueConverter
+        {
+            public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            {
+                Debug.Assert(targetType == typeof(string), "Expected to convert to string.");
+                return value.ToString();
+            }
+
+            public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            {
+                Debug.Assert(targetType == typeof(object), "Expected request to convert string to object.");
+                string valueAsString = (string)value;
+                if (String.IsNullOrEmpty(valueAsString))
                 {
                     // while counter input is limited to numbers a user can delete all text during editing
-                    searchTerm.DatabaseValue = null;
+                    return null;
                 }
                 else
                 {
-                    searchTerm.DatabaseValue = Int32.Parse(textBox.Text, NumberStyles.AllowLeadingSign, CultureInfo.CurrentCulture);
+                    return Int32.Parse(valueAsString, NumberStyles.AllowLeadingSign, CultureInfo.CurrentCulture);
                 }
             }
-            else
-            {
-                searchTerm.DatabaseValue = textBox.Text;
-            }
-            this.SearchTermValueChanged?.Invoke(searchTerm);
         }
 
-        private void UtcOffset_ValueChanged(TimeSpanPicker utcOffsetPicker, TimeSpan newTimeSpan)
+        protected class UtcOffsetConverter : IValueConverter
         {
-            SearchTerm searchTerm = (SearchTerm)utcOffsetPicker.Tag;
-            searchTerm.DatabaseValue = utcOffsetPicker.Value.TotalHours;
-            this.SearchTermValueChanged?.Invoke(searchTerm);
+            public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            {
+                Debug.Assert(targetType == typeof(TimeSpan), "Expected to convert to TimeSpan.");
+                if (value is TimeSpan timeSpan)
+                {
+                    return timeSpan;
+                }
+                return DateTimeHandler.FromDatabaseUtcOffset((double)value);
+            }
+
+            public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            {
+                Debug.Assert(targetType == typeof(double), "Expected to convert to double.");
+                return DateTimeHandler.ToDatabaseUtcOffset((TimeSpan)value);
+            }
         }
     }
 }

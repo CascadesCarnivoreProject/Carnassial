@@ -22,7 +22,7 @@ namespace Carnassial.Dialog
     /// that found in their metadata.  This dialog is also capable of reading dates and times into a note control.  It may, for example,
     /// be desired to compare a file's original metadata date time to its DateTimeOffset after clock corrections have been performed.
     /// </remarks>
-    public partial class PopulateFieldWithMetadata : Window
+    public partial class PopulateFieldWithMetadata : WindowWithSystemMenu
     {
         private bool clearIfNoMetadata;
         private string dataFieldLabel;
