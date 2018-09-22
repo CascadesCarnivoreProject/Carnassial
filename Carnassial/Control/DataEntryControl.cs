@@ -47,7 +47,7 @@ namespace Carnassial.Control
 
         public ControlType Type { get; private set; }
 
-        protected DataEntryControl(ControlRow control, DataEntryControls dataEntryControls)
+        protected DataEntryControl(ControlRow control, DataEntryControls styleProvider)
         {
             // populate properties from database definition of control
             // this.Content and Tooltip can't be set, however, as the caller hasn't instantiated the content control yet
@@ -66,12 +66,11 @@ namespace Carnassial.Control
             {
                 MaxWidth = control.MaxWidth, Width = new GridLength(1.0, GridUnitType.Star)
             });
-            this.Container.Height = 35;
-            this.Container.Margin = new Thickness(0, 0, 8, 0);
             this.Container.RowDefinitions.Add(new RowDefinition()
             {
                 Height = GridLength.Auto
             });
+            this.Container.Style = (Style)styleProvider.FindResource(DataEntryControls.ControlContainerStyleName);
 
             // use the containers's tag to point back to this so event handlers can access the DataEntryControl
             // this is needed by callbacks such as DataEntryHandler.Container_PreviewMouseRightButtonDown() and CarnassialWindow.CounterControl_MouseLeave()

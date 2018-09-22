@@ -7,32 +7,9 @@
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="300">
     <Control.Resources>
-        <!-- focus style for checkbox https://ramontebar.wordpress.com/2010/02/26/wpf-custom-check-box-template/ -->
-        <SolidColorBrush x:Key="FlagFocusBorderBrush" Color="IndianRed" />
-        <Style x:Key="FlagFocusVisualStyle">
-            <Setter Property="Control.Template">
-                <Setter.Value>
-                    <ControlTemplate>
-                        <Border CornerRadius="2" Margin="0,0,4,3" BorderThickness="2" BorderBrush="{StaticResource FlagFocusBorderBrush}" Background="Transparent"/>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
         <!-- brushes for flag controls -->
-        <LinearGradientBrush x:Key="DarkBrush" StartPoint="0,0" EndPoint="0,1">
-            <GradientBrush.GradientStops>
-                <GradientStopCollection>
-                    <GradientStop Color="#FFF" Offset="0.0"/>
-                    <GradientStop Color="#AAA" Offset="1.0"/>
-                </GradientStopCollection>
-            </GradientBrush.GradientStops>
-        </LinearGradientBrush>
-        <SolidColorBrush x:Key="DisabledBackgroundBrush" Color="#EEE" />
-        <SolidColorBrush x:Key="DisabledBorderBrush" Color="#AAA" />
-        <SolidColorBrush x:Key="DisabledForegroundBrush" Color="#888" />
-        <SolidColorBrush x:Key="GlyphBrush" Color="#444" />
-        <LinearGradientBrush x:Key="NormalBorderBrush" StartPoint="0,0" EndPoint="0,1">
+        <SolidColorBrush x:Key="FlagCheckmarkBrush" Color="#444" />
+        <LinearGradientBrush x:Key="FlagDefaultBorderBrush" StartPoint="0,0" EndPoint="0,1">
             <GradientBrush.GradientStops>
                 <GradientStopCollection>
                     <GradientStop Color="#CCC" Offset="0.0"/>
@@ -40,7 +17,15 @@
                 </GradientStopCollection>
             </GradientBrush.GradientStops>
         </LinearGradientBrush>
-        <LinearGradientBrush x:Key="NormalBrush" StartPoint="0,0" EndPoint="0,1">
+        <LinearGradientBrush x:Key="FlagMouseOverBrush" StartPoint="0,0" EndPoint="0,1">
+            <GradientBrush.GradientStops>
+                <GradientStopCollection>
+                    <GradientStop Color="#FFF" Offset="0.0"/>
+                    <GradientStop Color="#AAA" Offset="1.0"/>
+                </GradientStopCollection>
+            </GradientBrush.GradientStops>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="FlagNormalBrush" StartPoint="0,0" EndPoint="0,1">
             <GradientBrush.GradientStops>
                 <GradientStopCollection>
                     <GradientStop Color="#FFF" Offset="0.0"/>
@@ -48,7 +33,7 @@
                 </GradientStopCollection>
             </GradientBrush.GradientStops>
         </LinearGradientBrush>
-        <LinearGradientBrush x:Key="PressedBorderBrush" StartPoint="0,0" EndPoint="0,1">
+        <LinearGradientBrush x:Key="FlagPressedBorderBrush" StartPoint="0,0" EndPoint="0,1">
             <GradientBrush.GradientStops>
                 <GradientStopCollection>
                     <GradientStop Color="#444" Offset="0.0"/>
@@ -56,7 +41,7 @@
                 </GradientStopCollection>
             </GradientBrush.GradientStops>
         </LinearGradientBrush>
-        <LinearGradientBrush x:Key="PressedBrush" StartPoint="0,0" EndPoint="0,1">
+        <LinearGradientBrush x:Key="FlagPressedFillBrush" StartPoint="0,0" EndPoint="0,1">
             <GradientBrush.GradientStops>
                 <GradientStopCollection>
                     <GradientStop Color="#BBB" Offset="0.0"/>
@@ -68,18 +53,21 @@
         </LinearGradientBrush>
 
         <!-- control label styles -->
+        <Style x:Key="ContainerGrid" TargetType="Grid">
+            <Setter Property="Margin" Value="0,0,0,4.5" />
+        </Style>
+        
         <Style x:Key="CounterButton" TargetType="RadioButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Grid.Column" Value="0" />
-            <Setter Property="Height" Value="25" />
-            <Setter Property="Margin" Value="5,0,5,0" />
-            <Setter Property="Padding" Value="5,0,5,0" />
+            <Setter Property="Margin" Value="0,0,5,0" />
+            <Setter Property="Padding" Value="5,5,5,5" />
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <Style x:Key="Label" TargetType="Label">
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Grid.Column" Value="0" />
-            <Setter Property="Height" Value="25" />
-            <Setter Property="Padding" Value="5,4,5,0" />
+            <Setter Property="Padding" Value="1,5,5,5" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
@@ -88,7 +76,6 @@
             <Setter Property="BorderBrush" Value="LightBlue" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Grid.Column" Value="1" />
-            <Setter Property="Height" Value="25" />
             <Setter Property="IsEditable" Value="False" />
             <Setter Property="IsTextSearchEnabled" Value="True" />
             <Setter Property="Padding" Value="5,4,5,5" />
@@ -99,82 +86,66 @@
             <Setter Property="Grid.Column" Value="1" />
         </Style>
         <Style x:Key="FlagCheckBox" TargetType="CheckBox">
-            <Setter Property="FocusVisualStyle" Value="{StaticResource FlagFocusVisualStyle}" />
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="Grid.Column" Value="1" />
-            <Setter Property="Height" Value="20" />
             <Setter Property="HorizontalAlignment" Value="Left" />
-            <Setter Property="Margin" Value="0,5,0,0" />
             <Setter Property="OverridesDefaultStyle" Value="True" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="CheckBox">
                         <BulletDecorator Background="Transparent">
                             <BulletDecorator.Bullet>
-                                <Border x:Name="Border"  
-                                  Width="17" 
-                                  Height="17" 
-                                  CornerRadius="2" 
-                                  Background="{StaticResource NormalBrush}"
-                                  BorderThickness="1"
-                                  BorderBrush="{StaticResource NormalBorderBrush}">
-                                    <Path 
-                                    Width="11" Height="11" 
-                                    x:Name="CheckMark"
-                                    SnapsToDevicePixels="False" 
-                                    Stroke="{StaticResource GlyphBrush}"
-                                    StrokeThickness="2"
-                                    Data="M 2,4 C 2,4 3,5 5,13 C 5,13 5,3 12,0" />
+                                <Border x:Name="Border" Width="16" Height="16" 
+                                        Background="{StaticResource FlagNormalBrush}"
+                                        BorderBrush="{StaticResource FlagDefaultBorderBrush}" BorderThickness="1">
+                                    <Path x:Name="CheckMark" Width="10.5" Height="10.5" 
+                                          Stroke="{StaticResource FlagCheckmarkBrush}" StrokeThickness="2"
+                                          Data="M 2,4 C 2,4 3,5 5,13 C 5,13 5,3 12,0" />
                                 </Border>
                             </BulletDecorator.Bullet>
-                            <ContentPresenter Margin="4,0,0,0"
-                                VerticalAlignment="Center"
-                                HorizontalAlignment="Left"
-                                RecognizesAccessKey="True"/>
+                            <ContentPresenter RecognizesAccessKey="True" />
                         </BulletDecorator>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsChecked" Value="false">
-                                <Setter TargetName="CheckMark" Property="Visibility" Value="Collapsed"/>
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Hidden" />
                             </Trigger>
                             <Trigger Property="IsChecked" Value="{x:Null}">
-                                <Setter TargetName="CheckMark" Property="Data" Value="M 0 7 L 7 0" />
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Hidden" />
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="{StaticResource DarkBrush}" />
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource FlagMouseOverBrush}" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="{StaticResource PressedBrush}" />
-                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource PressedBorderBrush}" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="false">
-                                <Setter TargetName="Border" Property="Background" Value="{StaticResource DisabledBackgroundBrush}" />
-                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource DisabledBorderBrush}" />
-                                <Setter Property="Foreground" Value="{StaticResource DisabledForegroundBrush}"/>
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource FlagPressedFillBrush}" />
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource FlagPressedBorderBrush}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
             <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
         <Style x:Key="NoteCounterTextBox" TargetType="TextBox">
             <Setter Property="BorderBrush" Value="LightBlue" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Grid.Column" Value="1" />
-            <Setter Property="Height" Value="25" />
-            <Setter Property="Padding" Value="5,0,5,0" />
+            <Setter Property="Padding" Value="5,5,4,5" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
     </Control.Resources>
-    <ListView Name="ControlsView" Background="{StaticResource ApplicationBackgroundBrush}" BorderThickness="0" 
-            DragOver="ControlsView_DragOver" Drop="ControlsView_Drop" MinWidth="100"
-            HorizontalContentAlignment="Stretch"  MouseMove="ControlsView_MouseMove"
-            ScrollViewer.HorizontalScrollBarVisibility="Disabled" SelectionMode="Single">
-        <ListView.ItemContainerStyle>
-            <Style TargetType="ListViewItem">
-                <EventSetter Event="GotKeyboardFocus" Handler="ControlsViewItem_GotKeyboardFocus" />
-            </Style>
-        </ListView.ItemContainerStyle>
-    </ListView>
+    <AdornerDecorator>
+        <ListView Name="ControlsView" Background="{StaticResource ApplicationBackgroundBrush}" BorderThickness="0" 
+                  DragOver="ControlsView_DragOver" Drop="ControlsView_Drop" MinWidth="100"
+                  HorizontalContentAlignment="Stretch" MouseMove="ControlsView_MouseMove"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" SelectionMode="Single"
+                  VerticalContentAlignment="Center">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <EventSetter Event="GotKeyboardFocus" Handler="ControlsViewItem_GotKeyboardFocus" />
+                </Style>
+            </ListView.ItemContainerStyle>
+        </ListView>
+    </AdornerDecorator>
 </UserControl>

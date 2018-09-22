@@ -4,6 +4,7 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace Carnassial.Control
 {
@@ -13,17 +14,6 @@ namespace Carnassial.Control
     public class DataEntryCounter : DataEntryControl<TextBox, RadioButton>
     {
         private bool labelControlIsChecked;
-
-        public override bool ContentReadOnly
-        {
-            get { return this.ContentControl.IsReadOnly; }
-            set { this.ContentControl.IsReadOnly = value; }
-        }
-
-        public bool IsSelected
-        {
-            get { return this.LabelControl.IsChecked.HasValue ? (bool)this.LabelControl.IsChecked : false; }
-        }
 
         public DataEntryCounter(ControlRow control, DataEntryControls styleProvider) :
             base(control, styleProvider, ControlContentStyle.NoteCounterTextBox, ControlLabelStyle.CounterButton)
@@ -38,15 +28,26 @@ namespace Carnassial.Control
             this.ContentControl.SetBinding(TextBox.TextProperty, ImageRow.GetDataBindingPath(control));
         }
 
-        /// <summary>Ensures only numbers are entered for counters.</summary>
-        private void ContentControl_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        public override bool ContentReadOnly
         {
-            e.Handled = !Utilities.IsDigits(e.Text);
+            get { return this.ContentControl.IsReadOnly; }
+            set { this.ContentControl.IsReadOnly = value; }
         }
 
         public override bool IsCopyableValue(object value)
         {
             return (int)value != 0;
+        }
+
+        public bool IsSelected
+        {
+            get { return this.LabelControl.IsChecked.HasValue ? (bool)this.LabelControl.IsChecked : false; }
+        }
+
+        /// <summary>Ensures only numbers are entered for counters.</summary>
+        private void ContentControl_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            e.Handled = !Utilities.IsDigits(e.Text);
         }
 
         private void LabelControl_Click(object sender, RoutedEventArgs e)

@@ -377,7 +377,7 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <control:DataEntryControls x:Name="DataEntryControls" Margin="0,10,0,0" Grid.Column="0" Grid.Row="0" />
+                        <control:DataEntryControls x:Name="DataEntryControls" Margin="0,5,0,0" Grid.Column="0" Grid.Row="0" />
                         <control:AnalysisButtons x:Name="AnalysisButtons" Grid.Column="0" Grid.Row="1" 
                                                  MouseEnterButton="PasteButton_MouseEnter" MouseLeaveButton="PasteButton_MouseLeave" 
                                                  PasteAnalysis="PasteAnalysis_Click" PasteNext="PasteNextValues_Click" PastePrevious="PastePreviousValues_Click" />

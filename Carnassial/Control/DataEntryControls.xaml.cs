@@ -14,6 +14,8 @@ namespace Carnassial.Control
     /// </summary>
     public partial class DataEntryControls : UserControl
     {
+        public const string ControlContainerStyleName = "ContainerGrid";
+
         private HorizontalLineAdorner dragAdorner;
 
         public List<DataEntryControl> Controls { get; private set; }
