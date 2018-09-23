@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -15,7 +14,7 @@ namespace Carnassial.Database
         private bool disposed;
         private int schemaChangesSinceLastBackup;
 
-        protected Task<bool> BackupTask { get; private set; }
+        public Task<bool> BackupTask { get; private set; }
 
         public SQLiteConnection Connection { get; protected set; }
 
@@ -614,8 +613,7 @@ namespace Carnassial.Database
             {
                 DataSource = databaseFilePath,
                 DateTimeKind = DateTimeKind.Utc,
-                JournalMode = SQLiteJournalModeEnum.Memory,
-                SyncMode = SynchronizationModes.Off
+                JournalMode = SQLiteJournalModeEnum.Memory
             };
 
             SQLiteConnection connection = new SQLiteConnection(connectionStringBuilder.ConnectionString);

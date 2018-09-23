@@ -161,7 +161,7 @@ namespace Carnassial
             public const int NominalRowsPerTransactionFill = 2500;
             public const int RowsPerTransaction = 5000;
 
-            public static readonly TimeSpan BackupInterval = TimeSpan.FromMinutes(10);
+            public static readonly TimeSpan BackupInterval = TimeSpan.FromMinutes(5.0);
         }
 
         public static class DatabaseColumn

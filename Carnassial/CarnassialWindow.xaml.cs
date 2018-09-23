@@ -80,7 +80,7 @@ namespace Carnassial
             this.MenuOptionsOrderFilesByDateTime.IsChecked = this.State.OrderFilesByDateTime;
             this.MenuOptionsSkipFileClassification.IsChecked = this.State.SkipFileClassification;
 
-            // timer callback so the display will update to the current slider position when the user pauses whilst dragging the slider 
+            this.State.BackupTimer.Tick += this.Backup_TimerTick;
             this.State.FileNavigatorSliderTimer.Tick += this.FileNavigatorSlider_TimerTick;
             this.State.Throttles.FilePlayTimer.Tick += this.FilePlay_TimerTick;
 
@@ -133,6 +133,17 @@ namespace Carnassial
             this.State.UndoRedoChain.AddCommand(command);
             this.MenuEditRedo.IsEnabled = this.State.UndoRedoChain.CanRedo;
             this.MenuEditUndo.IsEnabled = this.State.UndoRedoChain.CanUndo;
+        }
+
+        private async void Backup_TimerTick(object sender, EventArgs e)
+        {
+            if (this.IsFileDatabaseAvailable())
+            {
+                if ((this.DataHandler.FileDatabase.BackupTask == null) || this.DataHandler.FileDatabase.BackupTask.IsCompleted)
+                {
+                    await this.DataHandler.FileDatabase.TryBackupAsync();
+                }
+            }
         }
 
         private void ClearStatusMessage()
@@ -319,9 +330,9 @@ namespace Carnassial
             this.FocusFileDisplay();
         }
 
-        // timer callback that forces image update to the current slider position. Invoked as the user pauses dragging the image slider 
         private async void FileNavigatorSlider_TimerTick(object sender, EventArgs e)
         {
+            // display the current file as the user drags the navigation slider 
             await this.ShowFileAsync(this.FileNavigatorSlider);
             this.State.FileNavigatorSliderTimer.Stop();
         }
