@@ -104,6 +104,11 @@
                             <Image Source="Resources/Menu/FindPrevious_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
+                    <MenuItem Name="MenuEditReplace" Header="_Replace..." Click="MenuEditReplace_Click" InputGestureText="Ctrl+H" Style="{StaticResource ApplicationMenuItem}" ToolTip="Find files matching specified criteria and replace one field's value.">
+                        <MenuItem.Icon>
+                            <Image Source="Resources/Menu/ReplaceInFiles_16x.png" />
+                        </MenuItem.Icon>
+                    </MenuItem>
                     <Separator />
                     <MenuItem Name="MenuEditUndo" Header="_Undo" Click="MenuEditUndo_Click" InputGestureText="Ctrl+Z" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="Undo navigation, selection, or changes to the current file.">
                         <MenuItem.Icon>
@@ -356,12 +361,12 @@
                                     Thumb.DragCompleted="FileNavigatorSlider_DragCompleted"
                                     ValueChanged="FileNavigatorSlider_ValueChanged" />
                             <ToggleButton Name="PlayFilesButton" IsChecked="False" Click="MenuViewPlayFiles_Click" Style="{StaticResource PlayPauseButtonStyle}" Grid.Column="1" Grid.Row="0" />
-                            <StatusBar Name="FileNavigation" Background="{StaticResource NavigationSliderBackgroundBrush}" Foreground="{StaticResource ApplicationBorderForegroundBrush}" Grid.Column="2" Grid.Row="0" MinWidth="160">
+                            <StatusBar Name="FileNavigation" Background="{StaticResource NavigationSliderBackgroundBrush}" Foreground="{StaticResource ApplicationBorderForegroundBrush}" Grid.Column="2" Grid.Row="0" MinWidth="165">
                                 <StatusBarItem Content="File:" FontWeight="Bold" Padding="2" />
                                 <StatusBarItem Content="0" Padding="2" />
                                 <StatusBarItem Content="of" Padding="2" />
                                 <StatusBarItem Content="0" Padding="2" />
-                                <StatusBarItem Content="(all files)" Padding="2" />
+                                <StatusBarItem Content="(all files)" Padding="2,2,5,2" />
                             </StatusBar>
                         </Grid>
                         <control:FileDisplayWithMarkers x:Name="FileDisplay" Background="{StaticResource ApplicationBackgroundBrush}" MarkerCreatedOrDeleted="MarkableCanvas_MarkerCreatedOrDeleted" Grid.Column="0" Grid.Row="1" />

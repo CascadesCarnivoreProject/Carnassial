@@ -270,8 +270,9 @@ namespace Carnassial.Dialog
                 CommonUserInterface.TryFitWindowInWorkingArea(this);
             }
 
-            FrameworkElement findTerm1Value = this.FindGrid.GetChild<FrameworkElement>(FindReplace.Term1Row, FindReplace.ValueColumn);
-            findTerm1Value.Focus();
+            Grid selectedGrid = this.FindTab.IsSelected ? this.FindGrid : this.ReplaceGrid;
+            FrameworkElement findTermValue = selectedGrid.GetChild<FrameworkElement>(FindReplace.Term1Row, FindReplace.ValueColumn);
+            findTermValue.Focus();
         }
     }
 }

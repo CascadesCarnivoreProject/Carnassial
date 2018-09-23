@@ -850,6 +850,13 @@ namespace Carnassial
             }
         }
 
+        private void MenuEditReplace_Click(object sender, RoutedEventArgs e)
+        {
+            FindReplace findReplace = new FindReplace(this);
+            findReplace.FindReplaceTabs.SelectedItem = findReplace.ReplaceTab;
+            findReplace.ShowDialog();
+        }
+
         private async void MenuEditRereadDateTimesFromFiles_Click(object sender, RoutedEventArgs e)
         {
             DateTimeRereadFromFiles rereadDates = new DateTimeRereadFromFiles(this.DataHandler.FileDatabase, this.State.Throttles.GetDesiredProgressUpdateInterval(), this);
@@ -1129,7 +1136,6 @@ namespace Carnassial
                 messageBox.Message.Solution += "\u2022 Adding, removing, or otherwise changing columns is not supported." + Environment.NewLine;
                 messageBox.Message.Solution += String.Format("\u2022 Using a worksheet with a name other than '{0}' in .xlsx files is not supported.{1}", Constant.Excel.FileDataWorksheetName, Environment.NewLine);
                 messageBox.Message.Result = "Carnassial will import as much data as it can.  If data can't be imported you'll get a dialog listing the problems.";
-                messageBox.Message.Hint = "\u2022 After you import, check your data. If it is not what you expect, restore your data by using that backup file." + Environment.NewLine;
                 messageBox.Message.Hint += String.Format("\u2022 Usually the spreadsheet should be in the same folder as the data file ({0}) it was exported from.{1}", Constant.File.FileDatabaseFileExtension, Environment.NewLine);
                 messageBox.Message.Hint += "\u2022 If you check 'Don't show this message' this dialog can be turned back on via the Options menu.";
                 messageBox.Message.StatusImage = MessageBoxImage.Information;
@@ -2847,8 +2853,20 @@ namespace Carnassial
         {
             if (this.IsFileAvailable() == false)
             {
-                // no file loaded so no special processing to do; let WPF drive menus as needed
+                // no file displayed so no special processing to do; let WPF drive menus as needed
                 return;
+            }
+
+            // stop any file play in progress when any key press is received
+            // For example, the user could click on a data entry control and start entering data.  This check is a best effort
+            // as the content controls of data entry controls can trap keyboard events, meaning file play will continue as this
+            // code is never reached.  If needed, stopping play when the selected data entry control changes would provide 
+            // further mitigation.
+            bool wasPlayingFiles = false;
+            if (this.PlayFilesButton.IsChecked == true)
+            {
+                wasPlayingFiles = true;
+                this.MenuViewPlayFiles_Click(sender, null);
             }
 
             // pass all keys to menus
@@ -2862,7 +2880,7 @@ namespace Carnassial
             {
                 // check if focus is actually within a control
                 // This check is needed to prevent focus unexpectedly going to the data entry controls in the case where
-                //   1) the controls, as is usually the case, don't fill the whole height of CarnassilWindow grid row they occupy
+                //   1) DataEntryControls, as is usually the case, doesn't fill the whole height above the analysis buttons
                 //   2) the user switched input focus to another application
                 //   3) the user clicks empty space near the controls to return input focus to Carnassial
                 // Without this check, this sequence results in the controls view having keyboard focus even though no control has 
@@ -2878,14 +2896,6 @@ namespace Carnassial
                         return;
                     }
                 }
-            }
-
-            // stop any file play in progress when any key is pressed
-            bool wasPlayingFiles = false;
-            if (this.PlayFilesButton.IsChecked == true)
-            {
-                wasPlayingFiles = true;
-                this.MenuViewPlayFiles_Click(sender, null);
             }
 
             // check if input key or chord is a shortcut key and dispatch appropriately if so
@@ -3010,6 +3020,13 @@ namespace Carnassial
                     if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
                         this.MenuViewGotoFile_Click(this, currentKey);
+                        currentKey.Handled = true;
+                    }
+                    break;
+                case Key.H:
+                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    {
+                        this.MenuEditReplace_Click(this, currentKey);
                         currentKey.Handled = true;
                     }
                     break;
