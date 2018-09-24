@@ -30,13 +30,13 @@
     <ClInclude Include="StdafxClr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="libjpeg-turbo.1.5.2\include\turbojpeg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="NativeProcessor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Processor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="libjpeg-turbo\include\turbojpeg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

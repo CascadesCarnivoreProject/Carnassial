@@ -14,7 +14,8 @@ namespace Carnassial.Util
             "DocumentFormat.OpenXml.dll", // OpenXML SDK
             "Microsoft.WindowsAPICodePack.dll", // required by Microsoft.WindowsAPICodePack.Shell.dll
             "Microsoft.WindowsAPICodePack.Shell.dll", // just for CarnassialWindow's use of CommonOpenFileDialog
-            "System.IO.Packaging.dll" // OpenXML SDK (System.IO.FileSystem.Primitives.dll not currently needed)
+            "System.IO.Packaging.dll", // OpenXML SDK (System.IO.FileSystem.Primitives.dll not currently needed)
+            "turbojpeg.dll" // can't link to turbojpeg-static.lib as it requires the /MT(d) runtime, which conflicts with /clr
         };
 
         private static readonly List<string> CommonRequiredBinaries = new List<string>()

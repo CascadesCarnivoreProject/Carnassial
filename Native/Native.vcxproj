@@ -104,6 +104,9 @@
       <AdditionalDependencies>$(ProjectDir)libjpeg-turbo\lib\turbojpeg.1.5.3.x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /d /y "$(ProjectDir)libjpeg-turbo\bin\turbojpeg.dll" "$(TargetDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -131,6 +134,9 @@
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /d /y "$(ProjectDir)libjpeg-turbo\bin\turbojpeg.dll" "$(TargetDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -147,7 +153,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="libjpeg-turbo.1.5.2\include\turbojpeg.h" />
+    <ClInclude Include="libjpeg-turbo\include\turbojpeg.h" />
     <ClInclude Include="MemoryImage.h" />
     <ClInclude Include="NativeImage.h" />
     <ClInclude Include="NativeProcessor.h" />

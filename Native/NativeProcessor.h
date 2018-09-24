@@ -1,6 +1,5 @@
 // adapted from https://msdn.microsoft.com/en-us/library/hskdteyh.aspx
 #pragma once
-#include <bitset>
 
 namespace Carnassial
 {
@@ -11,15 +10,12 @@ namespace Carnassial
 		private:
 			class ProcessorProperties
 			{
-			private:
-				std::runtime_error GetWindowsError();
-				std::runtime_error GetWindowsError(unsigned long errorCode);
-
 			public:
 				ProcessorProperties();
 
-				std::bitset<32> function1_Ecx;
-				std::bitset<32> function7_Ebx;
+				__int32 error;
+				__int32 function1_Ecx;
+				__int32 function7_Ebx;
 				__int32 physicalCores;
 			};
 
@@ -28,6 +24,7 @@ namespace Carnassial
 		public:
 			static bool Avx();
 			static bool Avx2();
+			static __int32 Error();
 			static __int32 PhysicalCores();
 			static bool Sse41();
 		};

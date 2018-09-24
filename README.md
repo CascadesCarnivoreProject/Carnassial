@@ -55,7 +55,7 @@ Also helpful are
 * Visual Studio 2017 or newer is required for development.
 * nuget packages, as referenced by the solution, and libjpeg-turbo, which is managed manually (see below)
 
-A nuget package for libjpeg-turbo exists but is not being maintained so the library is comitted to the Carnassial repro.  To update, download the [libjpeg-turbo](https://libjpeg-turbo.org/) VC and VC64 installers, copy the new bits to Native\libjpeg-turbo\include and lib, and update additional dependencies in Native.vcxproj's linker input settings to point to the new .lib.
+A nuget package for libjpeg-turbo exists but is not being maintained so the library is comitted to the Carnassial repro.  To update, download the [libjpeg-turbo](https://libjpeg-turbo.org/) VC and VC64 installers, copy the new bits to Native\libjpeg-turbo\{bin, include, lib}, git add -f them, and update additional dependencies in Native.vcxproj's linker input settings to point to the new .lib.
 
 Screen sizes of 1600 x 900 or larger are recommended.  Carnassial should run on any x64 processor but optimization effort generally targets hardware from the last five years.
 
@@ -64,10 +64,11 @@ Known limitations:
 * Carnassial is developed primarily for midrange processors with the ability to execute four threads concurrently.  Its algorithms also support two concurrent threads (most Celerons, some Pentiums) and scale to six or more cores but may not perform optimally.
 * Microsoft Windows does not report file times consistently at sub-millisecond precision.  While it's not been observed, it's possible rounding within the operating system may cause rereading date times from files without metadata to change the millisecond component of timestamps.
 
-Known limitations with Windows 7:
+Known limitations with earlier versions of Windows:
 
-* The Recycle Bin part of age out of automatic .tdb and .ddb backups and deletion of files is untested.
 * Users may need to [install .NET 4.7.1 or newer](https://msdn.microsoft.com/en-us/library/bb822049.aspx) if it's not already present using, for example, the [.NET installer](https://www.microsoft.com/net/download/dotnet-framework-runtime).
+* Users may need to [install the Universal C Runtime](https://www.microsoft.com/en-us/download/details.aspx?id=48234) if it or the Microsoft Visual C++ 2015 or 2017 redistributable is not already installed.
+* The Recycle Bin part of age out of automatic .tdb and .ddb backups and deletion of files is untested on Windows 7.
 
 ### History
 Carnassial is named for [carnassials](https://en.wikipedia.org/wiki/Carnassial) as its function is analogous (though unfortunately it lacks the teeth's self-sharpening properties).

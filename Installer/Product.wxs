@@ -113,6 +113,9 @@
       <Component Id="System.IO.Packaging.dll" Guid="*" Win64="yes">
         <File Id="System.IO.Packaging.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\System.IO.Packaging.dll" />
       </Component>
+      <Component Id="turbojpeg.dll" Guid="*" Win64="yes">
+        <File Id="turbojpeg.dll" KeyPath="yes" Source="$(var.Native.TargetDir)\turbojpeg.dll" />
+      </Component>
       <Component Id="XmpCore.dll" Guid="*" Win64="yes">
         <File Id="XmpCore.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\XmpCore.dll" />
       </Component>
@@ -172,6 +175,7 @@
       <ComponentRef Id="System.Data.SQLite.dll" />
       <ComponentRef Id="System.Data.SQLite.xml" />
       <ComponentRef Id="System.IO.Packaging.dll" />
+      <ComponentRef Id="turbojpeg.dll" />
       <ComponentRef Id="XmpCore.dll" />
       <ComponentRef Id="XmpCore.xml" />
       <ComponentRef Id="x64.SQLite.Interop.dll" />
