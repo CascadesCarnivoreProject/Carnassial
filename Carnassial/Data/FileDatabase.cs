@@ -487,7 +487,11 @@ namespace Carnassial.Data
             foreach (string dataLabel in fileDataLabels)
             {
                 ControlRow fileDatabaseControl = this.Controls[dataLabel];
-                ControlRow templateControl = templateDatabase.Controls[dataLabel];
+                if (templateDatabase.Controls.TryGet(dataLabel, out ControlRow templateControl) == false)
+                {
+                    Debug.Assert(dataLabelsInFileButNotTemplateDatabase.Contains(dataLabel), "Controls not present in the template database should be included in the list of such controls.");
+                    continue;
+                }
 
                 if (fileDatabaseControl.Type != templateControl.Type)
                 {
@@ -626,13 +630,17 @@ namespace Carnassial.Data
 
                 // load the updated controls table
                 this.GetControlsSortedByControlOrder();
-                this.Files.SetUserControls(this.Controls);
-
-                // however, don't read files from the database into in memory file table
-                // For large databases this is a long running operation and a better user experience is provided if it is deferred
-                // until later Carnassial's image set opening sequence.
             }
 
+            // index user controls
+            // This is needed in the normal case of no synchronization issues and also when the user chooses to run with the
+            // existing controls table to avoid synchronization issues.
+            this.Files.SetUserControls(this.Controls);
+
+            // don't read files from the database into in memory file table at this point
+            // For large databases this is a long running operation and a better user experience is provided if it is deferred
+            // until later in Carnassial's image set opening sequence.
+            
             // return true if there are synchronization issues as the database was still opened successfully
             return true;
         }

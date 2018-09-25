@@ -7,7 +7,12 @@
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
+        <!-- hosts the displayed file -->
         <control:FileDisplay x:Name="FileDisplay" HorizontalAlignment="Center" />
-        <Canvas Name="MarkerCanvas" />
+        <!-- hosts the markers on the file and the magnifying glass
+             The magnifying glass is essentially independent of displayed image and markers but needs to be included somewhere in the
+             UI graph for WPF to render it and this canvas is the least awkward location which allows child elements.
+             The image and markers displayed by the magnifying glass are hosted in a separate, off screen canvas. -->
+        <Canvas Name="DisplayCanvas" />
     </Grid>
 </UserControl>

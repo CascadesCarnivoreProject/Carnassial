@@ -46,6 +46,11 @@ namespace Carnassial.Control
 
         public void Display(CachedImage image)
         {
+            if (image == null)
+            {
+                throw new ArgumentNullException(nameof(image));
+            }
+
             if (image.ImageNotDecodable)
             {
                 this.Display(Constant.Images.FileCorruptMessage);

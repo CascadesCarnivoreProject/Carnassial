@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace Carnassial
@@ -244,6 +245,28 @@ namespace Carnassial
             public static readonly Uri BaseAddress = new Uri("https://github.com/");
         }
 
+        public static class ImageDisplay
+        {
+            public const double ImageZoomMaximum = 10.0;      // user configurable maximum amount of zoom in a display image
+            public const double ImageZoomMaximumRangeMaximum = 50.0; // the highest zoom a user can configure for a display image
+            public const double ImageZoomMaximumRangeMinimum = 2.0;
+            public const double ImageZoomMinimum = 1.0;       // minimum amount of zoom
+
+            public const double MagnifyingGlassDefaultFieldOfView = 300.0;
+            public const int MagnifyingGlassDiameter = 275;
+            public const double MagnifyingGlassFieldOfViewIncrement = 1.2;
+            public const double MagnifyingGlassMaximumFieldOfView = 350.0;
+            public const double MagnifyingGlassMinimumFieldOfView = 20.0;
+
+            public const int MarkerDiameter = 10;
+            public const int MarkerGlowDiameterIncrease = 14;
+            public const int MarkerStrokeThickness = 2;
+            public const double MarkerGlowOpacity = 0.35;
+            public const int MarkerGlowStrokeThickness = 7;
+
+            public static readonly SolidColorBrush MarkerFillBrush = new SolidColorBrush(Color.FromArgb(2, 0, 0, 0));
+        }
+
         public static class Images
         {
             // default threshold below which the mean luminosity of pixels in an image is considerd to be dark rather than greyscale
@@ -328,26 +351,6 @@ namespace Carnassial
                 ImageSetColumn.Options,
                 ImageSetColumn.TimeZone
             }.AsReadOnly();
-        }
-
-        public static class MarkableCanvas
-        {
-            public const double ImageZoomMaximum = 10.0;      // user configurable maximum amount of zoom in a display image
-            public const double ImageZoomMaximumRangeMaximum = 50.0; // the highest zoom a user can configure for a display image
-            public const double ImageZoomMaximumRangeMinimum = 2.0;
-            public const double ImageZoomMinimum = 1.0;       // minimum amount of zoom
-
-            public const double MagnifyingGlassDefaultFieldOfView = 300.0;
-            public const int MagnifyingGlassDiameter = 275;
-            public const double MagnifyingGlassFieldOfViewIncrement = 1.2;
-            public const double MagnifyingGlassMaximumFieldOfView = 350.0;
-            public const double MagnifyingGlassMinimumFieldOfView = 20.0;
-
-            public const int MarkerDiameter = 10;
-            public const int MarkerGlowDiameterIncrease = 14;
-            public const int MarkerStrokeThickness = 2;
-            public const double MarkerGlowOpacity = 0.35;
-            public const int MarkerGlowStrokeThickness = 7;
         }
 
         public static class Manufacturer
@@ -565,6 +568,7 @@ namespace Carnassial
 
         public static class UserInterface
         {
+            public const string ApplicationBackgroundBrush = "ApplicationBackgroundBrush";
             public const double FindOperatorWidth = 60.0;
             public const int FindTextBoxHeight = 22;
             public const int FindValueWidth = 200;

@@ -1,5 +1,4 @@
-﻿using Carnassial.Control;
-using Carnassial.Data;
+﻿using Carnassial.Data;
 using System;
 using System.Diagnostics;
 using System.Windows;
@@ -21,10 +20,7 @@ namespace Carnassial.Images
         // current angle of the entire magnifying glass
         private double magnifyingGlassAngle;
 
-        private readonly FileDisplayWithMarkers parent;
-
         private readonly RotateTransform rotation;
-        private readonly TranslateTransform translation;
 
         /// <summary>Gets or sets the diameter of the image shown in the magnifying glass's lens in pixels.</summary>
         /// <remarks>
@@ -33,13 +29,12 @@ namespace Carnassial.Images
         /// </remarks>
         public double FieldOfView { get; set; }
 
-        public MagnifyingGlass(FileDisplayWithMarkers fileDisplay)
+        public MagnifyingGlass()
         {
-            this.FieldOfView = Constant.MarkableCanvas.MagnifyingGlassDefaultFieldOfView;
+            this.FieldOfView = Constant.ImageDisplay.MagnifyingGlassDefaultFieldOfView;
             this.IsEnabled = false;
             this.IsHitTestVisible = false;
             this.HorizontalAlignment = HorizontalAlignment.Left;
-            this.parent = fileDisplay;
             this.VerticalAlignment = VerticalAlignment.Top;
             this.Visibility = Visibility.Collapsed;
 
@@ -64,31 +59,29 @@ namespace Carnassial.Images
             Line handle = new Line()
             {
                 StrokeThickness = 5,
-                X1 = 0.7 * Constant.MarkableCanvas.MagnifyingGlassDiameter,
-                Y1 = 0.7 * Constant.MarkableCanvas.MagnifyingGlassDiameter,
-                X2 = Constant.MarkableCanvas.MagnifyingGlassDiameter,
-                Y2 = Constant.MarkableCanvas.MagnifyingGlassDiameter
+                X1 = 0.7 * Constant.ImageDisplay.MagnifyingGlassDiameter,
+                Y1 = 0.7 * Constant.ImageDisplay.MagnifyingGlassDiameter,
+                X2 = Constant.ImageDisplay.MagnifyingGlassDiameter,
+                Y2 = Constant.ImageDisplay.MagnifyingGlassDiameter
             };
             handle.Stroke = linearGradientBrush;
             this.Children.Add(handle);
 
-            // Create the lens of the magnifying glass
+            // create the lens of the magnifying glass
             this.lensCanvas = new Canvas();
-            this.Children.Add(this.lensCanvas);
-
-            // lens has a white backgound
             Ellipse lensBackground = new Ellipse()
             {
-                Width = Constant.MarkableCanvas.MagnifyingGlassDiameter,
-                Height = Constant.MarkableCanvas.MagnifyingGlassDiameter,
-                Fill = Brushes.White
+                Width = Constant.ImageDisplay.MagnifyingGlassDiameter,
+                Height = Constant.ImageDisplay.MagnifyingGlassDiameter,
+                Fill = (Brush)App.Current.FindResource(Constant.UserInterface.ApplicationBackgroundBrush)
             };
             this.lensCanvas.Children.Add(lensBackground);
+            this.Children.Add(this.lensCanvas);
 
             this.magnifierLens = new Ellipse()
             {
-                Width = Constant.MarkableCanvas.MagnifyingGlassDiameter,
-                Height = Constant.MarkableCanvas.MagnifyingGlassDiameter,
+                Width = Constant.ImageDisplay.MagnifyingGlassDiameter,
+                Height = Constant.ImageDisplay.MagnifyingGlassDiameter,
                 StrokeThickness = 3
             };
 
@@ -108,8 +101,8 @@ namespace Carnassial.Images
             Canvas.SetLeft(lensImage, 2);
             Canvas.SetTop(lensImage, 2);
             lensImage.StrokeThickness = 4;
-            lensImage.Width = Constant.MarkableCanvas.MagnifyingGlassDiameter - 4;
-            lensImage.Height = Constant.MarkableCanvas.MagnifyingGlassDiameter - 4;
+            lensImage.Width = Constant.ImageDisplay.MagnifyingGlassDiameter - 4;
+            lensImage.Height = Constant.ImageDisplay.MagnifyingGlassDiameter - 4;
             this.lensCanvas.Children.Add(lensImage);
 
             // crosshairs
@@ -117,9 +110,9 @@ namespace Carnassial.Images
             {
                 StrokeThickness = 0.25,
                 X1 = 5,
-                Y1 = Constant.MarkableCanvas.MagnifyingGlassDiameter / 2,
-                X2 = Constant.MarkableCanvas.MagnifyingGlassDiameter - 5,
-                Y2 = Constant.MarkableCanvas.MagnifyingGlassDiameter / 2,
+                Y1 = Constant.ImageDisplay.MagnifyingGlassDiameter / 2,
+                X2 = Constant.ImageDisplay.MagnifyingGlassDiameter - 5,
+                Y2 = Constant.ImageDisplay.MagnifyingGlassDiameter / 2,
                 Stroke = Brushes.Black,
                 Opacity = 0.5
             };
@@ -128,10 +121,10 @@ namespace Carnassial.Images
             Line horizontalCrosshair = new Line()
             {
                 StrokeThickness = 0.25,
-                X1 = Constant.MarkableCanvas.MagnifyingGlassDiameter / 2,
+                X1 = Constant.ImageDisplay.MagnifyingGlassDiameter / 2,
                 Y1 = 5,
-                X2 = Constant.MarkableCanvas.MagnifyingGlassDiameter / 2,
-                Y2 = Constant.MarkableCanvas.MagnifyingGlassDiameter - 5,
+                X2 = Constant.ImageDisplay.MagnifyingGlassDiameter / 2,
+                Y2 = Constant.ImageDisplay.MagnifyingGlassDiameter - 5,
                 Stroke = Brushes.Black,
                 Opacity = 0.5
             };
@@ -140,12 +133,10 @@ namespace Carnassial.Images
             // set render transform
             // Rotate the glass before translating it as that ordering means translation calculations don't have to account for rotation.  If this is changed
             // RedrawIfVisible() must be updated.
-            this.rotation = new RotateTransform(this.magnifyingGlassAngle, Constant.MarkableCanvas.MagnifyingGlassDiameter, Constant.MarkableCanvas.MagnifyingGlassDiameter);
-            this.translation = new TranslateTransform();
+            this.rotation = new RotateTransform(this.magnifyingGlassAngle, Constant.ImageDisplay.MagnifyingGlassDiameter, Constant.ImageDisplay.MagnifyingGlassDiameter);
 
             TransformGroup transformGroup = new TransformGroup();
             transformGroup.Children.Add(this.rotation);
-            transformGroup.Children.Add(this.translation);
             this.RenderTransform = transformGroup;
         }
 
@@ -154,7 +145,7 @@ namespace Carnassial.Images
             this.Visibility = Visibility.Collapsed;
         }
 
-        public void RedrawIfVisible(Canvas canvasToMagnify, Point newTranslation)
+        public void RedrawIfVisible(Canvas canvasToMagnify, Image displayImage, Point mouseImagePosition)
         {
             // not visible or nothing to draw
             if ((this.IsEnabled == false) || 
@@ -165,9 +156,8 @@ namespace Carnassial.Images
             }
 
             // given the mouse position over the displayed image find the equivalent position in magnified image (which is a different size)
-            Point mousePosition = Mouse.GetPosition(this.parent.FileDisplay.Image);
-            Point mouseLocationRatio = Marker.ConvertPointToRatio(mousePosition, this.parent.FileDisplay.Image.ActualWidth, this.parent.FileDisplay.Image.ActualHeight);
-            Point magnifiedLocation = Marker.ConvertRatioToPoint(mouseLocationRatio, canvasToMagnify.Width, canvasToMagnify.Height);
+            Point mouseNormalizedPosition = Marker.ConvertPointToRatio(mouseImagePosition, displayImage.ActualWidth, displayImage.ActualHeight);
+            Point magnifierCenterPoint = Marker.ConvertRatioToPoint(mouseNormalizedPosition, canvasToMagnify.Width, canvasToMagnify.Height);
 
             // create a brush from the unaltered image in the magnification canvas and use it to fill the magnifying glass
             VisualBrush magnifierBrush = new VisualBrush(canvasToMagnify)
@@ -175,47 +165,47 @@ namespace Carnassial.Images
                 ViewboxUnits = BrushMappingMode.Absolute,
                 ViewportUnits = BrushMappingMode.RelativeToBoundingBox,
                 Viewport = new Rect(0, 0, 1, 1),
-                Viewbox = new Rect(magnifiedLocation.X - this.FieldOfView / 2.0, magnifiedLocation.Y - this.FieldOfView / 2.0, this.FieldOfView, this.FieldOfView)
+                Viewbox = new Rect(magnifierCenterPoint.X - this.FieldOfView / 2.0, magnifierCenterPoint.Y - this.FieldOfView / 2.0, this.FieldOfView, this.FieldOfView)
             };
             this.magnifierLens.Fill = magnifierBrush;
 
             // figure out the magnifying glass angle needed
             // Often several angles work so choose a new angle whose difference from the existing angle will cause the least amount of animation 
-            double leftEdge = Constant.MarkableCanvas.MagnifyingGlassDiameter;
-            double rightEdge = this.parent.FileDisplay.Image.ActualWidth - Constant.MarkableCanvas.MagnifyingGlassDiameter;
-            double topEdge = Constant.MarkableCanvas.MagnifyingGlassDiameter;
-            double bottomEdge = this.parent.FileDisplay.Image.ActualHeight - Constant.MarkableCanvas.MagnifyingGlassDiameter;
+            double leftEdge = Constant.ImageDisplay.MagnifyingGlassDiameter;
+            double rightEdge = displayImage.ActualWidth - Constant.ImageDisplay.MagnifyingGlassDiameter;
+            double topEdge = Constant.ImageDisplay.MagnifyingGlassDiameter;
+            double bottomEdge = displayImage.ActualHeight - Constant.ImageDisplay.MagnifyingGlassDiameter;
 
             double newMagnifyingGlassAngle;
-            if ((mousePosition.X < leftEdge) && (mousePosition.Y < topEdge))
+            if ((mouseImagePosition.X < leftEdge) && (mouseImagePosition.Y < topEdge))
             {
                 newMagnifyingGlassAngle = 180.0;                                              // upper left corner
             }
-            else if ((mousePosition.X < leftEdge) && (mousePosition.Y > bottomEdge))
+            else if ((mouseImagePosition.X < leftEdge) && (mouseImagePosition.Y > bottomEdge))
             {
                 newMagnifyingGlassAngle = 90.0;                                               // lower left corner
             }
-            else if (mousePosition.X < leftEdge)
+            else if (mouseImagePosition.X < leftEdge)
             {
                 newMagnifyingGlassAngle = this.magnifyingGlassAngle == 180.0 ? 180.0 : 90.0;  // middle of left edge
             }
-            else if ((mousePosition.X > rightEdge) && (mousePosition.Y < topEdge))
+            else if ((mouseImagePosition.X > rightEdge) && (mouseImagePosition.Y < topEdge))
             {
                 newMagnifyingGlassAngle = -90.0;                                              // upper right corner
             }
-            else if ((mousePosition.X > rightEdge) && (mousePosition.Y > bottomEdge))
+            else if ((mouseImagePosition.X > rightEdge) && (mouseImagePosition.Y > bottomEdge))
             {
                 newMagnifyingGlassAngle = 0.0;                                                // lower right corner
             }
-            else if (mousePosition.X > rightEdge)
+            else if (mouseImagePosition.X > rightEdge)
             {
                 newMagnifyingGlassAngle = this.magnifyingGlassAngle == 0.0 ? 0.0 : -90.0;     // middle of right edge
             }
-            else if (mousePosition.Y < topEdge)
+            else if (mouseImagePosition.Y < topEdge)
             {
                 newMagnifyingGlassAngle = this.magnifyingGlassAngle == 180.0 ? 180.0 : -90.0; // middle of top edge
             }
-            else if (mousePosition.Y > bottomEdge)
+            else if (mouseImagePosition.Y > bottomEdge)
             {
                 newMagnifyingGlassAngle = this.magnifyingGlassAngle == 90.0 ? 90.0 : 0.0;     // middle of bottom edge
             }
@@ -259,7 +249,7 @@ namespace Carnassial.Images
 
                 // rotate the lens within the magnifying glass to compensate for the magnifier's rotation
                 DoubleAnimation lensAnimation = new DoubleAnimation(this.lensAngle, endLensAngle, animationDuration);
-                RotateTransform rotateTransformLens = new RotateTransform(this.magnifyingGlassAngle, Constant.MarkableCanvas.MagnifyingGlassDiameter / 2.0, Constant.MarkableCanvas.MagnifyingGlassDiameter / 2.0);
+                RotateTransform rotateTransformLens = new RotateTransform(this.magnifyingGlassAngle, Constant.ImageDisplay.MagnifyingGlassDiameter / 2.0, Constant.ImageDisplay.MagnifyingGlassDiameter / 2.0);
                 rotateTransformLens.BeginAnimation(RotateTransform.AngleProperty, lensAnimation);
                 this.lensCanvas.RenderTransform = rotateTransformLens;
 
@@ -268,12 +258,10 @@ namespace Carnassial.Images
                 this.lensAngle = endLensAngle;
             }
 
-            // set translation for current mouse location
-            this.translation.X = newTranslation.X;
-            this.translation.Y = newTranslation.Y;
-
-            Canvas.SetLeft(this, mousePosition.X - Constant.MarkableCanvas.MagnifyingGlassDiameter);
-            Canvas.SetTop(this, mousePosition.Y - Constant.MarkableCanvas.MagnifyingGlassDiameter);
+            // update magnifiying glass's position to new mouse position
+            Point mouseMarkerCanvasPosition = Mouse.GetPosition((IInputElement)this.Parent);
+            Canvas.SetLeft(this, mouseMarkerCanvasPosition.X - Constant.ImageDisplay.MagnifyingGlassDiameter);
+            Canvas.SetTop(this, mouseMarkerCanvasPosition.Y - Constant.ImageDisplay.MagnifyingGlassDiameter);
         }
 
         public void Show()

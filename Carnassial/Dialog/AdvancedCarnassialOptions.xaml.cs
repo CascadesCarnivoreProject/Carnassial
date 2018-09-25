@@ -38,8 +38,8 @@ namespace Carnassial.Dialog
             // maixmum zoom
             this.MaxZoom.Value = this.fileDisplay.ZoomMaximum;
             this.MaxZoom.ToolTip = this.fileDisplay.ZoomMaximum;
-            this.MaxZoom.Maximum = Constant.MarkableCanvas.ImageZoomMaximumRangeMaximum;
-            this.MaxZoom.Minimum = Constant.MarkableCanvas.ImageZoomMaximumRangeMinimum;
+            this.MaxZoom.Maximum = Constant.ImageDisplay.ImageZoomMaximumRangeMaximum;
+            this.MaxZoom.Minimum = Constant.ImageDisplay.ImageZoomMaximumRangeMinimum;
 
             // image differencing
             this.DifferenceThreshold.Value = this.carnassialState.DifferenceThreshold;

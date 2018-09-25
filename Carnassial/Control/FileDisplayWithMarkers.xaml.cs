@@ -1,6 +1,5 @@
 ﻿using Carnassial.Data;
 using Carnassial.Images;
-using Carnassial.Native;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,17 +13,16 @@ namespace Carnassial.Control
 {
     public partial class FileDisplayWithMarkers : UserControl
     {
-        private static readonly SolidColorBrush MarkerFillBrush = new SolidColorBrush(Color.FromArgb(2, 0, 0, 0));
-
         private ZoomBookmark bookmark;
 
         // the canvas to magnify contains both an image and markers so the magnifying glass view matches the display image
-        private Canvas canvasToMagnify;
+        private Canvas magnifierCanvas;
 
         // the image displayed in the magnifying glass
-        private Image magifierImage;
+        // Unlike the display image, this image is rendered at 1:1 and the scaled or translated in the magnifier's view of it.
+        private Image imageToMagnify;
 
-        // render transforms
+        // render transforms for the display image and markers
         // RedrawMagnifyingGlassIfVisible() must be kept in sync with these.  See comments there.
         private ScaleTransform displayImageScale;
         private TranslateTransform displayImageTranslation;
@@ -33,7 +31,7 @@ namespace Carnassial.Control
 
         private List<Marker> markers;
 
-        // mouse and position states used to discriminate clicks from drags
+        // mouse state used to discriminate clicks from drags
         private UIElement mouseDownSender;
         private DateTime mouseDownTime;
         private Point mouseDownLocation;
@@ -65,26 +63,22 @@ namespace Carnassial.Control
 
             this.FileDisplay.Image.RenderTransform = transformGroup;
             this.FileDisplay.Image.MouseDown += this.FileDisplayImage_MouseDown;
-            this.FileDisplay.Image.MouseUp += this.FileDisplayImaage_MouseUp;
+            this.FileDisplay.Image.MouseUp += this.FileDisplayImage_MouseUp;
             this.FileDisplay.Image.MouseWheel += this.FileDisplayImage_MouseWheel;
             this.FileDisplay.Image.SizeChanged += this.FileDisplayImage_SizeChanged;
 
-            this.magifierImage = new Image()
-            {
-                HorizontalAlignment = HorizontalAlignment.Left,
-                VerticalAlignment = VerticalAlignment.Top
-            };
-            this.magifierImage.SizeChanged += this.ImageToMagnify_SizeChanged;
+            this.imageToMagnify = new Image();
+            this.imageToMagnify.SizeChanged += this.ImageToMagnify_SizeChanged;
 
-            this.canvasToMagnify = new Canvas();
-            this.canvasToMagnify.SizeChanged += this.CanvasToMagnify_SizeChanged;
-            this.canvasToMagnify.Children.Add(this.magifierImage);
+            this.magnifierCanvas = new Canvas();
+            this.magnifierCanvas.SizeChanged += this.CanvasToMagnify_SizeChanged;
+            this.magnifierCanvas.Children.Add(this.imageToMagnify);
 
             // set up the magnifying glass
-            this.magnifyingGlass = new MagnifyingGlass(this);
+            this.magnifyingGlass = new MagnifyingGlass();
 
-            Canvas.SetZIndex(this.magnifyingGlass, 1); // should always be in front
-            this.MarkerCanvas.Children.Add(this.magnifyingGlass);
+            Canvas.SetZIndex(this.magnifyingGlass, 1); // should always be on top
+            this.DisplayCanvas.Children.Add(this.magnifyingGlass);
 
             // event handlers for image interaction: keys, mouse handling for markers
             // this.mouseDownLocation not initialized as it's set from the display image's mouse down handler
@@ -128,18 +122,18 @@ namespace Carnassial.Control
             set
             {
                 // clamp the value
-                if (value < Constant.MarkableCanvas.MagnifyingGlassMinimumFieldOfView)
+                if (value < Constant.ImageDisplay.MagnifyingGlassMinimumFieldOfView)
                 {
-                    value = Constant.MarkableCanvas.MagnifyingGlassMinimumFieldOfView;
+                    value = Constant.ImageDisplay.MagnifyingGlassMinimumFieldOfView;
                 }
-                else if (value > Constant.MarkableCanvas.MagnifyingGlassMaximumFieldOfView)
+                else if (value > Constant.ImageDisplay.MagnifyingGlassMaximumFieldOfView)
                 {
-                    value = Constant.MarkableCanvas.MagnifyingGlassMaximumFieldOfView;
+                    value = Constant.ImageDisplay.MagnifyingGlassMaximumFieldOfView;
                 }
                 this.magnifyingGlass.FieldOfView = value;
 
                 // update magnifier content if there is something to magnify
-                if (this.magifierImage.Source != null && this.FileDisplay.Image.ActualWidth > 0)
+                if (this.imageToMagnify.Source != null && this.FileDisplay.Image.ActualWidth > 0)
                 {
                     this.RedrawMagnifyingGlassIfVisible();
                 }
@@ -188,11 +182,11 @@ namespace Carnassial.Control
             // create a marker
             Ellipse mark = new Ellipse()
             {
-                Width = Constant.MarkableCanvas.MarkerDiameter,
-                Height = Constant.MarkableCanvas.MarkerDiameter,
+                Width = Constant.ImageDisplay.MarkerDiameter,
+                Height = Constant.ImageDisplay.MarkerDiameter,
                 Stroke = marker.Highlight ? Brushes.MediumBlue : Brushes.Gold,
-                StrokeThickness = Constant.MarkableCanvas.MarkerStrokeThickness,
-                Fill = FileDisplayWithMarkers.MarkerFillBrush
+                StrokeThickness = Constant.ImageDisplay.MarkerStrokeThickness,
+                Fill = Constant.ImageDisplay.MarkerFillBrush
             };
             markerCanvas.Children.Add(mark);
 
@@ -223,11 +217,11 @@ namespace Carnassial.Control
             {
                 glow = new Ellipse()
                 {
-                    Width = whiteOutline.Width + Constant.MarkableCanvas.MarkerGlowDiameterIncrease,
-                    Height = whiteOutline.Height + Constant.MarkableCanvas.MarkerGlowDiameterIncrease,
-                    StrokeThickness = Constant.MarkableCanvas.MarkerGlowStrokeThickness,
+                    Width = whiteOutline.Width + Constant.ImageDisplay.MarkerGlowDiameterIncrease,
+                    Height = whiteOutline.Height + Constant.ImageDisplay.MarkerGlowDiameterIncrease,
+                    StrokeThickness = Constant.ImageDisplay.MarkerGlowStrokeThickness,
                     Stroke = mark.Stroke,
-                    Opacity = Constant.MarkableCanvas.MarkerGlowOpacity
+                    Opacity = Constant.ImageDisplay.MarkerGlowOpacity
                 };
                 markerCanvas.Children.Add(glow);
 
@@ -285,7 +279,7 @@ namespace Carnassial.Control
             markerCanvas.MouseDown += this.FileDisplayImage_MouseDown;
             markerCanvas.MouseMove += this.MarkableCanvas_MouseMove;
             markerCanvas.MouseRightButtonUp += this.Marker_MouseRightButtonUp;
-            markerCanvas.MouseUp += this.FileDisplayImaage_MouseUp;
+            markerCanvas.MouseUp += this.FileDisplayImage_MouseUp;
             markerCanvas.MouseWheel += this.FileDisplayImage_MouseWheel; // Make the mouse wheel work over marks as well as the image
             return markerCanvas;
         }
@@ -365,7 +359,7 @@ namespace Carnassial.Control
             // this.markers rather than this.Markers.
             if (image.Image != null)
             {
-                image.Image.SetSource(this.magifierImage);
+                image.Image.SetSource(this.imageToMagnify);
             }
 
             // change to new markers
@@ -412,7 +406,7 @@ namespace Carnassial.Control
             }
         }
 
-        private void FileDisplayImaage_MouseUp(object sender, MouseButtonEventArgs e)
+        private void FileDisplayImage_MouseUp(object sender, MouseButtonEventArgs e)
         {
             // make sure the cursor reverts to the normal arrow cursor
             this.Cursor = Cursors.Arrow;
@@ -465,8 +459,8 @@ namespace Carnassial.Control
         {
             // keep the magnifying glass canvas in sync with the magnified image size
             // this update triggers a call to CanvasToMagnify_SizeChanged
-            this.canvasToMagnify.Width = this.magifierImage.ActualWidth;
-            this.canvasToMagnify.Height = this.magifierImage.ActualHeight;
+            this.magnifierCanvas.Width = this.imageToMagnify.ActualWidth;
+            this.magnifierCanvas.Height = this.imageToMagnify.ActualHeight;
         }
 
         /// <summary>
@@ -474,7 +468,7 @@ namespace Carnassial.Control
         /// </summary>
         public void MagnifierZoomIn()
         {
-            this.MagnifyingGlassFieldOfView /= Constant.MarkableCanvas.MagnifyingGlassFieldOfViewIncrement;
+            this.MagnifyingGlassFieldOfView /= Constant.ImageDisplay.MagnifyingGlassFieldOfViewIncrement;
         }
 
         /// <summary>
@@ -482,7 +476,7 @@ namespace Carnassial.Control
         /// </summary>
         public void MagnifierZoomOut()
         {
-            this.MagnifyingGlassFieldOfView *= Constant.MarkableCanvas.MagnifyingGlassFieldOfViewIncrement;
+            this.MagnifyingGlassFieldOfView *= Constant.ImageDisplay.MagnifyingGlassFieldOfViewIncrement;
         }
 
         // hide the magnifying glass when the mouse leaves the canvas
@@ -562,31 +556,22 @@ namespace Carnassial.Control
         {
             // nothing to magnify
             if ((this.IsVisible == false) ||
-                (this.magifierImage.Source == null))
+                (this.imageToMagnify.Source == null))
             {
                 this.magnifyingGlass.Hide();
                 return;
             }
 
-            // mouse is off of display image and magnifying glass shouldn't be shown
-            Point mousePosition = Mouse.GetPosition(this.FileDisplay.Image);
-            if (this.FileDisplay.Image.Contains(mousePosition) == false)
+            // if mouse is off of display image and magnifying glass shouldn't be shown
+            Point mouseImagePosition = Mouse.GetPosition(this.FileDisplay.Image);
+            if (this.FileDisplay.Image.Contains(mouseImagePosition) == false)
             {
                 this.magnifyingGlass.Hide();
                 return;
             }
 
-            // determine magnifier translation for current mouse location
-            // This has no effect when the image to display has a unity scaling transform but is needed to properly place the glass when the display image
-            // zoom is above unity.  The difficulty is the magnifer's overall render scale (not its lens zoom!) remains constant as the display image scale
-            // changes, resulting in relative motion between the magnifier render origin at 0,0 on the display image and the display image's effective origin
-            // due to its transforms.
-            // Calculations here depend on the render transforms applied and their ordering and must be updated if these changes.
-            Point scaledMousePosition = new Point(this.displayImageScale.ScaleX * mousePosition.X, this.displayImageScale.ScaleY * mousePosition.Y);
-            Point transformedOrigin = this.displayImageTranslation.Transform(this.displayImageScale.Transform(new Point(0, 0)));
-            Point magnifierTranslation = new Point(scaledMousePosition.X - mousePosition.X + transformedOrigin.X,
-                                                   scaledMousePosition.Y - mousePosition.Y + transformedOrigin.Y);
-            this.magnifyingGlass.RedrawIfVisible(this.canvasToMagnify, magnifierTranslation);
+            // update magnifier's view of the image to magnify and position for current mouse location
+            this.magnifyingGlass.RedrawIfVisible(this.magnifierCanvas, this.FileDisplay.Image, mouseImagePosition);
         }
 
         /// <summary>
@@ -600,19 +585,19 @@ namespace Carnassial.Control
 
         private void RedrawDisplayMarkers()
         {
-            this.ClearMarkers(this.MarkerCanvas);
-            this.AddMarkers(this.MarkerCanvas, this.FileDisplay.Image.RenderSize, true);
+            this.ClearMarkers(this.DisplayCanvas);
+            this.AddMarkers(this.DisplayCanvas, this.FileDisplay.Image.RenderSize, true);
         }
 
         private void RedrawMagnifierMarkers()
         {
-            this.ClearMarkers(this.canvasToMagnify);
-            this.AddMarkers(this.canvasToMagnify, this.canvasToMagnify.RenderSize, false);
+            this.ClearMarkers(this.magnifierCanvas);
+            this.AddMarkers(this.magnifierCanvas, this.magnifierCanvas.RenderSize, false);
         }
 
         public void ResetMaximumZoom()
         {
-            this.ZoomMaximum = Constant.MarkableCanvas.ImageZoomMaximum;
+            this.ZoomMaximum = Constant.ImageDisplay.ImageZoomMaximum;
         }
 
         // scale the image around the given position
@@ -620,7 +605,7 @@ namespace Carnassial.Control
         {
             // nothing to do if at maximum or minimum scaling value whilst zooming in or out, respectively 
             if ((zoomIn && this.displayImageScale.ScaleX >= this.ZoomMaximum) ||
-                (!zoomIn && this.displayImageScale.ScaleX <= Constant.MarkableCanvas.ImageZoomMinimum))
+                (!zoomIn && this.displayImageScale.ScaleX <= Constant.ImageDisplay.ImageZoomMinimum))
             {
                 return;
             }
@@ -646,13 +631,13 @@ namespace Carnassial.Control
 
                 if (zoomIn)
                 {
-                    this.displayImageScale.ScaleX *= Constant.MarkableCanvas.MagnifyingGlassFieldOfViewIncrement;
+                    this.displayImageScale.ScaleX *= Constant.ImageDisplay.MagnifyingGlassFieldOfViewIncrement;
                     this.displayImageScale.ScaleX = Math.Min(this.ZoomMaximum, this.displayImageScale.ScaleX);
                 }
                 else
                 {
-                    this.displayImageScale.ScaleX /= Constant.MarkableCanvas.MagnifyingGlassFieldOfViewIncrement;
-                    this.displayImageScale.ScaleX = Math.Max(Constant.MarkableCanvas.ImageZoomMinimum, this.displayImageScale.ScaleX);
+                    this.displayImageScale.ScaleX /= Constant.ImageDisplay.MagnifyingGlassFieldOfViewIncrement;
+                    this.displayImageScale.ScaleX = Math.Max(Constant.ImageDisplay.ImageZoomMinimum, this.displayImageScale.ScaleX);
                 }
                 this.displayImageScale.ScaleY = this.displayImageScale.ScaleX;
 
@@ -661,7 +646,7 @@ namespace Carnassial.Control
                 // image panned.  If the user's intent is to zoom out to unity it's desirable to constrian the center and translation so the image occupies
                 // all display area available.  However, doing so would push the scale center off the mouse location and result in inconsistent behavior
                 // if the intent's not to go to unity.
-                if (this.displayImageScale.ScaleX <= Constant.MarkableCanvas.ImageZoomMinimum)
+                if (this.displayImageScale.ScaleX <= Constant.ImageDisplay.ImageZoomMinimum)
                 {
                     this.displayImageScale.CenterX = 0.0;
                     this.displayImageScale.CenterY = 0.0;
