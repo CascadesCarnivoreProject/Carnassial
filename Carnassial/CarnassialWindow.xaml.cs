@@ -2675,104 +2675,79 @@ namespace Carnassial
                 return;
             }
 
-            this.DataHandler.ImageCache.MoveToNextStateInCombinedDifferenceCycle();
-            if (this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Unaltered)
-            {
-                // unaltered image should be cached
-                CachedImage unalteredImage = this.DataHandler.ImageCache.GetCurrentImage();
-                Debug.Assert(unalteredImage.Image != null, "Unaltered image not available from image cache.");
-                this.FileDisplay.Display(unalteredImage);
-                this.ClearStatusMessage();
-                return;
-            }
-
             // generate and cache difference image if needed
-            if (this.DataHandler.ImageCache.GetCurrentImage() == null)
+            ImageDifferenceResult result = await this.DataHandler.ImageCache.TryMoveToNextCombinedDifferenceImageAsync(this.State.DifferenceThreshold);
+            switch (result)
             {
-                ImageDifferenceResult result = await this.DataHandler.ImageCache.TryCalculateCombinedDifferenceAsync(this.State.DifferenceThreshold);
-                switch (result)
-                {
-                    case ImageDifferenceResult.CurrentImageNotAvailable:
-                        this.SetStatusMessage("Combined differences can't be shown since the current file is not a loadable image (typically it's a video, missing, or corrupt).");
-                        return;
-                    case ImageDifferenceResult.NextImageNotAvailable:
-                        this.SetStatusMessage("Combined differences can't be shown since the next file is not available.");
-                        return;
-                    case ImageDifferenceResult.NotCalculable:
-                        this.SetStatusMessage("Previous or next file is not compatible with {0}, most likely because it's a different size.", this.DataHandler.ImageCache.Current.FileName);
-                        return;
-                    case ImageDifferenceResult.PreviousImageNotAvailable:
-                        this.SetStatusMessage("Combined differences can't be shown since the next file is not available.");
-                        return;
-                    case ImageDifferenceResult.Success:
-                        // set status below so that it's displayed when a cached difference is used
-                        break;
-                    default:
-                        throw new NotSupportedException(String.Format("Unhandled combined difference result {0}.", result));
-                }
+                case ImageDifferenceResult.CurrentImageNotAvailable:
+                    this.SetStatusMessage("Combined difference can't be shown since the current file is not a loadable image (typically it's a video, missing, or corrupt).");
+                    break;
+                case ImageDifferenceResult.NextImageNotAvailable:
+                    this.SetStatusMessage("Combined difference can't be shown since the next file is not available.");
+                    break;
+                case ImageDifferenceResult.NoLongerValid:
+                    // nothing to do
+                    break;
+                case ImageDifferenceResult.NotCalculable:
+                    this.SetStatusMessage("Previous or next file is not compatible with {0}, most likely because it's a different size.", this.DataHandler.ImageCache.Current.FileName);
+                    break;
+                case ImageDifferenceResult.PreviousImageNotAvailable:
+                    this.SetStatusMessage("Combined difference can't be shown since the next file is not available.");
+                    break;
+                case ImageDifferenceResult.Success:
+                    this.FileDisplay.Display(this.DataHandler.ImageCache.GetCurrentImage());
+                    if (this.DataHandler.ImageCache.CurrentDifferenceState != ImageDifference.Combined)
+                    {
+                        this.ClearStatusMessage();
+                    }
+                    else
+                    {
+                        this.SetStatusMessage("Viewing differences from both next and previous files ({0:0.0}ms).", 1000.0 * this.DataHandler.ImageCache.AverageCombinedDifferenceTimeInSeconds);
+                    }
+                    break;
+                default:
+                    throw new NotSupportedException(String.Format("Unhandled combined difference result {0}.", result));
             }
-
-            // display differenced image
-            // see above remarks about not modifying ImageToMagnify
-            this.FileDisplay.Display(this.DataHandler.ImageCache.GetCurrentImage());
-            this.SetStatusMessage("Viewing differences from both next and previous files ({0:0.0}ms).", 1000.0 * this.DataHandler.ImageCache.AverageCombinedDifferenceTimeInSeconds);
         }
 
         // Cycle through difference images in the order current, then previous and next differenced images.
         // Create and cache the differenced images.
         private async Task TryViewPreviousOrNextDifferenceAsync()
         {
-            if ((this.IsFileAvailable() == false) || this.DataHandler.ImageCache.Current.IsVideo)
-            {
-                return;
-            }
-
-            this.DataHandler.ImageCache.MoveToNextStateInPreviousNextDifferenceCycle();
-            if (this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Unaltered)
-            {
-                // unaltered image should be cached
-                CachedImage unaltered = this.DataHandler.ImageCache.GetCurrentImage();
-                this.FileDisplay.Display(unaltered);
-                if (unaltered != null)
-                {
-                    this.ClearStatusMessage();
-                }
-                else
-                {
-                    this.SetStatusMessage("Difference can't be shown as the current file is not a displayable image (typically it's a video, missing, or corrupt).");
-                }
-                return;
-            }
-
             // generate and cache difference image if needed
-            if (this.DataHandler.ImageCache.GetCurrentImage() == null)
+            ImageDifferenceResult result = await this.DataHandler.ImageCache.TryMoveToNextDifferenceImageAsync(this.State.DifferenceThreshold);
+            switch (result)
             {
-                ImageDifferenceResult result = await this.DataHandler.ImageCache.TryCalculateDifferenceAsync(this.State.DifferenceThreshold);
-                switch (result)
-                {
-                    case ImageDifferenceResult.CurrentImageNotAvailable:
-                        this.SetStatusMessage("Difference can't be shown as the current file is not a displayable image (typically it's a video, missing, or corrupt).");
-                        return;
-                    case ImageDifferenceResult.NextImageNotAvailable:
-                    case ImageDifferenceResult.PreviousImageNotAvailable:
-                        this.SetStatusMessage("View of difference from {0} file unavailable as it is not a displayable image (typically it's a video, missing, or corrupt).", this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next");
-                        return;
-                    case ImageDifferenceResult.NotCalculable:
-                        this.SetStatusMessage("{0} file is not compatible with {1}, most likely because it's a different size.", this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "Previous" : "Next", this.DataHandler.ImageCache.Current.FileName);
-                        return;
-                    case ImageDifferenceResult.Success:
-                        // set status below so that it's displayed when a cached difference is used
-                        break;
-                    default:
-                        throw new NotSupportedException(String.Format("Unhandled difference result {0}.", result));
-                }
+                case ImageDifferenceResult.CurrentImageNotAvailable:
+                    this.SetStatusMessage("Difference can't be shown as the current file is not a displayable image (typically it's a video, missing, or corrupt).");
+                    break;
+                case ImageDifferenceResult.NextImageNotAvailable:
+                case ImageDifferenceResult.PreviousImageNotAvailable:
+                    this.SetStatusMessage("View of difference from {0} file unavailable as it is not a displayable image (typically it's a video, missing, or corrupt).", this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next");
+                    break;
+                case ImageDifferenceResult.NoLongerValid:
+                    // nothing to do
+                    break;
+                case ImageDifferenceResult.NotCalculable:
+                    this.SetStatusMessage("{0} file is not compatible with {1}, most likely because it's a different size.", this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "Previous" : "Next", this.DataHandler.ImageCache.Current.FileName);
+                    break;
+                case ImageDifferenceResult.Success:
+                    // display the differenced image
+                    // the magnifying glass always displays the original non-diferenced image so ImageToDisplay is updated and ImageToMagnify left unchnaged
+                    // this allows the user to examine any particular differenced area and see what it really looks like in the non-differenced image. 
+                    this.FileDisplay.Display(this.DataHandler.ImageCache.GetCurrentImage());
+                    if (this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Unaltered)
+                    {
+                        this.ClearStatusMessage();
+                    }
+                    else
+                    {
+                        this.SetStatusMessage("Viewing difference from {0} file ({1:0.0}ms).", this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next", 1000.0 * this.DataHandler.ImageCache.AverageDifferenceTimeInSeconds);
+                    }
+                    break;
+                default:
+                    throw new NotSupportedException(String.Format("Unhandled difference result {0}.", result));
             }
-
-            // display the differenced image
-            // the magnifying glass always displays the original non-diferenced image so ImageToDisplay is updated and ImageToMagnify left unchnaged
-            // this allows the user to examine any particular differenced area and see what it really looks like in the non-differenced image. 
-            this.FileDisplay.Display(this.DataHandler.ImageCache.GetCurrentImage());
-            this.SetStatusMessage("Viewing difference from {0} file ({1:0.0}ms).", this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next", 1000.0 * this.DataHandler.ImageCache.AverageDifferenceTimeInSeconds);
         }
 
         private void UpdateFolderLoadProgress(FileLoadStatus progress)

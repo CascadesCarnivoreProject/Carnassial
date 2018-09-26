@@ -12,17 +12,17 @@ namespace Carnassial.Data
         public ImageRow Current { get; private set; }
         public int CurrentRow { get; private set; }
 
-        public FileTableEnumerator(FileDatabase fileDatabase) :
-            this(fileDatabase, Constant.Database.InvalidRow)
+        public FileTableEnumerator(FileDatabase fileDatabase)
         {
+            this.Current = null;
+            this.CurrentRow = Constant.Database.InvalidRow;
+            this.FileDatabase = fileDatabase;
         }
 
         public FileTableEnumerator(FileDatabase fileDatabase, int startingPosition)
+            : this(fileDatabase)
         {
             this.CurrentRow = startingPosition;
-            this.FileDatabase = fileDatabase;
-
-            // OK if this fails as FileTableEnumerator..ctor(FileDatabase) passes -1 to match default enumerator behaviour
             this.TryMoveToFile(startingPosition);
         }
 
@@ -72,9 +72,8 @@ namespace Carnassial.Data
         {
             if (this.FileDatabase.IsFileRowInRange(fileRowIndex))
             {
-                this.CurrentRow = fileRowIndex;
-                // rebuild ImageProperties regardless of whether the row changed or not as this seek may be a refresh after a database change
                 this.Current = this.FileDatabase.Files[fileRowIndex];
+                this.CurrentRow = fileRowIndex;
                 return true;
             }
 

@@ -59,11 +59,11 @@ namespace Carnassial.Images
 
             if (disposing)
             {
-                this.ResetDifferenceState(null);
                 foreach (CachedImage image in this.unalteredImagesByID.Values)
                 {
                     image.Dispose();
                 }
+                this.ResetDifferenceState();
             }
 
             base.Dispose(disposing);
@@ -72,249 +72,76 @@ namespace Carnassial.Images
 
         public CachedImage GetCurrentImage()
         {
-            return this.differenceCache[this.CurrentDifferenceState];
+            lock (this.differenceCache)
+            {
+                return this.differenceCache[this.CurrentDifferenceState];
+            }
         }
 
-        public void MoveToNextStateInCombinedDifferenceCycle()
+        private ImageDifference GetNextStateInCombinedDifferenceCycle()
         {
-            Debug.Assert((this.Current != null) && (this.Current.IsVideo == false), "No current file or current file is an image.");
+            Debug.Assert(this.IsFileAvailable && (this.Current.IsVideo == false), "No current file or current file is an image.");
 
-            // if this method and MoveToNextStateInPreviousNextDifferenceCycle() returned bool they'd be consistent MoveNext() and MovePrevious()
+            // can't calculate previous or next difference for the first or last file in the image set, respectively
+            // if this method and MoveToNextStateInPreviousNextDifferenceCycle() returned bool they'd be consistent with MoveNext() and MovePrevious()
             // however, there's no way for them to fail and there's not value in always returning true
-            if (this.CurrentDifferenceState == ImageDifference.Next ||
-                this.CurrentDifferenceState == ImageDifference.Previous ||
-                this.CurrentDifferenceState == ImageDifference.Combined)
+            if ((this.CurrentDifferenceState != ImageDifference.Unaltered) ||
+                (this.CurrentRow == 0) ||
+                (this.CurrentRow == this.FileDatabase.CurrentlySelectedFileCount - 1) ||
+                !this.FileDatabase.IsFileDisplayable(this.CurrentRow + 1) ||
+                !this.FileDatabase.IsFileDisplayable(this.CurrentRow - 1))
             {
-                this.CurrentDifferenceState = ImageDifference.Unaltered;
+                return ImageDifference.Unaltered;
             }
-            else
-            {
-                this.CurrentDifferenceState = ImageDifference.Combined;
-            }
+
+            return ImageDifference.Combined;
         }
 
-        public void MoveToNextStateInPreviousNextDifferenceCycle()
+        private ImageDifference GetNextStateInPreviousNextDifferenceCycle()
         {
-            Debug.Assert((this.Current != null) && (this.Current.IsVideo == false), "No current file or current file is an image.");
+            Debug.Assert(this.IsFileAvailable && (this.Current.IsVideo == false), "No current file or current file is an image.");
 
             // always go to unaltered from combined difference
             if (this.CurrentDifferenceState == ImageDifference.Combined)
             {
-                this.CurrentDifferenceState = ImageDifference.Unaltered;
-                return;
+                return ImageDifference.Unaltered;
             }
 
             if (!this.Current.IsDisplayable())
             {
                 // can't calculate differences for files which aren't displayble
-                this.CurrentDifferenceState = ImageDifference.Unaltered;
-                return;
-            }
-            else
-            {
-                // move to next state in cycle, wrapping around as needed
-                this.CurrentDifferenceState = (this.CurrentDifferenceState >= ImageDifference.Next) ? ImageDifference.Previous : ++this.CurrentDifferenceState;
+                return ImageDifference.Unaltered;
             }
 
+            // move to next state in cycle, wrapping around as needed
+            ImageDifference nextDifference = (this.CurrentDifferenceState >= ImageDifference.Next) ? ImageDifference.Previous : this.CurrentDifferenceState + 1;
+
             // unaltered is always displayable; no more checks required
-            if (this.CurrentDifferenceState == ImageDifference.Unaltered)
+            if (nextDifference == ImageDifference.Unaltered)
             {
-                return;
+                return nextDifference;
             }
 
             // can't calculate previous or next difference for the first or last file in the image set, respectively
             // can't calculate difference if needed file isn't displayable
-            if (this.CurrentDifferenceState == ImageDifference.Previous && this.CurrentRow == 0)
+            if ((nextDifference == ImageDifference.Previous) && (this.CurrentRow == 0))
             {
-                this.MoveToNextStateInPreviousNextDifferenceCycle();
+                return this.GetNextStateInCombinedDifferenceCycle();
             }
-            else if (this.CurrentDifferenceState == ImageDifference.Next && this.CurrentRow == this.FileDatabase.CurrentlySelectedFileCount - 1)
+            else if ((this.CurrentDifferenceState == ImageDifference.Next) && (this.CurrentRow == this.FileDatabase.CurrentlySelectedFileCount - 1))
             {
-                this.MoveToNextStateInPreviousNextDifferenceCycle();
+                return this.GetNextStateInCombinedDifferenceCycle();
             }
-            else if (this.CurrentDifferenceState == ImageDifference.Next && !this.FileDatabase.IsFileDisplayable(this.CurrentRow + 1))
+            else if ((this.CurrentDifferenceState == ImageDifference.Next) && !this.FileDatabase.IsFileDisplayable(this.CurrentRow + 1))
             {
-                this.MoveToNextStateInPreviousNextDifferenceCycle();
+                return this.GetNextStateInCombinedDifferenceCycle();
             }
-            else if (this.CurrentDifferenceState == ImageDifference.Previous && !this.FileDatabase.IsFileDisplayable(this.CurrentRow - 1))
+            else if ((this.CurrentDifferenceState == ImageDifference.Previous) && !this.FileDatabase.IsFileDisplayable(this.CurrentRow - 1))
             {
-                this.MoveToNextStateInPreviousNextDifferenceCycle();
-            }
-        }
-
-        // reset enumerator state but don't clear caches
-        public override void Reset()
-        {
-            base.Reset();
-            this.ResetDifferenceState(null);
-        }
-
-        public async Task<ImageDifferenceResult> TryCalculateDifferenceAsync(byte differenceThreshold)
-        {
-            if (this.Current == null || this.Current.IsVideo || this.Current.IsDisplayable() == false)
-            {
-                this.CurrentDifferenceState = ImageDifference.Unaltered;
-                return ImageDifferenceResult.CurrentImageNotAvailable;
+                return this.GetNextStateInCombinedDifferenceCycle();
             }
 
-            CachedImage unaltered = this.differenceCache[ImageDifference.Unaltered];
-            if (unaltered.Image == null)
-            {
-                this.CurrentDifferenceState = ImageDifference.Unaltered;
-                return ImageDifferenceResult.CurrentImageNotAvailable;
-            }
-
-            // determine which image to use for differencing
-            CachedImage comparisonImage = null;
-            if (this.CurrentDifferenceState == ImageDifference.Previous)
-            {
-                comparisonImage = await this.TryGetPreviousImageAsync();
-                if (comparisonImage.Image == null)
-                {
-                    return ImageDifferenceResult.PreviousImageNotAvailable;
-                }
-            }
-            else if (this.CurrentDifferenceState == ImageDifference.Next)
-            {
-                comparisonImage = await this.TryGetNextImageAsync();
-                if (comparisonImage.Image == null)
-                {
-                    return ImageDifferenceResult.NextImageNotAvailable;
-                }
-            }
-            else
-            {
-                return ImageDifferenceResult.NotCalculable;
-            }
-
-            MemoryImage difference = null;
-            bool differenceComputed = await Task.Run(() =>
-            {
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
-                bool success = unaltered.Image.TryDifference(comparisonImage.Image, differenceThreshold, out difference);
-                if (success)
-                {
-                    ++this.differencesCalculated;
-                    this.differenceTime += stopwatch.Elapsed;
-                }
-                return success;
-            });
-            this.differenceCache[this.CurrentDifferenceState] = new CachedImage(difference);
-            return differenceComputed ? ImageDifferenceResult.Success : ImageDifferenceResult.NotCalculable;
-        }
-
-        public async Task<ImageDifferenceResult> TryCalculateCombinedDifferenceAsync(byte differenceThreshold)
-        {
-            if (this.CurrentDifferenceState != ImageDifference.Combined)
-            {
-                return ImageDifferenceResult.NotCalculable;
-            }
-
-            // three valid images are needed: the current one, the previous one, and the next one
-            if (this.Current == null || this.Current.IsVideo || this.Current.IsDisplayable() == false)
-            {
-                this.CurrentDifferenceState = ImageDifference.Unaltered;
-                return ImageDifferenceResult.CurrentImageNotAvailable;
-            }
-
-            CachedImage unaltered = this.differenceCache[ImageDifference.Unaltered];
-            if (unaltered.Image == null)
-            {
-                this.CurrentDifferenceState = ImageDifference.Unaltered;
-                return ImageDifferenceResult.CurrentImageNotAvailable;
-            }
-
-            CachedImage previous = await this.TryGetPreviousImageAsync();
-            if (previous.Image == null)
-            {
-                return ImageDifferenceResult.PreviousImageNotAvailable;
-            }
-
-            CachedImage next = await this.TryGetNextImageAsync();
-            if (next.Image == null)
-            {
-                return ImageDifferenceResult.NextImageNotAvailable;
-            }
-
-            // all three images are available, so calculate and cache difference
-            MemoryImage difference = null;
-            bool differenceComputed = await Task.Run((Func<bool>)(() => 
-            {
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
-                bool success = unaltered.Image.TryDifference(previous.Image, next.Image, differenceThreshold, out difference);
-                stopwatch.Stop();
-                if (success)
-                {
-                    ++this.combinedDifferencesCalculated;
-                    this.combinedDifferenceTime += stopwatch.Elapsed;
-                }
-                return success;
-            }));
-            this.differenceCache[ImageDifference.Combined] = new CachedImage(difference);
-            return difference != null ? ImageDifferenceResult.Success : ImageDifferenceResult.NotCalculable;
-        }
-
-        public bool TryInvalidate(long id)
-        {
-            if (this.unalteredImagesByID.ContainsKey(id) == false)
-            {
-                return false;
-            }
-
-            if (this.Current == null || this.Current.ID == id)
-            {
-                this.Reset();
-            }
-
-            if (this.unalteredImagesByID.TryRemove(id, out CachedImage imageForID))
-            {
-                imageForID.Dispose();
-            }
-            lock (this.mostRecentlyUsedIDs)
-            {
-                return this.mostRecentlyUsedIDs.TryRemove(id);
-            }
-        }
-
-        public override bool TryMoveToFile(int fileIndex)
-        {
-            MoveToFileResult moveToFile = this.TryMoveToFileAsync(fileIndex, 0).GetAwaiter().GetResult();
-            return moveToFile.Succeeded;
-        }
-
-        public async Task<MoveToFileResult> TryMoveToFileAsync(int fileIndex, int prefetchStride)
-        {
-            long oldFileID = -1;
-            if (this.Current != null)
-            {
-                oldFileID = this.Current.ID;
-            }
-
-            if (base.TryMoveToFile(fileIndex) == false)
-            {
-                return new MoveToFileResult();
-            }
-
-            bool newFileToDisplay = false;
-            if (this.Current.ID != oldFileID)
-            {
-                // if this is an image load it from cache or disk
-                CachedImage unalteredImage = null;
-                if (this.Current.IsVideo == false)
-                {
-                    unalteredImage = await this.TryGetImageAsync(this.Current, prefetchStride);
-                }
-
-                // all moves are to display of unaltered images and invalidate any cached differences
-                // it is assumed images on disk are not altered while Carnassial is running and hence unaltered images can safely be cached by their IDs
-                this.ResetDifferenceState(unalteredImage);
-
-                newFileToDisplay = true;
-            }
-
-            return new MoveToFileResult(newFileToDisplay);
+            return nextDifference;
         }
 
         private void CacheImage(long id, CachedImage image)
@@ -349,10 +176,21 @@ namespace Carnassial.Images
             }
         }
 
-        private void ResetDifferenceState(CachedImage unaltered)
+        // reset enumerator state but don't clear caches
+        public override void Reset()
+        {
+            lock (this.differenceCache)
+            {
+                base.Reset();
+                this.ResetDifferenceState();
+            }
+        }
+
+        private void ResetDifferenceState()
         {
             this.CurrentDifferenceState = ImageDifference.Unaltered;
-            this.differenceCache[ImageDifference.Unaltered] = unaltered;
+            // unaltered image is also contained in this.unalteredImagesByID and is disposed from that collection
+            this.differenceCache[ImageDifference.Unaltered] = null;
 
             foreach (ImageDifference difference in new ImageDifference[] { ImageDifference.Previous, ImageDifference.Next, ImageDifference.Combined })
             {
@@ -367,7 +205,7 @@ namespace Carnassial.Images
 
         private async Task<CachedImage> TryGetImageAsync(int fileRow)
         {
-            if (this.TryGetFile(fileRow, out ImageRow file) == false || file.IsVideo)
+            if ((this.TryGetFile(fileRow, out ImageRow file) == false) || file.IsVideo)
             {
                 return null;
             }
@@ -421,16 +259,6 @@ namespace Carnassial.Images
             return file.IsDisplayable();
         }
 
-        private async Task<CachedImage> TryGetNextImageAsync()
-        {
-            return await this.TryGetImageAsync(this.CurrentRow + 1);
-        }
-
-        private async Task<CachedImage> TryGetPreviousImageAsync()
-        {
-            return await this.TryGetImageAsync(this.CurrentRow - 1);
-        }
-
         private bool TryInitiatePrefetch(int fileIndex)
         {
             if (this.FileDatabase.IsFileRowInRange(fileIndex) == false)
@@ -452,6 +280,232 @@ namespace Carnassial.Images
             }));
             this.prefetechesByID.AddOrUpdate(nextFile.ID, prefetch, (long id, Task newPrefetch) => { return newPrefetch; });
             return true;
+        }
+
+        public bool TryInvalidate(long id)
+        {
+            if (this.unalteredImagesByID.ContainsKey(id) == false)
+            {
+                return false;
+            }
+
+            if ((this.Current == null) || (this.Current.ID == id))
+            {
+                this.Reset();
+            }
+
+            if (this.unalteredImagesByID.TryRemove(id, out CachedImage imageForID))
+            {
+                imageForID.Dispose();
+            }
+            lock (this.mostRecentlyUsedIDs)
+            {
+                return this.mostRecentlyUsedIDs.TryRemove(id);
+            }
+        }
+
+        public override bool TryMoveToFile(int fileIndex)
+        {
+            MoveToFileResult moveToFile = this.TryMoveToFileAsync(fileIndex, 0).GetAwaiter().GetResult();
+            return moveToFile.Succeeded;
+        }
+
+        public async Task<MoveToFileResult> TryMoveToFileAsync(int fileIndex, int prefetchStride)
+        {
+            ImageRow afterMoveFile;
+            bool movedToNewFile = false;
+            lock (this.differenceCache)
+            {
+                long preMoveFileID = -1;
+                if (this.IsFileAvailable)
+                {
+                    preMoveFileID = this.Current.ID;
+                }
+
+                if (base.TryMoveToFile(fileIndex) == false)
+                {
+                    return new MoveToFileResult();
+                }
+
+                afterMoveFile = this.Current;
+                movedToNewFile = afterMoveFile.ID != preMoveFileID;
+                if (movedToNewFile)
+                {
+                    // all moves are to display of unaltered images and invalidate any cached differences
+                    // it is assumed images on disk are not altered while Carnassial is running and hence unaltered images can safely be cached by their IDs
+                    this.ResetDifferenceState();
+                }
+            }
+
+            // if this file is an image ensure it's loaded from disk and cached
+            if (afterMoveFile.IsVideo == false)
+            {
+                this.differenceCache[ImageDifference.Unaltered] = await this.TryGetImageAsync(afterMoveFile, prefetchStride);
+            }
+
+            return new MoveToFileResult(movedToNewFile);
+        }
+
+        public async Task<ImageDifferenceResult> TryMoveToNextCombinedDifferenceImageAsync(byte differenceThreshold)
+        {
+            ImageDifference initialDifferenceState;
+            int initialRow;
+            CachedImage unaltered;
+            lock (this.differenceCache)
+            {
+                // three valid images are needed for combined differencing: the current one, the previous one, and the next one
+                // If the current image is unavailable then neither unaltered or combined is display is feasible.
+                if ((this.IsFileAvailable == false) || this.Current.IsVideo || (this.Current.IsDisplayable() == false))
+                {
+                    this.CurrentDifferenceState = ImageDifference.Unaltered;
+                    return ImageDifferenceResult.CurrentImageNotAvailable;
+                }
+                unaltered = this.differenceCache[ImageDifference.Unaltered];
+                if ((unaltered == null) || (unaltered.Image == null))
+                {
+                    return ImageDifferenceResult.CurrentImageNotAvailable;
+                }
+
+                ImageDifference nextDifferenceState = this.GetNextStateInCombinedDifferenceCycle();
+                if (nextDifferenceState != ImageDifference.Combined)
+                {
+                    this.CurrentDifferenceState = nextDifferenceState;
+                    return ImageDifferenceResult.Success;
+                }
+
+                CachedImage cachedDifference = this.differenceCache[nextDifferenceState];
+                if ((cachedDifference != null) && (cachedDifference.Image != null))
+                {
+                    this.CurrentDifferenceState = nextDifferenceState;
+                    return ImageDifferenceResult.Success;
+                }
+
+                initialDifferenceState = this.CurrentDifferenceState;
+                initialRow = this.CurrentRow;
+            }
+
+            CachedImage previous = await this.TryGetImageAsync(initialRow - 1);
+            if ((previous == null) || (previous.Image == null))
+            {
+                return ImageDifferenceResult.PreviousImageNotAvailable;
+            }
+
+            CachedImage next = await this.TryGetImageAsync(initialRow + 1);
+            if ((next == null) || (next.Image == null))
+            {
+                return ImageDifferenceResult.NextImageNotAvailable;
+            }
+
+            // all three images are available, so calculate difference and cache result if it still applies at completion
+            return await Task.Run(() =>
+            {
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
+                bool success = unaltered.Image.TryDifference(previous.Image, next.Image, differenceThreshold, out MemoryImage difference);
+                stopwatch.Stop();
+                if (success)
+                {
+                    lock (this.differenceCache)
+                    {
+                        ++this.combinedDifferencesCalculated;
+                        this.combinedDifferenceTime += stopwatch.Elapsed;
+
+                        if ((this.CurrentRow == initialRow) && (this.CurrentDifferenceState == initialDifferenceState))
+                        {
+                            this.CurrentDifferenceState = ImageDifference.Combined;
+                            this.differenceCache[ImageDifference.Combined] = new CachedImage(difference);
+                            return ImageDifferenceResult.Success;
+                        }
+                        return ImageDifferenceResult.NoLongerValid;
+                    }
+                }
+                return ImageDifferenceResult.NotCalculable;
+            });
+        }
+
+        public async Task<ImageDifferenceResult> TryMoveToNextDifferenceImageAsync(byte differenceThreshold)
+        {
+            ImageDifferenceResult comparisonImageNotAvailable;
+            int comparisonRow;
+            ImageDifference initialDifferenceState;
+            int initialRow;
+            ImageDifference nextDifferenceState;
+            CachedImage unaltered;
+            lock (this.differenceCache)
+            {
+                if ((this.IsFileAvailable == false) || this.Current.IsVideo || (this.Current.IsDisplayable() == false))
+                {
+                    this.CurrentDifferenceState = ImageDifference.Unaltered;
+                    return ImageDifferenceResult.CurrentImageNotAvailable;
+                }
+
+                unaltered = this.differenceCache[ImageDifference.Unaltered];
+                if ((unaltered == null) || (unaltered.Image == null))
+                {
+                    this.CurrentDifferenceState = ImageDifference.Unaltered;
+                    return ImageDifferenceResult.CurrentImageNotAvailable;
+                }
+
+                initialDifferenceState = this.CurrentDifferenceState;
+                initialRow = this.CurrentRow;
+
+                nextDifferenceState = this.GetNextStateInPreviousNextDifferenceCycle();
+                switch (nextDifferenceState)
+                {
+                    case ImageDifference.Next:
+                        comparisonImageNotAvailable = ImageDifferenceResult.NextImageNotAvailable;
+                        comparisonRow = initialRow + 1;
+                        break;
+                    case ImageDifference.Unaltered:
+                        this.CurrentDifferenceState = nextDifferenceState;
+                        return ImageDifferenceResult.Success;
+                    case ImageDifference.Previous:
+                        comparisonImageNotAvailable = ImageDifferenceResult.PreviousImageNotAvailable;
+                        comparisonRow = initialRow - 1;
+                        break;
+                    case ImageDifference.Combined:
+                    default:
+                        throw new NotSupportedException(String.Format("Unhandled difference state {0}.", nextDifferenceState));
+                }
+
+                CachedImage cachedDifference = this.differenceCache[nextDifferenceState];
+                if ((cachedDifference != null) && (cachedDifference.Image != null))
+                {
+                    this.CurrentDifferenceState = nextDifferenceState;
+                    return ImageDifferenceResult.Success;
+                }
+            }
+
+            // determine which image to use for differencing
+            CachedImage comparisonImage = await this.TryGetImageAsync(comparisonRow);
+            if ((comparisonImage == null) || (comparisonImage.Image == null))
+            {
+                return comparisonImageNotAvailable;
+            }
+
+            return await Task.Run(() =>
+            {
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
+                bool success = unaltered.Image.TryDifference(comparisonImage.Image, differenceThreshold, out MemoryImage difference);
+                if (success)
+                {
+                    lock (this.differenceCache)
+                    {
+                        ++this.differencesCalculated;
+                        this.differenceTime += stopwatch.Elapsed;
+
+                        if ((this.CurrentRow == initialRow) && (this.CurrentDifferenceState == initialDifferenceState))
+                        {
+                            this.CurrentDifferenceState = nextDifferenceState;
+                            this.differenceCache[nextDifferenceState] = new CachedImage(difference);
+                            return ImageDifferenceResult.Success;
+                        }
+                        return ImageDifferenceResult.NoLongerValid;
+                    }
+                }
+                return ImageDifferenceResult.NotCalculable;
+            });
         }
     }
 }

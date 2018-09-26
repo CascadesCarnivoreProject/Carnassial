@@ -4,6 +4,7 @@
     {
         CurrentImageNotAvailable,
         NextImageNotAvailable,
+        NoLongerValid,
         NotCalculable,
         PreviousImageNotAvailable,
         Success

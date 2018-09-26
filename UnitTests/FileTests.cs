@@ -98,37 +98,49 @@ namespace Carnassial.UnitTests
                     moveToFile = await cache.TryMoveToFileAsync(fileExpectations.Count, 0);
                     Assert.IsFalse(moveToFile.Succeeded);
 
-                    for (int step = 0; step < 4; ++step)
+                    // combined diferences
+                    cache.Reset();
+                    for (int file = 0; file < fileDatabase.Files.RowCount; ++file)
                     {
-                        cache.MoveToNextStateInCombinedDifferenceCycle();
-                        Assert.IsTrue((cache.CurrentDifferenceState == ImageDifference.Combined) ||
-                                      (cache.CurrentDifferenceState == ImageDifference.Unaltered));
+                        moveToFile = await cache.TryMoveToFileAsync(file, 1);
+                        Assert.IsTrue(moveToFile.Succeeded);
 
-                        ImageDifferenceResult combinedDifferenceResult = await cache.TryCalculateCombinedDifferenceAsync(Constant.Images.DifferenceThresholdDefault - 2);
-                        await this.CheckDifferenceResult(combinedDifferenceResult, cache, fileDatabase);
-
-                        CachedImage differenceImage = cache.GetCurrentImage();
-                        if (combinedDifferenceResult == ImageDifferenceResult.Success)
+                        for (int step = 0; step < 4; ++step)
                         {
-                            Assert.IsNotNull(differenceImage.Image);
+                            ImageDifferenceResult combinedDifferenceResult = await cache.TryMoveToNextCombinedDifferenceImageAsync(Constant.Images.DifferenceThresholdDefault - 2);
+                            Assert.IsTrue((cache.CurrentDifferenceState == ImageDifference.Combined) ||
+                                          (cache.CurrentDifferenceState == ImageDifference.Unaltered));
+                            await this.CheckDifferenceResult(combinedDifferenceResult, cache, fileDatabase);
+
+                            CachedImage differenceImage = cache.GetCurrentImage();
+                            if (combinedDifferenceResult == ImageDifferenceResult.Success)
+                            {
+                                Assert.IsNotNull(differenceImage.Image);
+                            }
                         }
                     }
 
-                    Assert.IsTrue(cache.TryMoveToFile(0));
-                    for (int step = 0; step < 7; ++step)
+                    // next and previous differences
+                    cache.Reset();
+                    for (int file = fileDatabase.Files.RowCount - 1; file >= 0; --file)
                     {
-                        cache.MoveToNextStateInPreviousNextDifferenceCycle();
-                        Assert.IsTrue((cache.CurrentDifferenceState == ImageDifference.Next) ||
-                                      (cache.CurrentDifferenceState == ImageDifference.Previous) ||
-                                      (cache.CurrentDifferenceState == ImageDifference.Unaltered));
+                        moveToFile = await cache.TryMoveToFileAsync(file, -1);
+                        Assert.IsTrue(moveToFile.Succeeded);
 
-                        ImageDifferenceResult differenceResult = await cache.TryCalculateDifferenceAsync(Constant.Images.DifferenceThresholdDefault + 2);
-                        await this.CheckDifferenceResult(differenceResult, cache, fileDatabase);
-
-                        CachedImage differenceImage = cache.GetCurrentImage();
-                        if (differenceResult == ImageDifferenceResult.Success)
+                        for (int step = 0; step < 7; ++step)
                         {
-                            Assert.IsNotNull(differenceImage.Image);
+                            ImageDifferenceResult differenceResult = await cache.TryMoveToNextDifferenceImageAsync(Constant.Images.DifferenceThresholdDefault + 2);
+                            Assert.IsTrue((cache.CurrentDifferenceState == ImageDifference.Next) ||
+                                          (cache.CurrentDifferenceState == ImageDifference.Previous) ||
+                                          (cache.CurrentDifferenceState == ImageDifference.Unaltered));
+
+                            await this.CheckDifferenceResult(differenceResult, cache, fileDatabase);
+
+                            CachedImage differenceImage = cache.GetCurrentImage();
+                            if (differenceResult == ImageDifferenceResult.Success)
+                            {
+                                Assert.IsNotNull(differenceImage.Image);
+                            }
                         }
                     }
 
@@ -242,11 +254,11 @@ namespace Carnassial.UnitTests
 
                     if (expectNullImage)
                     {
-                        Assert.IsNull(currentImage.Image, "Expected a null image for difference result {0} and state {1}.", result, cache.CurrentDifferenceState);
+                        Assert.IsTrue((currentImage == null) || (currentImage.Image == null), "Expected a null image for difference result {0} and state {1}.", result, cache.CurrentDifferenceState);
                     }
                     else
                     {
-                        Assert.IsNotNull(currentImage.Image, "Expected an image for difference result {0} and state {1}.", result, cache.CurrentDifferenceState);
+                        Assert.IsTrue((currentImage != null) && (currentImage.Image != null), "Expected an image for difference result {0} and state {1}.", result, cache.CurrentDifferenceState);
                     }
                     break;
                 case ImageDifferenceResult.Success:
@@ -424,9 +436,11 @@ namespace Carnassial.UnitTests
 
             // don't dispose current image as it's owned by the cache
             CachedImage currentImage = cache.GetCurrentImage();
-            Assert.IsNotNull(currentImage.Image);
+            Assert.IsTrue(currentImage != null);
+            Assert.IsTrue(currentImage.Image != null);
             Assert.IsTrue(currentImage.Image.DecodeError == false);
             Assert.IsTrue(currentImage.Image.Format == MemoryImage.PreferredPixelFormat);
+            Assert.IsTrue(currentImage.ImageNotDecodable == false);
             Assert.IsTrue((1000 < currentImage.Image.PixelHeight) && (currentImage.Image.PixelHeight < 10000));
             Assert.IsTrue((1000 < currentImage.Image.PixelWidth) && (currentImage.Image.PixelWidth < 10000));
             Assert.IsTrue(currentImage.Image.TotalPixels > 1000 * 1000);
