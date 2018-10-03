@@ -1,35 +1,31 @@
 ﻿using System.Reflection;
+using System.Resources;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
 
-// General Information about an assembly is controlled through the following 
-// set of attributes. Change these attribute values to modify the information
-// associated with an assembly.
 [assembly: AssemblyTitle("Carnassial Template Editor")]
-[assembly: AssemblyDescription("")]
-[assembly: AssemblyConfiguration("")]
+[assembly: AssemblyDescription("Editor for Carnassial template database (.tdb) files.")]
 [assembly: AssemblyCompany("Cascades Carnivore Project")]
 [assembly: AssemblyProduct("Carnassial Template Editor")]
-[assembly: AssemblyCopyright("Copyright © 2016+")]
+[assembly: AssemblyCopyright("Copyright © 2018 Cascades Carnivore Project")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
-// Setting ComVisible to false makes the types in this assembly not visible 
-// to COM components.  If you need to access a type in this assembly from 
-// COM, set the ComVisible attribute to true on that type.
+[assembly: AssemblyVersion("2.2.4.0")]
+[assembly: AssemblyFileVersion("2.2.4.0")]
+
+#if DEBUG
+[assembly: AssemblyConfiguration("Debug")]
+#else
+[assembly: AssemblyConfiguration("Release")]
+#endif
+
 [assembly: ComVisible(false)]
-
-[assembly: ThemeInfo(
-    ResourceDictionaryLocation.None, // where theme specific resource dictionaries are located
-                                     // (used if a resource is not found in the page, 
-                                     // or application resource dictionaries)
-    ResourceDictionaryLocation.SourceAssembly // where the generic resource dictionary is located
-                                              // (used if a resource is not found in the page, 
-                                              // app, or any theme specific resource dictionaries)
-)]
-
-[assembly: AssemblyVersion("2.2.0.3")]
-[assembly: AssemblyFileVersion("2.2.0.3")]
+[assembly: Guid("2cdd91eb-a708-4baa-a698-4ef49c021fc6")]
 
 [assembly: InternalsVisibleTo("Carnassial.UnitTests")]
+
+[assembly: NeutralResourcesLanguage("en", UltimateResourceFallbackLocation.MainAssembly)]
+////                 no theme support                 styling is in this assembly
+[assembly: ThemeInfo(ResourceDictionaryLocation.None, ResourceDictionaryLocation.SourceAssembly)]

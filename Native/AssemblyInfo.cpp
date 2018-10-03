@@ -2,6 +2,7 @@
 
 using namespace System;
 using namespace System::Reflection;
+using namespace System::Resources;
 using namespace System::Runtime::CompilerServices;
 using namespace System::Runtime::InteropServices;
 using namespace System::Security::Permissions;
@@ -11,29 +12,26 @@ using namespace System::Security::Permissions;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 //
-[assembly:AssemblyTitleAttribute(L"Carnassial.Native")];
-[assembly:AssemblyDescriptionAttribute(L"A tool to simplify analysis of images and videos from remote cameras.")];
-[assembly:AssemblyConfigurationAttribute(L"")];
+[assembly:AssemblyTitleAttribute(L"Carnassial.Native.dll")];
+[assembly:AssemblyDescriptionAttribute(L"Carnassial C++/CLI and C++ components.")];
 [assembly:AssemblyCompanyAttribute(L"Cascades Carnivore Project")];
 [assembly:AssemblyProductAttribute(L"Carnassial")];
-[assembly:AssemblyCopyrightAttribute(L"Copyright ©2017+")];
+[assembly:AssemblyCopyrightAttribute(L"Copyright © 2018 Cascades Carnivore Project")];
 [assembly:AssemblyTrademarkAttribute(L"")];
 [assembly:AssemblyCultureAttribute(L"")];
 
-//
-// Version information for an assembly consists of the following four values:
-//
-//      Major Version
-//      Minor Version
-//      Build Number
-//      Revision
-//
-// You can specify all the value or you can default the Revision and Build Numbers
-// by using the '*' as shown below:
+#ifdef _DEBUG
+[assembly:AssemblyConfigurationAttribute(L"Debug")];
+#else
+[assembly:AssemblyConfigurationAttribute(L"Release")];
+#endif
 
-[assembly:AssemblyVersionAttribute("2.2.0.3")];
-[assembly:AssemblyFileVersionAttribute("2.2.0.3")];
+[assembly:AssemblyVersionAttribute("2.2.4.0")];
+[assembly:AssemblyFileVersionAttribute("2.2.4.0")];
 
 [assembly:ComVisible(false)];
+[assembly:Guid(L"768bba9c-aea6-47e3-b4ed-49177db0ef78")]
 
 [assembly:CLSCompliantAttribute(true)];
+
+[assembly:NeutralResourcesLanguage("en", UltimateResourceFallbackLocation::MainAssembly)];
