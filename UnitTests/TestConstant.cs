@@ -64,11 +64,11 @@ namespace Carnassial.UnitTests
             public const string Choice0 = "Choice0";
             public const string Note0 = "Note0";
             public const string Flag0 = "Flag0";
-            public const string CounterWithCustomDataLabel = "CounterWithCustomDataLabel";
-            public const string CounterWithCustomDataLabelMarkers = "CounterWithCustomDataLabelMarkers";
-            public const string ChoiceWithCustomDataLabel = "ChoiceWithCustomDataLabel";
-            public const string NoteWithCustomDataLabel = "NoteWithCustomDataLabel";
-            public const string FlagWithCustomDataLabel = "FlagWithCustomDataLabel";
+            public const string CounterWithCustomDataLabel = "कस्टम डेटा लेबल के साथ काउंटर"; // Hindi
+            public const string CounterWithCustomDataLabelMarkers = "कस्टम डेटा लेबल के साथ काउंटरMarkers";
+            public const string ChoiceWithCustomDataLabel = "Bandera con\"etiqueta\"de\"datos personalizada"; // Spanish
+            public const string NoteWithCustomDataLabel = "注意使用自定义数据标签"; // Chinese (simplified)
+            public const string FlagWithCustomDataLabel = "カスタムデータラベルのフラグ"; // Japanese
             public const string CounterNotVisible = "CounterNotVisible";
             public const string CounterNotVisibleMarkers = "CounterNotVisibleMarkers";
             public const string ChoiceNotVisible = "ChoiceNotVisible";

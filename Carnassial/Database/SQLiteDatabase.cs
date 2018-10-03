@@ -99,11 +99,11 @@ namespace Carnassial.Database
             },
             (SQLiteTableSchema newSchema) =>
             {
-                string commandText = String.Format("UPDATE {0} SET {1} = @{1} WHERE {2} IN (SELECT {2} FROM {3} WHERE {1} = @{1}AsString)", newSchema.Table, column, Constant.DatabaseColumn.ID, table);
+                string commandText = String.Format("UPDATE {0} SET {1} = @BooleanAsBoolean WHERE {2} IN (SELECT {2} FROM {3} WHERE {1} = @BooleanAsString)", newSchema.Table, SQLiteDatabase.QuoteIdentifier(column), Constant.DatabaseColumn.ID, table);
                 using (SQLiteCommand command = new SQLiteCommand(commandText, this.Connection, transaction))
                 {
-                    SQLiteParameter integerParameter = new SQLiteParameter("@" + column, true);
-                    SQLiteParameter stringParameter = new SQLiteParameter("@" + column + "AsString", Boolean.TrueString);
+                    SQLiteParameter integerParameter = new SQLiteParameter("@BooleanAsBoolean", true);
+                    SQLiteParameter stringParameter = new SQLiteParameter("@BooleanAsString", Boolean.TrueString);
                     command.Parameters.Add(integerParameter);
                     command.Parameters.Add(stringParameter);
 
@@ -125,11 +125,11 @@ namespace Carnassial.Database
             },
             (SQLiteTableSchema newSchema) =>
             {
-                string commandText = String.Format("UPDATE {0} SET {1} = @{1} WHERE {2} IN (SELECT {2} FROM {3} WHERE {1} = @{1}AsString)", newSchema.Table, column, Constant.DatabaseColumn.ID, table);
+                string commandText = String.Format("UPDATE {0} SET {1} = @EnumAsInteger WHERE {2} IN (SELECT {2} FROM {3} WHERE {1} = @EnumAsString)", newSchema.Table, SQLiteDatabase.QuoteIdentifier(column), Constant.DatabaseColumn.ID, table);
                 using (SQLiteCommand command = new SQLiteCommand(commandText, this.Connection, transaction))
                 {
-                    SQLiteParameter integerParameter = new SQLiteParameter("@" + column);
-                    SQLiteParameter stringParameter = new SQLiteParameter("@" + column + "AsString");
+                    SQLiteParameter integerParameter = new SQLiteParameter("@EnumAsInteger");
+                    SQLiteParameter stringParameter = new SQLiteParameter("@EnumAsString");
                     command.Parameters.Add(integerParameter);
                     command.Parameters.Add(stringParameter);
 
@@ -231,8 +231,8 @@ namespace Carnassial.Database
             // copy specified part of the old table's contents to the new table
             // SQLite doesn't allow autoincrement columns to be copied but their values are preserved as rows are inserted in the
             // same order.
-            List<string> sourceColumnNames = sourceColumns.Where(column => column.Autoincrement == false).Select(column => column.Name).ToList();
-            List<string> destinationColumnNames = destinationColumns.Where(column => column.Autoincrement == false).Select(column => column.Name).ToList();
+            List<string> sourceColumnNames = sourceColumns.Where(column => column.Autoincrement == false).Select(column => SQLiteDatabase.QuoteIdentifier(column.Name)).ToList();
+            List<string> destinationColumnNames = destinationColumns.Where(column => column.Autoincrement == false).Select(column => SQLiteDatabase.QuoteIdentifier(column.Name)).ToList();
 
             string copyColumns = "INSERT INTO " + newSchema.Table + " (" + String.Join(", ", destinationColumnNames) + ") SELECT " + String.Join(", ", sourceColumnNames) + " FROM " + existingTable;
             using (SQLiteCommand command = new SQLiteCommand(copyColumns, this.Connection, transaction))
@@ -353,7 +353,7 @@ namespace Carnassial.Database
 
         protected List<object> GetDistinctValuesInColumn(string table, string column)
         {
-            using (SQLiteCommand command = new SQLiteCommand("SELECT DISTINCT " + column + " FROM " + table, this.Connection))
+            using (SQLiteCommand command = new SQLiteCommand("SELECT DISTINCT " + SQLiteDatabase.QuoteIdentifier(column) + " FROM " + table, this.Connection))
             {
                 using (SQLiteDataReader reader = command.ExecuteReader())
                 {
@@ -631,19 +631,30 @@ namespace Carnassial.Database
             }
         }
 
+        public static string QuoteIdentifier(string identifier)
+        {
+            if (String.IsNullOrEmpty(identifier))
+            {
+                throw new ArgumentOutOfRangeException(nameof(identifier));
+            }
+
+            // best practice per https://www.sqlite.org/lang_keywords.html
+            return "\"" + identifier.Replace("\"", "\"\"") + "\"";
+        }
+
         /// <summary>
         /// SQLite doesn't support parameters for default values when defining table schemas so escaping has to be done by its caller.
         /// </summary>
-        public static string QuoteForSql(string value)
+        public static string QuoteStringLiteral(string literal)
         {
             // promote null values to empty strings
-            if (value == null)
+            if (literal == null)
             {
                 return "''";
             }
 
             // for an input of "foo's bar" the output is "'foo''s bar'"
-            return "'" + value.Replace("'", "''") + "'";
+            return "'" + literal.Replace("'", "''") + "'";
         }
 
         protected void RenameColumn(SQLiteTransaction transaction, string table, string currentColumnName, string newColumnName, Action<ColumnDefinition> modifyColumnDefinition)
@@ -776,6 +787,16 @@ namespace Carnassial.Database
                 command.ExecuteNonQuery();
                 Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
             }
+        }
+
+        public static string ToParameterName(string column)
+        {
+            if (String.IsNullOrEmpty(column))
+            {
+                throw new ArgumentOutOfRangeException(nameof(column));
+            }
+
+            return "@" + column.Replace(' ', '_').Replace('"', '_');
         }
 
         public async Task<bool> TryBackupAsync()

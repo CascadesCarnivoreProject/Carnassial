@@ -12,6 +12,7 @@ namespace Carnassial.Data
         private bool disposed;
         private readonly FileTable fileTable;
         private SQLiteCommand insertOrUpdateFiles;
+        private List<string> userColumnNames;
 
         protected FileTransactionSequence(StringBuilder command, SQLiteDatabase database, FileTable fileTable)
             : base(database)
@@ -19,16 +20,21 @@ namespace Carnassial.Data
             this.disposed = false;
             this.fileTable = fileTable;
             this.Transaction = database.Connection.BeginTransaction();
+            this.userColumnNames = new List<string>();
 
             this.insertOrUpdateFiles = new SQLiteCommand(command.ToString(), this.Database.Connection, this.Transaction);
+            
+            // must be kept in sequence with parameter sets in AddFiles()
             foreach (string standardColumn in Constant.Control.StandardControls)
             {
                 this.insertOrUpdateFiles.Parameters.Add(new SQLiteParameter("@" + standardColumn));
             }
-            foreach (string userColumn in fileTable.UserColumnsByName.Keys)
+            foreach (KeyValuePair<string, FileTableColumn> userColumn in fileTable.UserColumnsByName)
             {
-                this.insertOrUpdateFiles.Parameters.Add(new SQLiteParameter("@" + userColumn));
+                this.insertOrUpdateFiles.Parameters.Add(new SQLiteParameter(userColumn.Value.ParameterName));
+                this.userColumnNames.Add(userColumn.Key);
             }
+
             this.insertOrUpdateFiles.Parameters.Add(new SQLiteParameter("@" + Constant.DatabaseColumn.ID));
             this.IsInsert = this.insertOrUpdateFiles.CommandText.StartsWith("INSERT", StringComparison.Ordinal);
         }
@@ -43,10 +49,10 @@ namespace Carnassial.Data
                 columns.Add(standardColumn);
                 parameterNames.Add("@" + standardColumn);
             }
-            foreach (string userColumn in fileTable.UserColumnsByName.Keys)
+            foreach (KeyValuePair<string, FileTableColumn> userColumn in fileTable.UserColumnsByName)
             {
-                columns.Add(userColumn);
-                parameterNames.Add("@" + userColumn);
+                columns.Add(userColumn.Value.QuotedName);
+                parameterNames.Add(userColumn.Value.ParameterName);
             }
 
             StringBuilder insertCommand = new StringBuilder("INSERT INTO " + Constant.DatabaseTable.Files + " (" + String.Join(", ", columns) + ") VALUES (" + String.Join(", ", parameterNames) + ")");
@@ -62,10 +68,11 @@ namespace Carnassial.Data
             {
                 parameters.Add(standardColumn + "=@" + standardColumn);
             }
-            foreach (string userColumn in fileTable.UserColumnsByName.Keys)
+            foreach (KeyValuePair<string, FileTableColumn> userColumn in fileTable.UserColumnsByName)
             {
-                parameters.Add(userColumn + "=@" + userColumn);
+                parameters.Add(userColumn.Value.QuotedName + "=" + userColumn.Value.ParameterName);
             }
+
             updateCommand.Append(String.Join(", ", parameters));
             updateCommand.Append(" WHERE " + Constant.DatabaseColumn.ID + "=@" + Constant.DatabaseColumn.ID);
 
@@ -106,12 +113,13 @@ namespace Carnassial.Data
                 Debug.Assert(this.insertOrUpdateFiles.CommandText.StartsWith("INSERT", StringComparison.Ordinal) || (file.ID != Constant.Database.InvalidID), "File ID not set in update.");
                 Debug.Assert(this.insertOrUpdateFiles.CommandText.StartsWith("UPDATE", StringComparison.Ordinal) || (file.ID == Constant.Database.InvalidID), "File ID set in insert.");
 
+                // must be kept in sequence with parameter adds in .ctor()
                 int parameterIndex = 0;
                 foreach (string standardColumn in Constant.Control.StandardControls)
                 {
                     this.insertOrUpdateFiles.Parameters[parameterIndex++].Value = file.GetDatabaseValue(standardColumn);
                 }
-                foreach (string userColumn in this.fileTable.UserColumnsByName.Keys)
+                foreach (string userColumn in this.userColumnNames)
                 {
                     this.insertOrUpdateFiles.Parameters[parameterIndex++].Value = file.GetDatabaseValue(userColumn);
                 }

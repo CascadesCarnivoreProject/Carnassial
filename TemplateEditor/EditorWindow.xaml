@@ -319,7 +319,7 @@
                                 <DataGridTextColumn MinWidth="40" Header="Data Label" Binding="{Binding Path=DataLabel, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
-                                            <Setter Property="ToolTip" Value="The text describing this field as written in the output file. Will be the same as the Label if its left empty."/>
+                                            <Setter Property="ToolTip" Value="The name of this field in spreadsheets and in Carnassial's data file."/>
                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
@@ -327,7 +327,7 @@
                                 <DataGridTextColumn MinWidth="40" Header="Label" Binding="{Binding Path=Label, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
-                                            <Setter Property="ToolTip" Value="The text describing this field as shown on on a mouse hover over it in Carnassial's data entry panel."/>
+                                            <Setter Property="ToolTip" Value="The text describing this field in Carnassial's data entry panel."/>
                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
@@ -384,7 +384,7 @@
                                 <DataGridTextColumn MinWidth="50" Header="Tooltip" Binding="{Binding Path=Tooltip, Converter={StaticResource TrimmingConverter}}" Width="*" CanUserSort="False">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
-                                            <Setter Property="ToolTip" Value="The help text describing this field as shown in the user interface."/>
+                                            <Setter Property="ToolTip" Value="The help text Carnassial displays when the mouse hovers over this field in its data entry panel."/>
                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
@@ -406,7 +406,7 @@
                                 <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Copyable" Binding="{Binding Path=Copyable}" CanUserSort="False">
                                     <DataGridCheckBoxColumn.CellStyle>
                                         <Style TargetType="{x:Type DataGridCell}">
-                                            <Setter Property="ToolTip" Value="Whether the data value from the previous file will be copied to the current file if the user selects the 'Copy' button in Carnassial."/>
+                                            <Setter Property="ToolTip" Value="Whether this value is updated when an analysis is assigned or values are copied from other files."/>
                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                             <Style.Triggers>
                                                 <Trigger Property="IsEnabled" Value="False">
@@ -434,7 +434,7 @@
                                 <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Visible" Binding="{Binding Path=Visible}" CanUserSort="False">
                                     <DataGridCheckBoxColumn.CellStyle>
                                         <Style TargetType="{x:Type DataGridCell}">
-                                            <Setter Property="ToolTip" Value="Whether this item will be displayed in the user interface."/>
+                                            <Setter Property="ToolTip" Value="Whether this field will be displayed in the Carnassial's data entry panel."/>
                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                             <Style.Triggers>
                                                 <Trigger Property="IsEnabled" Value="False">
@@ -448,7 +448,7 @@
                                 <DataGridTextColumn MinWidth="40" Header="Max&#x0a;Width" Binding="{Binding Path=MaxWidth}" CanUserSort="False">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
-                                            <Setter Property="ToolTip" Value="The width of the data entry field as shown in the user interface."/>
+                                            <Setter Property="ToolTip" Value="The widest the this field can appear in Carnassial's data entry panel."/>
                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>

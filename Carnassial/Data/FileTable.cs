@@ -445,10 +445,7 @@ namespace Carnassial.Data
                     {
                         case ControlType.Counter:
                             string markerColumnName = FileTable.GetMarkerPositionColumnName(control.DataLabel);
-                            FileTableColumn markerColumn = new FileTableColumn(control)
-                            {
-                                DataType = SqlDataType.Blob
-                            };
+                            FileTableColumn markerColumn = new FileTableColumn(markerColumnName, control);
                             this.UserColumnsByName.Add(markerColumnName, markerColumn);
                             ++this.UserCounters;
                             break;

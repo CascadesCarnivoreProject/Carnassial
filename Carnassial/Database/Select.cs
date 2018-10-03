@@ -50,6 +50,7 @@ namespace Carnassial.Database
 
                     // check to see if the search should match an empty string
                     // If so, nulls need also to be matched as NULL and empty are considered interchangeable.
+                    string quotedColumn = SQLiteDatabase.QuoteIdentifier(clause.Column);
                     bool valueIsNullOrEmpty = clause.Value == null;
                     if (clause.Value is string)
                     {
@@ -57,12 +58,12 @@ namespace Carnassial.Database
                     }
                     if (valueIsNullOrEmpty && clause.Operator == Constant.SearchTermOperator.Equal)
                     {
-                        whereClauses.Add("(" + clause.Column + " IS NULL OR " + clause.Column + " = '')");
+                        whereClauses.Add("(" + quotedColumn + " IS NULL OR " + quotedColumn + " = '')");
                     }
                     else
                     {
-                        string parameterName = "@" + clause.Column + clausesEncounteredForThisColumn.ToString(Constant.InvariantCulture);
-                        whereClauses.Add(clause.Column + " " + clause.Operator + " " + parameterName);
+                        string parameterName = clause.ParameterName + clausesEncounteredForThisColumn.ToString(Constant.InvariantCulture);
+                        whereClauses.Add(quotedColumn + " " + clause.Operator + " " + parameterName);
                         whereParameters.Add(new SQLiteParameter(parameterName, clause.Value));
                     }
 

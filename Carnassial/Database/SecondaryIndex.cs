@@ -19,7 +19,7 @@ namespace Carnassial.Database
 
         public void Create(SQLiteConnection connection, SQLiteTransaction transaction)
         {
-            string createIndex = String.Format("CREATE INDEX '{0}' ON '{1}' ('{2}')", this.Name, this.Table, this.Column);
+            string createIndex = String.Format("CREATE INDEX {0} ON {1} ({2})", SQLiteDatabase.QuoteIdentifier(this.Name), this.Table, SQLiteDatabase.QuoteIdentifier(this.Column));
             using (SQLiteCommand command = new SQLiteCommand(createIndex, connection, transaction))
             {
                 command.ExecuteNonQuery();
@@ -34,7 +34,7 @@ namespace Carnassial.Database
 
         public void Drop(SQLiteConnection connection, SQLiteTransaction transaction)
         {
-            string dropIndex = String.Format("DROP INDEX '{0}'", this.Name);
+            string dropIndex = String.Format("DROP INDEX {0}", SQLiteDatabase.QuoteIdentifier(this.Name));
             using (SQLiteCommand command = new SQLiteCommand(dropIndex, connection, transaction))
             {
                 command.ExecuteNonQuery();

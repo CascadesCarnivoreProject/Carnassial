@@ -25,7 +25,7 @@ namespace Carnassial.Data
             {
                 if (control.IsUserControl())
                 {
-                    userControlDataLabels.Add(control.DataLabel);
+                    userControlDataLabels.Add(SQLiteDatabase.QuoteIdentifier(control.DataLabel));
                     string defaultValue;
                     switch (control.Type)
                     {
@@ -39,7 +39,7 @@ namespace Carnassial.Data
                             break;
                         case ControlType.FixedChoice:
                         case ControlType.Note:
-                            defaultValue = SQLiteDatabase.QuoteForSql(control.DefaultValue);
+                            defaultValue = SQLiteDatabase.QuoteStringLiteral(control.DefaultValue);
                             break;
                         case ControlType.DateTime:
                         case ControlType.UtcOffset:

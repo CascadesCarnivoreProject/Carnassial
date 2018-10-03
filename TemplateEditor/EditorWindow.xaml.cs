@@ -15,7 +15,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -252,18 +251,6 @@ namespace Carnassial.Editor
             switch ((string)this.ControlDataGrid.CurrentColumn.Header)
             {
                 // EditorConstant.Control.ControlOrder is not editable
-                case EditorConstant.ColumnHeader.DataLabel:
-                    if (String.IsNullOrEmpty(e.Text) == false)
-                    {
-                        // one key is provided by the event at a time during typing, multiple keys can be pasted in a single event
-                        // it's not known where in the data label the input occurs, so full validation is postponed to ValidateDataLabel()
-                        if (this.IsValidDataLabelCharacters(e.Text) == false)
-                        {
-                            this.ShowDataLabelRequirementsDialog();
-                            e.Handled = true;
-                        }
-                    }
-                    break;
                 case EditorConstant.ColumnHeader.DefaultValue:
                     if (this.ControlDataGrid.SelectedIndex < 0)
                     {
@@ -320,7 +307,7 @@ namespace Carnassial.Editor
                     e.Handled = !Utilities.IsDigits(e.Text);
                     break;
                 default:
-                    // no restrictions on analysis label, copyable, label, tooltip, or visible columns
+                    // no restrictions on analysis label, copyable, data label, label, tooltip, or visible columns
                     break;
             }
         }
@@ -551,41 +538,6 @@ namespace Carnassial.Editor
             }
         }
 
-        private bool IsValidDataLabel(string dataLabel)
-        {
-            if ((dataLabel == null) || (dataLabel.Length < 1))
-            {
-                return false;
-            }
-            if (Char.IsLetter(dataLabel[0]) == false)
-            {
-                return false;
-            }
-
-            if (dataLabel.Length > 1)
-            {
-                return this.IsValidDataLabelCharacters(dataLabel.Substring(1));
-            }
-            return true;
-        }
-
-        private bool IsValidDataLabelCharacters(string dataLabelFragment)
-        {
-            if (String.IsNullOrEmpty(dataLabelFragment))
-            {
-                return false;
-            }
-
-            foreach (char character in dataLabelFragment)
-            {
-                if ((Char.IsLetterOrDigit(character) == false) && (character != '_'))
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-
         private void MenuFileCloseTemplate_Click(object sender, RoutedEventArgs e)
         {
             // apply any pending edits, including those DataGrid may not fire cell or row edit ending events for
@@ -745,16 +697,6 @@ namespace Carnassial.Editor
             this.DataEntryControls.CreateControls(this.templateDatabase, null, (string dataLabel) => { return this.templateDatabase.Controls[dataLabel].GetWellKnownValues(); });
         }
 
-        private void ShowDataLabelRequirementsDialog()
-        {
-            MessageBox messageBox = new MessageBox("Data Labels can only contain letters, numbers and '_'.", this);
-            messageBox.Message.StatusImage = MessageBoxImage.Warning;
-            messageBox.Message.Problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
-            messageBox.Message.Result = "We will automatically ignore other characters, including spaces";
-            messageBox.Message.Hint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
-            messageBox.ShowDialog();
-        }
-
         private void SyncControlToDatabaseAndPreviews(ControlRow control)
         {
             this.controlDataGridBeingUpdatedByCode = true;
@@ -887,23 +829,22 @@ namespace Carnassial.Editor
 
         private void ValidateDataLabel(DataGridCellEditEndingEventArgs e)
         {
-            // Check to see if the data label entered is a reserved word or if its a non-unique label
             TextBox textBox = e.EditingElement as TextBox;
             string dataLabel = textBox.Text;
 
-            // Check to see if the data label is empty. If it is, generate a unique data label and warn the user
-            if (this.IsValidDataLabel(dataLabel) == false)
+            // if the data label is empty replace it and notify the user
+            if (String.IsNullOrWhiteSpace(dataLabel))
             {
-                MessageBox messageBox = new MessageBox("Data label isn't valid.", this);
+                MessageBox messageBox = new MessageBox("Data label is empty.", this);
                 messageBox.Message.StatusImage = MessageBoxImage.Warning;
-                messageBox.Message.Problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.  They cannot be empty.";
-                messageBox.Message.Result = "We will automatically create a uniquely named data label for you.";
-                messageBox.Message.Hint = "You can create your own name for this data label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
+                messageBox.Message.Problem = "Data label is empty.";
+                messageBox.Message.Result = "We will automatically create a uniquely data label for you.";
+                messageBox.Message.Hint = "You can replace this name with your own data label.";
                 messageBox.ShowDialog();
                 textBox.Text = this.templateDatabase.GetNextUniqueDataLabel("DataLabel");
             }
 
-            // Check to see if the data label is unique. If not, generate a unique data label and warn the user
+            // if data label is not unique, derive a unique one and notify the user
             for (int row = 0; row < this.templateDatabase.Controls.RowCount; row++)
             {
                 ControlRow control = this.templateDatabase.Controls[row];
@@ -915,62 +856,12 @@ namespace Carnassial.Editor
                     }
 
                     MessageBox messageBox = new MessageBox("Data Labels must be unique.", this);
-                    messageBox.Message.StatusImage = MessageBoxImage.Warning;
+                    messageBox.Message.StatusImage = MessageBoxImage.Information;
                     messageBox.Message.Problem = "'" + textBox.Text + "' is not a valid Data Label, as you have already used it in another row.";
                     messageBox.Message.Result = "We will automatically create a unique Data Label for you by adding a number to its end.";
                     messageBox.Message.Hint = "You can create your own unique name for this Data Label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
                     messageBox.ShowDialog();
                     textBox.Text = this.templateDatabase.GetNextUniqueDataLabel("DataLabel");
-                    break;
-                }
-            }
-
-            // Check to see if the label (if its not empty, which it shouldn't be) has any illegal characters.
-            // Much of this is redundant characters are also checked as they are typed.  However, the first check has not been performed.
-            if (dataLabel.Length > 0)
-            {
-                Regex alphanumdash = new Regex("^[a-zA-Z0-9_]*$");
-                Regex alpha = new Regex("^[a-zA-Z]*$");
-
-                string firstCharacter = dataLabel[0].ToString(Constant.InvariantCulture);
-                if (!(alpha.IsMatch(firstCharacter) && alphanumdash.IsMatch(dataLabel)))
-                {
-                    string replacementDataLabel = dataLabel;
-
-                    if (!alpha.IsMatch(firstCharacter))
-                    {
-                        replacementDataLabel = "X" + replacementDataLabel.Substring(1);
-                    }
-                    replacementDataLabel = Regex.Replace(replacementDataLabel, @"[^A-Za-z0-9_]+", "X");
-
-                    MessageBox messageBox = new MessageBox("'" + textBox.Text + "' is not a valid data label.", this);
-                    messageBox.Message.StatusImage = MessageBoxImage.Warning;
-                    messageBox.Message.Problem = "Data labels must begin with a letter, followed only by letters, numbers, and '_'.";
-                    messageBox.Message.Result = "We replaced all dissallowed characters with an 'X': " + replacementDataLabel;
-                    messageBox.Message.Hint = "Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
-                    messageBox.ShowDialog();
-
-                    textBox.Text = replacementDataLabel;
-                }
-            }
-
-            // Check to see if its a reserved word
-            foreach (string sqlKeyword in EditorConstant.ReservedSqlKeywords)
-            {
-                if (String.Equals(sqlKeyword, dataLabel, StringComparison.OrdinalIgnoreCase))
-                {
-                    MessageBox messageBox = new MessageBox("'" + textBox.Text + "' is not a valid data label.", this);
-                    messageBox.Message.StatusImage = MessageBoxImage.Warning;
-                    messageBox.Message.Problem = "Data labels cannot match the reserved words.";
-                    messageBox.Message.Result = "We will add an '_' suffix to this Data Label to make it differ from the reserved word";
-                    messageBox.Message.Hint = "Avoid the reserved words listed below. Start your label with a letter. Then use any combination of letters, numbers, and '_'." + Environment.NewLine;
-                    foreach (string keyword in EditorConstant.ReservedSqlKeywords)
-                    {
-                        messageBox.Message.Hint += keyword + " ";
-                    }
-                    messageBox.ShowDialog();
-
-                    textBox.Text += "_";
                     break;
                 }
             }

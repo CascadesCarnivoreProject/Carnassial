@@ -18,11 +18,11 @@ namespace Carnassial.Data
         {
             this.dataLabel = dataLabel;
 
-            string fileUpdateText = String.Format("UPDATE {0} SET {1}=@{1} WHERE {2}=@{2}", Constant.DatabaseTable.Files, dataLabel, Constant.DatabaseColumn.ID);
+            string fileUpdateText = String.Format("UPDATE {0} SET {1}=@Value WHERE {2}=@{2}", Constant.DatabaseTable.Files, SQLiteDatabase.QuoteIdentifier(dataLabel), Constant.DatabaseColumn.ID);
             this.Transaction = database.Connection.BeginTransaction();
             this.updateFiles = new SQLiteCommand(fileUpdateText, this.Database.Connection, this.Transaction);
             this.updateFiles.Parameters.Add(new SQLiteParameter("@" + Constant.DatabaseColumn.ID));
-            this.updateFiles.Parameters.Add(new SQLiteParameter("@" + dataLabel));
+            this.updateFiles.Parameters.Add(new SQLiteParameter("@Value"));
         }
 
         public override int AddToSequence(IList<FileLoad> files, int offset, int length)
