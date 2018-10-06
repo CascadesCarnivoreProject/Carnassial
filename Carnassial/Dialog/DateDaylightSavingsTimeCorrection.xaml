@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
-        Title="Date/time - Correct for changes to or from daylight savings time." 
+        Title="{StaticResource DateDaylightSavingsTime.Title}" 
 	    x:Name="DaylightSavingsTimeCorrection"
         Loaded="Window_Loaded"
 	    MinHeight="826" MinWidth="768" Height="856" Width="768" ShowInTaskbar="False" Style="{StaticResource ApplicationWindow}">
@@ -50,11 +50,11 @@
             </Grid.RowDefinitions>
             <control:StockMessageControl x:Name="Message"
                             StatusImage="Question"
-                            Title="Correct for Standard and Daylight Savings Time changes"
-                            Problem="The camera did not account for daylight savings time changes so the times of some files are off by an hour."
-                            Solution="1. The file below must be where the time change occurred.  If it isn't, click 'Cancel', navigate to that file in the main window, and restart this dialog.&#10;2. If needed, choose to subtract an hour or apply the change to previous files.&#10;3. Press 'Okay' to apply the changes."
-                            Result="An hour will be added or subtracted to the time of all selected files coming after this file (forwards) or before this file (backwards).  The changes can be undone by applying an equal and opposite correction."
-                            Hint="It may be helpful to choose to sort files by date under the Options menu before starting this dialog."
+                            Title="{StaticResource DateDaylightSavingsTime.Message.Title}"
+                            Problem="{StaticResource DateDaylightSavingsTime.Message.Problem}"
+                            Solution="{StaticResource DateDaylightSavingsTime.Message.Solution}"
+                            Result="{StaticResource DateDaylightSavingsTime.Message.Hint}"
+                            Hint="{StaticResource DateDaylightSavingsTime.Message.Title}"
                             HideExplanationCheckboxIsVisible="True" Grid.Row="0" />
             <Rectangle Style="{StaticResource DialogHorizontalRule}" Grid.Row="1" />
             <Grid Grid.Row="2">
@@ -68,7 +68,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <StackPanel Grid.Column="0" Grid.Row="0" Orientation="Horizontal">
-                    <Label Content="File:" HorizontalContentAlignment="Left" FontWeight="Bold" VerticalAlignment="Top" />
+                    <Label Content="{StaticResource DateTimeAdjustment.File}" HorizontalContentAlignment="Left" FontWeight="Bold" VerticalAlignment="Top" />
                     <Label Content="[ --- file name --- ]" HorizontalContentAlignment="Left" FontWeight="Normal" Name="FileName" VerticalAlignment="Top" />
                 </StackPanel>
                 <Grid Grid.Column="1" Grid.Row="1">
@@ -80,28 +80,28 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Label Content="Original date/time:" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Row="0" Grid.Column="0" />
+                    <Label Content="{StaticResource DateDaylightSavingsTime.OriginalDateTime}" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Row="0" Grid.Column="0" />
                     <Label Name="OriginalDate" Content="yyyy-MMM-dd HH:mm.ss" FontWeight="Normal" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1" />
-                    <Label Content="New date/time:" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Row="1" Grid.Column="0" />
+                    <Label Content="{StaticResource DateDaylightSavingsTime.NewDateTime}" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Row="1" Grid.Column="0" />
                     <Label Name="NewDate" Content="yyyy-MMM-dd HH:mm.ss" FontWeight="Normal" HorizontalAlignment="Left" Grid.Row="1" Grid.Column="1" />
                 </Grid>
-                <GroupBox Header="Time change" FontWeight="Bold" Grid.Column="2" Grid.Row="0" Margin="10,0,2,0">
+                <GroupBox Header="{StaticResource DateDaylightSavingsTime.TimeChange}" FontWeight="Bold" Grid.Column="2" Grid.Row="0" Margin="10,0,2,0">
                     <StackPanel>
-                        <RadioButton Name="AddHour" Content="_add an hour" GroupName="Hour" IsChecked="True" Margin="2,4,2,1" FontWeight="Normal" />
-                        <RadioButton Name="SubtractHour" Content="_subtract an hour" GroupName="Hour" Margin="2,2,2,0" FontWeight="Normal" />
+                        <RadioButton Name="AddHour" Content="{StaticResource DateDaylightSavingsTime.TimeChange.AddHour}" GroupName="Hour" IsChecked="True" Margin="2,4,2,1" FontWeight="Normal" />
+                        <RadioButton Name="SubtractHour" Content="{StaticResource DateDaylightSavingsTime.TimeChange.SubtractHour}" GroupName="Hour" Margin="2,2,2,0" FontWeight="Normal" />
                     </StackPanel>
                 </GroupBox>
-                <GroupBox Header="Apply change" FontWeight="Bold" Grid.Column="3" Grid.Row="0" Margin="2,0,5,0">
+                <GroupBox Header="{StaticResource DateDaylightSavingsTime.ApplyChange}" FontWeight="Bold" Grid.Column="3" Grid.Row="0" Margin="2,0,5,0">
                     <StackPanel>
-                        <RadioButton Name="PropagateForward" Content="_forward" GroupName="Propagate" IsChecked="True" Margin="2,4,2,1" FontWeight="Normal" />
-                        <RadioButton Name="PropagateBackwards" Content="_backwards" GroupName="Propagate" Margin="2,2,2,0" FontWeight="Normal" />
+                        <RadioButton Name="PropagateForward" Content="{StaticResource DateDaylightSavingsTime.ApplyChange.Forwards}" GroupName="Propagate" IsChecked="True" Margin="2,4,2,1" FontWeight="Normal" />
+                        <RadioButton Name="PropagateBackwards" Content="{StaticResource DateDaylightSavingsTime.ApplyChange.Backwards}" GroupName="Propagate" Margin="2,2,2,0" FontWeight="Normal" />
                     </StackPanel>
                 </GroupBox>
             </Grid>
             <control:FileDisplay x:Name="FileDisplay" HorizontalAlignment="Center" Grid.Row="3" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="4">
-                <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">_Okay</Button>
-                <Button Name="CancelButton" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
+                <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" Click="OkButton_Click" Content="{StaticResource Dialog.OK}" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" />
+                <Button Name="CancelButton" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Click="CancelButton_Click" Content="{StaticResource Dialog.Cancel}" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" />
             </StackPanel>
         </Grid>
     </Grid>

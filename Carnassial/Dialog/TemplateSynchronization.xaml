@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
-        Title="Sorry, this template isn't compatible with this data file."
+        Title="{StaticResource TemplateSynchronization.Title}"
         Loaded="Window_Loaded"
 		Height="500" Width="700"
         ShowInTaskbar="False" Style="{StaticResource ApplicationWindow}">
@@ -49,21 +49,21 @@
             </Grid.RowDefinitions>
             <control:StockMessageControl x:Name="Message"
                             StatusImage="Warning"
-                            Title="Template and data file are incompatible."
-                            Problem="The data file can't be updated to the data field definitions in the current template.  When a template is edited Carnassial automatically updates the data file to match. However, in this case changes are present which aren't supported our would result in data loss."
-                            Solution="Edit the template, data file, or both to resolve the issues listed below."
-                            Hint="You can still open the image set using the data file's copy of the original template."
+                            Title="{StaticResource TemplateSynchronization.Message.Title}"
+                            Problem="{StaticResource TemplateSynchronization.Message.Problem}"
+                            Solution="{StaticResource TemplateSynchronization.Message.Solution}"
+                            Hint="{StaticResource TemplateSynchronization.Message.Hint}"
                             Grid.Row="0" />
             <Rectangle Style="{StaticResource DialogHorizontalRule}" Grid.Row="1" />
             <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Grid.Row="2">
                 <TextBlock Name="TextBlockDetails" HorizontalAlignment="Left" Margin="10,10,10,0" VerticalAlignment="Top" TextWrapping="Wrap">
-				<Run FontWeight="Bold" Text="Details:" />
-                <LineBreak />
+    				<Run FontWeight="Bold" Text="{StaticResource TemplateSynchronization.Details}" />
+                    <LineBreak />
                 </TextBlock>
             </ScrollViewer>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="3">
-                <Button Name="UseOldTemplateButton" IsDefault="True" Padding="10" Margin="10,10,10,10" Click="UseOldTemplate_Click">_Open image set using the original template</Button>
-                <Button Name="ExitProgramButton" IsCancel="True" Padding="10" Margin="10,10,10,10" Click="ExitProgram_Click" IsEnabled="True">E_xit Carnassial</Button>
+                <Button IsDefault="True" Click="UseEmbeddedTemplate_Click" Content="{StaticResource TemplateSynchronization.UseOriginalTemplate}" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" />
+                <Button IsCancel="True" Click="ExitProgram_Click" Content="{StaticResource TemplateSynchronization.ExitProgram}" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" />
             </StackPanel>
         </Grid>
     </Grid>

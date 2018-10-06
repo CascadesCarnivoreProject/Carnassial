@@ -32,7 +32,7 @@ namespace Carnassial.Dialog
             this.FileIndexAsText.SelectionStart = 0;
             this.FileIndexAsText.SelectionLength = this.FileIndexAsText.Text.Length;
             this.FileIndexAsText.TextChanged += this.FileIndexAsText_TextChanged;
-            this.FileNumberRange.Text = String.Format("File number (1 - {0}):", selectedFiles);
+            this.FileNumberRange.Text = App.FormatResource(Constant.ResourceKey.GoToFileNumberRange, selectedFiles);
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)

@@ -18,6 +18,7 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Navigation;
@@ -68,8 +69,14 @@ namespace Carnassial.Editor
             // populate the most recent databases list
             this.MenuFileRecentTemplates_Refresh();
 
-            this.TutorialLink.NavigateUri = CarnassialConfigurationSettings.GetTutorialBrowserAddress();
-            this.TutorialLink.ToolTip = this.TutorialLink.NavigateUri.AbsoluteUri;
+            if (this.InstructionsScrollViewer.Tag == null)
+            {
+                Hyperlink tutorialLink = (Hyperlink)LogicalTreeHelper.FindLogicalNode(this.InstructionsScrollViewer.Document, Constant.ResourceName.InstructionsTutorialLink);
+                tutorialLink.NavigateUri = CarnassialConfigurationSettings.GetTutorialBrowserAddress();
+                tutorialLink.ToolTip = tutorialLink.NavigateUri.AbsoluteUri;
+
+                this.InstructionsScrollViewer.Tag = true;
+            }
         }
 
         /// <summary>

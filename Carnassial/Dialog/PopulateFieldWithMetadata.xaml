@@ -3,7 +3,7 @@
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Populate a data field with metadata." 
+        Title="{StaticResource PopulateFieldWithMetadata.Title}" 
         Loaded="Window_Loaded"
 		MinHeight="600" MinWidth="768" Height="856" Width="840"
         ShowInTaskbar="False" Style="{StaticResource ApplicationWindow}">
@@ -69,11 +69,11 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition MinWidth="80" Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <Label Content="Example file:" Height="28" Margin="5,0,0,0" HorizontalContentAlignment="Left" FontWeight="Bold" Grid.Column="0"/>
+                    <Label Content="{StaticResource PopulateFieldWithMetadata.ExapleFile}" Height="28" Margin="5,0,0,0" HorizontalContentAlignment="Left" Grid.Column="0"/>
                     <Label Content="--" Height="28" Margin="0,0,0,0" HorizontalContentAlignment="Left" FontWeight="Normal" Name="FileName" Grid.Column="1"/>
-                    <Label Content="Selected data field :" Height="28" Margin="5,0,0,0" HorizontalContentAlignment="Left" FontWeight="Bold" Grid.Column="2"/>
+                    <Label Content="{StaticResource PopulateFieldWithMetadata.SelectedDataField}" Height="28" Margin="5,0,0,0" HorizontalContentAlignment="Left" FontWeight="Bold" Grid.Column="2"/>
                     <Label Content="--" Height="28" Margin="0,0,0,0" HorizontalContentAlignment="Left" FontWeight="Normal" Name="DataField" Grid.Column="3"/>
-                    <Label Content="Selected metadata field :" Height="28" Margin="5,0,0,0" HorizontalContentAlignment="Left" FontWeight="Bold" Grid.Column="4"/>
+                    <Label Content="{StaticResource PopulateFieldWithMetadata.SelectedMetadataField}" Height="28" Margin="5,0,0,0" HorizontalContentAlignment="Left" FontWeight="Bold" Grid.Column="4"/>
                     <Label Content="--" Height="28" Margin="0,0,0,0" HorizontalContentAlignment="Left" FontWeight="Normal" Name="Metadata" Grid.Column="5"/>
                 </Grid>
             </StackPanel>
@@ -88,16 +88,16 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
-                <TextBlock FontWeight="Bold" Text="Data field" Grid.Column="0" Grid.Row="0" HorizontalAlignment="Center" Margin="10,10,40,0" />
-                <TextBlock FontWeight="Bold" Text="Metadata available in the example file" Grid.Column="1" Grid.Row="0" HorizontalAlignment="Center" Margin="0,10,0,0" Grid.ColumnSpan="3"/>
+                <TextBlock Text="{StaticResource PopulateFieldWithMetadata.DataFields}" Grid.Column="0" Grid.Row="0" HorizontalAlignment="Center" Margin="10,10,40,0" />
+                <TextBlock Text="{StaticResource PopulateFieldWithMetadata.MetadataFields}" Grid.Column="1" Grid.Row="0" HorizontalAlignment="Center" Margin="0,10,0,0" Grid.ColumnSpan="3"/>
                 <DataGrid Name="DataGrid" AutoGenerateColumns="False" ColumnWidth="*" SelectedCellsChanged="SelectionGrid_SelectedCellsChanged" SelectionMode="Single" SelectionUnit="FullRow" Margin="0,0,10,0" Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="3">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Binding="{Binding DirectoryName}" Header="metadata directory" Width="Auto" />
-                        <DataGridTextColumn Binding="{Binding Name}" Header="field" Width="Auto" />
-                        <DataGridTextColumn Binding="{Binding Description}" Header="value" Width="*" />
+                        <DataGridTextColumn Binding="{Binding DirectoryName}" Header="{StaticResource PopulateFieldWithMetadata.MetadataFields.Path}" Width="Auto" />
+                        <DataGridTextColumn Binding="{Binding Name}" Header="{StaticResource PopulateFieldWithMetadata.MetadataFields.Field}" Width="Auto" />
+                        <DataGridTextColumn Binding="{Binding Description}" Header="{StaticResource PopulateFieldWithMetadata.MetadataFields.Value}" Width="*" />
                     </DataGrid.Columns>
                 </DataGrid>
-                <ListBox Name="DataFields" Margin="10,0,9.983,0" Grid.Column="0" Grid.Row="1" SelectionChanged="NoteFieldsListBox_SelectionChanged"/>
+                <ListBox Name="DataFields" Margin="10,0,10,0" Grid.Column="0" Grid.Row="1" SelectionChanged="NoteFieldsListBox_SelectionChanged"/>
             </Grid>
             <Grid Name="FeedbackPanel" Visibility="Collapsed" Grid.Row="2">
                 <Grid.ColumnDefinitions>
@@ -110,16 +110,25 @@
                 <TextBlock Name="PopulatingMessage" FontWeight="Bold" Text="--" Grid.Column="0" Grid.Row="0" HorizontalAlignment="Center" Margin="10,10,10,0" />
                 <DataGrid Name="FeedbackGrid" Margin="0,0,10,0" AutoGenerateColumns="False" ColumnWidth="*" SelectionUnit="FullRow" SelectionMode="Single" Grid.Column="0" Grid.Row="1">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Binding="{Binding FileName}" Header="file" Width="Auto" />
-                        <DataGridTextColumn Binding="{Binding Message}" Header="result" Width="*" />
+                        <DataGridTextColumn Binding="{Binding FileName}" Header="{StaticResource PopulateFieldWithMetadata.Feedback.File}" Width="Auto" />
+                        <DataGridTextColumn Binding="{Binding Message}" Header="{StaticResource PopulateFieldWithMetadata.Feedback.Result}" Width="*" />
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="3">
-                <CheckBox x:Name="ClearIfNoMetadata"  VerticalAlignment="Center" HorizontalAlignment="Left" Padding="5,0,166,0" Margin="10,0,0,0" Checked="ClearIfNoMetadata_Checked" Content="Clear the data field if the file cannot be read or that file is missing the specified metadata"/>
-                <Button x:Name="PopulateButton" IsDefault="True" Padding="10" Margin="10,10,10,10"  IsEnabled="False" Click="PopulateButton_Click" Content="_Populate"/>
-                <Button x:Name="CancelDone" IsCancel="True" Padding="10" Margin="10,10,10,10" Click="CancelDoneButton_Click" Content="_Cancel"/>
-            </StackPanel>
+            <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <CheckBox Name="ClearIfNoMetadata" Checked="ClearIfNoMetadata_Checked" Content="{StaticResource PopulateFieldWithMetadata.ClearIfNoMetadata}" Margin="10,0,0,0" VerticalAlignment="Center" Grid.Column="0" Grid.Row="0" />
+                <Button Name="PopulateButton" IsDefault="True" Click="PopulateButton_Click" Content="{StaticResource PopulateFieldWithMetadata.Populate}" Margin="{StaticResource Dialog.ButtonMargin}" IsEnabled="False" Padding="{StaticResource Dialog.ButtonPadding}" Grid.Column="2" Grid.Row="0" />
+                <Button Name="CancelDone" IsCancel="True" Click="CancelDoneButton_Click" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" Content="{StaticResource Dialog.Cancel}" Grid.Column="3" Grid.Row="0" />
+            </Grid>
         </Grid>
     </Grid>
 </local:WindowWithSystemMenu>

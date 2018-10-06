@@ -1,8 +1,6 @@
-﻿using System.Windows;
-
-namespace Carnassial.Editor
+﻿namespace Carnassial.Editor
 {
-    public partial class App : Application
+    public partial class App : LocalizedApplication
     {
     }
 }

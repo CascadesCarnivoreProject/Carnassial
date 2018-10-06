@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
-        Title="(Re)classify files."
+        Title="{StaticResource ReclassifyFiles.Title}"
         Loaded="Window_Loaded" PreviewKeyDown="Window_PreviewKeyDown"
         MinHeight="500" MinWidth="700" Height="856" Width="768"
         ShowInTaskbar="False" Style="{StaticResource ApplicationWindow}">
@@ -50,13 +50,9 @@
             </Grid.RowDefinitions>
             <control:StockMessageControl x:Name="Message"
                             StatusImage="Question"
-                            Title="Identify videos and types of images."
-                            What="You can perform classification of new files as well as tune how classification is done and reclassify files."
-                            Solution="To perform classification of color images, greyscale images, and videos just press the Apply button.  To tune classification of images as dark, go to an image that you feel is a typical 'borderline' dark case.  Dark classification is performed automatically and the result displayed next to the file name along with the percentage of pixels which are dark.
-&#10;1. Drag the sliders to adjust how dim dark pixels need to be and how many pixels in a file need to be dark until satisfied.
-&#10;2. Navigate to other borderline files using the arrow keys or slider and check the results. Refine the thresholds as needed.
-&#10;3. Once good settings are found, apply them. Review and repeat if needed.
-&#10;At any time, you can reset thresholds to their initial values or to the Carnassial defaults."
+                            Title="{StaticResource ReclassifyFiles.Messages.Title}"
+                            What="{StaticResource ReclassifyFiles.Messages.What}"
+                            Solution="{StaticResource ReclassifyFiles.Messages.Solution}"
                             HideExplanationCheckboxIsVisible="True" Grid.Row="0" Margin="-4,4,4,3" />
             <Rectangle Style="{StaticResource DialogHorizontalRule}" Grid.Row="1" />
             <Grid Width="Auto" Grid.Row="2">
@@ -66,17 +62,17 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" Grid.Column="0" HorizontalAlignment="Left" >
-                    <Label Content="File:" HorizontalContentAlignment="Left" FontWeight="Bold" />
+                    <Label Content="{StaticResource ReclassifyFiles.File}" HorizontalContentAlignment="Left" FontWeight="Bold" />
                     <Label Name="FileName" Content="[ --- file name --- ]" HorizontalContentAlignment="Left" FontWeight="Normal" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Grid.Column="1" HorizontalAlignment="Left" Margin="5,0,5,0">
-                    <Label Content="Classification:" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center" Padding="0,0,1,0" />
+                    <Label Content="{StaticResource ReclassifyFiles.Classification}" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center" Padding="0,0,1,0" />
                     <Label Name="OriginalClassification" Content="Dark" HorizontalContentAlignment="Right" VerticalAlignment="Center" Padding="2,0,1,0" />
                     <Label Content="&#8594;" FontWeight="Bold" VerticalAlignment="Center" Padding="1,0,1,0" />
                     <Label Name="NewClassification" Content="Dark" VerticalAlignment="Center" Padding="1,0,5,0" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="5,0,0,0" Grid.Column="2">
-                    <TextBlock Name="ClassificationInformation" Text="Normalized brightness is 100.0%." VerticalAlignment="Center" />
+                    <TextBlock Name="ClassificationInformation" Text="{StaticResource ReclassifyFiles.Classification.Information.NormalizedBrightness}" VerticalAlignment="Center" />
                 </StackPanel>
             </Grid>
             <Grid Grid.Row="3">
@@ -103,16 +99,16 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Slider Name="DarkLuminosityThresholdPercent" Minimum="0" Maximum="100" SmallChange="0.1" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="1" Value="60" HorizontalAlignment="Center" Orientation="Vertical" Grid.Column="0" />
-                        <Label Content="maximum brightness of a dark image" HorizontalContentAlignment="Center" Margin="5,5,5,5" Grid.Column="1">
+                        <Label Content="{StaticResource ReclassifyFiles.MaximumBrighness}" HorizontalContentAlignment="Center" Margin="5,5,5,5" Grid.Column="1">
                             <Label.LayoutTransform>
                                 <RotateTransform Angle="-90" />
                             </Label.LayoutTransform>
                         </Label>
                     </Grid>
                     <Menu Background="{x:Static SystemColors.WindowBrush}" Grid.Row="1" Margin="0,5,0,0">
-                        <MenuItem Header="_Reset" Name="MenuReset" Background="{x:Static SystemColors.ControlBrush}" BorderBrush="{x:Static SystemColors.ControlDarkDarkBrush}" BorderThickness="1" Padding="5,5,5,5">
-                            <MenuItem Header="to your previous settings" ToolTip="Reset thresholds to those configured when this dialog was launched." Click="MenuResetCurrent_Click"/>
-                            <MenuItem Header="to Carnassial defaults"  ToolTip="Reset thresholds to the default values Carnassial ships with." Click="MenuResetDefault_Click"/>
+                        <MenuItem Header="{StaticResource ReclassifyFiles.Reset}" Name="MenuReset" Background="{x:Static SystemColors.ControlBrush}" BorderBrush="{x:Static SystemColors.ControlDarkDarkBrush}" BorderThickness="1" Padding="5,5,5,5">
+                            <MenuItem Click="MenuResetCurrent_Click" Header="{StaticResource ReclassifyFiles.Reset.PreviousSettings}" ToolTip="{StaticResource ReclassifyFiles.Reset.PreviousSettings.ToolTip}" />
+                            <MenuItem Click="MenuResetDefault_Click" Header="{StaticResource ReclassifyFiles.Reset.Defaults}" ToolTip="{StaticResource ReclassifyFiles.Reset.Defaults.ToolTip}" />
                         </MenuItem>
                     </Menu>
                 </Grid>
@@ -123,8 +119,8 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <Button Name="ApplyDoneButton" Grid.Column="1" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" Padding="10" Margin="10,10,10,10" Click="ApplyDoneButton_Click">_Apply to selected files</Button>
-                <Button Name="CancelStopButton" Grid.Column="2" IsCancel="True" VerticalAlignment="Bottom" Padding="10" Margin="10,10,10,10" Click="CancelStopButton_Click">_Cancel</Button>
+                <Button Name="ApplyDoneButton" Grid.Column="1" IsDefault="True" AutomationProperties.AutomationId="OkButton" Click="ApplyDoneButton_Click" Content="_Apply to selected files" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" />
+                <Button Name="CancelStopButton" IsCancel="True" Click="CancelStopButton_Click" Content="{StaticResource Dialog.Cancel}" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" Grid.Column="2" />
             </Grid>
         </Grid>
     </Grid>

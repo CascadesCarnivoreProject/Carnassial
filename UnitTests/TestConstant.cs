@@ -13,7 +13,7 @@ namespace Carnassial.UnitTests
         public const string DateTimeWithOffsetFormat = "yyyy-MM-ddTHH:mm:ss.fffK";
         public const byte[] DefaultMarkerPositions = null;
         public const string EditorTemplateDatabaseFieldName = "templateDatabase";
-        public const string FileCountsAutomationID = "FileCountsByQuality";
+        public const string FileCountsAutomationID = "FileCountsByClassification";
         public const string InitializeDataGridMethodName = "InitializeDataGrid";
         public const string MessageBoxAutomationID = "CarnassialMessageBox";
         public const string OkButtonAutomationID = "OkButton";

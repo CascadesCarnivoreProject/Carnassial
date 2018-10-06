@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
-        Title="Edit notes for this image set."
+        Title="{StaticResource EditLog.Title}"
         Loaded="Window_Loaded"
 		Height="600" Width="768" ShowInTaskbar="False" Style="{StaticResource ApplicationWindow}">
     <Window.CommandBindings>
@@ -47,13 +47,14 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <control:StockMessageControl x:Name="Message" StatusImage="Question" 
-                            What="Record any notes about this image set that you may want to refer to in the future. Your notes will be saved and viewable at any time through this software, but it will not be saved in the spreadsheet csv file. Typical uses are to log activities, list to-do items, leave messages for others, etc."
-                            Title="Edit notes for this image set." Grid.Row="0" />
+                                         Title="{StaticResource EditLog.Message.Title}" 
+                                         What="{StaticResource EditLog.Message.What}"
+                                         Grid.Row="0" />
             <Rectangle Style="{StaticResource DialogHorizontalRule}" Grid.Row="1" />
             <TextBox Name="Log" TextChanged="LogTextBox_TextChanged" AcceptsTab="True" AcceptsReturn="True" Margin="5,5,5,0" SpellCheck.IsEnabled="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Grid.Row="2" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="3">
-                <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="ChangesButton" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="False">_Save</Button>
-                <Button Name="CancelButton" IsCancel="True" Padding="10" AutomationProperties.AutomationId="CancelButton" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
+                <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="ChangesButton" Click="OkButton_Click" Content="{StaticResource EditLog.Save}" IsEnabled="False" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" />
+                <Button Name="CancelButton" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Click="CancelButton_Click" Content="{StaticResource Dialog.Cancel}" Margin="10,10,10,10" Padding="{StaticResource Dialog.ButtonPadding}" />
             </StackPanel>
         </Grid>
     </Grid>

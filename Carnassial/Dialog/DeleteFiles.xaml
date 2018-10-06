@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
-        Title="Delete files" 
+        Title="{StaticResource DeleteFiles.Title}" 
         Loaded="Window_Loaded"
         Height="780" Width="1000" ShowInTaskbar="False" Style="{StaticResource ApplicationWindow}">
     <Window.CommandBindings>
@@ -51,13 +51,24 @@
             <Grid Margin="10,10,10,10" Grid.Row="2">
                 <ListView x:Name="ThumbnailList" />
             </Grid>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="3">
-                <CheckBox Name="Confirm" IsChecked="False" Margin="0,0,20,0" Height="20" 
-                Checked="ConfirmBox_Checked" FontWeight="Bold" Content="_Confirm deletion of images, videos, and data (you must check this before the Okay button can be clicked; deleted data is not recoverable)" Unchecked="ConfirmBox_Checked">
+            <Grid Grid.Row="3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <CheckBox Name="Confirm" IsChecked="False" Checked="ConfirmBox_Checked" Margin="10,0,0,0" Unchecked="ConfirmBox_Checked" VerticalAlignment="Center" Grid.Column="0" Grid.Row="0">
+                    <CheckBox.Content>
+                        <StaticResource ResourceKey="DeleteFiles.ConfirmDeletion" />
+                    </CheckBox.Content>
                 </CheckBox>
-                <Button Name="OkButton" IsDefault="True" IsEnabled="False" AutomationProperties.AutomationId="ChangesButton" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">_Okay</Button>
-                <Button Name="CancelButton" IsCancel="True" Padding="10" AutomationProperties.AutomationId="CancelButton" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
-            </StackPanel>
+                <Button Name="OkButton" IsDefault="True" IsEnabled="False" AutomationProperties.AutomationId="ChangesButton" Click="OkButton_Click" Content="{StaticResource Dialog.OK}" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" Grid.Column="2" Grid.Row="0" />
+                <Button Name="CancelButton" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Click="CancelButton_Click" Content="{StaticResource Dialog.Cancel}" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" Grid.Column="3" Grid.Row="0" />
+            </Grid>
         </Grid>
     </Grid>
 </local:WindowWithSystemMenu>

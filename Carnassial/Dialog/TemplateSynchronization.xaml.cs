@@ -25,7 +25,7 @@ namespace Carnassial.Dialog
             this.DialogResult = false;
         }
 
-        private void UseOldTemplate_Click(object sender, RoutedEventArgs e)
+        private void UseEmbeddedTemplate_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = true;
         }

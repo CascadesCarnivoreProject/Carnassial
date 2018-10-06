@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32.SafeHandles;
 using System;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -60,6 +61,16 @@ namespace Carnassial.Interop
 
         [DllImport(Constant.Assembly.Kernel32)]
         private static extern bool GetFileSizeEx(SafeFileHandle hFile, out long lpFileSize);
+
+        public static CultureInfo GetKeyboardCulture()
+        {
+            long keyboardLayout = NativeMethods.GetKeyboardLayout(0).ToInt64();
+            int languageID = (int)(keyboardLayout & 0x000000000000ffff);
+            return new CultureInfo(languageID);
+        }
+
+        [DllImport(Constant.Assembly.User32)]
+        private static extern IntPtr GetKeyboardLayout(uint idThread);
 
         private static string GetRelativePathFromDirectory(string fromDirectoryPath, string toPath, int toType)
         {

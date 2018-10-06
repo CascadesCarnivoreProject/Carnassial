@@ -1,16 +1,15 @@
-﻿<Application x:Class="Carnassial.App" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    StartupUri="CarnassialWindow.xaml">
+﻿<carnassial:LocalizedApplication x:Class="Carnassial.App" 
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+             xmlns:carnassial="clr-namespace:Carnassial"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="CarnassialWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
-            <!-- register resource files so Visual Studio's XAML design window makes them available when calling into user controls such as StockMessageControl -->
-            <BitmapImage x:Key="StatusCriticalError_64x.png" UriSource="pack://application:,,/Resources/StatusCriticalError_64x.png" />
-            <BitmapImage x:Key="StatusHelp_64x.png" UriSource="pack://application:,,/Resources/StatusHelp_64x.png" />
-            <BitmapImage x:Key="StatusInformation_64x.png" UriSource="pack://application:,,/Resources/StatusInformation_64x.png" />
-            <BitmapImage x:Key="StatusWarning_64x.png" UriSource="pack://application:,,/Resources/StatusWarning_64x.png" />
-
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="CarnassialWindowStyle.xaml" />
+                <ResourceDictionary Source="Properties/SharedResources.xaml" />
+                <ResourceDictionary Source="Properties/Resources.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
-</Application>
+</carnassial:LocalizedApplication>

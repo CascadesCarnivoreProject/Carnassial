@@ -3,7 +3,7 @@
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-		Title="Date/time - Add a fixed correction value to all files selected."
+		Title="{StaticResource DateTimeFixedCorrection.Title}"
         Loaded="Window_Loaded"
 		MinHeight="826" MinWidth="768" Height="856" Width="768" ShowInTaskbar="False" Style="{StaticResource ApplicationWindow}">
     <Window.CommandBindings>
@@ -74,11 +74,11 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <Label Content="File:" FontWeight="Bold" Grid.Column="0" VerticalAlignment="Center" />
+                    <Label Content="{StaticResource DateTimeAdjustment.File}" FontWeight="Bold" Grid.Column="0" VerticalAlignment="Center" />
                     <Label Name="FileName" Content="[ --- file name --- ]" Margin="0,0,0,0" Grid.Column="1" VerticalAlignment="Center" />
-                    <Label Content="Original:" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Column="2" VerticalAlignment="Center" Margin="5,0,0,0" />
+                    <Label Content="{StaticResource DateTimeFixedCorrection.OriginalDate}" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Column="2" VerticalAlignment="Center" Margin="5,0,0,0" />
                     <Label Name="OriginalDate" MinWidth="140" Content="dd-MMM-yyyy HH:mm:ss" Grid.Column="3" VerticalAlignment="Center" Margin="0,0,5,0" />
-                    <Label Content="Corrected:" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Column="4" VerticalAlignment="Center" Margin="5,0,2,0" Padding="0,0,0,0" />
+                    <Label Content="{StaticResource DateTimeFixedCorrection.CorrectedDate}" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Column="4" VerticalAlignment="Center" Margin="5,0,2,0" Padding="0,0,0,0" />
                     <control:DateTimeOffsetPicker x:Name="DateTimePicker" Width="165" HorizontalAlignment="Left" Grid.Column="5" />
                 </Grid>
                 <control:FileDisplay x:Name="FileDisplay" HorizontalAlignment="Center" Grid.Row="1" />
@@ -93,8 +93,8 @@
             </Grid>
             <!-- Ok/Cancel buttons-->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="3">
-                <Button Name="ChangesButton" IsDefault="True" IsEnabled="False" Click="ChangesButton_Click" AutomationProperties.AutomationId="ChangesButton" Padding="10" Margin="10,10,10,10">_Preview Changes</Button>
-                <Button Name="CancelButton" IsCancel="True" Click="CancelButton_Click" AutomationProperties.AutomationId="CancelButton" Padding="10" Margin="10,10,10,10">_Cancel</Button>
+                <Button Name="ChangesButton" IsDefault="True" IsEnabled="False" Click="ChangesButton_Click" AutomationProperties.AutomationId="ChangesButton" Content="{StaticResource DateTimeAdjustment.PreviewChanges}" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" />
+                <Button Name="CancelButton" IsCancel="True" Click="CancelButton_Click" AutomationProperties.AutomationId="CancelButton" Content="{StaticResource Dialog.Cancel}" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" />
             </StackPanel>
         </Grid>
     </Grid>

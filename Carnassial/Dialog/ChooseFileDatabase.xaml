@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
-        Title="Select the data file to use." Height="550" Width="650" MinHeight="500" MinWidth="600"
+        Title="{StaticResource ChooseFileDatabase.Title}" Height="Auto" Width="650" MinHeight="500" MinWidth="600"
         Loaded="Window_Loaded" Style="{StaticResource ApplicationWindow}">
     <Window.CommandBindings>
         <CommandBinding Command="{x:Static SystemCommands.CloseWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="CloseWindow_Execute" />
@@ -50,16 +50,16 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <control:StockMessageControl x:Name="Message" Grid.Row="0" StatusImage="Question"
-                            Title="Choose a data file."
-                            Problem="There are multiple Carnassial database files (.ddb) in the same directory as the template."
-                            Solution="Choose the Carnassial file you want to use."
-                            Result="Carnassial will read data from and save data to the chosen file." />
+                            Title="{StaticResource ChooseFileDatabase.Message.Title}"
+                            Problem="{StaticResource ChooseFileDatabase.Message.Problem}"
+                            Solution="{StaticResource ChooseFileDatabase.Message.Solution}"
+                            Result="{StaticResource ChooseFileDatabase.Message.Result}" />
             <Rectangle Style="{StaticResource DialogHorizontalRule}" Grid.Row="1" />
-            <Label FontWeight="Bold" Content="Select a data file:" Grid.Row="2" Margin="5,0,0,0" />
+            <Label FontWeight="Bold" Content="{StaticResource ChooseFileDatabase.SelectDatabase}" Grid.Row="2" Margin="5,0,0,0" />
             <ListBox Name="FileDatabases" MouseDoubleClick="FileDatabases_MouseDoubleClick" SelectionChanged="FileDatabases_SelectionChanged" ScrollViewer.VerticalScrollBarVisibility="Auto" Grid.Row="3" Margin="10,0,10,5" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="4">
-                <Button Name="OkButton" IsDefault="True" Click="OkButton_Click" IsEnabled="False" Margin="10,10,10,10" Padding="10" AutomationProperties.AutomationId="OkButton">_Okay</Button>
-                <Button Name="CancelButton" IsCancel="True" Click="CancelButton_Click" AutomationProperties.AutomationId="CancelButton" Margin="10,10,10,10" Padding="10">_Cancel</Button>
+                <Button Name="OkButton" IsDefault="True" Click="OkButton_Click" AutomationProperties.AutomationId="OkButton" Content="{StaticResource Dialog.OK}" IsEnabled="False" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" />
+                <Button Name="CancelButton" IsCancel="True" Click="CancelButton_Click" AutomationProperties.AutomationId="CancelButton" Content="{StaticResource Dialog.Cancel}" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" />
             </StackPanel>
         </Grid>
     </Grid>

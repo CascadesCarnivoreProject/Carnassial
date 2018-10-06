@@ -32,55 +32,55 @@
             <Button Style="{StaticResource ApplicationIcon}" Grid.Column="0" />
             <Menu Name="Menu" Style="{StaticResource ApplicationMenu}" Grid.Column="1">
                 <!-- file menu -->
-                <MenuItem Header="_File" SubmenuOpened="MenuFile_SubmenuOpened">
-                    <MenuItem Name="MenuFileLoadImageSet" Header="_Open template, images, and videos..." Click="MenuFileLoadImageSet_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Asks for a template and then opens an existing database or creates a new database.">
+                <MenuItem Header="{StaticResource CarnassialWindow.MenuFile}" SubmenuOpened="MenuFile_SubmenuOpened">
+                    <MenuItem Name="MenuFileLoadImageSet" Header="{StaticResource CarnassialWindow.MenuFile.LoadImageSet}" Click="MenuFileLoadImageSet_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuFile.LoadImageSetTooltip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/OpenFolder_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Name="MenuFileRecentImageSets" Header="Open a _recently used image set" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="Open a recently used image set." />
-                    <MenuItem Name="MenuFileAddFilesToImageSet" Header="_Add images and videos to image set..." Click="MenuFileAddFilesToImageSet_Click" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="Add more images or videos to the currently opened image set.">
+                    <MenuItem Name="MenuFileRecentImageSets" Header="{StaticResource CarnassialWindow.MenuFile.RecentImageSets}" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="Open a recently used image set." />
+                    <MenuItem Name="MenuFileAddFilesToImageSet" Header="{StaticResource CarnassialWindow.MenuFile.AddFilesToImageSet}" Click="MenuFileAddFilesToImageSet_Click" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuFile.AddFilesToImageSetTooltip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/AddItem_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Name="MenuFileExport" Header="Ex_port selected data" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}">
-                        <MenuItem Name="MenuFileExportXlsx" Header="to an ._xlsx file" Click="MenuFileExportSpreadsheet_Click" ToolTip="Exports data for the selected files to an .xlsx (Excel) file.">
+                    <MenuItem Name="MenuFileExport" Header="{StaticResource CarnassialWindow.MenuFile.Export}" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}">
+                        <MenuItem Name="MenuFileExportXlsx" Header="{StaticResource CarnassialWindow.MenuFile.Export.Xlsx}" Click="MenuFileExportSpreadsheet_Click" ToolTip="{StaticResource CarnassialWindow.MenuFile.Export.XlsxTooltip}">
                             <MenuItem.Icon>
                                 <Image Source="Resources/Menu/ExportFile_16x.png" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Name="MenuFileExportXlsxAndOpen" Header="to an .xlsx file and _open..." Click="MenuFileExportSpreadsheet_Click" ToolTip="Exports data for the selected files to an .xlsx (Excel) file and opens it in the program associated with the .xlsx extension, which is usually Excel." />
-                        <MenuItem Name="MenuFileExportCsv" Header="to a ._csv file" Click="MenuFileExportSpreadsheet_Click" ToolTip="Export data for the selected files to a .csv (comma separated value) file.">
+                        <MenuItem Name="MenuFileExportXlsxAndOpen" Header="{StaticResource CarnassialWindow.MenuFile.Export.XlsxAndOpen}" Click="MenuFileExportSpreadsheet_Click" ToolTip="{StaticResource CarnassialWindow.MenuFile.Export.XlsxAndOpenTooltip}" />
+                        <MenuItem Name="MenuFileExportCsv" Header="{StaticResource CarnassialWindow.MenuFile.Export.Csv}" Click="MenuFileExportSpreadsheet_Click" ToolTip="{StaticResource CarnassialWindow.MenuFile.Export.CsvTooltip}">
                             <MenuItem.Icon>
                                 <Image Source="Resources/Menu/ExportFile_16x.png" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Name="MenuFileExportCsvAndOpen" Header="to a .csv file and o_pen..." Click="MenuFileExportSpreadsheet_Click" ToolTip="Export data for the selected files to a .csv (comma separated value) file and opens it in the program associated with the .csv extension, which is usually Excel." />
+                        <MenuItem Name="MenuFileExportCsvAndOpen" Header="{StaticResource CarnassialWindow.MenuFile.Export.CsvAndOpen}" Click="MenuFileExportSpreadsheet_Click" ToolTip="{StaticResource CarnassialWindow.MenuFile.Export.CsvAndOpenTooltip}" />
                     </MenuItem>
-                    <MenuItem Name="MenuFileImport" Header="I_mport data..." IsEnabled="False" Click="MenuFileImportSpreadsheet_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Import data from a .csv (comma separated value) or .xlsx (Excel) file.">
+                    <MenuItem Name="MenuFileImport" Header="{StaticResource CarnassialWindow.MenuFile.Import}" IsEnabled="False" Click="MenuFileImportSpreadsheet_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuFile.ImportTooltip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/ImportFile_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Name="MenuFileCloneCurrent" Header="Make a _copy of the current file..." Click="MenuFileCloneCurrent_Click" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="Make a copy of the current file in a location of your choosing.  The copy is not added to the image set." />
-                    <MenuItem Name="MenuFileMoveFiles" Header="Mo_ve selected files..." Click="MenuFileMoveFiles_Click" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="Move all currently selected file to a location of your choosing.">
+                    <MenuItem Name="MenuFileCloneCurrent" Header="{StaticResource CarnassialWindow.MenuFile.CloneCurrent}" Click="MenuFileCloneCurrent_Click" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuFile.CloneCurrentToolTip}" />
+                    <MenuItem Name="MenuFileMoveFiles" Header="{StaticResource CarnassialWindow.MenuFile.MoveFiles}" Click="MenuFileMoveFiles_Click" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuFile.MoveFilesToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/MoveToSubmodule_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Name="MenuFileRenameFileDatabase" Header="Rename the _data file..." Click="MenuFileRenameFileDatabase_Click" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="Renames the data file to a name of your choosing." />
+                    <MenuItem Name="MenuFileRenameFileDatabase" Header="{StaticResource CarnassialWindow.MenuFile.RenameFileDatabase}" Click="MenuFileRenameFileDatabase_Click" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuFile.RenameFileDatabase}" />
                     <Separator />
-                    <MenuItem Name="MenuFileCloseImageSet" Header="C_lose image set" Click="MenuFileCloseImageSet_Click" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="Closes the currently open image set so another can be opened.">
+                    <MenuItem Name="MenuFileCloseImageSet" Header="{StaticResource CarnassialWindow.MenuFile.CloseImageSet}" Click="MenuFileCloseImageSet_Click" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuFile.CloseImageSetToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/CloseSolution_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Name="MenuFileExit" Header="E_xit" Click="MenuFileExit_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Quit Carnassial.">
+                    <MenuItem Name="MenuFileExit" Header="{StaticResource CarnassialWindow.MenuFile.Exit}" Click="MenuFileExit_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuFile.ExitToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/Exit_16x.png" />
                         </MenuItem.Icon>
@@ -88,233 +88,233 @@
                 </MenuItem>
 
                 <!-- edit menu -->
-                <MenuItem Name="MenuEdit" Header="_Edit" IsEnabled="False">
-                    <MenuItem Name="MenuEditFind" Header="_Find..." Click="MenuEditFind_Click" InputGestureText="Ctrl+F" Style="{StaticResource ApplicationMenuItem}" ToolTip="Find files matching specified criteria.">
+                <MenuItem Name="MenuEdit" Header="{StaticResource CarnassialWindow.MenuEdit}" IsEnabled="False">
+                    <MenuItem Name="MenuEditFind" Header="{StaticResource CarnassialWindow.MenuEdit.Find}" Click="MenuEditFind_Click" InputGestureText="Ctrl+F" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuEdit.FindToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/QuickFind_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Name="MenuEditFindNext" Header="Find _next" Click="MenuEditFindNext_Click" InputGestureText="F3" Style="{StaticResource ApplicationMenuItem}" ToolTip="Find the next file matching the current find criteria.">
+                    <MenuItem Name="MenuEditFindNext" Header="{StaticResource CarnassialWindow.MenuEdit.FindNext}" Click="MenuEditFindNext_Click" InputGestureText="F3" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuEdit.FindNextToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/FindNext_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Name="MenuEditFindPrevious" Header="Find _previous" Click="MenuEditFindPrevious_Click" InputGestureText="Shift+F3" Style="{StaticResource ApplicationMenuItem}" ToolTip="Find the next file matching the current find criteria.">
+                    <MenuItem Name="MenuEditFindPrevious" Header="{StaticResource CarnassialWindow.MenuEdit.FindPrevious}" Click="MenuEditFindPrevious_Click" InputGestureText="Shift+F3" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuEdit.FindPreviousToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/FindPrevious_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Name="MenuEditReplace" Header="_Replace..." Click="MenuEditReplace_Click" InputGestureText="Ctrl+H" Style="{StaticResource ApplicationMenuItem}" ToolTip="Find files matching specified criteria and replace one field's value.">
+                    <MenuItem Name="MenuEditReplace" Header="{StaticResource CarnassialWindow.MenuEdit.Replace}" Click="MenuEditReplace_Click" InputGestureText="Ctrl+H" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuEdit.ReplaceToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/ReplaceInFiles_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Name="MenuEditUndo" Header="_Undo" Click="MenuEditUndo_Click" InputGestureText="Ctrl+Z" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="Undo navigation, selection, or changes to the current file.">
+                    <MenuItem Name="MenuEditUndo" Header="{StaticResource CarnassialWindow.MenuEdit.Undo}" Click="MenuEditUndo_Click" InputGestureText="Ctrl+Z" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuEdit.UndoToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/Undo_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Name="MenuEditRedo" Header="_Redo" Click="MenuEditRedo_Click" InputGestureText="Ctrl+Y" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="Redo navigation, selection, or changes to the current file.">
+                    <MenuItem Name="MenuEditRedo" Header="{StaticResource CarnassialWindow.MenuEdit.Redo}" Click="MenuEditRedo_Click" InputGestureText="Ctrl+Y" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuEdit.RedoToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/Redo_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Header="_Current file" Style="{StaticResource ApplicationMenuItem}">
-                        <MenuItem Name="MenuEditCopy" Header="_Copy values" Click="MenuEditCopy_Click" InputGestureText="Ctrl+C" ToolTip="Copy data entered for the current file to the clipboard.">
+                    <MenuItem Header="{StaticResource CarnassialWindow.MenuEdit.CurrentFile}" Style="{StaticResource ApplicationMenuItem}">
+                        <MenuItem Name="MenuEditCopy" Header="{StaticResource CarnassialWindow.MenuEdit.CurrentFile.Copy}" Click="MenuEditCopy_Click" InputGestureText="Ctrl+C" ToolTip="{StaticResource CarnassialWindow.MenuEdit.CurrentFile.CopyToolTip}">
                             <MenuItem.Icon>
                                 <Image Source="Resources/Menu/Copy_16x.png" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Name="MenuEditPaste" Header="_Paste values" Click="MenuEditPaste_Click" InputGestureText="Ctrl+V" ToolTip="Apply data copied to the clipboard to the current file.  Only fields marked copyable in the template are set.">
+                        <MenuItem Name="MenuEditPaste" Header="{StaticResource CarnassialWindow.MenuEdit.CurrentFile.Paste}" Click="MenuEditPaste_Click" InputGestureText="Ctrl+V" ToolTip="{StaticResource CarnassialWindow.MenuEdit.CurrentFile.PasteToolTip}">
                             <MenuItem.Icon>
                                 <Image Source="Resources/Menu/Paste_16x.png" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Name="MenuEditCopyPreviousValues" Header="Paste pre_vious values" Click="PastePreviousValues_Click" InputGestureText="Ctrl+P" ToolTip="Paste data entered for the previous file into this file.  Only fields marked copyable in the template are copied.">
+                        <MenuItem Name="MenuEditPastePreviousValues" Header="{StaticResource CarnassialWindow.MenuEdit.CurrentFile.PastePreviousValues}" Click="PastePreviousValues_Click" InputGestureText="Ctrl+P" ToolTip="{StaticResource CarnassialWindow.MenuEdit.CurrentFile.PastePreviousValues}">
                             <MenuItem.Icon>
                                 <Image Source="Resources/Menu/CopyDynamicValue_16x.png" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Name="MenuEditCopyNextValues" Header="Paste ne_xt values" Click="PasteNextValues_Click" InputGestureText="Ctrl+N" ToolTip="Paste data entered for the previous file into this file.  Only fields marked copyable in the template are copied.">
+                        <MenuItem Name="MenuEditPasteNextValues" Header="{StaticResource CarnassialWindow.MenuEdit.CurrentFile.PasteNextValues}" Click="PasteNextValues_Click" InputGestureText="Ctrl+N" ToolTip="{StaticResource CarnassialWindow.MenuEdit.CurrentFile.PasteNextValuesToolTip}">
                             <MenuItem.Icon>
                                 <Image Source="Resources/Menu/CopyDynamicValue_16x.png" />
                             </MenuItem.Icon>
                         </MenuItem>
                         <Separator />
-                        <MenuItem Name="MenuEditCopyValuesToAnalysis" Header="Copy values to _analysis" InputGestureText="Ctrl+1-9" ToolTip="Copy data entered for the current file where it can be reused under a particular analysis number." />
-                        <MenuItem Name="MenuEditPasteValuesFromAnalysis" Header="Paste values from anal_ysis" InputGestureText="1-9" ToolTip="Apply data in an analysis to the current file.  Only fields marked copyable in the template are set.">
+                        <MenuItem Name="MenuEditCopyValuesToAnalysis" Header="{StaticResource CarnassialWindow.MenuEdit.CurrentFile.CopyValuesToAnalysis}" InputGestureText="Ctrl+1-9" ToolTip="{StaticResource CarnassialWindow.MenuEdit.CurrentFile.CopyValuesToAnalysisToolTip}" />
+                        <MenuItem Name="MenuEditPasteValuesFromAnalysis" Header="{StaticResource CarnassialWindow.MenuEdit.CurrentFile.PasteValuesFromAnalysis}" InputGestureText="1-9" ToolTip="{StaticResource CarnassialWindow.MenuEdit.CurrentFile.PasteValuesFromAnalysisToolTip}">
                             <MenuItem.Icon>
                                 <Image Source="Resources/Menu/CopyDynamicValue_16x.png" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Name="MenuEditResetValues" Header="Re_set values to defaults" Click="MenuEditResetValues_Click" InputGestureText="Ctrl+R" ToolTip="Reset data the defaults specified in the template.  Only fields marked copyable in the template are reset.">
+                        <MenuItem Name="MenuEditResetValues" Header="{StaticResource CarnassialWindow.MenuEdit.CurrentFile.ResetValues}" Click="MenuEditResetValues_Click" InputGestureText="Ctrl+R" ToolTip="{StaticResource CarnassialWindow.MenuEdit.CurrentFile.ResetValuesToolTip}">
                             <MenuItem.Icon>
                                 <Image Source="Resources/Menu/Restart_16x.png" />
                             </MenuItem.Icon>
                         </MenuItem>
                     </MenuItem>
-                    <MenuItem Header="_Multiple files" Style="{StaticResource ApplicationMenuItem}">
-                        <MenuItem Name="MenuEditRereadDateTimesfromFiles" Header="_Reread date/times from files..." Click="MenuEditRereadDateTimesFromFiles_Click" ToolTip="Reread dates and times from all selected files." />
-                        <MenuItem Name="MenuEditDaylightSavingsTimeCorrection" Header="Adjust for _daylight savings time..." Click="MenuEditDaylightSavingsTimeCorrection_Click" ToolTip="Correct daylight saving time issues" />
-                        <MenuItem Name="MenuEditDateTimeFixedCorrection" Header="Add a _fixed correction value to every date/time..." Click="MenuEditDateTimeFixedCorrection_Click" ToolTip="Correct for dates or times which are all off by a fixed amount, which happens if your camera was not set to the correct date/time." />
-                        <MenuItem Name="MenuEditDateTimeLinearCorrection" Header="Correct for camera _clock drift..." Click="MenuEditDateTimeLinearCorrection_Click" ToolTip="Correct for a camera's clock running fast or slow.">
+                    <MenuItem Header="{StaticResource CarnassialWindow.MenuEdit.MultipleFiles}" Style="{StaticResource ApplicationMenuItem}">
+                        <MenuItem Name="MenuEditRereadDateTimesfromFiles" Header="{StaticResource CarnassialWindow.MenuEdit.MultipleFiles.RereadDateTimesfromFiles}" Click="MenuEditRereadDateTimesFromFiles_Click" ToolTip="{StaticResource CarnassialWindow.MenuEdit.MultipleFiles.RereadDateTimesfromFilesToolTip}" />
+                        <MenuItem Name="MenuEditDaylightSavingsTimeCorrection" Header="{StaticResource CarnassialWindow.MenuEdit.MultipleFiles.DaylightSavingsTimeCorrection}" Click="MenuEditDaylightSavingsTimeCorrection_Click" ToolTip="{StaticResource CarnassialWindow.MenuEdit.MultipleFiles.DaylightSavingsTimeCorrectionToolTip}" />
+                        <MenuItem Name="MenuEditDateTimeFixedCorrection" Header="{StaticResource CarnassialWindow.MenuEdit.MultipleFiles.DateTimeFixedCorrection}" Click="MenuEditDateTimeFixedCorrection_Click" ToolTip="{StaticResource CarnassialWindow.MenuEdit.MultipleFiles.DateTimeFixedCorrectionToolTip}" />
+                        <MenuItem Name="MenuEditDateTimeLinearCorrection" Header="{StaticResource CarnassialWindow.MenuEdit.MultipleFiles.DateTimeLinearCorrection}" Click="MenuEditDateTimeLinearCorrection_Click" ToolTip="{StaticResource CarnassialWindow.MenuEdit.MultipleFiles.DateTimeLinearCorrectionToolTip}">
                             <MenuItem.Icon>
                                 <Image Source="Resources/Menu/TimePicker_16x.png" />
                             </MenuItem.Icon>
                         </MenuItem>
                         <Separator />
-                        <MenuItem Name="MenuEditReclassify" Header="Reclassif_y files..." Click="MenuEditReclassify_Click" ToolTip="Determine which files are dark and light or reclassify your files.">
+                        <MenuItem Name="MenuEditReclassify" Header="{StaticResource CarnassialWindow.MenuEdit.MultipleFiles.Reclassify}" Click="MenuEditReclassify_Click" ToolTip="{StaticResource CarnassialWindow.MenuEdit.MultipleFiles.ReclassifyToolTip}">
                             <MenuItem.Icon>
                                 <Image Source="Resources/Menu/DarkTheme_16x.png" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Name="MenuEditPopulateFieldFromMetadata" Header="Populate a field with _metadata..." ToolTip="Match a data field with a metadata type. Then populate that field across all files with the corresponding metadata value." Click="MenuEditPopulateFieldFromMetadata_Click" />
+                        <MenuItem Name="MenuEditPopulateFieldFromMetadata" Header="{StaticResource CarnassialWindow.MenuEdit.MultipleFiles.PopulateFieldFromMetadata}" ToolTip="{StaticResource CarnassialWindow.MenuEdit.MultipleFiles.PopulateFieldFromMetadataToolTip}" Click="MenuEditPopulateFieldFromMetadata_Click" />
                         <Separator />
-                        <MenuItem Name="MenuEditModifyAmbiguousDates" Header="Correct for ambi_guous dates..." Click="MenuEditCorrectAmbiguousDates_Click" ToolTip="Check and optionally correct ambiguous dates (day-month vs month-day)." />
-                        <MenuItem Name="MenuEditSetTimeZone" Header="Set time _zone..." Click="MenuEditSetTimeZone_Click" ToolTip="Reassign the selected files to a particular time zone." />
+                        <MenuItem Name="MenuEditModifyAmbiguousDates" Header="{StaticResource CarnassialWindow.MenuEdit.MultipleFiles.ModifyAmbiguousDates}" Click="MenuEditCorrectAmbiguousDates_Click" ToolTip="{StaticResource CarnassialWindow.MenuEdit.MultipleFiles.ModifyAmbiguousDatesToolTip}" />
+                        <MenuItem Name="MenuEditSetTimeZone" Header="{StaticResource CarnassialWindow.MenuEdit.MultipleFiles.SetTimeZone}" Click="MenuEditSetTimeZone_Click" ToolTip="{StaticResource CarnassialWindow.MenuEdit.MultipleFiles.SetTimeZoneToolTip}" />
                     </MenuItem>
-                    <MenuItem Header="_Delete files" SubmenuOpened="MenuEditDelete_SubmenuOpened" Style="{StaticResource ApplicationMenuItem}">
-                        <MenuItem Name="MenuEditToggleCurrentFileDeleteFlag" Header="_Mark or unmark the current file for deletion" Click="MenuEditToggleCurrentFileDeleteFlag_Click" InputGestureText="Delete" ToolTip="Check or uncheck the current file's Delete? box.">
+                    <MenuItem Header="{StaticResource CarnassialWindow.MenuEdit.DeleteFiles}" SubmenuOpened="MenuEditDelete_SubmenuOpened" Style="{StaticResource ApplicationMenuItem}">
+                        <MenuItem Name="MenuEditToggleCurrentFileDeleteFlag" Header="{StaticResource CarnassialWindow.MenuEdit.DeleteFiles.ToggleCurrentFileDeleteFlag}" Click="MenuEditToggleCurrentFileDeleteFlag_Click" InputGestureText="Delete" ToolTip="{StaticResource CarnassialWindow.MenuEdit.DeleteFiles.ToggleCurrentFileDeleteFlagToolTip}">
                             <MenuItem.Icon>
                                 <Image Source="Resources/Menu/ShowHideDeletedItem_16x.png" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Name="MenuEditDeleteCurrentFile" Header="Delete the _current file..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes the file but not the data entered for it." />
-                        <MenuItem Name="MenuEditDeleteCurrentFileAndData" Header="Delete the current file and its _data..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes the file and the data entered for it." />
-                        <MenuItem Name="MenuEditDeleteFiles" Header="Delete _all files in the current selection marked for deletion..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes images and videos marked for deletion in the current selection, but leaves entered data intact." />
-                        <MenuItem Name="MenuEditDeleteFilesAndData" Header="D_elete all files in the current selection marked for deletion and their data..." Click="MenuEditDeleteFiles_Click" ToolTip="Deletes images and videos marked for deletion in the current selection, as well as data entered for those files." />
+                        <MenuItem Name="MenuEditDeleteCurrentFile" Header="{StaticResource CarnassialWindow.MenuEdit.DeleteFiles.DeleteCurrentFile}" Click="MenuEditDeleteFiles_Click" ToolTip="{StaticResource CarnassialWindow.MenuEdit.DeleteFiles.DeleteCurrentFileToolTip}" />
+                        <MenuItem Name="MenuEditDeleteCurrentFileAndData" Header="{StaticResource CarnassialWindow.MenuEdit.DeleteFiles.DeleteCurrentFileAndData}" Click="MenuEditDeleteFiles_Click" ToolTip="{StaticResource CarnassialWindow.MenuEdit.DeleteFiles.DeleteCurrentFileAndDataToolTip}" />
+                        <MenuItem Name="MenuEditDeleteFiles" Header="{StaticResource CarnassialWindow.MenuEdit.DeleteFiles.DeleteFiles}" Click="MenuEditDeleteFiles_Click" ToolTip="{StaticResource CarnassialWindow.MenuEdit.DeleteFiles.DeleteFilesToolTip}" />
+                        <MenuItem Name="MenuEditDeleteFilesAndData" Header="{StaticResource CarnassialWindow.MenuEdit.DeleteFiles.DeleteCurrentFileAndData}" Click="MenuEditDeleteFiles_Click" ToolTip="{StaticResource CarnassialWindow.MenuEdit.DeleteFiles.DeleteFilesAndDataToolTip}" />
                     </MenuItem>
                     <Separator />
-                    <MenuItem Name="MenuEditLog" Header="_Notes for this image set..." Click="MenuEditLog_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="View and edit any notes (e.g., a log of activites or to-do items) particular to this image set" />
+                    <MenuItem Name="MenuEditLog" Header="{StaticResource CarnassialWindow.MenuEdit.Log}" Click="MenuEditLog_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuEdit.LogToolTip}" />
                 </MenuItem>
 
                 <!-- options menu -->
-                <MenuItem Name="MenuOptions" Header="_Options" IsEnabled="False">
-                    <MenuItem Name="MenuOptionsOrderFilesByDateTime" IsCheckable="True" IsChecked="False" Header="_Order files by date/time" Click="MenuOptionsOrderFilesByDateTime_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Sort files by their date/time rather than the order in which they were added to the image set." />
-                    <MenuItem Name="MenuOptionsAudioFeedback" IsCheckable="True" IsChecked="False" IsEnabled="False" Header="_Audio feedback" Click="MenuOptionsAudioFeedback_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Toggles the audio that speaks the count whenever you add a counting mark to the image." />
+                <MenuItem Name="MenuOptions" Header="{StaticResource CarnassialWindow.MenuOptions}" IsEnabled="False">
+                    <MenuItem Name="MenuOptionsOrderFilesByDateTime" IsCheckable="True" IsChecked="False" Header="{StaticResource CarnassialWindow.MenuOptions.OrderFilesByDateTime}" Click="MenuOptionsOrderFilesByDateTime_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuOptions.OrderFilesByDateTimeToolTip}" />
+                    <MenuItem Name="MenuOptionsAudioFeedback" IsCheckable="True" IsChecked="False" IsEnabled="False" Header="{StaticResource CarnassialWindow.MenuOptions.AudioFeedback}" Click="MenuOptionsAudioFeedback_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuOptions.AudioFeedbackToolTip}" />
                     <Separator/>
-                    <MenuItem Name="MenuOptionsSkipFileClassification" IsCheckable="True" IsChecked="False" Header="_Skip classification when adding files" Click="MenuOptionsSkipFileClassification_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Make adding files to an image set faster by not checking if they're dark.  They can be checked for dark later through the Edit menu." />
+                    <MenuItem Name="MenuOptionsSkipFileClassification" IsCheckable="True" IsChecked="False" Header="{StaticResource CarnassialWindow.MenuOptions.SkipFileClassification}" Click="MenuOptionsSkipFileClassification_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuOptions.SkipFileClassificationToolTip}" />
                     <Separator/>
-                    <MenuItem Name="MenuOptionsDialogsOnOrOff" Header="Turn _dialogs on or off" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}">
-                        <MenuItem Name="MenuOptionsEnableAmbiguousDatesDialog" IsCheckable="True" Header="Display _ambiguous dates imported dialog" Click="MenuOptionsAmbiguousDatesDialog_Click" ToolTip="Turn on or off the informational dialog displayed when files with ambiguous dates are added to an image set." />
-                        <MenuItem Name="MenuOptionsEnableFileCountOnImportDialog" IsCheckable="True" Header="Display _counts when files are added" Click="MenuOptionsEnableFileCountOnImportDialog_Click" ToolTip="Turn on or off the informational dialog displaying image counts when files are loaded into an image set." />
-                        <MenuItem Name="MenuOptionsEnableCsvImportPrompt" IsCheckable="True" Header="Display ._csv import prompt" Click="MenuOptionsEnableCsvImportPrompt_Click" ToolTip="Turn on or off the informational dialog displayed when a .csv file is imported." />
+                    <MenuItem Name="MenuOptionsDialogsOnOrOff" Header="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff}" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}">
+                        <MenuItem Name="MenuOptionsEnableAmbiguousDatesDialog" IsCheckable="True" Header="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff.AmbiguousDates}" Click="MenuOptionsAmbiguousDatesDialog_Click" ToolTip="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff.AmbiguousDatesToolTip}" />
+                        <MenuItem Name="MenuOptionsEnableFileCountOnImportDialog" IsCheckable="True" Header="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff.FileCountOnImport}" Click="MenuOptionsEnableFileCountOnImportDialog_Click" ToolTip="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff.FileCountOnImportToolTip}" />
+                        <MenuItem Name="MenuOptionsEnableCsvImportPrompt" IsCheckable="True" Header="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff.CsvImportPrompt}" Click="MenuOptionsEnableCsvImportPrompt_Click" ToolTip="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff.CsvImportPromptToolTip}" />
                     </MenuItem>
                     <Separator/>
-                    <MenuItem Name="MenuOptionsAdvancedImageSetOptions" Header="Advanced _image set options..." Click="MenuOptionsAdvancedImageSetOptions_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Image set configuration options that should only be used by advanced users."/>
-                    <MenuItem Name="MenuOptionsAdvancedCarnassialOptions" Header="Advanced _Carnassial options..." Click="MenuOptionsAdvancedCarnassialOptions_Click" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="Carnassial configuration options that should only be used by advanced users."/>
+                    <MenuItem Name="MenuOptionsAdvancedImageSetOptions" Header="{StaticResource CarnassialWindow.MenuOptions.AdvancedImageSetOptions}" Click="MenuOptionsAdvancedImageSetOptions_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuOptions.AdvancedImageSetOptionsToolTip}" />
+                    <MenuItem Name="MenuOptionsAdvancedCarnassialOptions" Header="{StaticResource CarnassialWindow.MenuOptions.AdvancedCarnassialOptions}" Click="MenuOptionsAdvancedCarnassialOptions_Click" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuOptions.AdvancedCarnassialOptionsToolTip}" />
                 </MenuItem>
 
                 <!-- view menu -->
-                <MenuItem Name="MenuView" Header="_View" IsEnabled="False" ToolTip="Zooming, navigating, and image differencing.">
-                    <MenuItem Name="MenuViewShowNextFile" Header="View _next file" Click="MenuViewShowNextFile_Click" InputGestureText="&#x2192;" Style="{StaticResource ApplicationMenuItem}" ToolTip="View the next file in the current selection.">
+                <MenuItem Name="MenuView" Header="{StaticResource CarnassialWindow.MenuView}" IsEnabled="False" ToolTip="{StaticResource CarnassialWindow.MenuViewToolTip}">
+                    <MenuItem Name="MenuViewShowNextFile" Header="{StaticResource CarnassialWindow.MenuView.ShowNextFile}" Click="MenuViewShowNextFile_Click" InputGestureText="&#x2192;" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuView.ShowNextFileToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/Forward_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Name="MenuViewShowPreviousFile" Header="View _previous file" Click="MenuViewShowPreviousFile_Click" InputGestureText="&#x2190;" Style="{StaticResource ApplicationMenuItem}" ToolTip="View the previous file in the current selection.">
+                    <MenuItem Name="MenuViewShowPreviousFile" Header="{StaticResource CarnassialWindow.MenuView.ShowPreviousFile}" Click="MenuViewShowPreviousFile_Click" InputGestureText="&#x2190;" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuView.ShowPreviousFileToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/Backward_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Header="View _file" Style="{StaticResource ApplicationMenuItem}" >
-                        <MenuItem Header="_go to..." Click="MenuViewGotoFile_Click" InputGestureText="Ctrl+G" ToolTip="Go to a specific file in the current selection." />
+                    <MenuItem Header="{StaticResource CarnassialWindow.MenuView.File}" Style="{StaticResource ApplicationMenuItem}" >
+                        <MenuItem Header="{StaticResource CarnassialWindow.MenuView.File.GoTo}" Click="MenuViewGotoFile_Click" InputGestureText="Ctrl+G" ToolTip="Go to a specific file in the current selection." />
                         <Separator />
-                        <MenuItem Header="fi_ve ahead" Click="MenuViewShowNextFileShift_Click" InputGestureText="Shift+&#x2192;" ToolTip="View the file five files after this one in the current selection." />
-                        <MenuItem Header="fi_ve back" Click="MenuViewShowPreviousFileShift_Click" InputGestureText="Shift+&#x2190;" ToolTip="View the file five files before this one in the current selection." />
-                        <MenuItem Header="_10 ahead" Click="MenuViewShowNextFileControl_Click" InputGestureText="Ctrl+&#x2192;" ToolTip="View the file 10 files after this one in the current selection." />
-                        <MenuItem Header="_10 back" Click="MenuViewShowPreviousFileControl_Click" InputGestureText="Ctrl+&#x2190;" ToolTip="View the 10 file before this one in the current selection." />
-                        <MenuItem Header="_50 ahead" Click="MenuViewShowNextFileControlShift_Click" InputGestureText="Ctrl+Shift+&#x2192;" ToolTip="View the file 50 files after this one in the current selection." />
-                        <MenuItem Header="_50 back" Click="MenuViewShowPreviousFileControlShift_Click" InputGestureText="Ctrl+Shift+&#x2190;" ToolTip="View the file 50 files before this one in the current selection." />
+                        <MenuItem Header="{StaticResource CarnassialWindow.MenuView.File.ShowNextFile05}" Click="MenuViewShowNextFileShift_Click" InputGestureText="Shift+&#x2192;" ToolTip="{StaticResource CarnassialWindow.MenuView.File.ShowNextFile05ToolTip}" />
+                        <MenuItem Header="{StaticResource CarnassialWindow.MenuView.File.ShowPreviousFile05}" Click="MenuViewShowPreviousFileShift_Click" InputGestureText="Shift+&#x2190;" ToolTip="{StaticResource CarnassialWindow.MenuView.File.ShowPreviousFile05ToolTip}" />
+                        <MenuItem Header="{StaticResource CarnassialWindow.MenuView.File.ShowNextFile10}" Click="MenuViewShowNextFileControl_Click" InputGestureText="Ctrl+&#x2192;" ToolTip="{StaticResource CarnassialWindow.MenuView.File.ShowNextFile10ToolTip}" />
+                        <MenuItem Header="{StaticResource CarnassialWindow.MenuView.File.ShowPreviousFile10}" Click="MenuViewShowPreviousFileControl_Click" InputGestureText="Ctrl+&#x2190;" ToolTip="{StaticResource CarnassialWindow.MenuView.File.ShowPreviousFile10ToolTip}" />
+                        <MenuItem Header="{StaticResource CarnassialWindow.MenuView.File.ShowNextFile50}" Click="MenuViewShowNextFileControlShift_Click" InputGestureText="Ctrl+Shift+&#x2192;" ToolTip="{StaticResource CarnassialWindow.MenuView.File.ShowNextFile50ToolTip}" />
+                        <MenuItem Header="{StaticResource CarnassialWindow.MenuView.File.ShowPreviousFile50}" Click="MenuViewShowPreviousFileControlShift_Click" InputGestureText="Ctrl+Shift+&#x2190;" ToolTip="{StaticResource CarnassialWindow.MenuView.File.ShowPreviousFile50ToolTip}" />
                         <Separator />
-                        <MenuItem Header="10_% ahead" Click="MenuViewShowNextFilePageDown_Click" InputGestureText="PgDn" ToolTip="Move a tenth of the way forward in the current selection." />
-                        <MenuItem Header="10_% back" Click="MenuViewShowPreviousFilePageUp_Click" InputGestureText="PgUp" ToolTip="Move a tenth of the way back in the current selection." />
-                        <MenuItem Header="_first" Click="MenuViewShowFirstFile_Click" InputGestureText="Home" ToolTip="View the first file in the current selection.">
+                        <MenuItem Header="{StaticResource CarnassialWindow.MenuView.File.ShowNextFile10Percent}" Click="MenuViewShowNextFilePageDown_Click" InputGestureText="PgDn" ToolTip="{StaticResource CarnassialWindow.MenuView.File.ShowNextFile10PercentToolTip}" />
+                        <MenuItem Header="{StaticResource CarnassialWindow.MenuView.File.ShowPreviousFile10Percent}" Click="MenuViewShowPreviousFilePageUp_Click" InputGestureText="PgUp" ToolTip="{StaticResource CarnassialWindow.MenuView.File.ShowPreviousFile10PercentToolTip}" />
+                        <MenuItem Header="{StaticResource CarnassialWindow.MenuView.File.ShowFirst}" Click="MenuViewShowFirstFile_Click" InputGestureText="Home" ToolTip="{StaticResource CarnassialWindow.MenuView.File.ShowFirstToolTip}">
                             <MenuItem.Icon>
                                 <Image Source="Resources/Menu/GoToFirstRow_16x.png" />
                             </MenuItem.Icon>
                         </MenuItem>
-                        <MenuItem Header="_last" Click="MenuViewShowLastFile_Click" InputGestureText="End" ToolTip="View the first file in the current selection.">
+                        <MenuItem Header="{StaticResource CarnassialWindow.MenuView.File.ShowLast}" Click="MenuViewShowLastFile_Click" InputGestureText="End" ToolTip="{StaticResource CarnassialWindow.MenuView.File.ShowLastToolTip}">
                             <MenuItem.Icon>
                                 <Image Source="Resources/Menu/GoToLastRow_16x.png" />
                             </MenuItem.Icon>
                         </MenuItem>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Name="MenuViewPlayFiles" Header="Play or pause _files" Click="MenuViewPlayFiles_Click" InputGestureText="Ctrl+Space" Style="{StaticResource ApplicationMenuItem}" ToolTip="Start slideshow of files in the image set." />
-                    <MenuItem Name="MenuViewPlayVideo" Header="Play or pause _video" Click="MenuViewPlayVideo_Click" InputGestureText="Space" Style="{StaticResource ApplicationMenuItem}" ToolTip="Play the current video or pause it if it's currently playing.">
+                    <MenuItem Name="MenuViewPlayFiles" Header="{StaticResource CarnassialWindow.MenuView.PlayFiles}" Click="MenuViewPlayFiles_Click" InputGestureText="Ctrl+Space" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuView.PlayFilesToolTip}" />
+                    <MenuItem Name="MenuViewPlayVideo" Header="{StaticResource CarnassialWindow.MenuView.PlayVideo}" InputGestureText="Space" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuView.PlayVideoToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/PlayVideo_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Name="MenuViewZoomIn" Header="Zoom _in on pointer" Click="MenuViewZoomIn_Click" InputGestureText="=" Style="{StaticResource ApplicationMenuItem}" ToolTip="Zoom into this file using the current mouse or touchpad pointer location.">
+                    <MenuItem Name="MenuViewZoomIn" Header="{StaticResource CarnassialWindow.MenuView.ZoomIn}" Click="MenuViewZoomIn_Click" InputGestureText="=" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuView.ZoomInToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/ZoomIn_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Name="MenuViewZoomOut" Header="Zoom _out on pointer" Click="MenuViewZoomOut_Click" InputGestureText="-" Style="{StaticResource ApplicationMenuItem}" ToolTip="Zoom out on this file using the current mouse or touchpad pointer location.">
+                    <MenuItem Name="MenuViewZoomOut" Header="{StaticResource CarnassialWindow.MenuView.ZoomOut}" Click="MenuViewZoomOut_Click" InputGestureText="-" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuView.ZoomOutToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/ZoomOut_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Name="MenuViewZoomToFit" Header="Zoom out _all the way" Click="MenuViewZoomToFit_Click" InputGestureText="Ctrl+0" Style="{StaticResource ApplicationMenuItem}" ToolTip="Zoom out to the entire file.">
+                    <MenuItem Name="MenuViewZoomToFit" Header="{StaticResource CarnassialWindow.MenuView.ZoomToFit}" Click="MenuViewZoomToFit_Click" InputGestureText="Ctrl+0" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuView.ZoomToFitToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/ZoomToFit_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Name="MenuViewNextOrPreviousDifference" Header="View next or previous image _difference" Click="MenuViewPreviousOrNextDifference_Click" InputGestureText="&#x2191;" Style="{StaticResource ApplicationMenuItem}" ToolTip="Show difference between the current and the next image, and then the current and the previous image." />
-                    <MenuItem Name="MenuViewDifferencesCombined" Header="View _combined image differences" Click="MenuViewDifferencesCombined_Click" InputGestureText="&#x2193;" Style="{StaticResource ApplicationMenuItem}" ToolTip="Show the difference between the current image and the next and previous images simultaneously." />
+                    <MenuItem Name="MenuViewNextOrPreviousDifference" Header="{StaticResource CarnassialWindow.MenuView.NextOrPreviousDifference}" Click="MenuViewPreviousOrNextDifference_Click" InputGestureText="&#x2191;" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuView.NextOrPreviousDifferenceToolTip}" />
+                    <MenuItem Name="MenuViewDifferencesCombined" Header="{StaticResource CarnassialWindow.MenuView.DifferencesCombined}" Click="MenuViewDifferencesCombined_Click" InputGestureText="&#x2193;" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuView.DifferencesCombinedToolTip}" />
                     <Separator />
-                    <MenuItem Name="MenuOptionsDisplayMagnifier" IsCheckable="True" InputGestureText="M" Header="Display _magnifying glass on images" Click="MenuViewDisplayMagnifier_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Toggles the presence of the magnifying glass on image files.  The magnifying glass is not available on videos." />
-                    <MenuItem Name="MenuViewMagnifierZoomIncrease" InputGestureText="U" Header="Increase magnifying _glass magnification" Click="MenuViewMagnifierIncrease_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Increase the magnification of the magnifying glass.">
+                    <MenuItem Name="MenuViewDisplayMagnifier" IsCheckable="True" InputGestureText="M" Header="{StaticResource CarnassialWindow.MenuView.DisplayMagnifier}" Click="MenuViewDisplayMagnifier_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuView.DisplayMagnifierToolTip}" />
+                    <MenuItem Name="MenuViewMagnifierZoomIncrease" InputGestureText="U" Header="{StaticResource CarnassialWindow.MenuView.MagnifierZoomIncrease}" Click="MenuViewMagnifierIncrease_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuView.MagnifierZoomIncreaseToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/ExpandArrow_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
-                    <MenuItem Name="MenuViewMagnifierZoomDecrease" InputGestureText="D" Header="_Decrease magnifying glass magnification" Click="MenuViewMagnifierDecrease_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Decrease the magnification of the magnifying glass.">
+                    <MenuItem Name="MenuViewMagnifierZoomDecrease" InputGestureText="D" Header="{StaticResource CarnassialWindow.MenuView.MagnifierZoomDecrease}" Click="MenuViewMagnifierDecrease_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuView.MagnifierZoomDecreaseToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/ContractArrow_16x.png" />
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Name="MenuViewSetBookmark"  Header="Zoom to _bookmark in image" InputGestureText="B" Click="MenuViewApplyBookmark_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Zoom to the region saved in the bookmark." />
-                    <MenuItem Name="MenuViewApplyBookmark" Header="Bookmark current _zoom in image" InputGestureText="Ctrl+B" Click="MenuViewSetBookmark_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Save the current zoom region setting as a bookmark.">
+                    <MenuItem Name="MenuViewApplyBookmark"  Header="{StaticResource CarnassialWindow.MenuView.ApplyBookmark}" InputGestureText="B" Click="MenuViewApplyBookmark_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuView.ApplyBookmarkToolTip}" />
+                    <MenuItem Name="MenuViewSetBookmark" Header="{StaticResource CarnassialWindow.MenuView.SetBookmark}" InputGestureText="Ctrl+B" Click="MenuViewSetBookmark_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuView.SetBookmarkToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/Bookmark_002_16xMD.png" />
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Header="View _tab" Style="{StaticResource ApplicationMenuItem}" ToolTip="Choose to display the content of one of the tabs at right.">
-                        <MenuItem Header="_instructions" Click="MenuViewShowInstructions_Click" ToolTip="View the instructions tab." />
-                        <MenuItem Header="_files" Click="MenuViewShowFiles_Click" ToolTip="View the image set tab." />
+                    <MenuItem Header="{StaticResource CarnassialWindow.MenuView.Tab}" Style="{StaticResource ApplicationMenuItem}" ToolTip="Choose to display the content of one of the tabs at right.">
+                        <MenuItem Header="{StaticResource CarnassialWindow.MenuView.Tab.Instructions}" Click="MenuViewShowInstructions_Click" ToolTip="{StaticResource CarnassialWindow.MenuView.Tab.InstructionsToolTip}" />
+                        <MenuItem Header="{StaticResource CarnassialWindow.MenuView.Tab.Files}" Click="MenuViewShowFiles_Click" ToolTip="{StaticResource CarnassialWindow.MenuView.Tab.FilesToolTip}" />
                     </MenuItem>
                 </MenuItem>
 
                 <!-- select menu -->
-                <MenuItem Name="MenuSelect" Header="_Select" IsEnabled="False" SubmenuOpened="MenuSelect_SubmenuOpening" ToolTip="Select a subset of files.">
-                    <MenuItem Name="MenuSelectAllFiles" IsCheckable="True" IsChecked="True" Header="_All files" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Shows all files, including videos corrupted and dark ones." />
-                    <MenuItem Name="MenuSelectCustom" IsCheckable="True" IsChecked="False" Header="_Custom..." Click="MenuSelectCustom_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Create a custom selection." />
+                <MenuItem Name="MenuSelect" Header="{StaticResource CarnassialWindow.MenuSelect}" IsEnabled="False" SubmenuOpened="MenuSelect_SubmenuOpening" ToolTip="Select a subset of files.">
+                    <MenuItem Name="MenuSelectAllFiles" IsCheckable="True" IsChecked="True" Header="{StaticResource CarnassialWindow.MenuSelect.AllFiles}" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuSelect.AllFilesToolTip}" />
+                    <MenuItem Name="MenuSelectCustom" IsCheckable="True" IsChecked="False" Header="{StaticResource CarnassialWindow.MenuSelect.Custom}" Click="MenuSelectCustom_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuSelect.CustomToolTip}" />
                     <Separator />
-                    <MenuItem Name="MenuSelectColorFiles" IsCheckable="True" IsChecked="False" Header="Colo_r images" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Shows only color images." />
-                    <MenuItem Name="MenuSelectGreyscaleFiles" IsCheckable="True" IsChecked="False" Header="_Greyscale images" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Shows only greyscale images." />
-                    <MenuItem Name="MenuSelectDarkFiles" IsCheckable="True" IsChecked="False" Header="_Dark images" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Show only dark images." />
+                    <MenuItem Name="MenuSelectColorFiles" IsCheckable="True" IsChecked="False" Header="{StaticResource CarnassialWindow.MenuSelect.ColorFiles}" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuSelect.ColorFilesToolTip}" />
+                    <MenuItem Name="MenuSelectGreyscaleFiles" IsCheckable="True" IsChecked="False" Header="{StaticResource CarnassialWindow.MenuSelect.GreyscaleFiles}" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuSelect.GreyscaleFilesToolTip}" />
+                    <MenuItem Name="MenuSelectDarkFiles" IsCheckable="True" IsChecked="False" Header="{StaticResource CarnassialWindow.MenuSelect.DarkFiles}" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuSelect.DarkFilesToolTip}" />
                     <Separator />
-                    <MenuItem Name="MenuSelectVideoFiles" IsCheckable="True" IsChecked="False" Header="_Videos" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Show only dark images." />
+                    <MenuItem Name="MenuSelectVideoFiles" IsCheckable="True" IsChecked="False" Header="{StaticResource CarnassialWindow.MenuSelect.VideoFiles}" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuSelect.VideoFilesToolTip}" />
                     <Separator />
-                    <MenuItem Name="MenuSelectCorruptedFiles" IsCheckable="True" IsChecked="False" Header="Corrup_ted files" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Show only corrupted files." />
-                    <MenuItem Name="MenuSelectFilesNoLongerAvailable" IsCheckable="True" IsChecked="False" Header="_Missing files" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Show records for files no longer available." />
-                    <MenuItem Name="MenuSelectFilesMarkedForDeletion" IsCheckable="True" IsChecked="False" Header="Files marked for d_eletion" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Show only those marked for deletion." />
+                    <MenuItem Name="MenuSelectCorruptedFiles" IsCheckable="True" IsChecked="False" Header="{StaticResource CarnassialWindow.MenuSelect.CorruptedFiles}" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Show only corrupted files." />
+                    <MenuItem Name="MenuSelectFilesNoLongerAvailable" IsCheckable="True" IsChecked="False" Header="{StaticResource CarnassialWindow.MenuSelect.FilesNoLongerAvailable}" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuSelect.FilesNoLongerAvailableToolTip}" />
+                    <MenuItem Name="MenuSelectFilesMarkedForDeletion" IsCheckable="True" IsChecked="False" Header="{StaticResource CarnassialWindow.MenuSelect.FilesMarkedForDeletion}" Click="MenuSelectFiles_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuSelect.FilesMarkedForDeletionToolTip}" />
                     <Separator />
-                    <MenuItem Name="MenuItemImageCounts" Header="Show _file counts..." Click="MenuSelectFileCounts_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Displays statistics on the number of files by their classifications." />
+                    <MenuItem Name="MenuSelectFileCounts" Header="{StaticResource CarnassialWindow.MenuSelect.FileCounts}" Click="MenuSelectFileCounts_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuSelect.FileCountsToolTip}" />
                 </MenuItem>
 
                 <!-- help menu -->
-                <MenuItem Name="MenuItemHelp" Header="_Help">
-                    <MenuItem Name="MenuHelpAbout" Header="_About..." Click="MenuHelpAbout_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="Displays version information about this program and how to contact the development team." />
+                <MenuItem Name="MenuHelp" Header="{StaticResource CarnassialWindow.MenuHelp}">
+                    <MenuItem Name="MenuHelpAbout" Header="{StaticResource CarnassialWindow.MenuHelp.About}" Click="MenuHelpAbout_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuHelp.AboutToolTip}" />
                 </MenuItem>
             </Menu>
             <TextBlock Style="{StaticResource ApplicationTitle}" Grid.Column="2" />
@@ -329,17 +329,30 @@
                     <Setter Property="Padding" Value="10,2,10,2" />
                 </Style>
             </TabControl.Resources>
-            <TabItem Header="Instructions">
-                <control:HelpUserControl x:Name="Instructions" AllowDrop="True" Drop="Instructions_Drop" PreviewDragEnter="Instructions_PreviewDrag" PreviewDragOver="Instructions_PreviewDrag" Height="Auto" />
+            <TabItem Header="{StaticResource CarnassialWindow.Tab.Instructions}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="{StaticResource DefaultControlGridWidth}" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <control:Instructions x:Name="Instructions" AllowDrop="True" Drop="Instructions_Drop" PreviewDragEnter="Instructions_PreviewDrag" PreviewDragOver="Instructions_PreviewDrag" Height="Auto" Grid.Column="0" Grid.Row="0" />
+                </Grid>
             </TabItem>
-            <TabItem Header="Files">
+            <TabItem Header="{StaticResource CarnassialWindow.Tab.Files}">
                 <Grid Name="FileView">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
-                        <!-- ideally would be {Binding Source={x:Static local:Constant.DefaultControlGridWidth}} but the VS 2017 xaml editor doesn't support this -->
-                        <ColumnDefinition Width="300" />
+                        <ColumnDefinition Width="{StaticResource DefaultControlGridWidth}" />
                     </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    
                     <Grid Grid.Column="0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -362,9 +375,9 @@
                                     ValueChanged="FileNavigatorSlider_ValueChanged" />
                             <ToggleButton Name="PlayFilesButton" IsChecked="False" Click="MenuViewPlayFiles_Click" Style="{StaticResource PlayPauseButtonStyle}" Grid.Column="1" Grid.Row="0" />
                             <StatusBar Name="FileNavigation" Background="{StaticResource NavigationSliderBackgroundBrush}" Foreground="{StaticResource ApplicationBorderForegroundBrush}" Grid.Column="2" Grid.Row="0" MinWidth="165">
-                                <StatusBarItem Content="File:" FontWeight="Bold" Padding="2" />
+                                <StatusBarItem Content="{StaticResource CarnassialWindow.FileNavigation.File}" FontWeight="Bold" Padding="2" />
                                 <StatusBarItem Content="0" Padding="2" />
-                                <StatusBarItem Content="of" Padding="2" />
+                                <StatusBarItem Content="{StaticResource CarnassialWindow.FileNavigation.Of}" Padding="2" />
                                 <StatusBarItem Content="0" Padding="2" />
                                 <StatusBarItem Content="(all files)" Padding="2,2,5,2" />
                             </StatusBar>

@@ -3,7 +3,7 @@
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-		Title="Date/time - Add a varying correction value"
+		Title="{StaticResource DateTimeLinearCorrection.Title}"
         Loaded="Window_Loaded"
 		MinHeight="650" MinWidth="768" Height="856" Width="788" ShowInTaskbar="False" Style="{StaticResource ApplicationWindow}">
     <Window.CommandBindings>
@@ -47,19 +47,11 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <control:StockMessageControl x:Name="Message" StatusImage="Question" Grid.Row="0"
-                            Title="Date/time - Correct for a camera whose clock runs fast or slow."
-                            Problem="If a camera does not have an accurate clock, the time recorded on successive images or videos will be fast or slow, becoming increasingly inaccurate."
-                            Solution="Estimates of when the camera's clock was last correct and when the clock's error was measured are shown below.
-&#10;&#x2022; If needed, adjust the date/time when the camera was last correct in the left date/time picker.
-&#10;&#x2022; If needed, adjust the date/time when the camera's clock drift was measured in the right date/time picker.
-&#10;&#x2022; Set the amount of clock drift measured at far right.  Drift is positive for slow clocks, negative for fast ones.
-&#10;&#x2022; Click Preview Changes (which becomes active after you enter the clock drift) to review the changes that will be made.
-&#10;&#x2022; Click Apply Changes to apply those changes."
-                            Result="Using linear interpolation, each file's date/time is adjusted based on its position within the interval to correct.  In many cases this provides sufficient correction.  However, significant error may remain due to temperature variations or other factors, especially over long intervals.  The changes can be undone by applying an equal and opposite correction."
-                            Hint="&#x2022; Drift is defined as (actual date/time - date/time displayed on camera).  Thus, if the clock runs slow, the camera's time is behind correct time and the result is a positive time span.  For example, if the camera time is 09-Sep-2016 15:00:00 and the actual time is 09-Sep-2016 16:00:00 then the clock drift should be entered as 01:00:00.  Similarly, if the camera is fast the time span is negative.  For example, if the camera time was 09-Sep-2016 17:00:00 the drift would be -01:00:00.
-&#10;&#x2022; Among the files whose date/times will be adjusted the ones with the earliest and latest timestamps are shown below.
-&#10;&#x2022; The date and time format should be dd-MMM-yyyy HH:mm:ss, for example, 08-Jul-2016 14:30:00.
-&#10;&#x2022; The clock drift format should be [-]HH:mm:ss, for example, -00:46:18."
+                            Title="{StaticResource DateTimeLinearCorrection.Message.Title}"
+                            Problem="{StaticResource DateTimeLinearCorrection.Message.Problem}"
+                            Solution="{StaticResource DateTimeLinearCorrection.Message.Solution}"
+                            Result="{StaticResource DateTimeLinearCorrection.Message.Result}"
+                            Hint="{StaticResource DateTimeLinearCorrection.Message.Hint}"
                             HideExplanationCheckboxIsVisible="True" />
             <Rectangle Style="{StaticResource DialogHorizontalRule}" Grid.Row="1" />
             <!-- Content area -->
@@ -83,7 +75,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <Label Content="Camera last correct:" FontWeight="Bold" Grid.Row="0" Grid.Column="0"/>
+                    <Label Content="{StaticResource DateTimeLinearCorrection.LastCorrect}" FontWeight="Bold" Grid.Row="0" Grid.Column="0"/>
                     <control:DateTimeOffsetPicker x:Name="ClockLastCorrect" HorizontalAlignment="Left" Width="165" Grid.Row="0" Grid.Column="1" />
                 </Grid>
 
@@ -97,7 +89,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <Label Content="Clock drift measured:" FontWeight="Bold" Grid.Row="0" Grid.Column="0"/>
+                    <Label Content="{StaticResource DateTimeLinearCorrection.DriftMeasured}" FontWeight="Bold" Grid.Row="0" Grid.Column="0"/>
                     <control:DateTimeOffsetPicker Grid.Row="0" Grid.Column="1" x:Name="ClockDriftMeasured" HorizontalAlignment="Left" Width="165" />
                     <control:TimeSpanPicker Grid.Row="0" Grid.Column="2" x:Name="ClockDrift" HorizontalAlignment="Left" IsTabStop="True" Width="80" />
                 </Grid>
@@ -112,7 +104,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <Label Content="Earliest:" HorizontalAlignment="Left" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Row="0" Grid.Column="0"/>
+                    <Label Content="{StaticResource DateTimeLinearCorrection.Earliest}" HorizontalAlignment="Left" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Row="0" Grid.Column="0"/>
                     <Label Content="[ --- earliest file --- ]" HorizontalAlignment="Left" HorizontalContentAlignment="Left" FontWeight="Normal" Grid.Row="0" Grid.Column="1" Name="EarliestImageFileName" />
                     <Label Content="dd-MMM-yyyy HH:mm:ss" HorizontalAlignment="Left"  HorizontalContentAlignment="Left" FontWeight="Normal" Grid.Row="0" Grid.Column="2" Name="EarliestImageDateTime"/>
                 </Grid>
@@ -127,7 +119,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <Label Content="Latest:" HorizontalAlignment="Left" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Row="0" Grid.Column="0"/>
+                    <Label Content="{StaticResource DateTimeLinearCorrection.Latest}" HorizontalAlignment="Left" HorizontalContentAlignment="Right" FontWeight="Bold" Grid.Row="0" Grid.Column="0"/>
                     <Label Content="[ --- latest file --- ]" HorizontalAlignment="Left" HorizontalContentAlignment="Left" FontWeight="Normal" Grid.Row="0" Grid.Column="1" Name="LatestImageFileName"/>
                     <Label Content="dd-MMM-yyyy HH:mm:ss" HorizontalAlignment="Left"  HorizontalContentAlignment="Left" FontWeight="Normal" Grid.Row="0" Grid.Column="2" Name="LatestImageDateTime"/>
                 </Grid>
@@ -146,8 +138,8 @@
             </Grid>
             <!-- Ok/Cancel buttons-->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="3">
-                <Button Name="ChangesButton" IsDefault="True" AutomationProperties.AutomationId="ChangesButton" Padding="10" Margin="10,10,10,10" Click="ChangesButton_Click" IsEnabled="False">_Preview Changes</Button>
-                <Button Name="CancelButton" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
+                <Button Name="ChangesButton" IsDefault="True" AutomationProperties.AutomationId="ChangesButton" Click="ChangesButton_Click" Content="{StaticResource DateTimeAdjustment.PreviewChanges}" IsEnabled="False" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" />
+                <Button Name="CancelButton" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Click="CancelButton_Click" Content="{StaticResource Dialog.Cancel}" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" />
             </StackPanel>
         </Grid>
     </Grid>

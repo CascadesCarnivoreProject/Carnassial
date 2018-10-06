@@ -8,7 +8,9 @@ Bug reports, feature requests, and feedback are most welcome.  Let us know!  We'
 * Reconyx HyperFire, UltraFire, MicroFire, and RapidFire cameras
 * SpyPoint Force-10D and 11D cameras from 2016 or newer
 
-Having these in our archives helps us help you, so don't be shy.
+Having these in our archives helps us help you, so don't be shy.  See "Contacting the Carnassial Development Team" below for how to reach us.
+
+If you'd like to translate Carnassial into your language it's easy.  Send us your edited version of Resources.xaml or drop us a line and we'll set you up.
 
 If you're a developer and would like to submit a pull request please see below.
 
@@ -42,7 +44,10 @@ The need to analyze remote camera data is a common one.  In addition to Carnassi
 * Carnassial is readily available.  Obtaining the eMammal client requires a logon be issued, which can be hard to get.
 * Carnassial and Timelapse are broadly similar.  As of March 2017 Carnassial offers faster analysis, more flexibility, and fewer defects than Timelapse.
 
-If you know of others please email carnassialdev@gmail.com to let us know.
+If you know of others please let us know.
+
+### Contacting the Carnassial Development Team
+Feel free to open new issues on Carnassial here on github.  Or email us at carnassialdev@gmail.com.
 
 ### Development Environment
 Install [Visual Studio 2017 Community](https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx) or newer with the below options in addition to the defaults:
@@ -69,10 +74,12 @@ doing UI tasks if the view in the designer is to match what's displayed at x64 r
 StockMessageControl hits call graphs which go into Carnassial.Native, an approach which is anyways undesirable as there's a moderate performance penalty to building 
 AnyCPU rather than x64.)
 
-Visual Studio behaves similarly for unit test discovery, looking for an x86 build unless Test -> Test Settings -> Default Processor Architecture -> x64 is set, which
-unfortunately has to be done every time VS is started.  In some cases it's possible to specify a .runsettings without x64 selected and sometimes not, but test
-discovery does not honor the target platform specified in the .runsettings file.  In such situations VS can fail to find any unit tests until restarted, though 
-setting x64 and forcing a build typically gets test discovery unstuck.
+Visual Studio behaves similarly for unit test discovery, looking for an x86 build unless Test -> Test Settings -> Default Processor Architecture -> x64 is set.  In some 
+cases it's possible to specify a .runsettings without x64 selected and sometimes not, but test discovery does not honor the target platform specified in the .runsettings file.
+In such situations VS can fail to find any unit tests until restarted, though setting x64 and forcing a build typically gets test discovery unstuck.
+
+Carnassial uses WPF resource dictionaries for localization as the approach is lighter weight and more flexible than .resx files or locbaml type methods.  Culture
+specific resources are merged in Carnassial\LocalizedApplication.cs
 
 Also helpful are
 

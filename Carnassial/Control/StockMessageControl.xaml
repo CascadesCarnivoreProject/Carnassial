@@ -32,25 +32,25 @@
                 </Grid.RowDefinitions>
                 <Image Name="Image" Width="64" Height="64" Margin="2,2,2,2" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2"/>
                 <TextBox Name="TitleText" Background="Transparent" Margin="10,0,10,0" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" BorderThickness="0" IsReadOnly="True" IsTabStop="False" Grid.Column="1" Grid.Row="0" />
-                <CheckBox Name="HideExplanation" Content="_Hide explanation" Margin="8,0,10,0" VerticalAlignment="Center" Checked="HideExplanation_CheckedChanged" Unchecked="HideExplanation_CheckedChanged" Grid.Column="1" Grid.Row="1" />
+                <CheckBox Name="HideExplanation" Content="{StaticResource StockMessageControl.HideExplanation}" Margin="8,0,10,0" VerticalAlignment="Center" Checked="HideExplanation_CheckedChanged" Unchecked="HideExplanation_CheckedChanged" Grid.Column="1" Grid.Row="1" />
             </Grid>
 
-            <TextBlock Margin="10,7,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="1" Grid.Column="0" Text="Problem:" />
+            <TextBlock Margin="10,7,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="1" Grid.Column="0" Text="{StaticResource StockMessageControl.Problem}" />
             <TextBox Name="ProblemText" Background="Transparent" Margin="0,7,10,0" VerticalAlignment="Top" TextWrapping="Wrap" IsReadOnly="True" IsTabStop="False" BorderThickness="0" Grid.Row="1" Grid.Column="1" />
 
-            <TextBlock Margin="10,7,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="2" Grid.Column="0" Text="What:" />
+            <TextBlock Margin="10,7,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="2" Grid.Column="0" Text="{StaticResource StockMessageControl.What}" />
             <TextBox Name="WhatText" Background="Transparent" Margin="0,7,10,0" VerticalAlignment="Top" TextWrapping="Wrap" IsReadOnly="True" IsTabStop="False" BorderThickness="0" Grid.Row="2" Grid.Column="1" />
 
-            <TextBlock Margin="10,7,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="3" Grid.Column="0" Text="Reason:" />
+            <TextBlock Margin="10,7,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="3" Grid.Column="0" Text="{StaticResource StockMessageControl.Reason}" />
             <TextBox Name="ReasonText" Background="Transparent" Margin="0,7,10,0" VerticalAlignment="Top" TextWrapping="Wrap" IsReadOnly="True" IsTabStop="False" BorderThickness="0" Grid.Row="3" Grid.Column="1" />
 
-            <TextBlock Margin="10,7,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="4" Grid.Column="0" Text="Solution:" />
+            <TextBlock Margin="10,7,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="4" Grid.Column="0" Text="{StaticResource StockMessageControl.Solution}" />
             <TextBox Name="SolutionText" Background="Transparent" Margin="0,7,10,0" VerticalAlignment="Top" TextWrapping="Wrap" IsReadOnly="True" IsTabStop="False" BorderThickness="0" Grid.Row="4" Grid.Column="1" />
 
-            <TextBlock Margin="10,7,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="5" Grid.Column="0" Text="Result:" />
+            <TextBlock Margin="10,7,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="5" Grid.Column="0" Text="{StaticResource StockMessageControl.Result}" />
             <TextBox Name="ResultText" Background="Transparent" Margin="0,7,10,0" VerticalAlignment="Top" TextWrapping="Wrap" IsReadOnly="True" IsTabStop="False" BorderThickness="0" Grid.Row="5" Grid.Column="1" />
 
-            <TextBlock Margin="10,7,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="6" Grid.Column="0" Text="Hint:" />
+            <TextBlock Margin="10,7,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="6" Grid.Column="0" Text="{StaticResource StockMessageControl.Hint}" />
             <TextBox Name="HintText" Background="Transparent" Margin="0,7,10,0" VerticalAlignment="Top" TextWrapping="Wrap" IsReadOnly="True" IsTabStop="False" BorderThickness="0" Grid.Row="6" Grid.Column="1" />
         </Grid>
     </Grid>

@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8" ?> 
+<!-- non-style resources used by both Carnassial and the template editor -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+                    xmlns:system="clr-namespace:System;assembly=mscorlib"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Thickness x:Key="RichTextBox.WpfWorkarounds.ZeroThickness" />
+    <system:Double x:Key="UI.BulletSpacing">6.0</system:Double>
+
+    <Span x:Key="About.Author">
+        <Run FontWeight="Bold" Text="Author: " />
+        <Run Text="Carnassial development team" />
+        <LineBreak />
+        <TextBlock Margin="50,0,0,0">Cascades Carnivore Project</TextBlock>
+    </Span>
+    <system:String x:Key="About.CheckForNewerRelease">_Check for newer release</system:String>
+    <!-- IssuesLink and EmailLink are fully configured in code behind -->
+    <!-- TermsOfUse is specified in Resources.xaml -->
+    <system:String x:Key="About.Version">Version:</system:String>
+    <system:String x:Key="About.ViewReleases">_View releases</system:String>
+
+    <system:String x:Key="AdvancedImageSetOptions.TimeZone">Time zone</system:String>
+    <TextBlock x:Key="AdvancedImageSetOptions.TimeZone.Description" FontWeight="Normal" TextWrapping="Wrap" Grid.Column="0" Grid.Row="0">
+        By default Carnassial uses your computer's time zone, both when adding files to image sets and when displaying dates and times. If your cameras are in a different time zone or don't follow your local time zone's daylight savings time behavior because your study uses standard or universal time you can select an alternate timezone in the dropdown below.
+    </TextBlock>
+    <system:String x:Key="AdvancedImageSetOptions.Message.What">These options should be changed only if you know what you are doing. See the wiki for details.</system:String>
+    <system:String x:Key="AdvancedImageSetOptions.Title">Advanced image set options</system:String>
+
+    <system:String x:Key="AdvancedOptions.Reset">_Reset</system:String>
+
+    <system:String x:Key="AnalysisButtons.MenuAssignToSlotToolTip">Copy data entered for the current file to analysis number {0}.</system:String>
+    <system:String x:Key="AnalysisButtons.MenuHeader">Analysis _{0}</system:String>
+    <system:String x:Key="AnalysisButtons.MenuPasteFromSlotToolTip">Apply data in analysis {0} to the current file.</system:String>
+    <system:String x:Key="AnalysisButtons.PasteAnalysis1">Analysis _1</system:String>
+    <system:String x:Key="AnalysisButtons.PasteAnalysis1Tooltip">Apply copyable values stored in analysis 1.</system:String>
+    <system:String x:Key="AnalysisButtons.PasteAnalysis2">Analysis _2</system:String>
+    <system:String x:Key="AnalysisButtons.PasteAnalysis2Tooltip">Apply copyable values stored in analysis 2.</system:String>
+    <system:String x:Key="AnalysisButtons.PasteAnalysis3">Analysis _3</system:String>
+    <system:String x:Key="AnalysisButtons.PasteAnalysis3Tooltip">Apply copyable values stored in analysis 3.</system:String>
+    <system:String x:Key="AnalysisButtons.PasteAnalysis4">Analysis _4</system:String>
+    <system:String x:Key="AnalysisButtons.PasteAnalysis4Tooltip">Apply copyable values stored in analysis 4.</system:String>
+    <system:String x:Key="AnalysisButtons.PasteAnalysis5">Analysis _5</system:String>
+    <system:String x:Key="AnalysisButtons.PasteAnalysis5Tooltip">Apply copyable values stored in analysis 5.</system:String>
+    <system:String x:Key="AnalysisButtons.PasteAnalysis6">Analysis _6</system:String>
+    <system:String x:Key="AnalysisButtons.PasteAnalysis6Tooltip">Apply copyable values stored in analysis 6.</system:String>
+    <system:String x:Key="AnalysisButtons.PasteAnalysis7">Analysis _7</system:String>
+    <system:String x:Key="AnalysisButtons.PasteAnalysis7Tooltip">Apply copyable values stored in analysis 7.</system:String>
+    <system:String x:Key="AnalysisButtons.PasteAnalysis8">Analysis _8</system:String>
+    <system:String x:Key="AnalysisButtons.PasteAnalysis8Tooltip">Apply copyable values stored in analysis 8.</system:String>
+    <system:String x:Key="AnalysisButtons.PasteAnalysis9">Analysis _9</system:String>
+    <system:String x:Key="AnalysisButtons.PasteAnalysis9Tooltip">Apply copyable values stored in analysis 9.</system:String>
+    <system:String x:Key="AnalysisButtons.PastePreviousValues">Paste _previous</system:String>
+    <system:String x:Key="AnalysisButtons.PastePreviousValuesTooltip">Copy the highlighted data (fields marked 'Copyable' in the template) from the previous file.</system:String>
+    <system:String x:Key="AnalysisButtons.PasteNextValues">Paste _next</system:String>
+    <system:String x:Key="AnalysisButtons.PasteNextValuesTooltip">Copy the highlighted data (fields marked 'Copyable' in the template) from the next file.</system:String>
+
+    <system:String x:Key="Dialog.Cancel">_Cancel</system:String>
+    <system:String x:Key="Dialog.OK">_Okay</system:String>
+
+    <!-- register Carnassial resource files so Visual Studio's XAML design window makes them available when calling into user controls such as StockMessageControl -->
+    <BitmapImage x:Key="StatusCriticalError_64x.png" UriSource="pack://application:,,/Resources/StatusCriticalError_64x.png" />
+    <BitmapImage x:Key="StatusHelp_64x.png" UriSource="pack://application:,,/Resources/StatusHelp_64x.png" />
+    <BitmapImage x:Key="StatusInformation_64x.png" UriSource="pack://application:,,/Resources/StatusInformation_64x.png" />
+    <BitmapImage x:Key="StatusWarning_64x.png" UriSource="pack://application:,,/Resources/StatusWarning_64x.png" />
+
+    <system:String x:Key="StockMessageControl.HideExplanation">_Hide explanation</system:String>
+    <system:String x:Key="StockMessageControl.Problem">Problem:</system:String>
+    <system:String x:Key="StockMessageControl.What">What:</system:String>
+    <system:String x:Key="StockMessageControl.Reason">Reason:</system:String>
+    <system:String x:Key="StockMessageControl.Solution">Solution:</system:String>
+    <system:String x:Key="StockMessageControl.Result">Result:</system:String>
+    <system:String x:Key="StockMessageControl.Hint">Hint:</system:String>
+
+</ResourceDictionary>

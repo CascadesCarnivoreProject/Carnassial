@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
-        Title="Advanced image set options" 
+        Title="{StaticResource AdvancedImageSetOptions.Title}" 
         Loaded="Window_Loaded" MaxHeight="860" SizeToContent="Height" Style="{StaticResource ApplicationWindow}" Width="820">
     <Window.CommandBindings>
         <CommandBinding Command="{x:Static SystemCommands.CloseWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="CloseWindow_Execute" />
@@ -49,9 +49,9 @@
             </Grid.RowDefinitions>
             
             <control:StockMessageControl x:Name="Message" Margin="10,5,10,5" StatusImage="Question"
-                            Title="Advanced image set options"
-                            What="These options should be changed only if you know what you are doing. See the wiki for details." Grid.Row="0" />
-            <GroupBox Header="Time zone" Margin="10,5,10,5" HorizontalAlignment="Stretch" VerticalAlignment="Top" FontWeight="Bold" Padding="5" Grid.Row="1">
+                                         Title="{StaticResource AdvancedImageSetOptions.Title}"
+                                         What="{StaticResource AdvancedImageSetOptions.Message.What}" Grid.Row="0" />
+            <GroupBox Header="{StaticResource AdvancedImageSetOptions.TimeZone}" Margin="10,5,10,5" HorizontalAlignment="Stretch" VerticalAlignment="Top" FontWeight="Bold" Padding="5" Grid.Row="1">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -61,14 +61,14 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <TextBlock Text="By default Carnassial uses your computer's time zone, both when adding files to image sets and when displaying dates and times. If your cameras are in a different time zone or don't follow your local time zone's daylight savings time behavior because your study uses standard or universal time you can select an alternate timezone in the dropdown below." FontWeight="Normal" FontStyle="Normal" TextWrapping="Wrap" />
+                    <StaticResource ResourceKey="AdvancedImageSetOptions.TimeZone.Description" />
                     <control:TimeZonePicker x:Name="TimeZones" HorizontalAlignment="Left" Width="500" Height="26" Grid.Row="1" Grid.Column="0" />
-                    <Button x:Name="ResetTimeZone" Content="_Reset" Click="ResetTimeZone_Click" FontWeight="Normal" Margin="0,0,10,0" Padding="10" Grid.Row="1" Grid.Column="1" />
+                    <Button x:Name="ResetTimeZone" Content="{StaticResource AdvancedOptions.Reset}" Click="ResetTimeZone_Click" FontWeight="Normal" Margin="0,0,10,0" Padding="{StaticResource Dialog.ButtonPadding}" Grid.Row="1" Grid.Column="1" />
                 </Grid>
             </GroupBox>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="2">
-                <Button Name="OkButton" Content="_Okay" IsDefault="True" Margin="10,10,10,10" Padding="10" Click="OkButton_Click" AutomationProperties.AutomationId="OkButton" />
-                <Button Name="CancelButton" Content="_Cancel" IsCancel="True" Margin="10,10,10,10" Padding="10" Click="CancelButton_Click" AutomationProperties.AutomationId="CancelButton" />
+                <Button Name="OkButton" Content="{StaticResource Dialog.OK}" IsDefault="True" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" Click="OkButton_Click" AutomationProperties.AutomationId="OkButton" />
+                <Button Name="CancelButton" Content="{StaticResource Dialog.Cancel}" IsCancel="True" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" Click="CancelButton_Click" AutomationProperties.AutomationId="CancelButton" />
             </StackPanel>
         </Grid>
     </Grid>

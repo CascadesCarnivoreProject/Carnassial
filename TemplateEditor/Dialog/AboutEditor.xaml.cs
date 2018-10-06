@@ -3,6 +3,7 @@ using Carnassial.Util;
 using System;
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Documents;
 using System.Windows.Navigation;
 
 namespace Carnassial.Editor.Dialog
@@ -25,16 +26,29 @@ namespace Carnassial.Editor.Dialog
             this.Version.Text = typeof(AboutEditor).Assembly.GetName().Version.ToString();
 
             this.CheckForNewerRelease.IsEnabled = this.latestReleaseAddress != null;
-            this.EmailLink.NavigateUri = CarnassialConfigurationSettings.GetDevTeamEmailLink();
-            string emailAddress = this.EmailLink.NavigateUri.ToEmailAddress();
-            this.EmailLink.Inlines.Clear();
-            this.EmailLink.Inlines.Add(emailAddress);
-            this.EmailLink.ToolTip = emailAddress;
-            this.IssuesLink.NavigateUri = CarnassialConfigurationSettings.GetIssuesBrowserAddress();
-            this.IssuesLink.Inlines.Clear();
-            this.IssuesLink.Inlines.Add(this.IssuesLink.NavigateUri.AbsoluteUri);
-            this.IssuesLink.ToolTip = this.IssuesLink.NavigateUri.AbsoluteUri;
             this.ViewReleases.IsEnabled = this.releasesAddress != null;
+
+            // configure hyperlinks
+            // See remarks in Carnassial's About..ctor().
+            Span termsOfUse = App.FindResource<Span>(EditorConstant.ResourceKey.AboutEditorTermsOfUse);
+            if (termsOfUse.Tag == null)
+            {
+                Hyperlink emailLink = (Hyperlink)LogicalTreeHelper.FindLogicalNode(termsOfUse, Constant.ResourceName.AboutEmailLink);
+                emailLink.NavigateUri = CarnassialConfigurationSettings.GetDevTeamEmailLink();
+                emailLink.Inlines.Clear();
+                emailLink.Inlines.Add(emailLink.NavigateUri.ToEmailAddress());
+                emailLink.RequestNavigate += this.Hyperlink_RequestNavigate;
+                emailLink.ToolTip = emailLink.NavigateUri.ToEmailAddress();
+
+                Hyperlink issuesLink = (Hyperlink)LogicalTreeHelper.FindLogicalNode(termsOfUse, Constant.ResourceName.AboutIssuesLink);
+                issuesLink.NavigateUri = CarnassialConfigurationSettings.GetIssuesBrowserAddress();
+                issuesLink.Inlines.Clear();
+                issuesLink.Inlines.Add(issuesLink.NavigateUri.AbsoluteUri);
+                issuesLink.RequestNavigate += this.Hyperlink_RequestNavigate;
+                issuesLink.ToolTip = issuesLink.NavigateUri.AbsoluteUri;
+
+                termsOfUse.Tag = true;
+            }
         }
 
         private void CheckForUpdate_Click(object sender, RoutedEventArgs e)

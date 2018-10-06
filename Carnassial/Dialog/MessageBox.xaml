@@ -52,10 +52,10 @@
             <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Row="0">
                 <control:StockMessageControl x:FieldModifier="public" x:Name="Message" HideExplanationCheckboxIsVisible="False" />
             </ScrollViewer>
-            <CheckBox Name="DontShowAgain" Content="_Don't show this message again." Margin="10,10,10,10" Grid.Row="1" Visibility="Collapsed" />
+            <CheckBox Name="DontShowAgain" Content="{StaticResource Message.DontShowAgain}" Margin="10,10,10,10" Visibility="Collapsed" Grid.Row="1" />
             <StackPanel Orientation="Horizontal" Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Bottom">
-                <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">_Okay</Button>
-                <Button Name="CancelButton" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Visibility="Collapsed" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
+                <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" Click="OkButton_Click" Content="{StaticResource Dialog.OK}" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" />
+                <Button Name="CancelButton" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Click="CancelButton_Click" Content="{StaticResource Dialog.Cancel}" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" Visibility="Collapsed" />
             </StackPanel>
         </Grid>
     </Grid>

@@ -17,7 +17,7 @@ namespace Carnassial
 
         public const string ApplicationName = "Carnassial";
         public const string Debug = "DEBUG";
-        public const int DefaultControlGridWidth = 300; // keep in sync with corresponding default in CarnassialWindow.xaml
+        public const int DefaultControlGridWidth = 300; // keep in sync with DefaultControlGridWidth in CarnassialWindowStyle.xaml
         public const int LargeNumberOfFilesToDelete = 100;
         public const string MainWindowBaseTitle = "Carnassial: Simplifying Remote Camera Data";
         public const int MaximumUndoableCommands = 100;
@@ -39,6 +39,7 @@ namespace Carnassial
             public const string Kernel32 = "kernel32.dll";
             public const string Shell32 = "shell32.dll";
             public const string Shlwapi = "shlwapi.dll";
+            public const string User32 = "user32.dll";
         }
 
         public static class ComGuid
@@ -453,6 +454,23 @@ namespace Carnassial
         public static class Release
         {
             public static readonly Version V2_2_0_3 = new Version(2, 2, 0, 3);
+        }
+
+        public static class ResourceKey
+        {
+            public const string AboutTermsOfUse = "About.TermsOfUse";
+            public const string AnalysisAssignToolTip = "AnalysisButtons.MenuAssignToSlotToolTip";
+            public const string AnalysisHeader = "AnalysisButtons.MenuHeader";
+            public const string AnalysisPasteToolTip = "AnalysisButtons.MenuPasteFromSlotToolTip";
+            public const string GoToFileNumberRange = "GoToFile.FileNumberRange";
+            public const string KeyboardControl = "Keyboard.Control";
+        }
+
+        public static class ResourceName
+        {
+            public const string AboutEmailLink = "EmailLink";
+            public const string AboutIssuesLink = "IssuesLink";
+            public const string InstructionsTutorialLink = "TutorialLink";
         }
 
         public static class SearchTermOperator

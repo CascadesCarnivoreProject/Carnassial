@@ -5,6 +5,7 @@ using Carnassial.Database;
 using Carnassial.Dialog;
 using Carnassial.Github;
 using Carnassial.Images;
+using Carnassial.Interop;
 using Carnassial.Spreadsheet;
 using Carnassial.Util;
 using Microsoft.WindowsAPICodePack.Dialogs;
@@ -33,37 +34,14 @@ namespace Carnassial
     /// </summary>
     public partial class CarnassialWindow : ApplicationWindow, IDisposable
     {
-        #if DEBUG
-        // hook to allow tests to set culture
-        internal static bool UseCurrentCulture { get; set; }
-        #endif
-
         private bool disposed;
         private SpeechSynthesizer speechSynthesizer;
 
         public DataEntryHandler DataHandler { get; private set; }
         public CarnassialState State { get; private set; }
 
-        #if DEBUG
-        static CarnassialWindow()
-        {
-            CarnassialWindow.UseCurrentCulture = false;
-        }
-        #endif
-
         public CarnassialWindow()
         {
-            #if DEBUG
-            if (CarnassialWindow.UseCurrentCulture == false)
-            {
-                string debugCultureName = CultureInfo.CurrentCulture.Name.StartsWith("es", StringComparison.Ordinal) ? "en-IN" : "es-CL";
-                CultureInfo testCulture = CultureInfo.GetCultureInfo(debugCultureName);
-                CultureInfo.CurrentCulture = testCulture;
-                CultureInfo.CurrentUICulture = testCulture;
-                CultureInfo.DefaultThreadCurrentCulture = testCulture;
-                CultureInfo.DefaultThreadCurrentUICulture = testCulture;
-            }
-            #endif
             AppDomain.CurrentDomain.UnhandledException += this.OnUnhandledException;
             this.InitializeComponent();
 
@@ -85,27 +63,30 @@ namespace Carnassial
             this.State.Throttles.FilePlayTimer.Tick += this.FilePlay_TimerTick;
 
             // populate lists of menu items
+            CultureInfo keyboardCulture = NativeMethods.GetKeyboardCulture();
+            string keyboardControlPrefix = App.FindResource<string>(Constant.ResourceKey.KeyboardControl, keyboardCulture);
             for (int analysisSlot = 0; analysisSlot < Constant.AnalysisSlots; ++analysisSlot)
             {
                 int displaySlot = analysisSlot + 1;
+                string displaySlotKeyName = displaySlot.ToString(keyboardCulture);
+                string analysisHeader = App.FormatResource(Constant.ResourceKey.AnalysisHeader, displaySlotKeyName);
 
                 MenuItem copyToAnalysisSlot = new MenuItem();
                 copyToAnalysisSlot.Click += this.MenuEditCopyValuesToAnalysis_Click;
-                copyToAnalysisSlot.Header = String.Format("Analysis _{0}", displaySlot);
-                copyToAnalysisSlot.Icon = new Image() { Source = Constant.Images.Copy.Value };
-                copyToAnalysisSlot.InputGestureText = String.Format("Ctrl+{0}", displaySlot);
+                copyToAnalysisSlot.Header = analysisHeader;
+                copyToAnalysisSlot.InputGestureText = keyboardControlPrefix + displaySlotKeyName;
                 copyToAnalysisSlot.Tag = analysisSlot;
-                copyToAnalysisSlot.ToolTip = String.Format("Copy data entered for the current file analysis number {0}.", displaySlot);
+                copyToAnalysisSlot.ToolTip = App.FormatResource(Constant.ResourceKey.AnalysisAssignToolTip, displaySlot);
                 this.MenuEditCopyValuesToAnalysis.Items.Add(copyToAnalysisSlot);
-
+                
                 MenuItem pasteFromAnalysisSlot = new MenuItem();
                 pasteFromAnalysisSlot.Click += this.MenuEditPasteFromAnalysis_Click;
                 pasteFromAnalysisSlot.Icon = new Image() { Source = Constant.Images.Paste.Value };
-                pasteFromAnalysisSlot.InputGestureText = String.Format("{0}", displaySlot);
+                pasteFromAnalysisSlot.InputGestureText = displaySlotKeyName;
                 pasteFromAnalysisSlot.IsEnabled = false;
-                pasteFromAnalysisSlot.Header = String.Format("Analysis _{0}", displaySlot);
+                pasteFromAnalysisSlot.Header = analysisHeader;
                 pasteFromAnalysisSlot.Tag = analysisSlot;
-                pasteFromAnalysisSlot.ToolTip = String.Format("Apply data in analysis {0}.", displaySlot);
+                pasteFromAnalysisSlot.ToolTip = App.FormatResource(Constant.ResourceKey.AnalysisPasteToolTip, displaySlot);
                 this.MenuEditPasteValuesFromAnalysis.Items.Add(pasteFromAnalysisSlot);
             }
             this.MenuFileRecentImageSets_Refresh();
@@ -275,13 +256,13 @@ namespace Carnassial
             this.MenuEdit.IsEnabled = filesSelected;
             // view menu
             this.MenuView.IsEnabled = filesSelected;
+            this.MenuViewDisplayMagnifier.IsChecked = imageSetAvailable && this.DataHandler.FileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier);
             // select menu
             this.MenuSelect.IsEnabled = filesSelected;
             // options menu
             // always enable at top level when an image set exists so that image set advanced options are accessible
             this.MenuOptions.IsEnabled = imageSetAvailable;
             this.MenuOptionsAudioFeedback.IsEnabled = filesSelected;
-            this.MenuOptionsDisplayMagnifier.IsChecked = imageSetAvailable && this.DataHandler.FileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier);
             this.MenuOptionsDialogsOnOrOff.IsEnabled = filesSelected;
             this.MenuOptionsAdvancedCarnassialOptions.IsEnabled = filesSelected;
 
@@ -1489,7 +1470,7 @@ namespace Carnassial
             bool displayMagnifier = this.DataHandler.FileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier);
             displayMagnifier = !displayMagnifier;
             this.DataHandler.FileDatabase.ImageSet.Options = this.DataHandler.FileDatabase.ImageSet.Options.SetFlag(ImageSetOptions.Magnifier, displayMagnifier);
-            this.MenuOptionsDisplayMagnifier.IsChecked = displayMagnifier;
+            this.MenuViewDisplayMagnifier.IsChecked = displayMagnifier;
             this.FileDisplay.MagnifyingGlassEnabled = displayMagnifier;
         }
 
@@ -2209,9 +2190,9 @@ namespace Carnassial
                 // enable or disable menu items whose availability depends on whether the file's an image or video
                 bool isVideo = this.DataHandler.ImageCache.Current.IsVideo;
                 bool isImage = !isVideo;
-                this.MenuOptionsDisplayMagnifier.IsEnabled = isImage;
                 this.MenuViewApplyBookmark.IsEnabled = isImage;
                 this.MenuViewDifferencesCombined.IsEnabled = isImage;
+                this.MenuViewDisplayMagnifier.IsEnabled = isImage;
                 this.MenuViewMagnifierZoomIncrease.IsEnabled = isImage;
                 this.MenuViewMagnifierZoomDecrease.IsEnabled = isImage;
                 this.MenuViewNextOrPreviousDifference.IsEnabled = isImage;

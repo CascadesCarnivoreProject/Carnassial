@@ -4,7 +4,7 @@
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Loaded="Window_Loaded"
-        Title="About Carnassial" MaxHeight="860" MinHeight="450" SizeToContent="Height" Width="550"
+        Title="{StaticResource About.Title}" MaxHeight="860" MinHeight="450" SizeToContent="Height" Width="550"
 		ShowInTaskbar="False" Style="{StaticResource ApplicationWindow}">
     <Window.CommandBindings>
         <CommandBinding Command="{x:Static SystemCommands.CloseWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="CloseWindow_Execute" />
@@ -44,7 +44,7 @@
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <control:StockMessageControl x:Name="Message" HideExplanationCheckboxIsVisible="False" Margin="0,0,0,10" StatusImage="Information" Title="About Carnassial" Grid.Row="0" />
+            <control:StockMessageControl x:Name="Message" HideExplanationCheckboxIsVisible="False" Margin="0,0,0,10" StatusImage="Information" Title="{StaticResource About.Title}" Grid.Row="0" />
             <StackPanel Orientation="Vertical" Grid.Row="1">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -53,19 +53,21 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBlock HorizontalAlignment="Left" Margin="10,10,0,10" Grid.Column="0">
-                <Run FontWeight="Bold" Text="Version: " />
-                <Run x:Name="Version" />
+                        <Run FontWeight="Bold" Text="{StaticResource About.Version}" />
+                        <Run x:Name="Version" />
                     </TextBlock>
-                    <Button x:Name="CheckForNewerRelease" Content="_Check for newer release" Margin="10,0,10,0" Padding="5,0,5,0" Click="CheckForUpdate_Click" Grid.Column="1" />
-                    <Button x:Name="ViewReleases" Content="_View releases" Margin="10,0,15,0" Padding="5,0,5,0" Click="VersionChanges_Click" Grid.Column="2" />
+                    <Button x:Name="CheckForNewerRelease" Content="{StaticResource About.CheckForNewerRelease}" Margin="10,0,10,0" Padding="5,0,5,0" Click="CheckForUpdate_Click" Grid.Column="1" />
+                    <Button x:Name="ViewReleases" Content="{StaticResource About.ViewReleases}" Margin="10,0,15,0" Padding="5,0,5,0" Click="VersionChanges_Click" Grid.Column="2" />
                 </Grid>
-                <TextBlock Margin="10,10,10,0"><Run FontWeight="Bold" Text="Author: " /><Run Text="Carnassial development team"/></TextBlock>
-                <TextBlock Margin="60,0,10,0">Cascades Carnivore Project</TextBlock>
-                <TextBlock Margin="10,10,10,0" FontWeight="Bold">Terms of use:</TextBlock>
-                <TextBlock Margin="60,0,10,5" TextWrapping="Wrap">Carnassial is supplied as is as a volunteer extension of our regular work.  However, we'd like to it make it better for you too.  Submit comments, problems, or suggestions at <Hyperlink Name="IssuesLink" RequestNavigate="Hyperlink_RequestNavigate">https://github.com/Organization/Repo/issues</Hyperlink> or email <Hyperlink Name="EmailLink" RequestNavigate="Hyperlink_RequestNavigate">devteam@provider.net</Hyperlink>.  If you fork the repo to address your needs please submit a pull request after ensuring your changes meet the commit requirements described in the readme!</TextBlock>
-                <TextBlock Margin="60,5,10,0" TextWrapping="Wrap">Carnassial is licensed under the <Hyperlink NavigateUri="https://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International license</Hyperlink> and derives from <Hyperlink NavigateUri="http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.TimelapseVersions">Timelapse 2.0.2.4</Hyperlink>.</TextBlock>
+                <TextBlock Margin="10,10,10,0">
+                    <StaticResource ResourceKey="About.Author" />
+                </TextBlock>
+                
+                <TextBlock Margin="10,10,10,0">
+                    <StaticResource ResourceKey="About.TermsOfUse" />
+                </TextBlock>
             </StackPanel>
-            <Button Name="OkButton" IsCancel="True" IsDefault="True" AutomationProperties.AutomationId="OkButton" HorizontalAlignment="Right" Padding="10" Margin="10,10,10,10" Click="OkButton_Click" IsEnabled="True" Grid.Row="2">_Okay</Button>
+            <Button Name="OkButton" IsCancel="True" IsDefault="True" AutomationProperties.AutomationId="OkButton" Click="OkButton_Click" HorizontalAlignment="Right" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" Grid.Row="2" Content="{StaticResource Dialog.OK}" />
         </Grid>
     </Grid>
 </local:WindowWithSystemMenu>

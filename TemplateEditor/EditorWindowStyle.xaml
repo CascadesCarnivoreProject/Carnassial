@@ -5,6 +5,10 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:control="clr-namespace:Carnassial.Control;assembly=Carnassial"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ideally would be {Binding Source={x:Static local:Constant.DefaultControlGridWidth}} but VS 2017's design view doesn't support this -->
+    <GridLength x:Key="DefaultControlGridWidth">300.0</GridLength>
+
     <SolidColorBrush x:Key="ApplicationBackgroundBrush" Color="LightGray" />
     <SolidColorBrush x:Key="ApplicationBorderBackgroundBrush" Color="#404040" />
     <SolidColorBrush x:Key="ApplicationBorderForegroundBrush" Color="White" />
@@ -86,6 +90,9 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <Thickness x:Key="Dialog.ButtonMargin">10,10,10,10</Thickness>
+    <Thickness x:Key="Dialog.ButtonPadding">10</Thickness>
 
     <Style x:Key="DialogGrid" TargetType="Grid">
         <Setter Property="Background" Value="{StaticResource DialogBackgroundBrush}" />

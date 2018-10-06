@@ -9,7 +9,6 @@ using Carnassial.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -43,7 +42,7 @@ namespace Carnassial.UnitTests
         public static void ClassInitialize(TestContext testContext)
         {
             #if DEBUG
-            CarnassialWindow.UseCurrentCulture = true;
+            ApplicationWindow.UseCurrentCulture = true;
             #endif
             CarnassialTest.TryChangeToTestCultures();
 
@@ -56,12 +55,12 @@ namespace Carnassial.UnitTests
                 ShutdownMode = ShutdownMode.OnExplicitShutdown
             };
 
-            ResourceDictionary carnassialResourceDictionary = (ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/CarnassialWindowStyle.xaml", UriKind.Relative));
-            foreach (object key in carnassialResourceDictionary.Keys)
-            {
-                Application.Current.Resources.Add(key, carnassialResourceDictionary[key]);
-            }
+            Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/CarnassialWindowStyle.xaml", UriKind.Relative)));
+            Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/Properties/SharedResources.xaml", UriKind.Relative)));
+            Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/Properties/Resources.xaml", UriKind.Relative)));
+
             ResourceDictionary editorResourceDictionary = (ResourceDictionary)Application.LoadComponent(new Uri("/CarnassialTemplateEditor;component/EditorWindowStyle.xaml", UriKind.Relative));
+            Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/CarnassialTemplateEditor;component/Properties/Resources.xaml", UriKind.Relative)));
             foreach (object key in editorResourceDictionary.Keys)
             {
                 if (Application.Current.Resources.Contains(key) == false)

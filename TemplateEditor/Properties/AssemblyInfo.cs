@@ -26,6 +26,7 @@ using System.Windows;
 
 [assembly: InternalsVisibleTo("Carnassial.UnitTests")]
 
-[assembly: NeutralResourcesLanguage("en", UltimateResourceFallbackLocation.MainAssembly)]
 ////                 no theme support                 styling is in this assembly
 [assembly: ThemeInfo(ResourceDictionaryLocation.None, ResourceDictionaryLocation.SourceAssembly)]
+
+[assembly: NeutralResourcesLanguage("en", UltimateResourceFallbackLocation.MainAssembly)]

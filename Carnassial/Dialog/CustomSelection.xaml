@@ -3,7 +3,7 @@
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:dialog="clr-namespace:Carnassial.Dialog"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Create a custom selection."
+        Title="{StaticResource CustomSelection.Title}"
         Closed="Window_Closed" Loaded="Window_Loaded"
         MinHeight="500" MinWidth="700" Height="900" Width="768" ShowInTaskbar="False" Style="{StaticResource ApplicationWindow}">
     <Window.CommandBindings>
@@ -47,24 +47,24 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <control:StockMessageControl x:Name="Message" StatusImage="Question"
-                            Title="Create a custom selection."
-                            What="You may want to view only a subset of your images and videos which fit some criteria of interest to you."
-                            Solution="Specify the search terms which describe your criteria. Each row below reflects one of your data fields.  Select one or more data fields that you want to use as part of your search, select the expresson you want to use, and select or enter the value you want to use to compare against the data field's contents."
-                            Result="Only those files matching your search criteria will be displayed."
-                            Hint="Like expressions are case insensitive and allow wildcards as follows:&#10;&#x2022; * matches any number of characters and ? matches any single character&#10;&#x2022; [abc] matches one of the indicated characters; [a-z] matches one character in the range of indicated characters.&#10;More complex queries can be created by right clicking on a label and duplicating the term."
+                            Title="{StaticResource CustomSelection.Message.Title}"
+                            What="{StaticResource CustomSelection.Message.What}"
+                            Solution="{StaticResource CustomSelection.Message.Solution}"
+                            Result="{StaticResource CustomSelection.Message.Result}"
+                            Hint="{StaticResource CustomSelection.Message.Hint}"
                             HideExplanationCheckboxIsVisible="True" Grid.Row="0"/>
             <StackPanel Orientation="Vertical" VerticalAlignment="Stretch" Grid.Row="1">
                 <Rectangle Style="{StaticResource DialogHorizontalRule}" />
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Margin="10" FontWeight="Bold" VerticalAlignment="Center" Text="Combine searches using: "/>
+                    <TextBlock Margin="10" FontWeight="Bold" VerticalAlignment="Center" Text="{StaticResource CustomSelection.CombineSearches}"/>
                     <StackPanel Orientation="Vertical">
                         <StackPanel Orientation="Horizontal">
-                            <RadioButton VerticalAlignment="Center" Name="TermCombiningAnd" Margin="3,3,0,3 " FontWeight="Bold" Content="_And" GroupName="LogicalOperators" IsChecked="True"/>
-                            <TextBlock VerticalAlignment="Center" Margin="3,3,0,3" Text="to select images and videos matching all search terms"/>
+                            <RadioButton VerticalAlignment="Center" Name="TermCombiningAnd" Margin="3,3,0,3 " FontWeight="Bold" Content="{StaticResource CustomSelection.CombineSearches.And}" GroupName="LogicalOperators" IsChecked="True" />
+                            <TextBlock VerticalAlignment="Center" Margin="3,3,0,3" Text="{StaticResource CustomSelection.CombineSearches.And.Description}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
-                            <RadioButton Name="TermCombiningOr" VerticalAlignment="Center" Margin="3,1,0,3" FontWeight="Bold" Content="O_r" GroupName="LogicalOperators"  />
-                            <TextBlock VerticalAlignment="Center" Margin="3,0,0,3" Text="   to select images and videos matching any one of the search terms"/>
+                            <RadioButton Name="TermCombiningOr" VerticalAlignment="Center" Margin="3,1,0,3" FontWeight="Bold" Content="{StaticResource CustomSelection.CombineSearches.Or}" GroupName="LogicalOperators" />
+                            <TextBlock VerticalAlignment="Center" Margin="3,0,0,3" Text="{StaticResource CustomSelection.CombineSearches.Or.Description}" />
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
@@ -81,19 +81,19 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <TextBlock Padding="10,0,5,0" FontWeight="Bold" Text="Label" Grid.Row="0" Grid.Column="0"/>
-                    <TextBlock Padding="5,0,5,0" FontWeight="Bold" Text="Expression" Grid.Row="0" Grid.Column="1"/>
-                    <TextBlock Padding="5,0,5,0" FontWeight="Bold" Text="Value" Grid.Row="0" Grid.Column="2"/>
-                    <TextBlock Padding="5,0,5,0" FontWeight="Bold" Text="Database Query" Grid.Row="0" Grid.Column="3"/>
+                    <TextBlock Padding="10,0,5,0" FontWeight="Bold" Text="{StaticResource CustomSelection.SearchTerms.Label}" Grid.Row="0" Grid.Column="0"/>
+                    <TextBlock Padding="5,0,5,0" FontWeight="Bold" Text="{StaticResource CustomSelection.SearchTerms.Expression}" Grid.Row="0" Grid.Column="1"/>
+                    <TextBlock Padding="5,0,5,0" FontWeight="Bold" Text="{StaticResource CustomSelection.SearchTerms.Value}" Grid.Row="0" Grid.Column="2"/>
+                    <TextBlock Padding="5,0,5,0" FontWeight="Bold" Text="{StaticResource CustomSelection.SearchTerms.DatabaseQuery}" Grid.Row="0" Grid.Column="3"/>
                 </Grid>
             </ScrollViewer>
             <DockPanel Grid.Row="3">
-                <Button Name="Reset" Content="_Reset" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="10,0,0,0" Padding="10" Click="Reset_Click" IsEnabled="False"/>
+                <Button Name="Reset" Click="Reset_Click" Content="{StaticResource CustomSelection.Reset}" DockPanel.Dock="Left" IsEnabled="False" Margin="10,0,0,0" Padding="{StaticResource Dialog.ButtonPadding}" VerticalAlignment="Center" />
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <TextBlock Name="QueryMatches" HorizontalAlignment="Left"  Margin="10,5,0,5" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0" FontWeight="DemiBold"><Run Text="0  "/></TextBlock>
-                    <TextBlock HorizontalAlignment="Left"  Margin="0,5,0,5" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0"><Run Text=" files match your query "/></TextBlock>
-                    <Button Name="OkButton" Grid.Column="1" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Padding="10" Margin="10,10,10,10" Click="OkButton_Click">_Okay</Button>
-                    <Button Name="CancelButton" Grid.Column="0" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" AutomationProperties.AutomationId="CancelButton" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
+                    <TextBlock Name="QueryMatches" FontWeight="Bold" HorizontalAlignment="Left" Margin="10,5,0,5" Text="0" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0" />
+                    <TextBlock HorizontalAlignment="Left" Margin="3,5,0,5" Text="{StaticResource CustomSelection.QueryMatches}" VerticalAlignment="Center" Grid.Row="2" Grid.Column="0" />
+                    <Button Name="OkButton" Grid.Column="1" IsDefault="True" AutomationProperties.AutomationId="OkButton" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" Click="OkButton_Click" Content="{StaticResource Dialog.OK}" />
+                    <Button Name="CancelButton" Grid.Column="0" IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Stretch" AutomationProperties.AutomationId="CancelButton" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" Click="CancelButton_Click" Content="{StaticResource Dialog.Cancel}" />
                 </StackPanel>
             </DockPanel>
         </Grid>

@@ -43,6 +43,11 @@ namespace Carnassial.Editor
             public const string DisplayTrueString = "True (checked)";
         }
 
+        public static class ResourceKey
+        {
+            public const string AboutEditorTermsOfUse = "AboutEditor.TermsOfUse";
+        }
+
         // keys in EditorWindowStyle.xaml
         public static class StyleResources
         {

@@ -13,38 +13,49 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <Button Name="PasteAnalysis1" Click="PasteAnalysis1_Click" Margin="5,5,5,5" Padding="5,5,5,5" Content="Analysis _1" IsEnabled="False" Width="90" Grid.Column="0" Grid.Row="0"
+        <Button Name="PasteAnalysis1" Click="PasteAnalysis1_Click" Margin="5,5,5,5" Padding="5,5,5,5" 
+                Content="{StaticResource AnalysisButtons.PasteAnalysis1}" IsEnabled="False" Width="90" Grid.Column="0" Grid.Row="0"
                 MouseEnter="Button_MouseEnter" MouseLeave="Button_MouseLeave"
-                ToolTip="Apply copyable values stored in analysis 1." />
-        <Button Name="PasteAnalysis2" Click="PasteAnalysis2_Click" Margin="5,5,5,5" Padding="5,5,5,5" Content="Analysis _2" IsEnabled="False" Width="90" Grid.Column="1" Grid.Row="0"
+                ToolTip="{StaticResource AnalysisButtons.PasteAnalysis1Tooltip}" />
+        <Button Name="PasteAnalysis2" Click="PasteAnalysis2_Click" Margin="5,5,5,5" Padding="5,5,5,5" 
+                Content="{StaticResource AnalysisButtons.PasteAnalysis2}" IsEnabled="False" Width="90" Grid.Column="1" Grid.Row="0"
                 MouseEnter="Button_MouseEnter" MouseLeave="Button_MouseLeave"
-                ToolTip="Apply copyable values stored in analysis 2." />
-        <Button Name="PasteAnalysis3" Click="PasteAnalysis3_Click" Margin="5,5,5,5" Padding="5,5,5,5" Content="Analysis _3" IsEnabled="False" Width="90" Grid.Column="2" Grid.Row="0"
+                ToolTip="{StaticResource AnalysisButtons.PasteAnalysis2Tooltip}" />
+        <Button Name="PasteAnalysis3" Click="PasteAnalysis3_Click" Margin="5,5,5,5" Padding="5,5,5,5" 
+                Content="{StaticResource AnalysisButtons.PasteAnalysis3}" IsEnabled="False" Width="90" Grid.Column="2" Grid.Row="0"
                 MouseEnter="Button_MouseEnter" MouseLeave="Button_MouseLeave"
-                ToolTip="Apply copyable values stored in analysis 3." />
-        <Button Name="PasteAnalysis4" Click="PasteAnalysis4_Click" Margin="5,5,5,5" Padding="5,5,5,5" Content="Analysis _4" IsEnabled="False" Width="90" Grid.Column="0" Grid.Row="1"
+                ToolTip="{StaticResource AnalysisButtons.PasteAnalysis3Tooltip}" />
+        <Button Name="PasteAnalysis4" Click="PasteAnalysis4_Click" Margin="5,5,5,5" Padding="5,5,5,5" 
+                Content="{StaticResource AnalysisButtons.PasteAnalysis4}" IsEnabled="False" Width="90" Grid.Column="0" Grid.Row="1"
                 MouseEnter="Button_MouseEnter" MouseLeave="Button_MouseLeave"
-                ToolTip="Apply copyable values stored in analysis 4." />
-        <Button Name="PasteAnalysis5" Click="PasteAnalysis5_Click" Margin="5,5,5,5" Padding="5,5,5,5" Content="Analysis _5" IsEnabled="False" Width="90" Grid.Column="1" Grid.Row="1"
+                ToolTip="{StaticResource AnalysisButtons.PasteAnalysis4Tooltip}" />
+        <Button Name="PasteAnalysis5" Click="PasteAnalysis5_Click" Margin="5,5,5,5" Padding="5,5,5,5" 
+                Content="{StaticResource AnalysisButtons.PasteAnalysis5}" IsEnabled="False" Width="90" Grid.Column="1" Grid.Row="1"
                 MouseEnter="Button_MouseEnter" MouseLeave="Button_MouseLeave"
-                ToolTip="Apply copyable values stored in analysis 5." />
-        <Button Name="PasteAnalysis6" Click="PasteAnalysis6_Click" Margin="5,5,5,5" Padding="5,5,5,5" Content="Analysis _6" IsEnabled="False" Width="90" Grid.Column="2" Grid.Row="1"
+                ToolTip="{StaticResource AnalysisButtons.PasteAnalysis5Tooltip}" />
+        <Button Name="PasteAnalysis6" Click="PasteAnalysis6_Click" Margin="5,5,5,5" Padding="5,5,5,5" 
+                Content="{StaticResource AnalysisButtons.PasteAnalysis6}" IsEnabled="False" Width="90" Grid.Column="2" Grid.Row="1"
                 MouseEnter="Button_MouseEnter" MouseLeave="Button_MouseLeave"
-                ToolTip="Apply copyable values stored in analysis 6." />
-        <Button Name="PasteAnalysis7" Click="PasteAnalysis7_Click" Margin="5,5,5,5" Padding="5,5,5,5" Content="Analysis _7" IsEnabled="False" Width="90" Grid.Column="0" Grid.Row="2"
+                ToolTip="{StaticResource AnalysisButtons.PasteAnalysis6Tooltip}" />
+        <Button Name="PasteAnalysis7" Click="PasteAnalysis7_Click" Margin="5,5,5,5" Padding="5,5,5,5" 
+                Content="{StaticResource AnalysisButtons.PasteAnalysis7}" IsEnabled="False" Width="90" Grid.Column="0" Grid.Row="2"
                 MouseEnter="Button_MouseEnter" MouseLeave="Button_MouseLeave"
-                ToolTip="Apply copyable values stored in analysis 7." />
-        <Button Name="PasteAnalysis8" Click="PasteAnalysis8_Click" Margin="5,5,5,5" Padding="5,5,5,5" Content="Analysis _8" IsEnabled="False" Width="90" Grid.Column="1" Grid.Row="2"
+                ToolTip="{StaticResource AnalysisButtons.PasteAnalysis7Tooltip}" />
+        <Button Name="PasteAnalysis8" Click="PasteAnalysis8_Click" Margin="5,5,5,5" Padding="5,5,5,5" 
+                Content="{StaticResource AnalysisButtons.PasteAnalysis8}" IsEnabled="False" Width="90" Grid.Column="1" Grid.Row="2"
                 MouseEnter="Button_MouseEnter" MouseLeave="Button_MouseLeave"
-                ToolTip="Apply copyable values stored in analysis 8." />
-        <Button Name="PasteAnalysis9" Click="PasteAnalysis9_Click" Margin="5,5,5,5" Padding="5,5,5,5" Content="Analysis _9" IsEnabled="False" Width="90" Grid.Column="2" Grid.Row="2"
+                ToolTip="{StaticResource AnalysisButtons.PasteAnalysis8Tooltip}" />
+        <Button Name="PasteAnalysis9" Click="PasteAnalysis9_Click" Margin="5,5,5,5" Padding="5,5,5,5" 
+                Content="{StaticResource AnalysisButtons.PasteAnalysis9}" IsEnabled="False" Width="90" Grid.Column="2" Grid.Row="2"
                 MouseEnter="Button_MouseEnter" MouseLeave="Button_MouseLeave"
-                ToolTip="Apply copyable values stored in analysis 9." />
-        <Button Name="PastePreviousValues" Click="PastePreviousValues_Click" Margin="5,5,5,5" Padding="5,5,5,5" Content="Paste _previous" IsEnabled="False" Width="90" Grid.Column="0" Grid.Row="3"
+                ToolTip="{StaticResource AnalysisButtons.PasteAnalysis9Tooltip}" />
+        <Button Name="PastePreviousValues" Click="PastePreviousValues_Click" Margin="5,5,5,5" Padding="5,5,5,5" 
+                Content="{StaticResource AnalysisButtons.PastePreviousValues}" IsEnabled="False" Width="90" Grid.Column="0" Grid.Row="3"
                 MouseEnter="Button_MouseEnter" MouseLeave="Button_MouseLeave"
-                ToolTip="Copy the highlighted data (fields marked 'Copyable' in the template) from the previous file." />
-        <Button Name="PasteNextValues" Click="PasteNextValues_Click" Margin="5,5,5,5" Padding="5,5,5,5" Content="Paste _next" IsEnabled="False" Width="90" Grid.Column="2" Grid.Row="3"
+                ToolTip="{StaticResource AnalysisButtons.PastePreviousValuesTooltip}" />
+        <Button Name="PasteNextValues" Click="PasteNextValues_Click" Margin="5,5,5,5" Padding="5,5,5,5" 
+                Content="{StaticResource AnalysisButtons.PasteNextValues}" IsEnabled="False" Width="90" Grid.Column="2" Grid.Row="3"
                 MouseEnter="Button_MouseEnter" MouseLeave="Button_MouseLeave"
-                ToolTip="Copy the highlighted data (fields marked 'Copyable' in the template) from the next file." />
+                ToolTip="{StaticResource AnalysisButtons.PasteNextValuesTooltip}" />
     </Grid>
 </UserControl>

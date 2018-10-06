@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
-        Title="Date - Check and modify ambiguous dates." 
+        Title="{StaticResource DateCorrectAmbiguous.Title}" 
         Loaded="Window_Loaded"
 		MinHeight="600" MinWidth="768" Height="856" Width="768" ShowInTaskbar="False" Style="{StaticResource ApplicationWindow}">
     <Window.CommandBindings>
@@ -73,17 +73,17 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <Label Content="Sample file:" Margin="10,0,0,0" HorizontalAlignment="Right" FontWeight="Bold" Grid.Row="0" Grid.Column="0"/>
+                    <Label Content="{StaticResource DateCorrectAmbiguous.SampleFile}" Margin="10,0,0,0" HorizontalAlignment="Right" FontWeight="Bold" Grid.Row="0" Grid.Column="0"/>
                     <Label Name="FileName" Content="[ --- file name --- ]" HorizontalContentAlignment="Left" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="1"/>
-                    <Label Content="Files with same date:" VerticalAlignment="Top" FontWeight="Bold" HorizontalAlignment="Right" Grid.Row="1" Grid.Column="0"/>
-                    <Label Name="NumberOfImagesWithSameDate" VerticalAlignment="Top" Content="count" Grid.Row="1" Grid.Column="1"/>
-                    <RadioButton Name="OriginalDate" GroupName="DateOptions" Content="Original date:" FontWeight="Bold" IsChecked="True" Grid.Row="0" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                    <Label Name="OriginalDateLabel" Content="dd-mmm-yyyy" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="3" ToolTip="The original date recorded for all files with this date." Margin="0,0,5,0" />
-                    <RadioButton Name="SwappedDate"  GroupName="DateOptions" Content="Swapped date:" FontWeight="Bold" IsChecked="False" Grid.Row="1" Grid.Column="2" Margin="7,0,0,0" HorizontalAlignment="Right" VerticalAlignment="Center" />
-                    <Label Name="SwappedDateLabel" Content="dd-mmm-yyyy" Grid.Row="1" Grid.Column="3" HorizontalAlignment="Left" ToolTip="The corrected (swapped) date for all files with this date." Margin="0,0,5,0" />
-                    <Button Name="PreviousDate" Content="_Previous" Grid.Row="0" Grid.Column="4" Grid.RowSpan="2" Padding="6,5,6,5" Margin="6,5,6,5" IsEnabled="False" Click="NextPreviousButton_Click" />
-                    <Button Name="NextDate" Content="_Next" Grid.Row="0" Grid.Column="5" Grid.RowSpan="2" Padding="6,5,6,5" Margin="6,5,6,5" Click="NextPreviousButton_Click" />
-                    <Button Name="SwapAll" Content="_Swap all" HorizontalAlignment="Right" Grid.Row="0" Grid.Column="6" Grid.RowSpan="2" Padding="6,5,6,5" Margin="6,5,6,5" Click="SwapAllButton_Click" />
+                    <Label Content="{StaticResource DateCorrectAmbiguous.FilesWithSameDate}" VerticalAlignment="Top" FontWeight="Bold" HorizontalAlignment="Right" Grid.Row="1" Grid.Column="0"/>
+                    <Label Name="NumberOfImagesWithSameDate" VerticalAlignment="Top" Content="[nnn]" Grid.Row="1" Grid.Column="1"/>
+                    <RadioButton Name="OriginalDate" GroupName="DateOptions" Content="{StaticResource DateCorrectAmbiguous.OriginalDate}" FontWeight="Bold" IsChecked="True" Margin="5,0,3,0" VerticalAlignment="Center" Grid.Row="0" Grid.Column="2" />
+                    <Label Name="OriginalDateLabel" Content="dd-mmm-yyyy" HorizontalAlignment="Left" Grid.Row="0" Grid.Column="3" ToolTip="{StaticResource DateCorrectAmbiguous.OriginalDate.ToolTip}" Margin="0,0,5,0" />
+                    <RadioButton Name="SwappedDate"  GroupName="DateOptions" Content="{StaticResource DateCorrectAmbiguous.SwappedDate}" FontWeight="Bold" IsChecked="False" Margin="5,0,3,0" VerticalAlignment="Center" Grid.Row="1" Grid.Column="2" />
+                    <Label Name="SwappedDateLabel" Content="dd-mmm-yyyy" Grid.Row="1" Grid.Column="3" HorizontalAlignment="Left" ToolTip="{StaticResource DateCorrectAmbiguous.SwappedDate.ToolTip}" Margin="0,0,5,0" />
+                    <Button Name="PreviousDate" Content="{StaticResource DateCorrectAmbiguous.PreviousDate}" Grid.Row="0" Grid.Column="4" Grid.RowSpan="2" Padding="6,5,6,5" Margin="6,5,6,5" IsEnabled="False" Click="NextPreviousButton_Click" />
+                    <Button Name="NextDate" Content="{StaticResource DateCorrectAmbiguous.NextDate}" Grid.Row="0" Grid.Column="5" Grid.RowSpan="2" Padding="6,5,6,5" Margin="6,5,6,5" Click="NextPreviousButton_Click" />
+                    <Button Name="SwapAll" Content="{StaticResource DateCorrectAmbiguous.SwapAll}" HorizontalAlignment="Right" Grid.Row="0" Grid.Column="6" Grid.RowSpan="2" Padding="6,5,6,5" Margin="6,5,6,5" Click="SwapAllButton_Click" />
                 </Grid>
                 <control:FileDisplay x:Name="FileDisplay" HorizontalAlignment="Center" Grid.Row="1" />
             </Grid>
@@ -96,8 +96,8 @@
                 <control:DateChangesFeedbackControl x:Name="DateChangeFeedback" ShowDifferenceColumn="False" Grid.Row="1" />
             </Grid>
             <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Name="PreviewChangesButton" IsDefault="True" Click="PreviewChangesButton_Click" AutomationProperties.AutomationId="ChangesButton" Padding="10" Margin="10,10,10,10">_Preview Changes</Button>
-                <Button Name="CancelButton" IsCancel="True" Click="CancelButton_Click" AutomationProperties.AutomationId="CancelButton" Padding="10" Margin="10,10,10,10">_Cancel</Button>
+                <Button Name="PreviewChangesButton" IsDefault="True" Click="PreviewChangesButton_Click" AutomationProperties.AutomationId="ChangesButton" Content="{StaticResource DateTimeAdjustment.PreviewChanges}" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" />
+                <Button Name="CancelButton" IsCancel="True" Click="CancelButton_Click" AutomationProperties.AutomationId="CancelButton" Content="{StaticResource Dialog.Cancel}" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" />
             </StackPanel>
         </Grid>
     </Grid>

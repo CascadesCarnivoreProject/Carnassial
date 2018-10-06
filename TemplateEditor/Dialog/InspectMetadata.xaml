@@ -3,7 +3,7 @@
         xmlns:carnassial="clr-namespace:Carnassial;assembly=Carnassial"
         xmlns:control="clr-namespace:Carnassial.Control;assembly=Carnassial"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Inspect metadata available in files"
+        Title="{StaticResource InspectMetadata.Title}"
         Loaded="Window_Loaded"
 		MinHeight="600" MinWidth="768" Height="856" Width="840" ShowInTaskbar="False" Style="{StaticResource ApplicationWindow}">
     <Window.CommandBindings>
@@ -53,37 +53,33 @@
                 </Grid.RowDefinitions>
                 <control:StockMessageControl x:Name="Message"
                         StatusImage="Question"
-                        Title="See what metadata is available in a file of your choosing."
-                        What="Cameras typically embed metadata in image files, some of which may be useful to capture as data. 
-&#10;You can inspect an image or video of your choice to see what metadata is typically recorded. 
-&#10;You can then create a Note field representing that metadata, where Carnassial can automatically populate its values."
-                        Solution="1. Click 'Inspect Image' below to navigate to a typical image you will be analyzing. 
-&#10;2. Inspect the metadata to see if there are any fields of interest to you.
-&#10;3. If so, create a meaningfully labelled Note for each metadata field you want. 
-&#10;4. Later, use Carnassial to populate that field across your image set by selecting 'Populate a field with metadata...' from the Carnassial 'Edit' menu."
-                        Hint="As metadata can be camera specific, inspect files produced by each camera model you have and compare their metadata."
+                        Title="{StaticResource InspectMetadata.Message.Title}"
+                        What="{StaticResource InspectMetadata.Message.What}"
+                        Solution="{StaticResource InspectMetadata.Message.Solution}"
+                        Hint="{StaticResource InspectMetadata.Message.Hint}"
                         HideExplanationCheckboxIsVisible="True" Grid.Row="0" />
                 <Rectangle Style="{StaticResource DialogHorizontalRule}" Grid.Row="1" />
                 <Grid Name="PanelHeader" Grid.Row="2">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition MinWidth="80" Width="Auto" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Button Name="OpenFile" VerticalAlignment="Bottom" HorizontalAlignment="Left" Padding="10" Margin="10,10,5,10"  Click="OpenFile_Click">Open _File</Button>
-                    <Label Content="File currently open:" Height="28" Margin="5,0,0,0" HorizontalContentAlignment="Left" FontWeight="Bold" Grid.Column="1"/>
-                    <Label Content="--" MinWidth="100" Height="28" Margin="0,0,0,0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" FontWeight="Normal" Name="ImageName" Grid.Column="2"/>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Button Name="OpenFile" Click="OpenFile_Click" Content="{StaticResource InspectMetadata.OpenFile}" Margin="10,10,10,10" Padding="{StaticResource Dialog.ButtonPadding}" Grid.Column="0" Grid.Row="0" />
+                    <Label Content="{StaticResource InspectMetadata.FileCurrentlyOpen}" FontWeight="Bold" VerticalAlignment="Center" Grid.Column="1" Grid.Row="0" />
+                    <Label Name="ImageName" Content="--" FontWeight="Normal" VerticalAlignment="Center" Grid.Column="2" Grid.Row="0" />
                 </Grid>
                 <DataGrid Name="DataGrid" Margin="10,0,10,0" ColumnWidth="*" AutoGenerateColumns="False" SelectionUnit="FullRow" SelectionMode="Single" Grid.Row="3">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Binding="{Binding DirectoryName}" Header="metadata directory" />
-                        <DataGridTextColumn Binding="{Binding Name}" Header="tag name" />
-                        <DataGridTextColumn Binding="{Binding Description}" Header="value" />
+                        <DataGridTextColumn Binding="{Binding DirectoryName}" Header="{StaticResource InspectMetadata.DataGrid.MetadataDirectory}" />
+                        <DataGridTextColumn Binding="{Binding Name}" Header="{StaticResource InspectMetadata.DataGrid.TagName}" />
+                        <DataGridTextColumn Binding="{Binding Description}" Header="{StaticResource InspectMetadata.DataGrid.Value}" />
                     </DataGrid.Columns>
                 </DataGrid>
-                <Button IsCancel="True" VerticalAlignment="Bottom" HorizontalAlignment="Right" Padding="10" Margin="10,10,10,10" Click="OkayButton_Click" Grid.Row="4">_Okay</Button>
+                <Button Click="OkayButton_Click" Content="{StaticResource Dialog.OK}" IsCancel="True" HorizontalAlignment="Right" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" Grid.Row="4" />
             </Grid>
         </Grid>
     </Grid>

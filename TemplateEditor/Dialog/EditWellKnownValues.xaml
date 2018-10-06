@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:carnassial="clr-namespace:Carnassial;assembly=Carnassial"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Edit well known values for note or choice control" 
+        Title="{StaticResource EditWellKnownValues.Title}" 
         Height="500" Width="300"
         Loaded="Window_Loaded" ShowInTaskbar="False" Style="{StaticResource ApplicationWindow}" WindowStyle="ToolWindow">
     <Window.CommandBindings>
@@ -45,12 +45,12 @@
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <TextBlock Text="Enter one value per line.  These values become the autocompletions for notes and the choices available in a choice control." Margin="10,10,10,10" TextWrapping="Wrap" Grid.Row="0" />
+            <TextBlock Text="{StaticResource EditWellKnownValues.Instructions}" Margin="10,10,10,10" TextWrapping="Wrap" Grid.Row="0" />
             <Rectangle Style="{StaticResource DialogHorizontalRule}" Grid.Row="1" />
             <TextBox Name="ValuesList" MinHeight="100" TextWrapping="NoWrap" AcceptsTab="True" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" TextChanged="ItemList_TextChanged" ToolTip="Define automcompletions or choices by entering one item per line." Grid.Row="2" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="3">
-                <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" Padding="10" Margin="10,5,5,5" Click="OkButton_Click" IsEnabled="False">_Okay</Button>
-                <Button Name="CancelButton" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Padding="10" Margin="5,5,5,5" Click="CancelButton_Click">_Cancel</Button>
+                <Button Name="OkButton" IsDefault="True" AutomationProperties.AutomationId="OkButton" Click="OkButton_Click" Content="{StaticResource Dialog.OK}" IsEnabled="False" Margin="5,5,5,5" Padding="{StaticResource Dialog.ButtonPadding}" />
+                <Button Name="CancelButton" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Click="CancelButton_Click" Content="{StaticResource Dialog.Cancel}" Margin="5,5,5,5" Padding="{StaticResource Dialog.ButtonPadding}" />
             </StackPanel>
         </Grid>
     </Grid>

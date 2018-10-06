@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:control="clr-namespace:Carnassial.Control"
         xmlns:local="clr-namespace:Carnassial"
-        Title="Date/time - Reread dates and times from image and video files."
+        Title="{StaticResource DateTimeRereadFromFiles.Title}"
         Loaded="Window_Loaded"
         MinHeight="600" MinWidth="768" Height="856" Width="768" ShowInTaskbar="False" Style="{StaticResource ApplicationWindow}">
     <Window.CommandBindings>
@@ -48,20 +48,20 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <control:StockMessageControl x:Name="Message" StatusImage="Question"
-                            Title="Reread dates and times from images and videos."
-                            Problem="You've changed the selected files' dates or times and now want to go back to their original dates and times."
-                            Solution="Click 'Start' below to replace the existing dates/times with the original dates/times on the files. &#10;Click 'Cancel' if you don't want to do this."
-                            Result="Carnassial will replace the current date/time with the original date/time if they differ and a list of the changes will be displayed.  These changes cannot be undone."
+                            Title="{StaticResource DateTimeRereadFromFiles.Message.Title}"
+                            Problem="{StaticResource DateTimeRereadFromFiles.Message.Problem}"
+                            Solution="{StaticResource DateTimeRereadFromFiles.Message.Solution}"
+                            Result="{StaticResource DateTimeRereadFromFiles.Message.Result}"
                             HideExplanationCheckboxIsVisible="True" Grid.Row="0" />
             <DataGrid Name="FeedbackGrid" AutoGenerateColumns="False" SelectionMode="Single" SelectionUnit="FullRow" Margin="5,5,5,0" ColumnWidth="*" Grid.Row="2">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Binding="{Binding FileName}" Header="file" Width="Auto" />
-                    <DataGridTextColumn Binding="{Binding Message}" Header="result" Width="*" />
+                    <DataGridTextColumn Binding="{Binding FileName}" Header="{StaticResource DateTimeRereadFromFiles.File}" Width="Auto" />
+                    <DataGridTextColumn Binding="{Binding Message}" Header="{StaticResource DateTimeRereadFromFiles.Result}" Width="*" />
                 </DataGrid.Columns>
             </DataGrid>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Row="4">
-                <Button Name="StartDoneButton" IsDefault="True" Padding="10" Margin="10,10,10,10" Click="StartButton_Click" IsEnabled="True">_Start</Button>
-                <Button Name="CancelButton" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Padding="10" Margin="10,10,10,10" Click="CancelButton_Click">_Cancel</Button>
+                <Button Name="StartDoneButton" IsDefault="True" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" Click="StartButton_Click" Content="{StaticResource DateTimeRereadFromFiles.Start}" />
+                <Button Name="CancelButton" IsCancel="True" AutomationProperties.AutomationId="CancelButton" Content="{StaticResource Dialog.Cancel}" Click="CancelButton_Click" Margin="{StaticResource Dialog.ButtonMargin}" Padding="{StaticResource Dialog.ButtonPadding}" />
             </StackPanel>
         </Grid>
     </Grid>

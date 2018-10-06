@@ -116,127 +116,23 @@
                     <Setter Property="Padding" Value="10,2,10,0" />
                 </Style>
             </TabControl.Resources>
-            <TabItem Header="Instructions">
+            <TabItem Header="{StaticResource EditorWindow.Tab.Instructions}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="300" />
+                        <ColumnDefinition Width="{StaticResource DefaultControlGridWidth}" />
                     </Grid.ColumnDefinitions>
-                    <FlowDocumentScrollViewer AllowDrop="True" Drop="Instructions_Drop" PreviewDragEnter="Instructions_PreviewDrag" PreviewDragOver="Instructions_PreviewDrag" VerticalScrollBarVisibility="Auto" Grid.Column="0">
-                        <FlowDocument FontSize="12" TextAlignment="Left" ColumnRuleWidth="2" FontFamily="Verdana">
-                            <Paragraph FontWeight="Bold" FontSize="20">What the Template Editor does</Paragraph>
-                            <Paragraph>
-                                Information recorded for each image or video from a camera is specific to the kinds of files you want to analyze, your data needs, and how that data will be processed.  This differs between organizations and possibly between different kinds of image sets.  You define your needs through this template editor which saves them in template (.tdb file) named
-                                <Bold>CarnassialTemplate.tdb</Bold> by default.  This template file is then included in each image set folder.  Carnassial looks the template and uses it to create the user interface and manage the data you enter.
-                            </Paragraph>
-                            <Paragraph FontWeight="Bold" FontSize="20">Working with templates</Paragraph>
-                            <List>
-                                <ListItem>
-                                    <Paragraph>
-                                        <Bold>File -> New</Bold> Creates a new template with required fields which you can then add new fields to.
-                                    </Paragraph>
-                                </ListItem>
-                                <ListItem>
-                                    <Paragraph>
-                                        <Bold>File -> Open</Bold> Opens an existing template so you can further modify its contents.
-                                    </Paragraph>
-                                </ListItem>
-                            </List>
-                            <Paragraph>Each template includes several required fields:
-                                <Bold>RelativePath, File, DateTime, UtcOffset, ImageQuality,</Bold> and
-                                <Bold>DeleteFlag</Bold> .  Carnassial fills these in automatically.  The template editor gives you the option of making these (and other) fields invisible in the user interface.  RelativePath and File locate files on disk and DateTime and UtcOffset completely describe when a file was captured.  ImageQuality powers much of Carnassial's select menu and DeleteFlag enables one selection option as well as delete options under Carnassial's edit menu.
-                            </Paragraph>
-                            <Paragraph>You can add new data fields specific to your project. Each will be one of the following types.</Paragraph>
-                            <List>
-                                <ListItem>
-                                    <Paragraph>
-                                        <Bold>Counter</Bold> Numeric data (integers).  Normally used to count specific entities found in an image.
-                                    </Paragraph>
-                                </ListItem>
-                                <ListItem>
-                                    <Paragraph>
-                                        <Bold>Choice</Bold> A list of values selected from a menu.
-                                    </Paragraph>
-                                </ListItem>
-                                <ListItem>
-                                    <Paragraph>
-                                        <Bold>Note</Bold> General purpose textual data usable for any purpose (comments, camera station names, study sites, survey name,
-                                        <Italic>etc</Italic> .)
-                                    </Paragraph>
-                                </ListItem>
-                                <ListItem>
-                                    <Paragraph>
-                                        <Bold>Flag</Bold> Boolean data; true or false.
-                                    </Paragraph>
-                                </ListItem>
-                            </List>
-                            <Paragraph>You can specify various attributes for each field.</Paragraph>
-                            <List>
-                                <ListItem>
-                                    <Paragraph>
-                                        <Bold>Data label</Bold> The field's column name in Carnassial's database file (.ddb).  Much more restricted than the label.
-                                    </Paragraph>
-                                </ListItem>
-                                <ListItem>
-                                    <Paragraph>
-                                        <Bold>Label</Bold> The name displayed for the field in Carnassial's user interface.
-                                    </Paragraph>
-                                </ListItem>
-                                <ListItem>
-                                    <Paragraph>
-                                        <Bold>Values</Bold> The choices available for a choice field, entered one per line, or the default set of autocompletions for a note.  Including an empty line allows the field to be set to empty.  Each entry in the list should be unique.
-                                    </Paragraph>
-                                </ListItem>
-                                <ListItem>
-                                    <Paragraph>
-                                        <Bold>Default Value</Bold> The field's initial value.  For example, if a survey name field is present it's often quite convenient to have it default to something like "Our Spiffy Project" rather than requiring this be typed in for every file in the image set.
-                                    </Paragraph>
-                                </ListItem>
-                                <ListItem>
-                                    <Paragraph>
-                                        <Bold>Tooltip</Bold> Help text displayed when a Carnassial user hovers the mouse cursor over the field's name.
-                                    </Paragraph>
-                                </ListItem>
-                                <ListItem>
-                                    <Paragraph>
-                                        <Bold>Analysis label</Bold> Whether the field is used to label a Carnassial analysis button when an analysis is assigned.
-                                    </Paragraph>
-                                </ListItem>
-                                <ListItem>
-                                    <Paragraph>
-                                        <Bold>Copyable</Bold> Whether or not Carnassial's copy from previous button and context menus can be used to populate data in the field.  In most cases it's desirable to have fields be copyable.
-                                    </Paragraph>
-                                </ListItem>
-                                <ListItem>
-                                    <Paragraph>
-                                        <Bold>Index</Bold> Whether an index is created for the field in Carnassial's database.  This should left unchecked unless custom selections using the field take too long.
-                                    </Paragraph>
-                                </ListItem>
-                                <ListItem>
-                                    <Paragraph>
-                                        <Bold>Visible</Bold> Whether or not a field is displayed in the Carnassial user interface.  Fields should generally be visible.
-                                    </Paragraph>
-                                </ListItem>
-                                <ListItem>
-                                    <Paragraph>
-                                        <Bold>Width</Bold> How wide the field appears in the Carnassial user interface.  The editor shows a preview of the layout.
-                                    </Paragraph>
-                                </ListItem>
-                            </List>
-                            <Paragraph>You can also drag and drop the fields in the preview windows to set their order in the Carnassial user interface and the column order in .csv spreadsheet files.</Paragraph>
-                            <Paragraph>If you're new to Carnassial
-                                <Hyperlink Name="TutorialLink" RequestNavigate="TutorialLink_RequestNavigate">check out the tutorial</Hyperlink> for more help.
-                            </Paragraph>
-                        </FlowDocument>
+                    <FlowDocumentScrollViewer Name="InstructionsScrollViewer" AllowDrop="True" Drop="Instructions_Drop" PreviewDragEnter="Instructions_PreviewDrag" PreviewDragOver="Instructions_PreviewDrag" VerticalScrollBarVisibility="Auto" Grid.Column="0">
+                        <StaticResource ResourceKey="EditorWindow.Instructions" />
                     </FlowDocumentScrollViewer>
                 </Grid>
             </TabItem>
-            <TabItem Header="Template">
+            <TabItem Header="{StaticResource EditorWindow.Tab.Template}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="300" />
+                        <ColumnDefinition Width="{StaticResource DefaultControlGridWidth}" />
                     </Grid.ColumnDefinitions>
                     <Grid Grid.Column="0">
                         <Grid.ColumnDefinitions>
@@ -249,7 +145,7 @@
                             <RowDefinition Height="Auto" MinHeight="125" />
                         </Grid.RowDefinitions>
 
-                        <DataGrid Name="ControlDataGrid" Grid.Row="0" RowHeight="25" VirtualizingStackPanel.IsVirtualizing="False"
+                        <DataGrid Name="ControlDataGrid" Grid.Row="0" VirtualizingStackPanel.IsVirtualizing="False"
                                   AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" 
                                   CellEditEnding="ControlDataGrid_CellEditEnding"
                                   ColumnHeaderStyle="{DynamicResource HeaderStyle}"
@@ -279,63 +175,63 @@
                                 </Style>
                             </DataGrid.Resources>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="ID" Binding="{Binding Path=ID}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
-                                <DataGridTextColumn MinWidth="40" Header="Type" Binding="{Binding Path=Type, Converter={StaticResource ControlTypeConverter}}" CanUserSort="False" IsReadOnly="True">
+                                <DataGridTextColumn Header="{StaticResource EditorWindow.ControlDataGrid.ID}" Binding="{Binding Path=ID}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
+                                <DataGridTextColumn MinWidth="40" Header="{StaticResource EditorWindow.ControlDataGrid.Type}" Binding="{Binding Path=Type, Converter={StaticResource ControlTypeConverter}}" CanUserSort="False" IsReadOnly="True">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Type}" Value="Note">
-                                                    <Setter Property="ToolTip" Value="A note field accepts free-form text.  Edit its well known values to define common values which will be available for autocomplete." />
+                                                <DataTrigger Binding="{Binding DataLabel}" Value="Classification">
+                                                    <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.Type.ToolTip.Classification}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding DataLabel}" Value="DateTime">
+                                                    <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.Type.ToolTip.DateTime}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding DataLabel}" Value="DeleteFlag">
+                                                    <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.Type.ToolTip.DeleteFlag}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding DataLabel}" Value="RelativePath">
+                                                    <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.Type.ToolTip.RelativePath}" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Type}" Value="Counter">
-                                                    <Setter Property="ToolTip" Value="A counter field provides a point and click interface for counting entities in an image or video." />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Type}" Value="FixedChoice">
-                                                    <Setter Property="ToolTip" Value="A choice field provides a drop down menu of choices.  Edit its well known values to create these choices." />
+                                                    <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.Type.ToolTip.Counter}" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Type}" Value="Flag">
-                                                    <Setter Property="ToolTip" Value="A flag field can be toggled between true and false." />
+                                                    <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.Type.ToolTip.Flag}" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Type}" Value="File">
-                                                    <Setter Property="ToolTip" Value="Carnassial automatically sets File to the file name of the image or video." />
+                                                    <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.Type.ToolTip.File}" />
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding Type}" Value="RelativePath">
-                                                    <Setter Property="ToolTip" Value="Carnassial automatically sets RelativePath to the folder path from the template to the file." />
+                                                <DataTrigger Binding="{Binding Type}" Value="FixedChoice">
+                                                    <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.Type.ToolTip.FixedChoice}" />
                                                 </DataTrigger>
-                                                <DataTrigger Binding="{Binding Type}" Value="DateTime">
-                                                    <Setter Property="ToolTip" Value="Carnassial automatically sets a file's date and time.  They can be edited if changes are required." />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Type}" Value="ImageQuality">
-                                                    <Setter Property="ToolTip" Value="By default, Carnassial sets a file's image quality.  It can be edited or recalculated later if needed." />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Type}" Value="DeleteFlag">
-                                                    <Setter Property="ToolTip" Value="The delete flag indicates whether a file is marked deletion.  Marked files can be removed from disk and from the image set using Carnassial's edit menu." />
+                                                <DataTrigger Binding="{Binding Type}" Value="Note">
+                                                    <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.Type.ToolTip.Note}" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn MinWidth="40" Header="Data Label" Binding="{Binding Path=DataLabel, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
+                                <DataGridTextColumn MinWidth="40" Header="{StaticResource EditorWindow.ControlDataGrid.DataLabel}" Binding="{Binding Path=DataLabel, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
-                                            <Setter Property="ToolTip" Value="The name of this field in spreadsheets and in Carnassial's data file."/>
+                                            <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.DataLabel.ToolTip}" />
                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn MinWidth="40" Header="Label" Binding="{Binding Path=Label, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
+                                <DataGridTextColumn MinWidth="40" Header="{StaticResource EditorWindow.ControlDataGrid.Label}" Binding="{Binding Path=Label, Converter={StaticResource TrimmingConverter}}" CanUserSort="False">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
-                                            <Setter Property="ToolTip" Value="The text describing this field in Carnassial's data entry panel."/>
+                                            <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.Label.ToolTip}" />
                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTemplateColumn MinWidth="40" Header="Well Known&#x0a;Values" Width="80" CanUserSort="False">
+                                <DataGridTemplateColumn MinWidth="40" Header="{StaticResource EditorWindow.ControlDataGrid.WellKnownValues}" Width="80" CanUserSort="False">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate>
-                                            <Button Click="EditWellKnownValues_Click" Content="Edit..." Margin="1" Tag="{Binding Path=ControlOrder}">
+                                            <Button Click="EditWellKnownValues_Click" Content="{StaticResource EditorWindow.ControlDataGrid.WellKnownValues.Edit}" Margin="1" Tag="{Binding Path=ControlOrder}">
                                                 <Button.Style>
                                                     <Style TargetType="Button">
                                                         <Style.Triggers>
@@ -360,13 +256,13 @@
                                                                 <Setter Property="Visibility" Value="Collapsed"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding Type}" Value="FixedChoice">
-                                                                <Setter Property="ToolTip" Value="Define the values which can be chosen for this field."/>
+                                                                <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.WellKnownValues.ToolTip.FixedChoice}" />
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding Type}" Value="Flag">
                                                                 <Setter Property="Visibility" Value="Collapsed"/>
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding Type}" Value="Note">
-                                                                <Setter Property="ToolTip" Value="Define the initial list of autocompletions for this field."/>
+                                                                <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.WellKnownValues.ToolTip.Note}" />
                                                             </DataTrigger>
                                                             <DataTrigger Binding="{Binding Type}" Value="UtcOffset">
                                                                 <Setter Property="Visibility" Value="Collapsed"/>
@@ -378,21 +274,21 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="Default Value" CanUserSort="False" MinWidth="40" CellTemplateSelector="{StaticResource ControlTypeDefaultValueSelector}" />
-                                <DataGridTextColumn Header="Control&#x0a;Order" Binding="{Binding Path=ControlOrder}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
-                                <DataGridTextColumn Header="Spreadsheet&#x0a;Order" Binding="{Binding Path=SpreadsheetOrder}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
-                                <DataGridTextColumn MinWidth="50" Header="Tooltip" Binding="{Binding Path=Tooltip, Converter={StaticResource TrimmingConverter}}" Width="*" CanUserSort="False">
+                                <DataGridTemplateColumn Header="{StaticResource EditorWindow.ControlDataGrid.DefaultValue}" CanUserSort="False" MinWidth="40" CellTemplateSelector="{StaticResource ControlTypeDefaultValueSelector}" />
+                                <DataGridTextColumn Header="{StaticResource EditorWindow.ControlDataGrid.ControlOrder}" Binding="{Binding Path=ControlOrder}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
+                                <DataGridTextColumn Header="{StaticResource EditorWindow.ControlDataGrid.SpreadsheetOrder}" Binding="{Binding Path=SpreadsheetOrder}" CanUserSort="False" IsReadOnly="True" Visibility="Collapsed" />
+                                <DataGridTextColumn MinWidth="50" Header="{StaticResource EditorWindow.ControlDataGrid.ToolTip}" Binding="{Binding Path=Tooltip, Converter={StaticResource TrimmingConverter}}" Width="*" CanUserSort="False">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
-                                            <Setter Property="ToolTip" Value="The help text Carnassial displays when the mouse hovers over this field in its data entry panel."/>
+                                            <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.ToolTip.ToolTip}" />
                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridCheckBoxColumn MinWidth="25" Header="Analysis&#x0a;Label" Binding="{Binding Path=AnalysisLabel, Converter={StaticResource TrimmingConverter}}" Width="Auto" CanUserSort="False">
+                                <DataGridCheckBoxColumn MinWidth="25" Header="{StaticResource EditorWindow.ControlDataGrid.AnalysisLabel}" Binding="{Binding Path=AnalysisLabel, Converter={StaticResource TrimmingConverter}}" Width="Auto" CanUserSort="False">
                                     <DataGridCheckBoxColumn.CellStyle>
                                         <Style TargetType="{x:Type DataGridCell}">
-                                            <Setter Property="ToolTip" Value="Whether the value of this field is shown as a reminder on analysis buttons."/>
+                                            <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.AnalysisLabel.ToolTip}"/>
                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                             <Style.Triggers>
                                                 <Trigger Property="IsEnabled" Value="False">
@@ -403,10 +299,10 @@
                                         </Style>
                                     </DataGridCheckBoxColumn.CellStyle>
                                 </DataGridCheckBoxColumn>
-                                <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Copyable" Binding="{Binding Path=Copyable}" CanUserSort="False">
+                                <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="{StaticResource EditorWindow.ControlDataGrid.Copyable}" Binding="{Binding Path=Copyable}" CanUserSort="False">
                                     <DataGridCheckBoxColumn.CellStyle>
                                         <Style TargetType="{x:Type DataGridCell}">
-                                            <Setter Property="ToolTip" Value="Whether this value is updated when an analysis is assigned or values are copied from other files."/>
+                                            <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.Copyable.ToolTip}" />
                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                             <Style.Triggers>
                                                 <Trigger Property="IsEnabled" Value="False">
@@ -417,10 +313,10 @@
                                         </Style>
                                     </DataGridCheckBoxColumn.CellStyle>
                                 </DataGridCheckBoxColumn>
-                                <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Index" Binding="{Binding Path=IndexInFileTable}" CanUserSort="False">
+                                <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="{StaticResource EditorWindow.ControlDataGrid.Index}" Binding="{Binding Path=IndexInFileTable}" CanUserSort="False">
                                     <DataGridCheckBoxColumn.CellStyle>
                                         <Style TargetType="{x:Type DataGridCell}">
-                                            <Setter Property="ToolTip" Value="Whether this field is indexed in Carnassial's database.  Leave this unchecked unless custom selections using the field take too long."/>
+                                            <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.Index.ToolTip}" />
                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                             <Style.Triggers>
                                                 <Trigger Property="IsEnabled" Value="False">
@@ -431,10 +327,10 @@
                                         </Style>
                                     </DataGridCheckBoxColumn.CellStyle>
                                 </DataGridCheckBoxColumn>
-                                <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="Visible" Binding="{Binding Path=Visible}" CanUserSort="False">
+                                <DataGridCheckBoxColumn MinWidth="25" Width="Auto" Header="{StaticResource EditorWindow.ControlDataGrid.Visible}" Binding="{Binding Path=Visible}" CanUserSort="False">
                                     <DataGridCheckBoxColumn.CellStyle>
                                         <Style TargetType="{x:Type DataGridCell}">
-                                            <Setter Property="ToolTip" Value="Whether this field will be displayed in the Carnassial's data entry panel."/>
+                                            <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.Visible.ToolTip}" />
                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                             <Style.Triggers>
                                                 <Trigger Property="IsEnabled" Value="False">
@@ -445,10 +341,10 @@
                                         </Style>
                                     </DataGridCheckBoxColumn.CellStyle>
                                 </DataGridCheckBoxColumn>
-                                <DataGridTextColumn MinWidth="40" Header="Max&#x0a;Width" Binding="{Binding Path=MaxWidth}" CanUserSort="False">
+                                <DataGridTextColumn MinWidth="40" Header="{StaticResource EditorWindow.ControlDataGrid.MaxWidth}" Binding="{Binding Path=MaxWidth}" CanUserSort="False">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="{x:Type TextBlock}">
-                                            <Setter Property="ToolTip" Value="The widest the this field can appear in Carnassial's data entry panel."/>
+                                            <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.MaxWidth.ToolTip}" />
                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
@@ -463,11 +359,11 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
-                            <Button Content="Add _counter" Click="AddControlButton_Click" IsEnabled="False" Margin="0,0,0,5" Name="AddCounterButton" Padding="5,5,5,5" ToolTip="Add a new counter control." Grid.Column="0" Grid.Row="0" />
-                            <Button Content="Add c_hoice" Click="AddControlButton_Click" IsEnabled="False" Margin="0,5,0,5" Name="AddFixedChoiceButton" Padding="5,5,5,5" ToolTip="Add a new choice control." Grid.Column="0" Grid.Row="1" />
-                            <Button Content="Add _note" Click="AddControlButton_Click" IsEnabled="False" Margin="0,5,0,5" Name="AddNoteButton" Padding="5,5,5,5" ToolTip="Add a new note control." Grid.Column="0" Grid.Row="2" />
-                            <Button Content="Add fla_g" Click="AddControlButton_Click" IsEnabled="False" Margin="0,5,0,5" Name="AddFlagButton" Padding="5,5,5,5" ToolTip="Add a new flag control." Grid.Column="0" Grid.Row="3" />
-                            <Button Content="_Remove" Click="RemoveControlButton_Click" IsEnabled="False" Margin="0,30,0,0" Name="RemoveControlButton" Padding="5,5,5,5" ToolTip="Remove the currently selected control." Grid.Column="0" Grid.Row="4" />
+                            <Button Content="{StaticResource EditorWindow.Add.Counter}" Click="AddControlButton_Click" IsEnabled="False" Margin="0,0,0,5" Name="AddCounterButton" Padding="5,5,5,5" ToolTip="{StaticResource EditorWindow.Add.Counter.Tooltip}" Grid.Column="0" Grid.Row="0" />
+                            <Button Content="{StaticResource EditorWindow.Add.Choice}" Click="AddControlButton_Click" IsEnabled="False" Margin="0,5,0,5" Name="AddFixedChoiceButton" Padding="5,5,5,5" ToolTip="{StaticResource EditorWindow.Add.Choice.Tooltip}" Grid.Column="0" Grid.Row="1" />
+                            <Button Content="{StaticResource EditorWindow.Add.Note}" Click="AddControlButton_Click" IsEnabled="False" Margin="0,5,0,5" Name="AddNoteButton" Padding="5,5,5,5" ToolTip="{StaticResource EditorWindow.Add.Note.Tooltip}" Grid.Column="0" Grid.Row="2" />
+                            <Button Content="{StaticResource EditorWindow.Add.Flag}" Click="AddControlButton_Click" IsEnabled="False" Margin="0,5,0,5" Name="AddFlagButton" Padding="5,5,5,5" ToolTip="{StaticResource EditorWindow.Add.Flag.Tooltip}" Grid.Column="0" Grid.Row="3" />
+                            <Button Content="{StaticResource EditorWindow.Remove}" Click="RemoveControlButton_Click" IsEnabled="False" Margin="0,30,0,0" Name="RemoveControlButton" Padding="5,5,5,5" ToolTip="{StaticResource EditorWindow.Remove.Tooltip}" Grid.Column="0" Grid.Row="4" />
                         </Grid>
                         <GridSplitter Grid.Row="1" Grid.ColumnSpan="2" Height="4" HorizontalAlignment="Stretch" VerticalAlignment="Center" />
 
@@ -477,7 +373,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
-                            <TextBlock Grid.Row="0" Margin="10,10,10,0" Text="The columns in spreadsheets exported from Carnassial while using this template are dislayed below.  Drag and drop columns to rearrange their order to your preference." TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="0" Margin="10,10,10,0" Text="{StaticResource EditorWindow.SpreadsheetOrder}" TextWrapping="Wrap" />
                             <Border Grid.Row="1" BorderBrush="Gray" BorderThickness="1" Margin="10,0,10,10">
                                 <ScrollViewer Height="50" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" VerticalAlignment="Top">
                                     <DataGrid x:Name="SpreadsheetOrderPreview" ColumnReordered="OnSpreadsheetOrderChanged" Height="25" VerticalAlignment="Top"/>
@@ -496,10 +392,10 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock Text="Drag and drop the controls below by their labels to order them to your preference." Grid.Row="0" Margin="4,2,4,4" TextWrapping="Wrap" />
+                        <TextBlock Text="{StaticResource EditorWindow.ControlOrder}" Grid.Row="0" Margin="4,2,4,4" TextWrapping="Wrap" />
                         <control:DataEntryControls x:Name="DataEntryControls" ControlOrderChangedByDragDrop="DataEntryControls_ControlOrderChangedByDragDrop" Grid.Column="0" Grid.Row="1" />
                         <control:AnalysisButtons x:Name="AnalysisButtons" Grid.Column="0" Grid.Row="2" />
-                        <TextBlock Name="MessageBar" Background="{StaticResource ApplicationBorderBackgroundBrush}"  Foreground="{StaticResource ApplicationBorderForegroundBrush}" Grid.Column="0" Grid.Row="3" MinHeight="60" Padding="10,5,2,5" TextWrapping="Wrap" />
+                        <TextBlock Name="MessageBar" Background="{StaticResource ApplicationBorderBackgroundBrush}" Foreground="{StaticResource ApplicationBorderForegroundBrush}" Grid.Column="0" Grid.Row="3" MinHeight="60" Padding="10,5,2,5" TextWrapping="Wrap" />
                     </Grid>
                 </Grid>
             </TabItem>
