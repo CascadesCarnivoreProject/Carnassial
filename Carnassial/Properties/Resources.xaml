@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <!-- resources used only by Carnassial -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+                    xmlns:dialog="clr-namespace:Carnassial.Dialog"
                     xmlns:system="clr-namespace:System;assembly=mscorlib"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
@@ -17,7 +18,7 @@
         <TextBlock Margin="50,10,0,0" TextWrapping="Wrap">
             Carnassial is licensed under the
             <Hyperlink NavigateUri="https://creativecommons.org/licenses/by-nc-sa/4.0/">Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International license</Hyperlink> and derives from
-            <Hyperlink NavigateUri="http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.TimelapseVersions">Timelapse 2.0.2.4</Hyperlink> .
+            <Hyperlink NavigateUri="http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.TimelapseVersions">Timelapse 2.0.2.4</Hyperlink>.
         </TextBlock>
     </Span>
 
@@ -256,6 +257,234 @@
     <system:String x:Key="CarnassialWindow.Tab.Instructions">Instructions</system:String>
     <system:String x:Key="CarnassialWindow.Tab.Files">Files</system:String>
 
+    <dialog:Message x:Key="CarnassialWindow.ClockDrift.Failed" WindowTitle="Can't correct for clock drift"
+                    Image="Error" Title="Can't correct for clock drift." Buttons="OK">
+        <dialog:Message.Reason>
+            <Run>All of the files selected have date/time fields whose contents are not recognizable as dates or times.</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; dates should look like dd-MMM-yyyy e.g., 16-Jan-2016</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; times should look like HH:mm:ss using 24 hour time e.g., 01:05:30 or 13:30:00</Run>
+        </dialog:Message.Reason>
+        <dialog:Message.Result>
+            <Run>Correction will be aborted and nothing will be changed.</Run>
+        </dialog:Message.Result>
+        <dialog:Message.Hint>
+            <Run>Check the format of your dates and times. You may also want to change your selection if you're not viewing All files.</Run>
+        </dialog:Message.Hint>
+    </dialog:Message>
+
+    <dialog:Message x:Key="CarnassialWindow.CopyFile.Failed" WindowTitle="File not found" 
+                    Image="Error" Title="Unable to copy file." Buttons="OK">
+        <dialog:Message.Problem>
+            <Run>The file '{0}' was not found.</Run>
+        </dialog:Message.Problem>
+        <dialog:Message.Solution>
+            <Run>Make sure you have navigated to a file which is present on disk before you try to copy it.</Run>
+        </dialog:Message.Solution>
+    </dialog:Message>
+
+    <dialog:Message x:Key="CarnassialWindow.DatabaseLoad.Failed" WindowTitle="Carnassial could not load the database file"
+                    Image="Error" Title="Carnassial could not load the database file." Buttons="OK">
+        <dialog:Message.Reason>
+            <Run>It may be that the database</Run>
+            <Run xml:space="preserve">  &#x2022; was created with Timelapse instead of Carnassial</Run>
+            <Run xml:space="preserve">  &#x2022; is corrupted or somehow otherwise invalid</Run>
+        </dialog:Message.Reason>
+        <dialog:Message.Solution>
+            <Run>You may have to recreate the database, restore it from a backup (Carnassial makes one automatically), or use another copy of it if you have one.</Run>
+        </dialog:Message.Solution>
+        <dialog:Message.Result>
+            <Run>Carnassial won't do anything at the moment.  You can select another template or database file.</Run>
+        </dialog:Message.Result>
+        <dialog:Message.Hint>
+            <Run>If the database also can't be opened in a SQLite database editor the file is corrupt.</Run>
+        </dialog:Message.Hint>
+    </dialog:Message>
+    
+    <dialog:Message x:Key="CarnassialWindow.DaylightSavings.Failed" WindowTitle="Can't correct for daylight savings time" 
+                    Image="Error" Title="Can't correct for daylight savings time." Buttons="OK">
+        <dialog:Message.Solution>
+            <Run>To correct for daylight savings time, you need to be displaying a file</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; with a valid date</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; occuring next to the daylight savings time change</Run>
+        </dialog:Message.Solution>
+    </dialog:Message>
+
+    <dialog:Message x:Key="CarnassialWindow.ImageMetadata.Failed" WindowTitle="Can't populate a data field with image metadata" 
+                    Image="Error" Title="Can't populate a data field with image metadata." Buttons="OK">
+        <dialog:Message.Problem>
+            <Run>Metadata is not available as no file in the image set can be read.</Run>
+        </dialog:Message.Problem>
+        <dialog:Message.Reason>
+            <Run>Carnassial must have at least one valid file in order to get its metadata.  All files are either corrupted or removed.</Run>
+        </dialog:Message.Reason>
+    </dialog:Message>
+
+    <dialog:Message x:Key="CarnassialWindow.ExportSpreadsheet.Failed" WindowTitle="Can't write the spreadsheet file" 
+                    Image="Error" Title="Can't write the spreadsheet file." Buttons="OK">
+        <dialog:Message.Problem>
+            <Run>The following file can't be written: '{0}'</Run>
+        </dialog:Message.Problem>
+        <dialog:Message.Reason>
+            <Run>You may have it open in Excel or another application or may not have write permission to the location.</Run>
+        </dialog:Message.Reason>
+        <dialog:Message.Solution>
+            <Run>If the file is open in another application, close it and try again. Otherwise, choosing another location may help.</Run>
+        </dialog:Message.Solution>
+        <dialog:Message.Hint>
+            <Run>{1}: {2}</Run>
+        </dialog:Message.Hint>
+    </dialog:Message>
+
+    <dialog:Message x:Key="CarnassialWindow.FileMove.Incomplete" WindowTitle="Not all files could be moved" 
+                    Title="Conflicts prevented some files from being moved." Buttons="OK">
+        <dialog:Message.What>
+            <Run>{0} of {1} files were moved.</Run>
+        </dialog:Message.What>
+        <dialog:Message.Reason>
+            <Run>This occurs when the selection contains multiple files with the same name or files with the same name are already present in the destination folder.</Run>
+        </dialog:Message.Reason>
+        <dialog:Message.Solution>
+            <Run xml:space="preserve">  &#x2022; Move the remaining files to an alternate folder.</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; Remove or rename the conflicting files and apply the move command again to move the remaining files.</Run>
+        </dialog:Message.Solution>
+        <dialog:Message.Result>
+            <Run>Carnassial moved the files which could be moved.  The remaining files were left in place.</Run>
+        </dialog:Message.Result>
+        <dialog:Message.Hint>
+            <Run>The {2} files which could not be moved are</Run><LineBreak />
+            <LineBreak />
+        </dialog:Message.Hint>
+    </dialog:Message>
+
+    <dialog:Message x:Key="CarnassialWindow.ImportSpreadsheet" WindowTitle="Importing spreadsheet data" 
+                    Image="Information" Title="How importing spreadsheet data works." DisplayDontShowAgain="True" Buttons="OK">
+        <dialog:Message.Solution>
+            <Run>Modifying and importing a spreadsheet is supported only if the file is exported from and then back into image set with the same template.</Run><LineBreak />
+            <Run>A limited set of modifications is allowed:</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; Counter data must be zero or a positive integer.</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; Flag data must be 'true' or 'false', case insensitive.</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; FixedChoice data must be a string that exactly matches one of the FixedChoice menu options or the field's default value.</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; DateTime must be in '{0}' format.</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; UtcOffset must be a floating point number between {1} and {2}, inclusive.</Run><LineBreak />
+            <Run xml:space="preserve">Changing these things is either unsupported or is best done with care:</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; FileName and RelativePath identify the file updates are applied to.  Changing them causes a different file to be updated or a new file to be added.</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; RelativePath is interpreted relative to the spreadsheet file.  Make sure it's in the right place!</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; Column names can be swapped to assign data to different fields.</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; Adding, removing, or otherwise changing columns is not supported.</Run><LineBreak />
+            <Run xml:space="preserve">&#x2022; Using a worksheet with a name other than '{3}' in .xlsx files is not supported.</Run>
+        </dialog:Message.Solution>
+        <dialog:Message.Result>
+            <Run>Carnassial will import as much data as it can.  If data can't be imported you'll get a dialog listing the problems.</Run>
+        </dialog:Message.Result>
+        <dialog:Message.Hint>
+            <Run xml:space="preserve">  &#x2022; Usually the spreadsheet should be in the same folder as the data file ({4}) it was exported from.</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; If you check 'Don't show this message' this dialog can be turned back on via the Options menu.</Run>
+        </dialog:Message.Hint>
+    </dialog:Message>
+    <dialog:Message x:Key="CarnassialWindow.ImportSpreadsheet.Failed" WindowTitle="Can't import spreadsheet" 
+                    Image="Error" Title="Can't import spreadsheet." Buttons="OK">
+        <dialog:Message.Problem>
+            <Run>The file '{0}' either could not be opened or could not be read.</Run>
+        </dialog:Message.Problem>
+        <dialog:Message.Reason>
+            <Run>Most likely the file is open in another program.</Run>
+        </dialog:Message.Reason>
+        <dialog:Message.Result>
+            <Run>{1}: {2}</Run>
+        </dialog:Message.Result>
+        <dialog:Message.Hint>
+            <Run>Is the file open in Excel?</Run>
+        </dialog:Message.Hint>
+    </dialog:Message>
+    <dialog:Message x:Key="CarnassialWindow.ImportSpreadsheet.Incomplete" WindowTitle="Spreadsheet import incomplete" 
+                    Image="Warning" Title="Spreadsheet import incomplete." Buttons="OK">
+        <dialog:Message.Problem>
+            <Run>The file '{0}' could not be fully read.</Run>
+        </dialog:Message.Problem>
+        <dialog:Message.Reason>
+            <Run>The spreadsheet is not fully compatible with the current image set.</Run>
+        </dialog:Message.Reason>
+        <dialog:Message.Solution>
+            <Run>Check that</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; The first row of the file is a header line.</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; The column names in the header line match the database.</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; Choice values use the correct case.</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; Counter values are numbers.</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; Flag values are either 'true' or 'false'.</Run>
+        </dialog:Message.Solution>
+        <dialog:Message.Result>
+            <Run>Either no data was imported or invalid parts of the spreadsheet were skipped.</Run>
+        </dialog:Message.Result>
+        <dialog:Message.Hint>
+            <Run>The errors encountered were:</Run>
+        </dialog:Message.Hint>
+    </dialog:Message>
+
+    <dialog:Message x:Key="CarnassialWindow.NoAmbiguousDates" WindowTitle="No ambiguous dates found" 
+                    Image="Information" Title="No ambiguous dates found." Buttons="OK">
+        <dialog:Message.Reason>
+            <Run>All of the selected files have unambguous date fields</Run>
+        </dialog:Message.Reason>
+        <dialog:Message.Result>
+            <Run>No corrections needed, and no changes have been made.</Run>
+        </dialog:Message.Result>
+    </dialog:Message>
+
+    <dialog:Message x:Key="CarnassialWindow.NoDeleteableFiles" WindowTitle="No files are marked for deletion" 
+                    Image="Information" Title="No files are marked for deletion." Buttons="OK">
+        <dialog:Message.Problem>
+            <Run>You are trying to delete files marked for deletion but no files have their delete box checked.</Run>
+        </dialog:Message.Problem>
+        <dialog:Message.Solution>
+            <Run>If you have files that you think should be deleted check their delete box.</Run>
+        </dialog:Message.Solution>
+    </dialog:Message>
+
+    <dialog:Message x:Key="CarnassialWindow.NoMetadataAvailable" WindowTitle="Can't populate a data field with metadata" 
+                    Image="Information" Title="Can't populate a data field with metadata." Buttons="OK">
+        <dialog:Message.Problem>
+            <Run>Metadata is not available as no file in the image set can be read.</Run>
+        </dialog:Message.Problem>
+        <dialog:Message.Reason>
+            <Run>At least one file must be available to read metadata from.  All files are either corrupted or removed.</Run>
+        </dialog:Message.Reason>
+    </dialog:Message>
+
+    <dialog:Message x:Key="CarnassialWindow.SelectFolder" WindowTitle="Add files?" 
+                    Image="Question" Title="Select a folder containing images or videos?" Buttons="YesNo">
+        <dialog:Message.What>
+            <Run>There aren't any images or videos in the folder '{0}' so the image set is currently empty.</Run>
+        </dialog:Message.What>
+        <dialog:Message.Solution>
+            <Run>Choose Yes and select a folder containing images and/or videos.  Or choose No and add files later via the File menu.</Run>
+        </dialog:Message.Solution>
+        <dialog:Message.Hint>
+            <Run xml:space="preserve">  &#x2022; The files may be in a subfolder of this folder.</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; If you need to set the image set's time zone before adding files choose No.</Run>
+        </dialog:Message.Hint>
+    </dialog:Message>
+
+    <dialog:Message x:Key="CarnassialWindow.TemplateLoad.Failed" WindowTitle="Carnassial could not load the template file" 
+                    Image="Error" Title="Carnassial could not load the template file." Buttons="OK">
+        <dialog:Message.Problem>
+            <Run>Carnassial could not load '{0}'.</Run>
+        </dialog:Message.Problem>
+        <dialog:Message.Reason>
+            <Run xml:space="preserve">  &#x2022; The template was created with the Timelapse template editor instead of the Carnassial editor.</Run>
+            <LineBreak />
+            <Run xml:space="preserve">  &#x2022; The template may be corrupted or somehow otherwise invalid.</Run>
+        </dialog:Message.Reason>
+        <dialog:Message.Solution>
+            <Run>You may have to recreate the template, restore it from a backup, or use another copy of it.</Run>
+        </dialog:Message.Solution>
+        <dialog:Message.Result>
+            <Run>Carnassial won't do anything.  You can select another template file.</Run>
+        </dialog:Message.Result>
+        <dialog:Message.Hint>
+            <Run>If the template can't be opened in a SQLite database editor the file is corrupt.</Run>
+        </dialog:Message.Hint>
+    </dialog:Message>
+
     <system:String x:Key="ChooseFileDatabase.Title">Select the database file to use</system:String>
     <system:String x:Key="ChooseFileDatabase.Message.Title">Choose a database file.</system:String>
     <system:String x:Key="ChooseFileDatabase.Message.Problem">There are multiple Carnassial database files (.ddb) in the same directory as the template.</system:String>
@@ -283,6 +512,52 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="CustomSelection.SearchTerms.DatabaseQuery">Database Query</system:String>
     <system:String x:Key="CustomSelection.Reset">_Reset</system:String>
     <system:String x:Key="CustomSelection.QueryMatches">files match your query</system:String>
+
+    <dialog:Message x:Key="DataEntryHandler.ConfirmCopyAll" WindowTitle="Copy field value to all files?" 
+                    Image="Question" Title="Please confirm copy to all for this field..." Buttons="YesNo">
+        <dialog:Message.What>
+            <Run>Copy to all is not undoable and can overwrite existing values.</Run>
+        </dialog:Message.What>
+        <dialog:Message.Result>
+            <Run>If you choose yes, Carnassial will:</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; set this field to '{0}' across all {1} selected files</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; overwrite any other data entered in this field</Run>
+        </dialog:Message.Result>
+    </dialog:Message>
+    <dialog:Message x:Key="DataEntryHandler.ConfirmCopyForward" WindowTitle="Copy field value to all subsequent files?" 
+                    Image="Question" Title="Please confirm copy forward to end for this field..." Buttons="YesNo">
+        <dialog:Message.What>
+            <Run>Copy forward is not undoable and can overwrite existing values.</Run>
+        </dialog:Message.What>
+        <dialog:Message.Result>
+            <Run>If you choose yes, Carnassial will:</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; copy the value '{0}' in this field from here to the last of the selected files</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; overwrite any other data entered in this field for those {1} files</Run>
+        </dialog:Message.Result>
+    </dialog:Message>
+    <dialog:Message x:Key="DataEntryHandler.ConfirmPropagateToHere" WindowTitle="Copy field value to here?" 
+                    Image="Question" Title="Please confirm copy to here for this field..." Buttons="YesNo">
+        <dialog:Message.What>
+            <Run>Copy to here is not undoable and can overwrite existing values.</Run>
+            <Run xml:space="preserve">  &#x2022; the last non-empty value '{0}' was found {1} files previously</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; that field's value will be copied to all files between that file and this one in the selection</Run><LineBreak />
+        </dialog:Message.What>
+        <dialog:Message.Result>
+            <Run>If you choose yes, Carnassial will perform the copy.</Run><LineBreak />
+        </dialog:Message.Result>
+    </dialog:Message>
+    <dialog:Message x:Key="DataEntryHandler.NothingToCopyForward" WindowTitle="Nothing to copy forward" 
+                    Image="Information" Title="Nothing to copy forward." Buttons="OK">
+        <dialog:Message.Reason>
+            <Run>As you are on the last file, there are no files after this.</Run>
+        </dialog:Message.Reason>
+    </dialog:Message>
+    <dialog:Message x:Key="DataEntryHandler.NothingToPropagate" WindowTitle="Nothing to propagate to here" 
+                    Image="Information" Title="Nothing to propagate to here." Buttons="OK">
+        <dialog:Message.Reason>
+            <Run>None of the files before this have a value specified for this field, so there is no value to propagate.</Run>
+        </dialog:Message.Reason>
+    </dialog:Message>
 
     <system:String x:Key="DateCorrectAmbiguous.Title">Date - Check and modify ambiguous dates</system:String>
     <system:String x:Key="DateCorrectAmbiguous.Message.Title">Correct ambiguous dates.</system:String>
@@ -407,6 +682,25 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="FindReplace.Replace.Current">_Replace</system:String>
     <system:String x:Key="FindReplace.Replace.All">Replace _all</system:String>
     <system:String x:Key="FindReplace.Close">_Close</system:String>
+
+    <dialog:Message x:Key="GithubReleaseClient.GetNewVersion" WindowTitle="Update available" 
+                    Image="Question" Title="Get new version?" Buttons="YesNo">
+        <dialog:Message.What>
+            <Run>Version {0} of {1} is now available. You're currently running {2}.</Run>
+        </dialog:Message.What>
+        <dialog:Message.Solution>
+            <Run>Choose 'Yes' to go to the website and download the new version.</Run>
+        </dialog:Message.Solution>
+        <dialog:Message.Hint>
+            <Run>To see all releases, go to {3}.</Run>
+        </dialog:Message.Hint>
+    </dialog:Message>
+    <dialog:Message x:Key="GithubReleaseClient.NoUpdates" WindowTitle="No updates are available" 
+                    Image="Information" Title="No updates are available." Buttons="OK">
+        <dialog:Message.Reason>
+            <Run>You're running the latest release, {0} {1}.</Run>
+        </dialog:Message.Reason>
+    </dialog:Message>
 
     <system:String x:Key="GoToFile.Title">Go to file</system:String>
     <system:String x:Key="GoToFile.FileNumberRange">File number (1 - {0}):</system:String>

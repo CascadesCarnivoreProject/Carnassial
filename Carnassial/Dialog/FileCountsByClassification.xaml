@@ -51,9 +51,9 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <control:StockMessageControl x:Name="Message" 
-                                         StatusImage="Information"
+                                         Image="Information"
                                          Title="{StaticResource FileCountsByClassification.Message.Title}"
-                                         HideExplanationCheckboxIsVisible="False" Grid.Row="0" />
+                                         DisplayHideExplanationCheckbox="False" Grid.Row="0" />
             <CheckBox x:Name="DontShowAgain" Margin="79,10,10,10" Content="{StaticResource Message.DontShowAgain}" Visibility="Collapsed" Grid.Row="1" />
             <Grid Margin="10,10,10,0" Grid.Row="2">
                 <Grid.ColumnDefinitions>

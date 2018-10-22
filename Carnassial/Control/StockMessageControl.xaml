@@ -27,31 +27,31 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
-                <Image Name="Image" Width="64" Height="64" Margin="2,2,2,2" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2"/>
-                <TextBox Name="TitleText" Background="Transparent" Margin="10,0,10,0" FontSize="16" FontWeight="Bold" VerticalAlignment="Center" BorderThickness="0" IsReadOnly="True" IsTabStop="False" Grid.Column="1" Grid.Row="0" />
-                <CheckBox Name="HideExplanation" Content="{StaticResource StockMessageControl.HideExplanation}" Margin="8,0,10,0" VerticalAlignment="Center" Checked="HideExplanation_CheckedChanged" Unchecked="HideExplanation_CheckedChanged" Grid.Column="1" Grid.Row="1" />
+                <Image Name="StatusImage" Width="64" Height="64" Margin="2,2,2,2" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" />
+                <TextBlock Name="TitleText" x:FieldModifier="public" FontSize="16" FontWeight="Bold" Margin="10,0,10,0" VerticalAlignment="Center" Grid.Column="1" Grid.Row="0" />
+                <CheckBox Name="HideExplanation" Checked="HideExplanation_CheckedChanged" Content="{StaticResource StockMessageControl.HideExplanation}" Margin="8,0,10,0" Unchecked="HideExplanation_CheckedChanged" VerticalAlignment="Center" Grid.Column="1" Grid.Row="1" />
             </Grid>
 
-            <TextBlock Margin="10,7,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="1" Grid.Column="0" Text="{StaticResource StockMessageControl.Problem}" />
-            <TextBox Name="ProblemText" Background="Transparent" Margin="0,7,10,0" VerticalAlignment="Top" TextWrapping="Wrap" IsReadOnly="True" IsTabStop="False" BorderThickness="0" Grid.Row="1" Grid.Column="1" />
+            <TextBlock Name="ProblemLabel" FontWeight="Bold" Margin="10,7,10,0" Text="{StaticResource StockMessageControl.Problem}" VerticalAlignment="Top"  Visibility="{Binding Path=ProblemText.Visibility}" Grid.Column="0" Grid.Row="1" />
+            <TextBlock Name="ProblemText" x:FieldModifier="public" Margin="0,7,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="1" Grid.Column="1" />
 
-            <TextBlock Margin="10,7,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="2" Grid.Column="0" Text="{StaticResource StockMessageControl.What}" />
-            <TextBox Name="WhatText" Background="Transparent" Margin="0,7,10,0" VerticalAlignment="Top" TextWrapping="Wrap" IsReadOnly="True" IsTabStop="False" BorderThickness="0" Grid.Row="2" Grid.Column="1" />
+            <TextBlock Name="WhatLabel" FontWeight="Bold" Margin="10,7,10,0" Text="{StaticResource StockMessageControl.What}" VerticalAlignment="Top" Visibility="{Binding Path=WhatText.Visibility}" Grid.Column="0" Grid.Row="2" />
+            <TextBlock Name="WhatText" x:FieldModifier="public" Margin="0,7,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="2" Grid.Column="1" />
 
-            <TextBlock Margin="10,7,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="3" Grid.Column="0" Text="{StaticResource StockMessageControl.Reason}" />
-            <TextBox Name="ReasonText" Background="Transparent" Margin="0,7,10,0" VerticalAlignment="Top" TextWrapping="Wrap" IsReadOnly="True" IsTabStop="False" BorderThickness="0" Grid.Row="3" Grid.Column="1" />
+            <TextBlock Name="ReasonLabel" FontWeight="Bold" Margin="10,7,10,0" Text="{StaticResource StockMessageControl.Reason}" VerticalAlignment="Top" Visibility="{Binding Path=ReasonText.Visibility}" Grid.Column="0" Grid.Row="3" />
+            <TextBlock Name="ReasonText" x:FieldModifier="public" Margin="0,7,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1" Grid.Row="3" />
 
-            <TextBlock Margin="10,7,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="4" Grid.Column="0" Text="{StaticResource StockMessageControl.Solution}" />
-            <TextBox Name="SolutionText" Background="Transparent" Margin="0,7,10,0" VerticalAlignment="Top" TextWrapping="Wrap" IsReadOnly="True" IsTabStop="False" BorderThickness="0" Grid.Row="4" Grid.Column="1" />
+            <TextBlock Name="SolutionLabel" FontWeight="Bold" Margin="10,7,10,0" Text="{StaticResource StockMessageControl.Solution}" VerticalAlignment="Top" Visibility="{Binding Path=SolutionText.Visibility}" Grid.Column="0" Grid.Row="4" />
+            <TextBlock Name="Solution" x:FieldModifier="public" Margin="0,7,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1" Grid.Row="4" />
 
-            <TextBlock Margin="10,7,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="5" Grid.Column="0" Text="{StaticResource StockMessageControl.Result}" />
-            <TextBox Name="ResultText" Background="Transparent" Margin="0,7,10,0" VerticalAlignment="Top" TextWrapping="Wrap" IsReadOnly="True" IsTabStop="False" BorderThickness="0" Grid.Row="5" Grid.Column="1" />
+            <TextBlock Name="ResultLabel" FontWeight="Bold" Margin="10,7,10,0" Text="{StaticResource StockMessageControl.Result}" VerticalAlignment="Top" Visibility="{Binding Path=ResultText.Visibility}" Grid.Column="0" Grid.Row="5" />
+            <TextBlock Name="ResultText" x:FieldModifier="public" Margin="0,7,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1" Grid.Row="5" />
 
-            <TextBlock Margin="10,7,10,0" VerticalAlignment="Top" FontWeight="Bold" Grid.Row="6" Grid.Column="0" Text="{StaticResource StockMessageControl.Hint}" />
-            <TextBox Name="HintText" Background="Transparent" Margin="0,7,10,0" VerticalAlignment="Top" TextWrapping="Wrap" IsReadOnly="True" IsTabStop="False" BorderThickness="0" Grid.Row="6" Grid.Column="1" />
+            <TextBlock Name="HintLabel" FontWeight="Bold" Margin="10,7,10,0" Text="{StaticResource StockMessageControl.Hint}" VerticalAlignment="Top" Visibility="{Binding Path=HintText.Visibility}" Grid.Column="0" Grid.Row="6" />
+            <TextBlock Name="HintText" x:FieldModifier="public" Margin="0,7,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1" Grid.Row="6" />
         </Grid>
     </Grid>
 </UserControl>

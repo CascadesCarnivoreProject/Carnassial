@@ -522,14 +522,7 @@ namespace Carnassial.Editor
             if (templateLoaded == false)
             {
                 // notify the user the template couldn't be loaded
-                MessageBox messageBox = new MessageBox("Carnassial could not load the template.", this);
-                messageBox.Message.Problem = "Carnassial could not load " + Path.GetFileName(templateDatabasePath) + Environment.NewLine;
-                messageBox.Message.Reason = "\u2022 The template was created with the Timelapse template editor instead of the Carnassial editor." + Environment.NewLine;
-                messageBox.Message.Reason = "\u2022 The template may be corrupted or somehow otherwise invalid.";
-                messageBox.Message.Solution = "You may have to recreate the template or use another copy of it (if you have one).";
-                messageBox.Message.Result = "Carnassial won't do anything. You can try to select another template file.";
-                messageBox.Message.Hint = "If the template can't be opened in a SQLite database editor the file is corrupt and you'll have to recreate it.";
-                messageBox.Message.StatusImage = MessageBoxImage.Error;
+                MessageBox messageBox = MessageBox.FromResource(EditorConstant.ResourceKey.EditorWindowTemplateLoadFailed, this, Path.GetFileName(templateDatabasePath));
                 messageBox.ShowDialog();
             }
 
@@ -696,7 +689,12 @@ namespace Carnassial.Editor
 
         private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            this.ShowExceptionReportingDialog("The template editor needs to close.", e, this);
+            string databasePath = null;
+            if (this.templateDatabase != null)
+            {
+                databasePath = this.templateDatabase.FilePath;
+            }
+            this.ShowExceptionReportingDialog("The template editor needs to close.", databasePath, e);
         }
 
         private void RebuildControlPreview()
@@ -842,11 +840,7 @@ namespace Carnassial.Editor
             // if the data label is empty replace it and notify the user
             if (String.IsNullOrWhiteSpace(dataLabel))
             {
-                MessageBox messageBox = new MessageBox("Data label is empty.", this);
-                messageBox.Message.StatusImage = MessageBoxImage.Warning;
-                messageBox.Message.Problem = "Data label is empty.";
-                messageBox.Message.Result = "We will automatically create a uniquely data label for you.";
-                messageBox.Message.Hint = "You can replace this name with your own data label.";
+                MessageBox messageBox = MessageBox.FromResource(EditorConstant.ResourceKey.EditorWindowDataLabelEmpty, this);
                 messageBox.ShowDialog();
                 textBox.Text = this.templateDatabase.GetNextUniqueDataLabel("DataLabel");
             }
@@ -855,20 +849,11 @@ namespace Carnassial.Editor
             for (int row = 0; row < this.templateDatabase.Controls.RowCount; row++)
             {
                 ControlRow control = this.templateDatabase.Controls[row];
-                if (dataLabel.Equals(control.DataLabel))
+                if ((this.ControlDataGrid.SelectedIndex != row) && dataLabel.Equals(control.DataLabel))
                 {
-                    if (this.ControlDataGrid.SelectedIndex == row)
-                    {
-                        continue; // Its the same row, so its the same key, so skip it
-                    }
-
-                    MessageBox messageBox = new MessageBox("Data Labels must be unique.", this);
-                    messageBox.Message.StatusImage = MessageBoxImage.Information;
-                    messageBox.Message.Problem = "'" + textBox.Text + "' is not a valid Data Label, as you have already used it in another row.";
-                    messageBox.Message.Result = "We will automatically create a unique Data Label for you by adding a number to its end.";
-                    messageBox.Message.Hint = "You can create your own unique name for this Data Label. Start your label with a letter. Then use any combination of letters, numbers, and '_'.";
+                    MessageBox messageBox = MessageBox.FromResource(EditorConstant.ResourceKey.EditorWindowDataLabelNotUnique, this, textBox.Text);
                     messageBox.ShowDialog();
-                    textBox.Text = this.templateDatabase.GetNextUniqueDataLabel("DataLabel");
+                    textBox.Text = this.templateDatabase.GetNextUniqueDataLabel(textBox.Text);
                     break;
                 }
             }

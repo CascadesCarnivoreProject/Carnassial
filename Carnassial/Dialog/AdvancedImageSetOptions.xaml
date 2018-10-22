@@ -48,7 +48,7 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             
-            <control:StockMessageControl x:Name="Message" Margin="10,5,10,5" StatusImage="Question"
+            <control:StockMessageControl x:Name="Message" Margin="10,5,10,5" Image="Question"
                                          Title="{StaticResource AdvancedImageSetOptions.Title}"
                                          What="{StaticResource AdvancedImageSetOptions.Message.What}" Grid.Row="0" />
             <GroupBox Header="{StaticResource AdvancedImageSetOptions.TimeZone}" Margin="10,5,10,5" HorizontalAlignment="Stretch" VerticalAlignment="Top" FontWeight="Bold" Padding="5" Grid.Row="1">

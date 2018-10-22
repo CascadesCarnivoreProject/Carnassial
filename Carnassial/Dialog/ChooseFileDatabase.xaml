@@ -49,7 +49,7 @@
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <control:StockMessageControl x:Name="Message" Grid.Row="0" StatusImage="Question"
+            <control:StockMessageControl x:Name="Message" Grid.Row="0" Image="Question"
                             Title="{StaticResource ChooseFileDatabase.Message.Title}"
                             Problem="{StaticResource ChooseFileDatabase.Message.Problem}"
                             Solution="{StaticResource ChooseFileDatabase.Message.Solution}"

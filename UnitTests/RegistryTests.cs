@@ -59,7 +59,6 @@ namespace Carnassial.UnitTests
             userSettings.MostRecentImageSets.SetMostRecent(databasePath);
             userSettings.OrderFilesByDateTime = true;
             userSettings.SkipFileClassification = true;
-            userSettings.SuppressAmbiguousDatesDialog = true;
             userSettings.SuppressFileCountOnImportDialog = true;
             userSettings.SuppressSpreadsheetImportPrompt = true;
             userSettings.Throttles.ImageClassificationChangeSlowdown = Constant.ThrottleValues.ImageClassificationSlowdownMinimum;
@@ -81,7 +80,6 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(mostRecentDatabasePath == databasePath);
             Assert.IsTrue(userSettings.OrderFilesByDateTime);
             Assert.IsTrue(userSettings.SkipFileClassification);
-            Assert.IsTrue(userSettings.SuppressAmbiguousDatesDialog);
             Assert.IsTrue(userSettings.SuppressFileCountOnImportDialog);
             Assert.IsTrue(userSettings.SuppressSpreadsheetImportPrompt);
             Assert.IsTrue(userSettings.Throttles.ImageClassificationChangeSlowdown == Constant.ThrottleValues.ImageClassificationSlowdownMinimum);
@@ -154,7 +152,6 @@ namespace Carnassial.UnitTests
             Assert.IsNull(mostRecentDatabasePath);
             Assert.IsFalse(userSettings.OrderFilesByDateTime);
             Assert.IsFalse(userSettings.SkipFileClassification);
-            Assert.IsFalse(userSettings.SuppressAmbiguousDatesDialog);
             Assert.IsFalse(userSettings.SuppressSpreadsheetImportPrompt);
             Assert.IsFalse(userSettings.SuppressFileCountOnImportDialog);
             Assert.IsTrue(userSettings.Throttles.DesiredImageRendersPerSecond == Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault);

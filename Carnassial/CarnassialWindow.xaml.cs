@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
 using MessageBox = Carnassial.Dialog.MessageBox;
@@ -575,11 +576,7 @@ namespace Carnassial
             DateCorrectAmbiguous ambiguousDateCorrection = new DateCorrectAmbiguous(this.DataHandler.FileDatabase, this);
             if (ambiguousDateCorrection.Abort)
             {
-                MessageBox messageBox = new MessageBox("No ambiguous dates found.", this);
-                messageBox.Message.Reason = "All of the selected images have unambguous date fields." + Environment.NewLine;
-                messageBox.Message.Result = "No corrections needed, and no changes have been made." + Environment.NewLine;
-                messageBox.Message.StatusImage = MessageBoxImage.Information;
-                messageBox.ShowDialog();
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowNoAmbiguousDates, this);
                 messageBox.Close();
                 return;
             }
@@ -599,14 +596,7 @@ namespace Carnassial
             DateTimeLinearCorrection linearDateCorrection = new DateTimeLinearCorrection(this.DataHandler.FileDatabase, this);
             if (linearDateCorrection.Abort)
             {
-                MessageBox messageBox = new MessageBox("Can't correct for clock drift.", this);
-                messageBox.Message.Problem = "Can't correct for clock drift.";
-                messageBox.Message.Reason = "All of the files selected have date/time fields whose contents are not recognizable as dates or times." + Environment.NewLine;
-                messageBox.Message.Reason += "\u2022 dates should look like dd-MMM-yyyy e.g., 16-Jan-2016" + Environment.NewLine;
-                messageBox.Message.Reason += "\u2022 times should look like HH:mm:ss using 24 hour time e.g., 01:05:30 or 13:30:00";
-                messageBox.Message.Result = "Date correction will be aborted and nothing will be changed.";
-                messageBox.Message.Hint = "Check the format of your dates and times. You may also want to change your selection if you're not viewing All files.";
-                messageBox.Message.StatusImage = MessageBoxImage.Error;
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowClockDriftFailed, this);
                 messageBox.ShowDialog();
                 return;
             }
@@ -619,11 +609,7 @@ namespace Carnassial
             if (this.DataHandler.ImageCache.Current.IsDisplayable() == false)
             {
                 // Just a corrupted image
-                MessageBox messageBox = new MessageBox("Can't correct for daylight savings time.", this);
-                messageBox.Message.Problem = "This is a corrupted file.";
-                messageBox.Message.Solution = "To correct for daylight savings time, you need to:" + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 be displaying a file with a valid date ";
-                messageBox.Message.Solution += "\u2022 where that file should be the one at the daylight savings time threshold.";
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowDaylightSavingsFailed, this);
                 messageBox.ShowDialog();
                 return;
             }
@@ -682,10 +668,7 @@ namespace Carnassial
             // This should be unreachable as the invoking menu item should be disabled.
             if (filesToDelete == null || filesToDelete.Count < 1)
             {
-                MessageBox messageBox = new MessageBox("No files are marked for deletion.", this);
-                messageBox.Message.Problem = "You are trying to delete files marked for deletion, but no files have their 'Delete?' box checked.";
-                messageBox.Message.Hint = "If you have files that you think should be deleted, check their Delete? box.";
-                messageBox.Message.StatusImage = MessageBoxImage.Information;
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowNoDeletableFiles, this);
                 messageBox.ShowDialog();
                 return;
             }
@@ -791,10 +774,7 @@ namespace Carnassial
                 if (firstFileDisplayable == -1)
                 {
                     // there are no displayable files and thus no metadata to choose, so abort
-                    MessageBox messageBox = new MessageBox("Can't populate a data field with image metadata.", this);
-                    messageBox.Message.Problem = "Metadata is not available as no file in the image set can be read." + Environment.NewLine;
-                    messageBox.Message.Reason += "Carnassial must have at least one valid file in order to get its metadata.  All files are either corrupted or removed.";
-                    messageBox.Message.StatusImage = MessageBoxImage.Error;
+                    MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowNoMetadataAvailable, this);
                     messageBox.ShowDialog();
                     return;
                 }
@@ -928,11 +908,7 @@ namespace Carnassial
             string sourcePath = this.DataHandler.ImageCache.Current.GetFilePath(this.FolderPath);
             if (File.Exists(sourcePath) == false)
             {
-                MessageBox messageBox = new MessageBox("Unable to copy this file.", this);
-                messageBox.Message.StatusImage = MessageBoxImage.Error;
-                messageBox.Message.Problem = "Carnassial can't copy the current file.";
-                messageBox.Message.Reason = String.Format("The file '{0}' was not found.", sourcePath);
-                messageBox.Message.Solution = "Make sure you have navigated to a file which is present on disk before you try to export it.";
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowCopyFileFailed, this, sourcePath);
                 messageBox.ShowDialog();
                 return;
             }
@@ -1002,16 +978,14 @@ namespace Carnassial
                 this.SetStatusMessage("Moved {0} of {1} files to {2}.", this.DataHandler.FileDatabase.CurrentlySelectedFileCount - immovableFiles.Count, this.DataHandler.FileDatabase.CurrentlySelectedFileCount, Path.GetFileName(folderSelectionDialog.FileName));
                 if (immovableFiles.Count > 0)
                 {
-                    MessageBox messageBox = new MessageBox("Not all files could be moved.", this);
-                    messageBox.Message.Title = "Conflicts prevented some files from being moved.";
-                    messageBox.Message.What = String.Format("{0} of {1} files were moved.", this.DataHandler.FileDatabase.CurrentlySelectedFileCount - immovableFiles.Count, this.DataHandler.FileDatabase.CurrentlySelectedFileCount);
-                    messageBox.Message.Reason = "This occurs when the selection contains multiple files with the same name or files with the same name are already present in the destination folder.";
-                    messageBox.Message.Solution = "Remove or rename the conflicting files and apply the move command again to move the remaining files.";
-                    messageBox.Message.Result = "Carnassial moved the files which could be moved.  The remaining files were left in place.";
-                    messageBox.Message.Hint = String.Format("The {0} files which could not be moved are{1}", immovableFiles.Count, Environment.NewLine);
+                    MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowFileMoveIncomplete, this, 
+                                                                    this.DataHandler.FileDatabase.CurrentlySelectedFileCount - immovableFiles.Count, 
+                                                                    this.DataHandler.FileDatabase.CurrentlySelectedFileCount,
+                                                                    immovableFiles.Count);
                     foreach (string fileName in immovableFiles)
                     {
-                        messageBox.Message.Hint += String.Format("\u2022 {0}{1}", fileName, Environment.NewLine);
+                        messageBox.Message.HintText.Inlines.Add(new LineBreak());
+                        messageBox.Message.HintText.Inlines.Add(new Run("  \u2022 " + fileName));
                     }
                     messageBox.ShowDialog();
                 }
@@ -1090,12 +1064,10 @@ namespace Carnassial
             }
             catch (IOException exception)
             {
-                MessageBox messageBox = new MessageBox("Can't write the spreadsheet file.", this);
-                messageBox.Message.StatusImage = MessageBoxImage.Error;
-                messageBox.Message.Problem = "The following file can't be written: " + spreadsheetFilePath;
-                messageBox.Message.Reason = "You may already have it open in Excel or another application.";
-                messageBox.Message.Solution = "If the file is open in another application, close it and try again.";
-                messageBox.Message.Hint = String.Format("{0}: {1}", exception.GetType().FullName, exception.Message);
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowExportSpreadsheetFailed, this,
+                                                                spreadsheetFilePath,
+                                                                exception.GetType().FullName, 
+                                                                exception.Message);
                 messageBox.ShowDialog();
                 return;
             }
@@ -1111,26 +1083,12 @@ namespace Carnassial
         {
             if (this.State.SuppressSpreadsheetImportPrompt == false)
             {
-                MessageBox messageBox = new MessageBox("How importing spreadsheet data works.", this, MessageBoxButton.OKCancel);
-                messageBox.Message.What = "Importing data from .csv (comma separated value) and .xslx (Excel) files follows the rules below.";
-                messageBox.Message.Reason = "Carnassial requires the file follow a specific format and processes its data in a specific way.";
-                messageBox.Message.Solution = "Modifying and importing a spreadsheet is supported only if the file is exported from and then back into image set with the same template." + Environment.NewLine;
-                messageBox.Message.Solution += "A limited set of modifications is allowed:" + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 Counter data must be zero or a positive integer." + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 Flag data must be 'true' or 'false', case insensitive." + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 FixedChoice data must be a string that exactly matches one of the FixedChoice menu options or the field's default value." + Environment.NewLine;
-                messageBox.Message.Solution += String.Format("\u2022 DateTime must be in '{0}' format.{1}", Constant.Time.DateTimeDatabaseFormat, Environment.NewLine);
-                messageBox.Message.Solution += String.Format("\u2022 UtcOffset must be a floating point number between {0} and {1}, inclusive.{2}", DateTimeHandler.ToDatabaseUtcOffsetString(TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours)), DateTimeHandler.ToDatabaseUtcOffsetString(TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours)), Environment.NewLine);
-                messageBox.Message.Solution += "Changing these things either doesn't work or is best done with care:" + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 FileName and RelativePath identify the file updates are applied to.  Changing them causes a different file to be updated or a new file to be added." + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 RelativePath is interpreted relative to the spreadsheet file.  Make sure it's in the right place!" + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 Column names can be swapped to assign data to different fields." + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 Adding, removing, or otherwise changing columns is not supported." + Environment.NewLine;
-                messageBox.Message.Solution += String.Format("\u2022 Using a worksheet with a name other than '{0}' in .xlsx files is not supported.{1}", Constant.Excel.FileDataWorksheetName, Environment.NewLine);
-                messageBox.Message.Result = "Carnassial will import as much data as it can.  If data can't be imported you'll get a dialog listing the problems.";
-                messageBox.Message.Hint += String.Format("\u2022 Usually the spreadsheet should be in the same folder as the data file ({0}) it was exported from.{1}", Constant.File.FileDatabaseFileExtension, Environment.NewLine);
-                messageBox.Message.Hint += "\u2022 If you check 'Don't show this message' this dialog can be turned back on via the Options menu.";
-                messageBox.Message.StatusImage = MessageBoxImage.Information;
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImportSpreadsheet, this,
+                    Constant.Time.DateTimeDatabaseFormat,
+                    DateTimeHandler.ToDatabaseUtcOffsetString(TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours)), 
+                    DateTimeHandler.ToDatabaseUtcOffsetString(TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours)),
+                    Constant.Excel.FileDataWorksheetName,
+                    Constant.File.FileDatabaseFileExtension);
                 messageBox.DontShowAgain.Visibility = Visibility.Visible;
 
                 if (messageBox.ShowDialog() != true)
@@ -1180,34 +1138,21 @@ namespace Carnassial
                 stopwatch.Stop();
                 this.SetStatusMessage("Couldn't import spreadsheet.");
 
-                MessageBox messageBox = new MessageBox("Can't import spreadsheet.", this);
-                messageBox.Message.StatusImage = MessageBoxImage.Error;
-                messageBox.Message.Problem = String.Format("The file {0} either could not be opened or could not be read.", spreadsheetFilePath);
-                messageBox.Message.Reason = "Most likely the file is open in another program.";
-                messageBox.Message.Solution = "If the file is open in another program, close it.";
-                messageBox.Message.Result = String.Format("{0}: {1}", importResult.Exception.GetType().FullName, importResult.Exception.Message);
-                messageBox.Message.Hint = "Is the file open in Excel?";
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImportSpreadsheetFailed, this,
+                                                                spreadsheetFilePath,
+                                                                importResult.Exception.GetType().FullName, 
+                                                                importResult.Exception.Message);
                 messageBox.ShowDialog();
             }
             else if (importResult.Errors.Count > 0)
             {
                 stopwatch.Stop();
 
-                MessageBox messageBox = new MessageBox("Spreadsheet import incomplete.", this);
-                messageBox.Message.StatusImage = MessageBoxImage.Error;
-                messageBox.Message.Problem = String.Format("The file {0} could not be fully read.", spreadsheetFilePath);
-                messageBox.Message.Reason = "The spreadsheet is not fully compatible with the current image set.";
-                messageBox.Message.Solution = "Check that:" + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 The first row of the file is a header line." + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 The column names in the header line match the database." + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 Choice values use the correct case." + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 Counter values are numbers." + Environment.NewLine;
-                messageBox.Message.Solution += "\u2022 Flag values are either 'true' or 'false'.";
-                messageBox.Message.Result = "Either no data was imported or invalid parts of the spreadsheet were skipped.";
-                messageBox.Message.Hint = "The errors encountered were:";
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImportSpreadsheetIncomplete, this, spreadsheetFilePath);
                 foreach (string importError in importResult.Errors)
                 {
-                    messageBox.Message.Hint += Environment.NewLine + "\u2022 " + importError;
+                    messageBox.Message.HintText.Inlines.Add(new LineBreak());
+                    messageBox.Message.HintText.Inlines.Add(new Run(importError));
                 }
                 messageBox.ShowDialog();
             }
@@ -1316,12 +1261,6 @@ namespace Carnassial
         {
             AdvancedImageSetOptions advancedImageSetOptions = new AdvancedImageSetOptions(this.DataHandler.FileDatabase, this);
             advancedImageSetOptions.ShowDialog();
-        }
-
-        private void MenuOptionsAmbiguousDatesDialog_Click(object sender, RoutedEventArgs e)
-        {
-            this.State.SuppressAmbiguousDatesDialog = !this.State.SuppressAmbiguousDatesDialog;
-            this.MenuOptionsEnableAmbiguousDatesDialog.IsChecked = !this.State.SuppressAmbiguousDatesDialog;
         }
 
         /// <summary>Toggle audio feedback on and off</summary>
@@ -1842,7 +1781,12 @@ namespace Carnassial
 
         private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            this.ShowExceptionReportingDialog("Carnassial needs to close.", e, this);
+            string databasePath = null;
+            if (this.IsFileDatabaseAvailable())
+            {
+                databasePath = this.DataHandler.FileDatabase.FilePath;
+            }
+            this.ShowExceptionReportingDialog(null, databasePath, e);
         }
 
         private void PasteAnalysis_Click(object sender, int analsisSlot)
@@ -1946,64 +1890,13 @@ namespace Carnassial
             this.DataHandler.TrySyncCurrentFileToDatabase();
             this.DataHandler.SelectFiles(selection);
 
-            // explain to user if their selection has gone empty and revert to all files
+            // if the selection has gone empty revert to all files
             if ((this.DataHandler.FileDatabase.CurrentlySelectedFileCount < 1) && (selection != FileSelection.All))
             {
-                // These cases are reached when 
+                // This case is reached when 
                 // 1) datetime modifications result in no files matching a custom selection
                 // 2) all files which match the selection get deleted
-                this.SetStatusMessage("Resetting selection to 'All files'.");
-
-                MessageBox messageBox = new MessageBox("Resetting selection to 'All files' (no files match the current selection)", this);
-                messageBox.Message.StatusImage = MessageBoxImage.Information;
-                switch (selection)
-                {
-                    case FileSelection.Color:
-                        messageBox.Message.Problem = "Color images were previously selected but no files are currently classified as color so nothing can be shown.";
-                        messageBox.Message.Reason = "No files are classified as color images.";
-                        messageBox.Message.Hint = "If you have files you think should be marked as color, set their ImageQuality field to Color and then reselect color files.";
-                        break;
-                    case FileSelection.Corrupt:
-                        messageBox.Message.Problem = "Corrupted files were previously selected but no files are currently corrupted, so nothing can be shown.";
-                        messageBox.Message.Reason = "No files have their ImageQuality set to Corrupted.";
-                        messageBox.Message.Hint = "If you have files you think should be marked as Corrupted, set their ImageQuality to Corrupted and then reselect corrupted files.";
-                        break;
-                    case FileSelection.Custom:
-                        messageBox.Message.Problem = "No files currently match the custom selection.  So nothing can be shown.";
-                        messageBox.Message.Reason = "No files match the criteria set in the current custom selection.";
-                        messageBox.Message.Hint = "Create a different custom selection and apply it view the matching files.";
-                        break;
-                    case FileSelection.Dark:
-                        messageBox.Message.Problem = "Dark files were previously selected but no files are currently dark.  So nothing can be shown.";
-                        messageBox.Message.Reason = "No files are currently classified as dark images.";
-                        messageBox.Message.Hint = "If you have files you think should be marked as Dark, set their ImageQuality to Dark and then reselect dark files.";
-                        break;
-                    case FileSelection.Greyscale:
-                        messageBox.Message.Problem = "Greyscale images were previously selected but no files are currently classified as greyscale.  So nothing can be shown.";
-                        messageBox.Message.Reason = "No files are currently classified as greyscale images.";
-                        messageBox.Message.Hint = "If you have files you think should be marked as greyscale, set their ImageQuality field to Greyscale and then reselect greyscale files.";
-                        break;
-                    case FileSelection.NoLongerAvailable:
-                        messageBox.Message.Problem = "Files which are no longer available were selected but all files are now available.  So nothing can be shown.";
-                        messageBox.Message.Reason = "No files currently have their classification set to FilesNoLongerAvailable.";
-                        messageBox.Message.Hint = "If you have removed files set their ImageQuality field to FilesNoLongerAvailable and then reselect files no longer available.";
-                        break;
-                    case FileSelection.MarkedForDeletion:
-                        messageBox.Message.Problem = "Files marked for deletion were previously selected but no files are currently marked.  So nothing can be shown.";
-                        messageBox.Message.Reason = "No files have their Delete? box checked.";
-                        messageBox.Message.Hint = "If you have files you think should be marked for deletion, check their Delete? box and then reselect files marked for deletion.";
-                        break;
-                    case FileSelection.Video:
-                        messageBox.Message.Problem = "Videos were previously selected but no files are currently classified as videos.  So nothing can be shown.";
-                        messageBox.Message.Reason = "No files are currently classified as videos.";
-                        messageBox.Message.Hint = "If you have files you think should be marked as videos, set their ImageQuality field to Video and then reselect video files.";
-                        break;
-                    default:
-                        throw new NotSupportedException(String.Format("Unhandled selection {0}.", selection));
-                }
-                messageBox.Message.Result = "The 'All files' selection will be applied, where all files in your image set are displayed.";
-                messageBox.ShowDialog();
-
+                this.SetStatusMessage("Selection changed to 'All files'.");
                 this.DataHandler.SelectFiles(FileSelection.All);
             }
 
@@ -2316,14 +2209,7 @@ namespace Carnassial
             if (folderLoad.FilesToLoad == 0)
             {
                 // no images were found in folder; see if user wants to try again
-                MessageBox messageBox = new MessageBox("Select a folder containing images or videos?", this, MessageBoxButton.YesNo);
-                messageBox.Message.Problem = "There aren't any images or videos in the folder '" + this.FolderPath + "' so your image set is currentl empty.";
-                messageBox.Message.Reason = "\u2022 This folder has no images in it (files ending in .jpg)." + Environment.NewLine;
-                messageBox.Message.Reason += "\u2022 This folder has no videos in it (files ending in .avi or .mp4).";
-                messageBox.Message.Solution = "Choose Yes and select a folder containing images and/or videos or choose No and add files later via the File menu.";
-                messageBox.Message.Hint = "\u2022 The files may be in a subfolder of this folder." + Environment.NewLine;
-                messageBox.Message.Hint += "\u2022 If you need to set the image set's time zone before adding files choose No." + Environment.NewLine;
-                messageBox.Message.StatusImage = MessageBoxImage.Question;
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowSelectFolder, this, this.FolderPath);
                 if (messageBox.ShowDialog() == false)
                 {
                     return false;
@@ -2459,14 +2345,7 @@ namespace Carnassial
             if (templateLoadedOrCreated == false)
             {
                 // notify the user the template couldn't be loaded
-                MessageBox messageBox = new MessageBox("Carnassial could not load the template.", this);
-                messageBox.Message.Problem = "Carnassial could not load " + Path.GetFileName(templateDatabasePath) + Environment.NewLine;
-                messageBox.Message.Reason = "\u2022 The template was created with the Timelapse template editor instead of the Carnassial editor." + Environment.NewLine;
-                messageBox.Message.Reason = "\u2022 The template may be corrupted or somehow otherwise invalid.";
-                messageBox.Message.Solution = "You may have to recreate the template, restore it from a backup, or use another copy of it.";
-                messageBox.Message.Result = "Carnassial won't do anything.  You can select another template file.";
-                messageBox.Message.Hint = "If the template can't be opened in a SQLite database editor the file is corrupt.";
-                messageBox.Message.StatusImage = MessageBoxImage.Error;
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowTemplateLoadFailed, this, templateDatabasePath);
                 messageBox.ShowDialog();
 
                 this.State.MostRecentImageSets.TryRemove(templateDatabasePath);
@@ -2519,14 +2398,7 @@ namespace Carnassial
                 else
                 {
                     // notify user the database couldn't be loaded
-                    MessageBox messageBox = new MessageBox("Carnassial could not load the database.", this);
-                    messageBox.Message.Problem = "Carnassial could not load " + fileDatabaseFileName + Environment.NewLine;
-                    messageBox.Message.Reason = "\u2022 The database was created with Timelapse instead of Carnassial." + Environment.NewLine;
-                    messageBox.Message.Reason = "\u2022 The database may be corrupted or somehow otherwise invalid.";
-                    messageBox.Message.Solution = "You may have to recreate the database, restore it from a backup (Carnassial makes one automatically), or use another copy of it if you have one.";
-                    messageBox.Message.Result = "Carnassial won't do anything.  You can select another template or database file.";
-                    messageBox.Message.Hint = "If the database can't be opened in a SQLite database editor the file is corrupt.";
-                    messageBox.Message.StatusImage = MessageBoxImage.Error;
+                    MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowDatabaseLoadFailed, this, fileDatabaseFileName);
                     messageBox.ShowDialog();
                     if (fileDatabase != null)
                     {

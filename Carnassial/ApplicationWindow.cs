@@ -34,7 +34,7 @@ namespace Carnassial
             #endif
         }
 
-        private string GetDotNetVersion()
+        internal string GetDotNetVersion()
         {
             // adapted from https://msdn.microsoft.com/en-us/library/hh925568.aspx
             int release = 0;
@@ -122,28 +122,16 @@ namespace Carnassial
             return false;
         }
 
-        protected void ShowExceptionReportingDialog(string title, UnhandledExceptionEventArgs e, Window owner)
+        protected void ShowExceptionReportingDialog(string alternativeTitle, string databasePath, UnhandledExceptionEventArgs e)
         {
-            MessageBox exitNotification = new MessageBox("Uh-oh.  We're so sorry.", owner);
-            exitNotification.Message.StatusImage = MessageBoxImage.Error;
-            exitNotification.Message.Title = title;
-            exitNotification.Message.Problem = String.Format("This is a bug and we'd appreciate your help in fixing it.  The What section below has been copied to the clipboard.  Please paste it into a new issue at {0} or an email to {1}.  Please also include a clear and specific description of what you were doing at the time.",
-                                                             CarnassialConfigurationSettings.GetIssuesBrowserAddress(),
-                                                             CarnassialConfigurationSettings.GetDevTeamEmailLink().ToEmailAddress());
-            exitNotification.Message.What = String.Format("{0}, {1}, .NET {2}{3}", typeof(CarnassialWindow).Assembly.GetName(), Environment.OSVersion, this.GetDotNetVersion(), Environment.NewLine);
-            if ((owner is CarnassialWindow carnassial) && (carnassial.DataHandler != null) && (carnassial.DataHandler.FileDatabase != null))
-            {
-                exitNotification.Message.What = String.Format("{0}{1}", carnassial.DataHandler.FileDatabase.FilePath, Environment.NewLine);
-            }
-            if (e.ExceptionObject != null)
-            {
-                exitNotification.Message.What += e.ExceptionObject.ToString();
-            }
-            exitNotification.Message.Reason = "It's not you, it's us.  If you let us know we'll get it fixed.  If you don't tell us probably we won't know there's a problem.";
-            exitNotification.Message.Result = "The data file is likely OK.  If it's not you can restore it from its backup.  The last few changes (if any) may have to redone, though.";
-            exitNotification.Message.Hint = "\u2022 If you do the same thing this'll probably happen again.  If so, that's helpful to know as well." + Environment.NewLine;
-            exitNotification.Message.Hint += "\u2022 If the automatic copy of the What content didn't take click on the What details, hit ctrl+a to select all of it, and ctrl+c to copy.";
-
+            MessageBox exitNotification = MessageBox.FromResource(Constant.ResourceKey.ApplicationWindowException, this, 
+                                                                  CarnassialConfigurationSettings.GetIssuesBrowserAddress(),
+                                                                  CarnassialConfigurationSettings.GetDevTeamEmailLink().ToEmailAddress(),
+                                                                  typeof(CarnassialWindow).Assembly.GetName(), 
+                                                                  Environment.OSVersion, 
+                                                                  this.GetDotNetVersion(), 
+                                                                  databasePath,
+                                                                  e.ExceptionObject);
             Clipboard.SetText(exitNotification.Message.What);
             exitNotification.ShowDialog();
         }

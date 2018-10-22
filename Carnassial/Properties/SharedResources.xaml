@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?> 
 <!-- non-style resources used by both Carnassial and the template editor -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+                    xmlns:dialog="clr-namespace:Carnassial.Dialog"
                     xmlns:system="clr-namespace:System;assembly=mscorlib"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
@@ -54,8 +55,31 @@
     <system:String x:Key="AnalysisButtons.PasteNextValues">Paste _next</system:String>
     <system:String x:Key="AnalysisButtons.PasteNextValuesTooltip">Copy the highlighted data (fields marked 'Copyable' in the template) from the next file.</system:String>
 
+    <!-- @Title is overridden in code for the editor -->
+    <dialog:Message x:Key="ApplicationWindow.Exception" WindowTitle="Um, please pardon us while we crash now..." Image="Error" Title="Uh-oh, Carnassial needs to close.">
+        <dialog:Message.Problem>
+            <Run>This is a bug and we'd appreciate your help in fixing it.  The What section below has been copied to the clipboard.  Please paste it into a new issue at {0} or an email to {1}.  Please also include a clear and specific description of what you were doing at the time.</Run>
+        </dialog:Message.Problem>
+        <dialog:Message.What>
+            <Run>{2}, {3}, .NET {4}</Run><LineBreak />
+            <Run>{5}</Run><LineBreak />
+            <Run>{6}</Run>
+        </dialog:Message.What>
+        <dialog:Message.Reason>
+            <Run>We have a bug.  If you let us know about we'll get it fixed.  If you don't tell us probably we won't know there's a problem.</Run>
+        </dialog:Message.Reason>
+        <dialog:Message.Result>
+            <Run>The database file should be just fine.  In the unlikely event it's not you can restore it from its backup, though your most recent changes will probably have to be re-entered.</Run>
+        </dialog:Message.Result>
+        <dialog:Message.Hint>
+            <Run>If you do the same thing this'll probably happen again.  If so, that's helpful to know as well.</Run>
+        </dialog:Message.Hint>
+    </dialog:Message>
+    
     <system:String x:Key="Dialog.Cancel">_Cancel</system:String>
+    <system:String x:Key="Dialog.No">_No</system:String>
     <system:String x:Key="Dialog.OK">_Okay</system:String>
+    <system:String x:Key="Dialog.Yes">_Yes</system:String>
 
     <!-- register Carnassial resource files so Visual Studio's XAML design window makes them available when calling into user controls such as StockMessageControl -->
     <BitmapImage x:Key="StatusCriticalError_64x.png" UriSource="pack://application:,,/Resources/StatusCriticalError_64x.png" />

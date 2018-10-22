@@ -440,7 +440,6 @@ namespace Carnassial
                 public const string SkipFileClassification = "SkipFileClassification";
 
                 // dialog opt outs
-                public const string SuppressAmbiguousDatesDialog = "SuppressAmbiguousDatesDialog";
                 public const string SuppressFileCountOnImportDialog = "SuppressFileCountOnImportDialog";
                 public const string SuppressSpreadsheetImportPrompt = "SuppressSpreadsheetImportPrompt";
 
@@ -462,6 +461,33 @@ namespace Carnassial
             public const string AnalysisAssignToolTip = "AnalysisButtons.MenuAssignToSlotToolTip";
             public const string AnalysisHeader = "AnalysisButtons.MenuHeader";
             public const string AnalysisPasteToolTip = "AnalysisButtons.MenuPasteFromSlotToolTip";
+            public const string ApplicationWindowException = "ApplicationWindow.Exception";
+            public const string CarnassialWindowClockDriftFailed = "CarnassialWindow.ClockDrift.Failed";
+            public const string CarnassialWindowCopyFileFailed = "CarnassialWindow.CopyFile.Failed";
+            public const string CarnassialWindowDatabaseLoadFailed = "CarnassialWindow.DatabaseLoad.Failed";
+            public const string CarnassialWindowDaylightSavingsFailed = "CarnassialWindow.DaylightSavings.Failed";
+            public const string CarnassialWindowFileMoveIncomplete = "CarnassialWindow.FileMove.Incomplete";
+            public const string CarnassialWindowExportSpreadsheetFailed = "CarnassialWindow.ExportSpreadsheet.Failed";
+            public const string CarnassialWindowImageMetadataFailed = "CarnassialWindow.ImageMetadata.Failed";
+            public const string CarnassialWindowImportSpreadsheet = "CarnassialWindow.ImportSpreadsheet";
+            public const string CarnassialWindowImportSpreadsheetFailed = "CarnassialWindow.ImportSpreadsheet.Failed";
+            public const string CarnassialWindowImportSpreadsheetIncomplete = "CarnassialWindow.ImportSpreadsheet.Incomplete";
+            public const string CarnassialWindowNoAmbiguousDates = "CarnassialWindow.NoAmbiguousDates";
+            public const string CarnassialWindowNoDeletableFiles = "CarnassialWindow.NoDeleteableFiles";
+            public const string CarnassialWindowNoMetadataAvailable = "CarnassialWindow.NoMetadataAvailable";
+            public const string CarnassialWindowSelectFolder = "CarnassialWindow.SelectFolder";
+            public const string CarnassialWindowTemplateLoadFailed = "CarnassialWindow.TemplateLoad.Failed";
+            public const string DataEntryHandlerConfirmCopyAll = "DataEntryHandler.ConfirmCopyAll";
+            public const string DataEntryHandlerConfirmCopyForward = "DataEntryHandler.ConfirmCopyForward";
+            public const string DataEntryHandlerConfirmPropagateToHere = "DataEntryHandler.ConfirmPropagateToHere";
+            public const string DataEntryHandlerNothingToCopyForward = "DataEntryHandler.NothingToCopyForward";
+            public const string DataEntryHandlerNothingToPropagate = "DataEntryHandler.NothingToPropagate";
+            public const string DialogCancel = "Dialog.Cancel";
+            public const string DialogNo = "Dialog.No";
+            public const string DialogOK = "Dialog.OK";
+            public const string DialogYes = "Dialog.Yes";
+            public const string GithubReleaseClientGetNewVersion = "GithubReleaseClient.GetNewVersion";
+            public const string GithubReleaseClientNoUpdates = "GithubReleaseClient.NoUpdates";
             public const string GoToFileNumberRange = "GoToFile.FileNumberRange";
             public const string KeyboardControl = "Keyboard.Control";
         }

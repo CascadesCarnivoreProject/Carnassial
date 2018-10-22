@@ -46,6 +46,9 @@ namespace Carnassial.Editor
         public static class ResourceKey
         {
             public const string AboutEditorTermsOfUse = "AboutEditor.TermsOfUse";
+            public const string EditorWindowTemplateLoadFailed = "EditorWindow.TemplateLoad.Failed";
+            public const string EditorWindowDataLabelEmpty = "EditorWindow.DataLabel.Empty";
+            public const string EditorWindowDataLabelNotUnique = "EditorWindow.DataLabel.NotUnique";
         }
 
         // keys in EditorWindowStyle.xaml

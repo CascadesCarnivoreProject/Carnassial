@@ -47,12 +47,12 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <control:StockMessageControl x:Name="Message" StatusImage="Question"
+            <control:StockMessageControl x:Name="Message" Image="Question"
                             Title="{StaticResource DateTimeRereadFromFiles.Message.Title}"
                             Problem="{StaticResource DateTimeRereadFromFiles.Message.Problem}"
                             Solution="{StaticResource DateTimeRereadFromFiles.Message.Solution}"
                             Result="{StaticResource DateTimeRereadFromFiles.Message.Result}"
-                            HideExplanationCheckboxIsVisible="True" Grid.Row="0" />
+                            DisplayHideExplanationCheckbox="True" Grid.Row="0" />
             <DataGrid Name="FeedbackGrid" AutoGenerateColumns="False" SelectionMode="Single" SelectionUnit="FullRow" Margin="5,5,5,0" ColumnWidth="*" Grid.Row="2">
                 <DataGrid.Columns>
                     <DataGridTextColumn Binding="{Binding FileName}" Header="{StaticResource DateTimeRereadFromFiles.File}" Width="Auto" />

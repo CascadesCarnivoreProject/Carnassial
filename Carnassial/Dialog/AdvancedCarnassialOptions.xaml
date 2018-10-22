@@ -52,7 +52,7 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <control:StockMessageControl x:Name="Message" HideExplanationCheckboxIsVisible="False" Margin="10,5,10,10" StatusImage="Question"
+            <control:StockMessageControl x:Name="Message" DisplayHideExplanationCheckbox="False" Margin="10,5,10,10" Image="Question"
                             Title="{StaticResource AdvancedCarnassialOptions.Title}"
                             What="{StaticResource AdvancedCarnassialOptions.Message.What}" Grid.Row="0" />
             

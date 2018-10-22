@@ -48,7 +48,7 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <control:StockMessageControl x:Name="Message"
-                            StatusImage="Warning"
+                            Image="Warning"
                             Title="{StaticResource TemplateSynchronization.Message.Title}"
                             Problem="{StaticResource TemplateSynchronization.Message.Problem}"
                             Solution="{StaticResource TemplateSynchronization.Message.Solution}"

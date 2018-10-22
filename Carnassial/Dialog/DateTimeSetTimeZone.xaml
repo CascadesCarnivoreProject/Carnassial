@@ -46,7 +46,7 @@
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <control:StockMessageControl x:Name="Message" StatusImage="Question"
+            <control:StockMessageControl x:Name="Message" Image="Question"
                             Title="Set the time zone of all files selected."
                             Problem="The UTC offset needs to be changed.  This could be because the camera is located in a different time zone from the image set's time zone, no metadata was available from the files (meaning local file times were used), or the wrong time zone was set when the files were added to the image set."
                             Solution="Your currently selected file is shown below.
@@ -54,7 +54,7 @@
 &#10;&#x2022; Click Preview Changes (which becomes active after you enter an adjusted date/time) to review the changes that will be made.
 &#10;&#x2022; Click Apply Changes to apply those changes."
                             Result="The UTC offset of all images and videos selected will be set to the specified time zone.  The files' date and time of day will not change."
-                            HideExplanationCheckboxIsVisible="True" Grid.Row="0" />
+                            DisplayHideExplanationCheckbox="True" Grid.Row="0" />
             <Rectangle Style="{StaticResource DialogHorizontalRule}" Grid.Row="1" />
             <Grid Name="PrimaryPanel" Grid.Row="2">
                 <Grid.RowDefinitions>

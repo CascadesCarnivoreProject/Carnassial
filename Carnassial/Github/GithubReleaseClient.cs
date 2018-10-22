@@ -85,15 +85,11 @@ namespace Carnassial.Github
             if (currentVersion < publiclyAvailableVersion)
             {
                 // ask the user if they would like to download the new version  
-                string title = String.Format("Get the new version of {0}?", this.applicationName);
-                MessageBox messageBox = new MessageBox(title, Application.Current.MainWindow, MessageBoxButton.YesNo);
-                messageBox.Message.StatusImage = MessageBoxImage.Question;
-                messageBox.Message.What = String.Format("You're running an old release, {0} {1}.", this.applicationName, currentVersion);
-                messageBox.Message.Reason = String.Format("A new version is available, {0} {1}", this.applicationName, publiclyAvailableVersion);
-                messageBox.Message.Solution = "Select 'Yes' to go to the website and download it.";
-                messageBox.Message.Result = description;
-                messageBox.Message.Hint = "\u2022 We recommend downloading the latest release." + Environment.NewLine;
-                messageBox.Message.Hint += String.Format(@"\u2022 To see all releases, go to {0}.", CarnassialConfigurationSettings.GetReleasesBrowserAddress());
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.GithubReleaseClientGetNewVersion, App.Current.MainWindow,
+                                                                publiclyAvailableVersion,                                            
+                                                                this.applicationName,
+                                                                currentVersion,
+                                                                CarnassialConfigurationSettings.GetReleasesBrowserAddress());
                 if (messageBox.ShowDialog() == true)
                 {
                     Uri releasesAddress = CarnassialConfigurationSettings.GetReleasesBrowserAddress();
@@ -102,9 +98,7 @@ namespace Carnassial.Github
             }
             else if (showNoUpdatesMessage)
             {
-                MessageBox messageBox = new MessageBox(String.Format("No updates to {0} are available.", this.applicationName), Application.Current.MainWindow);
-                messageBox.Message.Reason = String.Format("You're running the latest release, {0} {1}.", this.applicationName, currentVersion);
-                messageBox.Message.StatusImage = MessageBoxImage.Information;
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.GithubReleaseClientNoUpdates, App.Current.MainWindow, this.applicationName, currentVersion);
                 messageBox.ShowDialog();
             }
 

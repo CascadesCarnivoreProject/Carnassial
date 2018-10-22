@@ -421,6 +421,24 @@ namespace Carnassial.UnitTests
                     this.ShowDialog(new FindReplace(carnassial));
                     this.ShowDialog(new GoToFile(carnassial.DataHandler.ImageCache.CurrentRow, carnassial.DataHandler.FileDatabase.Files.RowCount, carnassial));
 
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.ApplicationWindowException, carnassial, CarnassialConfigurationSettings.GetIssuesBrowserAddress(), CarnassialConfigurationSettings.GetDevTeamEmailLink().ToEmailAddress(), typeof(CarnassialWindow).Assembly.GetName(), Environment.OSVersion, carnassial.GetDotNetVersion(), "database path", null));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowClockDriftFailed, carnassial));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowCopyFileFailed, carnassial, "file path"));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowDatabaseLoadFailed, carnassial, "file path"));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowDaylightSavingsFailed, carnassial));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowExportSpreadsheetFailed, carnassial, "file path", "Exception.Type", "exception message"));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowFileMoveIncomplete, carnassial, 0, 1, 1));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImportSpreadsheet, carnassial, Constant.Time.DateTimeDatabaseFormat, DateTimeHandler.ToDatabaseUtcOffsetString(TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours)), DateTimeHandler.ToDatabaseUtcOffsetString(TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours)), Constant.Excel.FileDataWorksheetName, Constant.File.FileDatabaseFileExtension));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImportSpreadsheetFailed, carnassial, "file path", "Exception.Type", "exception message"));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImportSpreadsheetIncomplete, carnassial, "file path"));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowNoAmbiguousDates, carnassial));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowNoDeletableFiles, carnassial));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowNoMetadataAvailable, carnassial));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowSelectFolder, carnassial, carnassial.DataHandler.FileDatabase.FolderPath));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowTemplateLoadFailed, carnassial, "file path"));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.GithubReleaseClientGetNewVersion, App.Current.MainWindow, new Version(), Constant.ApplicationName, new Version(), CarnassialConfigurationSettings.GetReleasesBrowserAddress()));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.GithubReleaseClientNoUpdates, App.Current.MainWindow, Constant.ApplicationName, new Version()));
+
                     this.ShowDialog(new PopulateFieldWithMetadata(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache.Current.GetFilePath(carnassial.DataHandler.FileDatabase.FolderPath), carnassial.State.Throttles.GetDesiredProgressUpdateInterval(), carnassial));
                     using (ReclassifyFiles reclassify = new ReclassifyFiles(carnassial.DataHandler.FileDatabase, carnassial.DataHandler.ImageCache, new CarnassialState(), carnassial))
                     {
@@ -429,31 +447,12 @@ namespace Carnassial.UnitTests
                     this.ShowDialog(new RenameFileDatabaseFile(carnassial.DataHandler.FileDatabase.FileName, carnassial));
                     this.ShowDialog(new TemplateSynchronization(carnassial.DataHandler.FileDatabase.ControlSynchronizationIssues, carnassial));
 
-                    MessageBox okMessageBox = this.CreateMessageBox(carnassial, MessageBoxButton.OK, MessageBoxImage.Error);
-                    this.ShowDialog(okMessageBox);
-                    MessageBox okCancelMessageBox = this.CreateMessageBox(carnassial, MessageBoxButton.OKCancel, MessageBoxImage.Information);
-                    this.ShowDialog(okCancelMessageBox);
-                    MessageBox yesNoMessageBox = this.CreateMessageBox(carnassial, MessageBoxButton.YesNo, MessageBoxImage.Question);
-                    this.ShowDialog(yesNoMessageBox);
-
                     Task<bool> backupTask = carnassial.DataHandler.FileDatabase.TryBackupAsync();
                     carnassial.Close();
                     Assert.IsTrue(backupTask.IsCompleted);
                     Assert.IsFalse(backupTask.Result);
                 }
             }
-        }
-
-        private MessageBox CreateMessageBox(Window owner, MessageBoxButton buttonType, MessageBoxImage iconType)
-        {
-            MessageBox messageBox = new MessageBox("Message box title.", owner, buttonType);
-            messageBox.Message.StatusImage = iconType;
-            messageBox.Message.Problem = "Problem description.";
-            messageBox.Message.Reason = "Explanation of why issue is an issue.";
-            messageBox.Message.Solution = "Suggested method for resolving the issue.";
-            messageBox.Message.Result = "Current status.";
-            messageBox.Message.Hint = "Additional suggestions as to how to resolve the issue.";
-            return messageBox;
         }
 
         [TestMethod]
@@ -533,12 +532,20 @@ namespace Carnassial.UnitTests
                         }
 
                         // propagation methods
-                        // Currently no coverage due to need for UX interaction to confirm changes.
+                        // Currently no coverage due to need for UX automation beyond ShowDialog() to confirm changes.
                         // DataEntryControl noteControl = controls.ControlsByDataLabel[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel];
                         // Assert.IsTrue(dataHandler.ImageCache.TryMoveToFile(fileDatabase.Files.RowCount - 1));
                         // Assert.IsTrue(dataHandler.TryCopyForward(noteControl) == false);
                         // Assert.IsTrue(dataHandler.TryCopyFromLastNonEmptyValue(control, out object value) == false);
                         // Assert.IsTrue(dataHandler.TryCopyToAll(control) == false);
+                        Window owner = new Window();
+                        owner.Show();
+                        this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.DataEntryHandlerConfirmCopyAll, owner, 0, null));
+                        this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.DataEntryHandlerConfirmCopyForward, owner, null, 0));
+                        this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.DataEntryHandlerConfirmPropagateToHere, owner, null, 0));
+                        this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.DataEntryHandlerNothingToCopyForward, owner));
+                        this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.DataEntryHandlerNothingToPropagate, owner));
+                        owner.Close();
 
                         // verify roundtrip of fields subject to copy/paste and analysis assignment
                         // GetValues() returns a dictionary with one fewer values than there are columns as the DateTime and UtcOffset
@@ -745,6 +752,10 @@ namespace Carnassial.UnitTests
             TemplateDatabase templateDatabase = (TemplateDatabase)editorAccessor.GetField(TestConstant.EditorTemplateDatabaseFieldName);
             this.ShowDialog(new AdvancedImageSetOptions(templateDatabase, editor));
             this.ShowDialog(new EditWellKnownValues(editor.ControlDataGrid, new List<string>() { "Choice0", "Choice1", "Choice2", "Choice3" }, editor));
+
+            this.ShowDialog(MessageBox.FromResource(EditorConstant.ResourceKey.EditorWindowDataLabelEmpty, editor));
+            this.ShowDialog(MessageBox.FromResource(EditorConstant.ResourceKey.EditorWindowDataLabelNotUnique, editor, "currentDataLabel"));
+            this.ShowDialog(MessageBox.FromResource(EditorConstant.ResourceKey.EditorWindowTemplateLoadFailed, editor, "file path"));
 
             editor.Close();
         }

@@ -48,7 +48,7 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <control:StockMessageControl x:Name="Message" 
-                            StatusImage="Question"
+                            Image="Question"
                             Title="{StaticResource RenameFileDatabaseFile.Message.Title}"
                             What="{StaticResource RenameFileDatabaseFile.Message.What}"
                             Solution="{StaticResource RenameFileDatabaseFile.Message.Solution}"

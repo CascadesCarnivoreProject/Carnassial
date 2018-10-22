@@ -44,7 +44,7 @@
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <control:StockMessageControl x:Name="Message" HideExplanationCheckboxIsVisible="False" Margin="0,0,0,10" StatusImage="Information" Title="{StaticResource About.Title}" Grid.Row="0" />
+            <control:StockMessageControl x:Name="Message" DisplayHideExplanationCheckbox="False" Margin="0,0,0,10" Image="Information" Title="{StaticResource About.Title}" Grid.Row="0" />
             <StackPanel Orientation="Vertical" Grid.Row="1">
                 <Grid>
                     <Grid.ColumnDefinitions>

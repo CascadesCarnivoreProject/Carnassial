@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+                    xmlns:dialog="clr-namespace:Carnassial.Dialog;assembly=Carnassial"
                     xmlns:system="clr-namespace:System;assembly=mscorlib"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
@@ -199,6 +200,49 @@ Width</system:String>
     <system:String x:Key="EditorWindow.Remove.Tooltip">Remove the currently selected control.</system:String>
     <system:String x:Key="EditorWindow.SpreadsheetOrder">The columns in spreadsheets exported from Carnassial while using this template are dislayed below.  Drag and drop columns to rearrange their order to your preference.</system:String>
     <system:String x:Key="EditorWindow.ControlOrder">Drag and drop the controls below by their labels to arrange them to your preference.</system:String>
+
+    <dialog:Message x:Key="EditorWindow.DataLabel.Empty" WindowTitle="Data label is empty" 
+                    Image="Information" Title="Data label is empty." Buttons="OK">
+        <dialog:Message.Result>
+            <Run>The template editor will automatically create a unique data label for you.</Run>
+        </dialog:Message.Result>
+        <dialog:Message.Hint>
+            <Run>You can replace this name with your own data label.</Run>
+        </dialog:Message.Hint>
+    </dialog:Message>
+    <dialog:Message x:Key="EditorWindow.DataLabel.NotUnique" WindowTitle="Data labels must be unique" 
+                    Image="Information" Title="Data labels must be unique." Buttons="OK">
+        <dialog:Message.Problem>
+            <Run>'{0}' is not a valid data label as it is already in use by another field.</Run>
+        </dialog:Message.Problem>
+        <dialog:Message.Result>
+            <Run>The template editor will make the data label unique for you.</Run>
+        </dialog:Message.Result>
+        <dialog:Message.Hint>
+            <Run>You can change the data label to something else that's also not in use.</Run>
+        </dialog:Message.Hint>
+    </dialog:Message>
+
+    <dialog:Message x:Key="EditorWindow.TemplateLoad.Failed" WindowTitle="Template file couldn't be loaded" 
+                    Image="Error" Title="The template editor could not load the template file." Buttons="OK">
+        <dialog:Message.Problem>
+            <Run>The template editor could not load '{0}'.</Run>
+        </dialog:Message.Problem>
+        <dialog:Message.Reason>
+            <Run xml:space="preserve">  &#x2022; The template was created with the Timelapse template editor instead of the Carnassial editor.</Run>
+            <LineBreak />
+            <Run xml:space="preserve">  &#x2022; The template may be corrupted or somehow otherwise invalid.</Run>
+        </dialog:Message.Reason>
+        <dialog:Message.Solution>
+            <Run>You may have to recreate the template, restore it from a backup, or use another copy of it.</Run>
+        </dialog:Message.Solution>
+        <dialog:Message.Result>
+            <Run>The template editor won't do anything.  You can select another template file.</Run>
+        </dialog:Message.Result>
+        <dialog:Message.Hint>
+            <Run>If the template can't be opened in a SQLite database editor the file is corrupt.</Run>
+        </dialog:Message.Hint>
+    </dialog:Message>
 
     <system:String x:Key="EditWellKnownValues.Title">Edit well known values for note or choice control</system:String>
     <system:String x:Key="EditWellKnownValues.Instructions">Enter one value per line.  These values become the autocompletions for notes and the choices available in a choice control.</system:String>

@@ -46,13 +46,13 @@
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <control:StockMessageControl x:Name="Message" StatusImage="Question" Grid.Row="0"
+            <control:StockMessageControl x:Name="Message" Image="Question" Grid.Row="0"
                             Title="{StaticResource DateTimeLinearCorrection.Message.Title}"
                             Problem="{StaticResource DateTimeLinearCorrection.Message.Problem}"
                             Solution="{StaticResource DateTimeLinearCorrection.Message.Solution}"
                             Result="{StaticResource DateTimeLinearCorrection.Message.Result}"
                             Hint="{StaticResource DateTimeLinearCorrection.Message.Hint}"
-                            HideExplanationCheckboxIsVisible="True" />
+                            DisplayHideExplanationCheckbox="True" />
             <Rectangle Style="{StaticResource DialogHorizontalRule}" Grid.Row="1" />
             <!-- Content area -->
             <Grid Name="AdjustmentEntryPanel" Margin="5,0,5,10" Grid.Row="2">

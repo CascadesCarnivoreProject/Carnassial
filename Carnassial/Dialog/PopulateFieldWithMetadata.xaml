@@ -48,7 +48,7 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <control:StockMessageControl x:Name="Message"
-                            StatusImage="Question"
+                            Image="Question"
                             Title="Populate a data field with metadata of your choosing."
                             What="Images often embed metadata, some of which may be useful to capture as data."
                             Solution="For all your files, you can choose and populate one of your data fields with metadata of your choosing.
@@ -57,7 +57,7 @@
 &#10;3. (Optional) If some images or videos are missing that metatdata, you can use the checkbox below to specify clearing the old data or leave it as is.
 &#10;4. Click the Populate button to apply the above selections to your files.  If you have a large number of files the edit make take some time."
                             Result="For each file the chosen data field will be filled in with the chosen metadata from that file.  These changes cannot be undone."
-                            HideExplanationCheckboxIsVisible="True" Grid.Row="0" />
+                            DisplayHideExplanationCheckbox="True" Grid.Row="0" />
             <StackPanel Orientation="Vertical" Grid.Row="1">
                 <Rectangle Style="{StaticResource DialogHorizontalRule}" />
                 <Grid Name="PanelHeader">

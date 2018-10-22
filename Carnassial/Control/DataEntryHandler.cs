@@ -46,52 +46,27 @@ namespace Carnassial.Control
         // ask the user to confirm value propagation from the last value
         private bool? ConfirmCopyForward(string value, int filesAffected)
         {
-            MessageBox messageBox = new MessageBox("Please confirm copy forward for this field...", Application.Current.MainWindow, MessageBoxButton.YesNo);
-            messageBox.Message.StatusImage = MessageBoxImage.Question;
-            messageBox.Message.What = "Copy forward is not undoable and can overwrite existing values.";
-            messageBox.Message.Result = "If you select yes, this operation will:" + Environment.NewLine;
-            if (String.IsNullOrWhiteSpace(value))
-            {
-                messageBox.Message.Result += "\u2022 copy the empty or blank value '" + value + "' in this field from here to the last of the selected files.";
-            }
-            else
-            {
-                messageBox.Message.Result += "\u2022 copy the value '" + value + "' in this field from here to the last of the selected files.";
-            }
-            messageBox.Message.Result += Environment.NewLine + "\u2022 over-write any existing data values in those fields";
-            messageBox.Message.Result += Environment.NewLine + "\u2022 will affect " + filesAffected.ToString(CultureInfo.CurrentCulture) + " files.";
+            MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.DataEntryHandlerConfirmCopyForward, App.Current.MainWindow,
+                                                            value,
+                                                            filesAffected.ToString(CultureInfo.CurrentCulture));
             return messageBox.ShowDialog();
         }
 
         // ask the user to confirm propagation to all selected files
         private bool? ConfirmCopyCurrentValueToAll(string value, int filesAffected, bool checkForZero)
         {
-            MessageBox messageBox = new MessageBox("Please confirm copy to all for this field...", Application.Current.MainWindow, MessageBoxButton.YesNo);
-            messageBox.Message.StatusImage = MessageBoxImage.Question;
-            messageBox.Message.What = "Copy to all is not undoable and can overwrite existing values.";
-            messageBox.Message.Result = "If you select yes, this operation will:" + Environment.NewLine;
-            if (!checkForZero && value.Equals(String.Empty, StringComparison.Ordinal))
-            {
-                messageBox.Message.Result += "\u2022 clear this field across all " + filesAffected.ToString(CultureInfo.CurrentCulture) + " selected files.";
-            }
-            else
-            {
-                messageBox.Message.Result += "\u2022 set this field to '" + value + "' across all " + filesAffected.ToString(CultureInfo.CurrentCulture) + " selected files.";
-            }
-            messageBox.Message.Result += Environment.NewLine + "\u2022 over-write any existing data values in those fields";
+            MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.DataEntryHandlerConfirmCopyAll, App.Current.MainWindow,
+                                                            filesAffected.ToString(CultureInfo.CurrentCulture),
+                                                            value);
             return messageBox.ShowDialog();
         }
 
         // ask the user to confirm value propagation from the last value
         private bool? ConfirmCopyFromLastNonEmptyValue(string value, int filesAffected)
         {
-            MessageBox messageBox = new MessageBox("Please confirm 'Propagate to Here' for this field.", Application.Current.MainWindow, MessageBoxButton.YesNo);
-            messageBox.Message.StatusImage = MessageBoxImage.Question;
-            messageBox.Message.What = "Propagate to here is not undoable and can overwrite existing values.";
-            messageBox.Message.Reason = "\u2022 The last non-empty value '" + value + "' was seen " + filesAffected.ToString(CultureInfo.CurrentCulture) + " files back." + Environment.NewLine;
-            messageBox.Message.Reason += "\u2022 That field's value will be copied to all files between that file and this one in the selection";
-            messageBox.Message.Result = "If you select yes: " + Environment.NewLine;
-            messageBox.Message.Result = "\u2022 " + filesAffected.ToString(CultureInfo.CurrentCulture) + " files will be affected.";
+            MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.DataEntryHandlerConfirmPropagateToHere, App.Current.MainWindow,
+                                                            value,
+                                                            filesAffected.ToString(CultureInfo.CurrentCulture));
             return messageBox.ShowDialog();
         }
 
@@ -378,8 +353,7 @@ namespace Carnassial.Control
             if (filesAffected < 1)
             {
                 // should be unreachable as the menu shouldn't be be enabled on the last file
-                MessageBox messageBox = new MessageBox("Nothing to copy forward.", Application.Current.MainWindow);
-                messageBox.Message.Reason = "As you are on the last file, there are no files after this.";
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.DataEntryHandlerNothingToCopyForward, App.Current.MainWindow);
                 messageBox.ShowDialog();
                 return false;
             }
@@ -425,8 +399,7 @@ namespace Carnassial.Control
             if (indexToCopyFrom == Constant.Database.InvalidRow)
             {
                 // Nothing to propagate.  If the menu item is deactivated as expected this shouldn't be reachable.
-                MessageBox messageBox = new MessageBox("Nothing to propagate to here.", Application.Current.MainWindow);
-                messageBox.Message.Reason = "None of the earlier files have a value specified for this field, so there is no value to propagate.";
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.DataEntryHandlerNothingToPropagate, App.Current.MainWindow);
                 messageBox.ShowDialog();
                 return false;
             }

@@ -46,7 +46,7 @@
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            <control:StockMessageControl x:Name="Message" StatusImage="Question" 
+            <control:StockMessageControl x:Name="Message" Image="Question" 
                                          Title="{StaticResource EditLog.Message.Title}" 
                                          What="{StaticResource EditLog.Message.What}"
                                          Grid.Row="0" />
