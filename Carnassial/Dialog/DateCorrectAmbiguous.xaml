@@ -52,7 +52,7 @@
                             Problem="Days of the month that are 12 or less are interchangeable with the month.  For example, a date recorded as 01-02-2017 could be either 02-Jan-2017 or 01-Feb-2017."
                             Solution="For each day choose whether to keep the original date or change to the swapped date and press next.  After all days have been reviewed press 'Preview Changes' to see a summary of what dates will be changed and, if satisfied, click 'Apply' to make the changes."
                             Result="The month and day will be interchanged for all dates selected for swapping.  The changes can be undone by swapping the dates a second time."
-                            DisplayHideExplanationCheckbox="True"/>
+                            DisplayHideExplanation="True"/>
             <Rectangle Style="{StaticResource DialogHorizontalRule}" Grid.Row="1" />
             <Grid Name="PrimaryPanel" Grid.Row="2">
                 <Grid.RowDefinitions>

@@ -5,8 +5,20 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="600">
+    <UserControl.Resources>
+        <Style x:Key="CollapsingTextBlock" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,7,10,0" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+        <Style x:Key="LabelBlock" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Margin" Value="0,7,10,0" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+    </UserControl.Resources>
     <Grid>
-        <Grid Name="MessageGrid" Margin="0,10,0,0">
+        <Grid Name="MessageGrid" Margin="10,10,5,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -21,7 +33,7 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Grid Margin="10,10,0,10" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
+            <Grid Margin="10,0,0,10" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -31,27 +43,27 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Image Name="StatusImage" Width="64" Height="64" Margin="2,2,2,2" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" />
-                <TextBlock Name="TitleText" x:FieldModifier="public" FontSize="16" FontWeight="Bold" Margin="10,0,10,0" VerticalAlignment="Center" Grid.Column="1" Grid.Row="0" />
+                <TextBlock Name="Title" x:FieldModifier="public" FontSize="16" FontWeight="Bold" Margin="10,0,10,0" VerticalAlignment="Center" Grid.Column="1" Grid.Row="0" />
                 <CheckBox Name="HideExplanation" Checked="HideExplanation_CheckedChanged" Content="{StaticResource StockMessageControl.HideExplanation}" Margin="8,0,10,0" Unchecked="HideExplanation_CheckedChanged" VerticalAlignment="Center" Grid.Column="1" Grid.Row="1" />
             </Grid>
 
-            <TextBlock Name="ProblemLabel" FontWeight="Bold" Margin="10,7,10,0" Text="{StaticResource StockMessageControl.Problem}" VerticalAlignment="Top"  Visibility="{Binding Path=ProblemText.Visibility}" Grid.Column="0" Grid.Row="1" />
-            <TextBlock Name="ProblemText" x:FieldModifier="public" Margin="0,7,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="1" Grid.Column="1" />
+            <TextBlock Name="ProblemLabel" Style="{StaticResource LabelBlock}" Text="{StaticResource StockMessageControl.Problem}" Visibility="{Binding ElementName=Problem,Path=Visibility}" Grid.Column="0" Grid.Row="1" />
+            <TextBlock Name="Problem" Style="{StaticResource CollapsingTextBlock}" Grid.Row="1" Grid.Column="1" />
 
-            <TextBlock Name="WhatLabel" FontWeight="Bold" Margin="10,7,10,0" Text="{StaticResource StockMessageControl.What}" VerticalAlignment="Top" Visibility="{Binding Path=WhatText.Visibility}" Grid.Column="0" Grid.Row="2" />
-            <TextBlock Name="WhatText" x:FieldModifier="public" Margin="0,7,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="2" Grid.Column="1" />
+            <TextBlock Name="WhatLabel" Style="{StaticResource LabelBlock}" Text="{StaticResource StockMessageControl.What}" Visibility="{Binding ElementName=What,Path=Visibility}" Grid.Column="0" Grid.Row="2" />
+            <TextBlock Name="What" Style="{StaticResource CollapsingTextBlock}" Grid.Row="2" Grid.Column="1" />
 
-            <TextBlock Name="ReasonLabel" FontWeight="Bold" Margin="10,7,10,0" Text="{StaticResource StockMessageControl.Reason}" VerticalAlignment="Top" Visibility="{Binding Path=ReasonText.Visibility}" Grid.Column="0" Grid.Row="3" />
-            <TextBlock Name="ReasonText" x:FieldModifier="public" Margin="0,7,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1" Grid.Row="3" />
+            <TextBlock Name="ReasonLabel" Style="{StaticResource LabelBlock}" Text="{StaticResource StockMessageControl.Reason}" Visibility="{Binding ElementName=Reason,Path=Visibility}" Grid.Column="0" Grid.Row="3" />
+            <TextBlock Name="Reason" Style="{StaticResource CollapsingTextBlock}" Grid.Column="1" Grid.Row="3" />
 
-            <TextBlock Name="SolutionLabel" FontWeight="Bold" Margin="10,7,10,0" Text="{StaticResource StockMessageControl.Solution}" VerticalAlignment="Top" Visibility="{Binding Path=SolutionText.Visibility}" Grid.Column="0" Grid.Row="4" />
-            <TextBlock Name="Solution" x:FieldModifier="public" Margin="0,7,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1" Grid.Row="4" />
+            <TextBlock Name="SolutionLabel" Style="{StaticResource LabelBlock}" Text="{StaticResource StockMessageControl.Solution}" Visibility="{Binding ElementName=Solution,Path=Visibility}" Grid.Column="0" Grid.Row="4" />
+            <TextBlock Name="Solution" Style="{StaticResource CollapsingTextBlock}" Grid.Column="1" Grid.Row="4" />
 
-            <TextBlock Name="ResultLabel" FontWeight="Bold" Margin="10,7,10,0" Text="{StaticResource StockMessageControl.Result}" VerticalAlignment="Top" Visibility="{Binding Path=ResultText.Visibility}" Grid.Column="0" Grid.Row="5" />
-            <TextBlock Name="ResultText" x:FieldModifier="public" Margin="0,7,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1" Grid.Row="5" />
+            <TextBlock Name="ResultLabel" Style="{StaticResource LabelBlock}" Text="{StaticResource StockMessageControl.Result}" Visibility="{Binding ElementName=Result,Path=Visibility}" Grid.Column="0" Grid.Row="5" />
+            <TextBlock Name="Result" Style="{StaticResource CollapsingTextBlock}" Grid.Column="1" Grid.Row="5" />
 
-            <TextBlock Name="HintLabel" FontWeight="Bold" Margin="10,7,10,0" Text="{StaticResource StockMessageControl.Hint}" VerticalAlignment="Top" Visibility="{Binding Path=HintText.Visibility}" Grid.Column="0" Grid.Row="6" />
-            <TextBlock Name="HintText" x:FieldModifier="public" Margin="0,7,10,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Column="1" Grid.Row="6" />
+            <TextBlock Name="HintLabel" Style="{StaticResource LabelBlock}" Text="{StaticResource StockMessageControl.Hint}" Visibility="{Binding ElementName=Hint,Path=Visibility}" Grid.Column="0" Grid.Row="6" />
+            <TextBlock Name="Hint" x:FieldModifier="public" Style="{StaticResource CollapsingTextBlock}" Grid.Column="1" Grid.Row="6" />
         </Grid>
     </Grid>
 </UserControl>

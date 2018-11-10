@@ -19,6 +19,7 @@ namespace Carnassial.Dialog
         public About(Window owner)
         {
             this.InitializeComponent();
+            this.Message.SetVisibility();
 
             this.latestReleaseAddress = CarnassialConfigurationSettings.GetLatestReleaseApiAddress();
             this.MostRecentCheckForUpdate = null;

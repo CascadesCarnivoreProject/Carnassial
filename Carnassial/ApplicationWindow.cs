@@ -132,7 +132,7 @@ namespace Carnassial
                                                                   this.GetDotNetVersion(), 
                                                                   databasePath,
                                                                   e.ExceptionObject);
-            Clipboard.SetText(exitNotification.Message.What);
+            Clipboard.SetText(exitNotification.Message.GetWhat());
             exitNotification.ShowDialog();
         }
     }

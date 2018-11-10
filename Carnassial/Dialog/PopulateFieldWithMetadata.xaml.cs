@@ -36,6 +36,7 @@ namespace Carnassial.Dialog
 
         public PopulateFieldWithMetadata(FileDatabase fileDatabase, string filePath, TimeSpan desiredStatusInterval, Window owner)
         {
+            this.InitializeComponent();
             this.clearIfNoMetadata = false;
             this.dataFieldLabel = String.Empty;
             this.dataFieldSelected = false;
@@ -46,7 +47,8 @@ namespace Carnassial.Dialog
             this.metadataField = null;
             this.metadataFieldSelected = false;
 
-            this.InitializeComponent();
+            this.Message.SetVisibility();
+
             if (JpegImage.IsJpeg(filePath))
             {
                 this.DataGrid.ItemsSource = JpegImage.LoadMetadata(this.filePath).SelectMany(directory => directory.Tags);

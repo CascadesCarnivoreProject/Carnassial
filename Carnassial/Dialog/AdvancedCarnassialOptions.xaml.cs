@@ -12,6 +12,7 @@ namespace Carnassial.Dialog
         public AdvancedCarnassialOptions(CarnassialState state, FileDisplayWithMarkers fileDisplay, Window owner)
         {
             this.InitializeComponent();
+            this.Message.SetVisibility();
             this.Owner = owner;
             this.carnassialState = state;
             this.fileDisplay = fileDisplay;

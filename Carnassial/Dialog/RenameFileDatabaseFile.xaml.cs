@@ -13,6 +13,7 @@ namespace Carnassial.Dialog
         public RenameFileDatabaseFile(string fileName, Window owner)
         {
             this.InitializeComponent();
+            this.Message.SetVisibility();
 
             this.CurrentFileName.Text = fileName;
             this.Owner = owner;

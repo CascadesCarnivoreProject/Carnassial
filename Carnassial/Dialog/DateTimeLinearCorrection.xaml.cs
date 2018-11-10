@@ -27,6 +27,7 @@ namespace Carnassial.Dialog
         {
             this.InitializeComponent();
             this.Abort = false;
+            this.Message.SetVisibility();
             this.Owner = owner;
 
             this.displayingPreview = false;

@@ -577,7 +577,7 @@ namespace Carnassial.Editor
                 FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName),
                 Filter = Constant.File.TemplateFileFilter,
                 OverwritePrompt = true,
-                Title = "Save new template file",
+                Title = App.FindResource<string>(EditorConstant.ResourceKey.EditorWindowTemplateFileSaveNew)
             };
 
             if (saveFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
@@ -593,10 +593,10 @@ namespace Carnassial.Editor
         {
             OpenFileDialog openFileDialog = new OpenFileDialog()
             {
-                FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName), // Default file name without the extension
-                DefaultExt = Constant.File.TemplateFileExtension, // Default file extension
-                Filter = "Database Files (" + Constant.File.TemplateFileExtension + ")|*" + Constant.File.TemplateFileExtension, // Filter files by extension 
-                Title = "Select an Existing Template File to Open"
+                FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName),
+                DefaultExt = Constant.File.TemplateFileExtension,
+                Filter = App.FormatResource(EditorConstant.ResourceKey.EditorWindowTemplateFileOpenExistingFilter, Constant.File.TemplateFileExtension),
+                Title = App.FindResource<string>(EditorConstant.ResourceKey.EditorWindowTemplateFileOpenExisting)
             };
 
             if (openFileDialog.ShowDialog() == true)
@@ -694,7 +694,7 @@ namespace Carnassial.Editor
             {
                 databasePath = this.templateDatabase.FilePath;
             }
-            this.ShowExceptionReportingDialog("The template editor needs to close.", databasePath, e);
+            this.ShowExceptionReportingDialog(App.FindResource<string>(EditorConstant.ResourceKey.EditorWindowException), databasePath, e);
         }
 
         private void RebuildControlPreview()
@@ -842,7 +842,7 @@ namespace Carnassial.Editor
             {
                 MessageBox messageBox = MessageBox.FromResource(EditorConstant.ResourceKey.EditorWindowDataLabelEmpty, this);
                 messageBox.ShowDialog();
-                textBox.Text = this.templateDatabase.GetNextUniqueDataLabel("DataLabel");
+                textBox.Text = this.templateDatabase.GetNextUniqueDataLabel(Constant.ControlColumn.DataLabel);
             }
 
             // if data label is not unique, derive a unique one and notify the user

@@ -52,7 +52,7 @@
                             Solution="{StaticResource DateTimeLinearCorrection.Message.Solution}"
                             Result="{StaticResource DateTimeLinearCorrection.Message.Result}"
                             Hint="{StaticResource DateTimeLinearCorrection.Message.Hint}"
-                            DisplayHideExplanationCheckbox="True" />
+                            DisplayHideExplanation="True" />
             <Rectangle Style="{StaticResource DialogHorizontalRule}" Grid.Row="1" />
             <!-- Content area -->
             <Grid Name="AdjustmentEntryPanel" Margin="5,0,5,10" Grid.Row="2">

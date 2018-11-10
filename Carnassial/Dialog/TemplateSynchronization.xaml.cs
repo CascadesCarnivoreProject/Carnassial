@@ -10,6 +10,7 @@ namespace Carnassial.Dialog
         public TemplateSynchronization(List<string> errors, Window owner)
         {
             this.InitializeComponent();
+            this.Message.SetVisibility();
 
             this.Owner = owner;
             foreach (string error in errors)

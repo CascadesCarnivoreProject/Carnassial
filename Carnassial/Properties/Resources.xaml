@@ -164,8 +164,8 @@
     <system:String x:Key="CarnassialWindow.MenuOptions.DialogsOnOrOff.AmbiguousDatesToolTip">Turn on or off the informational dialog displayed when files with ambiguous dates are added to an image set.</system:String>
     <system:String x:Key="CarnassialWindow.MenuOptions.DialogsOnOrOff.FileCountOnImport">Display _counts when files are added</system:String>
     <system:String x:Key="CarnassialWindow.MenuOptions.DialogsOnOrOff.FileCountOnImportToolTip">Turn on or off the informational dialog displaying image counts when files are loaded into an image set.</system:String>
-    <system:String x:Key="CarnassialWindow.MenuOptions.DialogsOnOrOff.CsvImportPrompt">Display _spreadsheet import prompt</system:String>
-    <system:String x:Key="CarnassialWindow.MenuOptions.DialogsOnOrOff.CsvImportPromptToolTip">Turn on or off the informational dialog displayed when a .csv file is imported.</system:String>
+    <system:String x:Key="CarnassialWindow.MenuOptions.DialogsOnOrOff.SpreadsheetImportPrompt">Display _spreadsheet import prompt</system:String>
+    <system:String x:Key="CarnassialWindow.MenuOptions.DialogsOnOrOff.SpreadsheetImportPromptToolTip">Turn on or off the informational dialog displayed when a .csv file is imported.</system:String>
     <system:String x:Key="CarnassialWindow.MenuOptions.AdvancedImageSetOptions">Advanced _image set options...</system:String>
     <system:String x:Key="CarnassialWindow.MenuOptions.AdvancedImageSetOptionsToolTip">Image set configuration options that should only be used by advanced users."/></system:String>
     <system:String x:Key="CarnassialWindow.MenuOptions.AdvancedCarnassialOptions">Advanced _Carnassial options...</system:String>
@@ -358,7 +358,7 @@
 
     <dialog:Message x:Key="CarnassialWindow.ImportSpreadsheet" WindowTitle="Importing spreadsheet data" 
                     Image="Information" Title="How importing spreadsheet data works." DisplayDontShowAgain="True" Buttons="OK">
-        <dialog:Message.Solution>
+        <dialog:Message.What>
             <Run>Modifying and importing a spreadsheet is supported only if the file is exported from and then back into image set with the same template.</Run><LineBreak />
             <Run>A limited set of modifications is allowed:</Run><LineBreak />
             <Run xml:space="preserve">  &#x2022; Counter data must be zero or a positive integer.</Run><LineBreak />
@@ -372,7 +372,7 @@
             <Run xml:space="preserve">  &#x2022; Column names can be swapped to assign data to different fields.</Run><LineBreak />
             <Run xml:space="preserve">  &#x2022; Adding, removing, or otherwise changing columns is not supported.</Run><LineBreak />
             <Run xml:space="preserve">&#x2022; Using a worksheet with a name other than '{3}' in .xlsx files is not supported.</Run>
-        </dialog:Message.Solution>
+        </dialog:Message.What>
         <dialog:Message.Result>
             <Run>Carnassial will import as much data as it can.  If data can't be imported you'll get a dialog listing the problems.</Run>
         </dialog:Message.Result>
@@ -464,6 +464,35 @@
         </dialog:Message.Hint>
     </dialog:Message>
 
+    <system:String x:Key="CarnassialWindow.Status.CombinedDifference">Viewing differences from both next and previous files ({0:0.0}ms).</system:String>
+    <system:String x:Key="CarnassialWindow.Status.CombinedDifference.CurrentNotLoadable">Combined difference can't be shown since the current file is not a loadable image (typically it's a video, missing, or corrupt).</system:String>
+    <system:String x:Key="CarnassialWindow.Status.CombinedDifference.NextNotAvailable">Combined difference can't be shown since the next file is not available.</system:String>
+    <system:String x:Key="CarnassialWindow.Status.CombinedDifference.NotCalculable">Previous or next file is not compatible with {0}, most likely because it's a different size.</system:String>
+    <system:String x:Key="CarnassialWindow.Status.CombinedDifference.PreviousNotAvailable">Combined difference can't be shown since the previous file is not available.</system:String>
+    <system:String x:Key="CarnassialWindow.Status.CopyFile.Completed">{0} copied to {1}.</system:String>
+    <system:String x:Key="CarnassialWindow.Status.CopyFile.Failed">Copy failed with {0}.</system:String>
+    <system:String x:Key="CarnassialWindow.Status.ImageSet.Empty">Image set is empty.</system:String>
+    <system:String x:Key="CarnassialWindow.Status.ImageSet.None">No image set is open.</system:String>
+    <system:String x:Key="CarnassialWindow.Status.ImageSet.Opening">Opening {0}...</system:String>
+    <system:String x:Key="CarnassialWindow.Status.ImageSet.Opened">Image set opened in {0:0.000}s ({1:0} files/second for {2:0.000}s).</system:String>
+    <system:String x:Key="CarnassialWindow.Status.ImageSet.LoadingFolders">Loading folders...</system:String>
+    <system:String x:Key="CarnassialWindow.Status.ImageSet.LoadingFolders.Complete">{0} of {1} files added to image set in {2:0.000}s ({3:0} files/second, {4:0.000}s IO, {5:0.000}s compute, {6:0.000}s database).</system:String>
+    <system:String x:Key="CarnassialWindow.Status.ImageSet.LoadingFolders.WithClassification">Loading folders (if this is slower than you like and file classification isn't needed you can select Skip classification in the Options menu right now)...</system:String>
+    <system:String x:Key="CarnassialWindow.Status.MoveFiles.Complete">Moved {0} of {1} files to {2}.</system:String>
+    <system:String x:Key="CarnassialWindow.Status.PreviousNextDifference">Viewing difference from {0} file ({1:0.0}ms).</system:String>
+    <system:String x:Key="CarnassialWindow.Status.PreviousNextDifference.CurrentNotLoadable">Difference can't be shown as the current file is not a displayable image (typically it's a video, missing, or corrupt).</system:String>
+    <system:String x:Key="CarnassialWindow.Status.PreviousNextDifference.OtherNotLoadable">View of difference from {0} file unavailable as it is not a displayable image (typically it's a video, missing, or corrupt).</system:String>
+    <system:String x:Key="CarnassialWindow.Status.PreviousNextDifference.OtherNotCompatible">{0} file is not compatible with {1}, most likely because it's a different size.</system:String>
+    <system:String x:Key="CarnassialWindow.Status.Redo">Redid {0}.</system:String>
+    <system:String x:Key="CarnassialWindow.Status.Selection.Reverted">Selection reverted to all files.</system:String>
+    <system:String x:Key="CarnassialWindow.Status.Spreadsheet.Export">Exporting data to {0}...</system:String>
+    <system:String x:Key="CarnassialWindow.Status.Spreadsheet.Export.Completed">Data exported to {0} in {1:0.000}s ({2:0} files/second).</system:String>
+    <system:String x:Key="CarnassialWindow.Status.Spreadsheet.Export.ExcelLimitExceeded">The current selection contains {0} files, which exceeds Excel's limit of {1} rows in a worksheet.  Consider direct database access, exporting to .csv, using smaller selections with multiple Excel files.</system:String>
+    <system:String x:Key="CarnassialWindow.Status.Spreadsheet.Import">Importing spreadsheet...</system:String>
+    <system:String x:Key="CarnassialWindow.Status.Spreadsheet.Import.Completed">{0} imported in {1:0.000}s: {2} files added, {3} files updated (processed {4:0} files/second).</system:String>
+    <system:String x:Key="CarnassialWindow.Status.Spreadsheet.Import.Failed">Couldn't import spreadsheet.</system:String>
+    <system:String x:Key="CarnassialWindow.Status.Undo">Undid {0}.</system:String>
+    
     <dialog:Message x:Key="CarnassialWindow.TemplateLoad.Failed" WindowTitle="Carnassial could not load the template file" 
                     Image="Error" Title="Carnassial could not load the template file." Buttons="OK">
         <dialog:Message.Problem>
@@ -644,11 +673,63 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="DateTimeSetTimeZone.OriginalDateTimeOffset">Original date, time, and offset:</system:String>
     <system:String x:Key="DateTimeSetTimeZone.NewTimeZone">New time zone:</system:String>
 
-    <system:String x:Key="DeleteFiles.Title">Delete files</system:String>
     <TextBlock x:Key="DeleteFiles.ConfirmDeletion">
         <Run FontWeight="Bold">_Confirm deletion of images, videos, and data</Run>
         <Run> (you must check this before the Okay button can be clicked; deleted data is not recoverable)</Run>
     </TextBlock>
+
+    <dialog:Message x:Key="DeleteFiles.Message.CurrentFileAndData" WindowTitle="Delete current file?" 
+                    Image="Question" Title="Delete the current {0} and its data?" DisplayHideExplanation="True">
+        <dialog:Message.What>
+            <Run>Deletes the current {0} (shown below) and the data associated with that {0}.</Run>
+        </dialog:Message.What>
+        <dialog:Message.Result>
+            <Run xml:space="preserve">  &#x2022; The data associated with the current {0} will be removed from the image set.</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; This change cannot be undone directly.</Run>
+        </dialog:Message.Result>
+        <dialog:Message.Hint>
+            <Run>If needed, the deleted {0} can be restored from the Recyle Bin and added back to the image set.</Run>
+        </dialog:Message.Hint>
+    </dialog:Message>
+    <dialog:Message x:Key="DeleteFiles.Message.CurrentFileOnly" WindowTitle="Delete current file?" 
+                    Image="Question" Title="Delete the current {0} but not its data?" DisplayHideExplanation="True">
+        <dialog:Message.What>
+            <Run>Deletes the current {0} (shown below) but not its data.</Run>
+        </dialog:Message.What>
+        <dialog:Message.Result>
+            <Run xml:space="preserve">  &#x2022; Data for the {0} will be retained and a placeholder image shown when viewing the deleted {0}.</Run>
+            <Run xml:space="preserve">  &#x2022; This change cannot be undone directly.</Run>
+        </dialog:Message.Result>
+        <dialog:Message.Hint>
+            <Run>If needed, the deleted {0} can be restored from the Recyle Bin.</Run>
+        </dialog:Message.Hint>
+    </dialog:Message>
+    <dialog:Message x:Key="DeleteFiles.Message.FilesAndData" WindowTitle="Delete files?" 
+                    Image="Question" Title="Delete the {0} files marked for deletion in this selection?" DisplayHideExplanation="True">
+        <dialog:Message.What>
+            <Run>Deletes the {0} files marked for deletion (shown below) in this selection along with the data entered for them.</Run>
+        </dialog:Message.What>
+        <dialog:Message.Result>
+            <Run xml:space="preserve">  &#x2022; The files will be removed from the image set.</Run>
+            <Run xml:space="preserve">  &#x2022; This change cannot be undone directly.</Run>
+        </dialog:Message.Result>
+        <dialog:Message.Hint>
+            <Run>If needed, the deleted files can be restored from the Recyle Bin and added back to the image set.</Run>
+        </dialog:Message.Hint>
+    </dialog:Message>
+    <dialog:Message x:Key="DeleteFiles.Message.FilesOnly" WindowTitle="Delete files?" 
+                    Image="Question" Title="Delete the {0} files marked for deletion in this selection?" DisplayHideExplanation="True">
+        <dialog:Message.What>
+            <Run>Deletes the {0} files marked for deletion (shown below) but not the data entered for them.</Run>
+        </dialog:Message.What>
+        <dialog:Message.Result>
+            <Run xml:space="preserve">  &#x2022; A placeholder image will be shown when viewing a deleted file.</Run>
+            <Run xml:space="preserve">  &#x2022; This change cannot be undone directly.</Run>
+        </dialog:Message.Result>
+        <dialog:Message.Hint>
+            <Run>If needed, the deleted files can be restored from the Recyle Bin.</Run>
+        </dialog:Message.Hint>
+    </dialog:Message>
 
     <system:String x:Key="EditLog.Title">Edit log for this image set</system:String>
     <system:String x:Key="EditLog.Message.Title">Edit log entries for this image set</system:String>
@@ -657,6 +738,7 @@ More complex queries can be created by right clicking on a label and duplicating
 
     <system:String x:Key="FileCountsByClassification.Title">Summary of file classifications</system:String>
     <system:String x:Key="FileCountsByClassification.Message.Title">Summary of files by their classification.</system:String>
+    <system:String x:Key="FileCountsByClassification.Message.Hint">If you check don't show this message again this dialog can be turned back on via the Options menu.</system:String>
     <system:String x:Key="FileCountsByClassification.Counts">Counts:</system:String>
     <system:String x:Key="FileCountsByClassification.Counts.Color">color</system:String>
     <system:String x:Key="FileCountsByClassification.Counts.Color.Description">images (includes images and videos marked ok in earlier versions of Carnassial)</system:String>
@@ -671,6 +753,16 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="FileCountsByClassification.Counts.NoLongerAvailable.Description">files that were likely deleted or moved</system:String>
     <system:String x:Key="FileCountsByClassification.Counts.Total">files total</system:String>
 
+    <system:String x:Key="FileSelection.All">(all files)</system:String>
+    <system:String x:Key="FileSelection.Color">color images</system:String>
+    <system:String x:Key="FileSelection.Corrupt">corrupted files</system:String>
+    <system:String x:Key="FileSelection.Custom">(custom selection)</system:String>
+    <system:String x:Key="FileSelection.Dark">dark images</system:String>
+    <system:String x:Key="FileSelection.Greyscale">greyscale images</system:String>
+    <system:String x:Key="FileSelection.MarkedForDeletion">marked for deletion</system:String>
+    <system:String x:Key="FileSelection.NoLongerAvailable">no longer available</system:String>
+    <system:String x:Key="FileSelection.Video">videos</system:String>
+    
     <system:String x:Key="FindReplace.Title">Find and replace</system:String>
     <system:String x:Key="FindReplace.Find">Fin_d</system:String>
     <system:String x:Key="FindReplace.Find.Label">Find</system:String>

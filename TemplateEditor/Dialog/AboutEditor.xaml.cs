@@ -18,6 +18,7 @@ namespace Carnassial.Editor.Dialog
         public AboutEditor(Window owner)
         {
             this.InitializeComponent();
+            this.Message.SetVisibility();
 
             this.latestReleaseAddress = CarnassialConfigurationSettings.GetLatestReleaseApiAddress();
             this.MostRecentCheckForUpdate = null;

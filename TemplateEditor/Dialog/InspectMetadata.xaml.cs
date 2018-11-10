@@ -18,6 +18,8 @@ namespace Carnassial.Editor.Dialog
         public InspectMetadata(string folderPath, Window owner)
         {
             this.InitializeComponent();
+            this.Message.SetVisibility();
+
             this.Owner = owner;
         }
 

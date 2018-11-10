@@ -28,6 +28,7 @@ namespace Carnassial.Dialog
             this.ambiguousDatesList = new List<AmbiguousDate>();
             this.database = database;
             this.displayingPreview = false;
+            this.Message.SetVisibility();
             this.Owner = owner;
 
             // set callbacks in code behind to avoid invoking callbacks when the dialog is created

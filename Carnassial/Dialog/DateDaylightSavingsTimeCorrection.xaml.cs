@@ -22,6 +22,7 @@ namespace Carnassial.Dialog
             this.currentFileIndex = imageCache.CurrentRow;
             this.fileDatabase = fileDatabase;
             this.imageCache = imageCache;
+            this.Message.SetVisibility();
             this.orignalDateTimeOffset = imageCache.Current.DateTimeOffset;
             this.Owner = owner;
 

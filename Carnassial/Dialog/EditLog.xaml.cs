@@ -17,6 +17,7 @@ namespace Carnassial.Dialog
         public EditLog(string text, Window owner)
         {
             this.InitializeComponent();
+            this.Message.SetVisibility();
             this.Owner = owner;
 
             this.Log.Text = text;

@@ -200,6 +200,10 @@ Width</system:String>
     <system:String x:Key="EditorWindow.Remove.Tooltip">Remove the currently selected control.</system:String>
     <system:String x:Key="EditorWindow.SpreadsheetOrder">The columns in spreadsheets exported from Carnassial while using this template are dislayed below.  Drag and drop columns to rearrange their order to your preference.</system:String>
     <system:String x:Key="EditorWindow.ControlOrder">Drag and drop the controls below by their labels to arrange them to your preference.</system:String>
+    <system:String x:Key="EditorWindow.Exception">The template editor needs to close.</system:String>
+    <system:String x:Key="EditorWindow.TemplateFile.OpenExisting">Select an existing template to open</system:String>
+    <system:String x:Key="EditorWindow.TemplateFile.OpenExistingFilter">Carnassial templates ({0})|*{0}</system:String>
+    <system:String x:Key="EditorWindow.TemplateFile.SaveNew">Save new template</system:String>
 
     <dialog:Message x:Key="EditorWindow.DataLabel.Empty" WindowTitle="Data label is empty" 
                     Image="Information" Title="Data label is empty." Buttons="OK">

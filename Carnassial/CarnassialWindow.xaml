@@ -199,7 +199,7 @@
                     <Separator/>
                     <MenuItem Name="MenuOptionsDialogsOnOrOff" Header="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff}" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}">
                         <MenuItem Name="MenuOptionsEnableFileCountOnImportDialog" IsCheckable="True" Header="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff.FileCountOnImport}" Click="MenuOptionsEnableFileCountOnImportDialog_Click" ToolTip="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff.FileCountOnImportToolTip}" />
-                        <MenuItem Name="MenuOptionsEnableCsvImportPrompt" IsCheckable="True" Header="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff.CsvImportPrompt}" Click="MenuOptionsEnableCsvImportPrompt_Click" ToolTip="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff.CsvImportPromptToolTip}" />
+                        <MenuItem Name="MenuOptionsEnableSpreadsheetImportPrompt" IsCheckable="True" Header="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff.SpreadsheetImportPrompt}" Click="MenuOptionsEnableSpreadsheetImportPrompt_Click" ToolTip="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff.SpreadsheetImportPromptToolTip}" />
                     </MenuItem>
                     <Separator/>
                     <MenuItem Name="MenuOptionsAdvancedImageSetOptions" Header="{StaticResource CarnassialWindow.MenuOptions.AdvancedImageSetOptions}" Click="MenuOptionsAdvancedImageSetOptions_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuOptions.AdvancedImageSetOptionsToolTip}" />

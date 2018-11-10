@@ -18,6 +18,7 @@ namespace Carnassial.Dialog
         public ChooseFileDatabase(List<string> fileDatabasePaths, string templateDatabasePath, Window owner)
         {
             this.InitializeComponent();
+            this.Message.SetVisibility();
             this.Owner = owner;
             this.SelectedFile = String.Empty;
 

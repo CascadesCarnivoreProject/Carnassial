@@ -36,7 +36,7 @@ namespace Carnassial
     public partial class CarnassialWindow : ApplicationWindow, IDisposable
     {
         private bool disposed;
-        private SpeechSynthesizer speechSynthesizer;
+        private Lazy<SpeechSynthesizer> speechSynthesizer;
 
         public DataEntryHandler DataHandler { get; private set; }
         public CarnassialState State { get; private set; }
@@ -46,7 +46,7 @@ namespace Carnassial
             AppDomain.CurrentDomain.UnhandledException += this.OnUnhandledException;
             this.InitializeComponent();
 
-            this.speechSynthesizer = new SpeechSynthesizer();
+            this.speechSynthesizer = new Lazy<SpeechSynthesizer>(() => new SpeechSynthesizer());
             this.State = new CarnassialState();
             this.Title = Constant.MainWindowBaseTitle;
 
@@ -55,7 +55,7 @@ namespace Carnassial
             this.FileView.ColumnDefinitions[2].Width = new GridLength(this.ControlGrid.Width);
 
             this.MenuOptionsAudioFeedback.IsChecked = this.State.AudioFeedback;
-            this.MenuOptionsEnableCsvImportPrompt.IsChecked = !this.State.SuppressSpreadsheetImportPrompt;
+            this.MenuOptionsEnableSpreadsheetImportPrompt.IsChecked = !this.State.SuppressSpreadsheetImportPrompt;
             this.MenuOptionsOrderFilesByDateTime.IsChecked = this.State.OrderFilesByDateTime;
             this.MenuOptionsSkipFileClassification.IsChecked = this.State.SkipFileClassification;
 
@@ -183,7 +183,7 @@ namespace Carnassial
             this.State.ResetImageSetRelatedState();
             // reset undo/redo after reset of main state object as it touches some of the same state but also updates the enable state of undo/rendo menu items
             this.ResetUndoRedoState();
-            this.SetStatusMessage("No image set is open.");
+            this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusImageSetNone);
             this.Title = Constant.MainWindowBaseTitle;
         }
 
@@ -227,7 +227,10 @@ namespace Carnassial
                 {
                     this.DataHandler.Dispose();
                 }
-                this.speechSynthesizer.Dispose();
+                if (this.speechSynthesizer.IsValueCreated)
+                {
+                    this.speechSynthesizer.Value.Dispose();
+                }
             }
 
             this.disposed = true;
@@ -277,7 +280,7 @@ namespace Carnassial
 
             if (filesSelected == false)
             {
-                this.SetStatusMessage("Image set is empty.");
+                this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusImageSetEmpty);
                 this.SetFileCount(0);
             }
         }
@@ -491,9 +494,10 @@ namespace Carnassial
             FileCountsByClassification imageStats = new FileCountsByClassification(counts, this);
             if (onFileLoading)
             {
-                imageStats.Message.Hint = "\u2022 " + imageStats.Message.Hint + Environment.NewLine + "\u2022 If you check don't show this message again this dialog can be turned back on via the Options menu.";
+                imageStats.Message.Hint.Inlines.Add(new Run(App.FindResource<string>(Constant.ResourceKey.FileCountsByClassificationMessageHint)));
                 imageStats.DontShowAgain.Visibility = Visibility.Visible;
             }
+
             Nullable<bool> result = imageStats.ShowDialog();
             if (onFileLoading && (result == true) && imageStats.DontShowAgain.IsChecked.HasValue)
             {
@@ -507,8 +511,8 @@ namespace Carnassial
             if (this.State.AudioFeedback)
             {
                 // cancel any speech in progress and say the given text
-                this.speechSynthesizer.SpeakAsyncCancelAll();
-                this.speechSynthesizer.SpeakAsync(text);
+                this.speechSynthesizer.Value.SpeakAsyncCancelAll();
+                this.speechSynthesizer.Value.SpeakAsync(text);
             }
         }
 
@@ -818,7 +822,7 @@ namespace Carnassial
 
                 this.MenuEditRedo.IsEnabled = this.State.UndoRedoChain.CanRedo;
                 this.MenuEditUndo.IsEnabled = this.State.UndoRedoChain.CanUndo;
-                this.SetStatusMessage("Redid " + stateToRedo.ToString() + ".");
+                this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusRedo, stateToRedo);
             }
         }
 
@@ -883,7 +887,7 @@ namespace Carnassial
 
                 this.MenuEditRedo.IsEnabled = this.State.UndoRedoChain.CanRedo;
                 this.MenuEditUndo.IsEnabled = this.State.UndoRedoChain.CanUndo;
-                this.SetStatusMessage("Undid " + stateToUndo.ToString() + ".");
+                this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusUndo, stateToUndo.ToString());
             }
         }
 
@@ -933,12 +937,12 @@ namespace Carnassial
                 try
                 {
                     File.Copy(sourcePath, destinationPath, true);
-                    this.SetStatusMessage(sourceFileName + " copied to " + destinationPath);
+                    this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusCopyFileCompleted, sourceFileName, destinationPath);
                 }
                 catch (Exception exception)
                 {
                     Debug.Fail(String.Format("Copy of '{0}' to '{1}' failed.", sourceFileName, destinationPath), exception.ToString());
-                    this.SetStatusMessage("Copy failed with {0}.", exception.GetType().Name);
+                    this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusCopyFileFailed, exception.GetType().Name);
                 }
             }
         }
@@ -975,7 +979,7 @@ namespace Carnassial
 
                 // move files
                 List<string> immovableFiles = this.DataHandler.FileDatabase.MoveSelectedFilesToFolder(folderSelectionDialog.FileName);
-                this.SetStatusMessage("Moved {0} of {1} files to {2}.", this.DataHandler.FileDatabase.CurrentlySelectedFileCount - immovableFiles.Count, this.DataHandler.FileDatabase.CurrentlySelectedFileCount, Path.GetFileName(folderSelectionDialog.FileName));
+                this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusMoveFilesComplete, this.DataHandler.FileDatabase.CurrentlySelectedFileCount - immovableFiles.Count, this.DataHandler.FileDatabase.CurrentlySelectedFileCount, Path.GetFileName(folderSelectionDialog.FileName));
                 if (immovableFiles.Count > 0)
                 {
                     MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowFileMoveIncomplete, this, 
@@ -984,8 +988,8 @@ namespace Carnassial
                                                                     immovableFiles.Count);
                     foreach (string fileName in immovableFiles)
                     {
-                        messageBox.Message.HintText.Inlines.Add(new LineBreak());
-                        messageBox.Message.HintText.Inlines.Add(new Run("  \u2022 " + fileName));
+                        messageBox.Message.Hint.Inlines.Add(new LineBreak());
+                        messageBox.Message.Hint.Inlines.Add(new Run("  \u2022 " + fileName));
                     }
                     messageBox.ShowDialog();
                 }
@@ -1005,7 +1009,7 @@ namespace Carnassial
             bool exportXlsx = (sender == this.MenuFileExportXlsxAndOpen) || (sender == this.MenuFileExportXlsx);
             if (exportXlsx && (this.DataHandler.FileDatabase.Files.RowCount > Constant.Excel.MaximumRowsInWorksheet))
             {
-                this.SetStatusMessage("The current selection contains {0} files, which exceeds Excel's limit of {1} rows in a worksheet.  Consider direct database access, exporting to .csv, using smaller selections with multiple Excel files.", this.DataHandler.FileDatabase.Files.RowCount, Constant.Excel.MaximumRowsInWorksheet);
+                this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusSpreadsheetExportExcelLimitExceeded, this.DataHandler.FileDatabase.Files.RowCount, Constant.Excel.MaximumRowsInWorksheet);
                 return;
             }
             string spreadsheetFileExtension = exportXlsx ? Constant.File.ExcelFileExtension : Constant.File.CsvFileExtension;
@@ -1035,7 +1039,7 @@ namespace Carnassial
             bool openFileAfterExport = (sender == this.MenuFileExportXlsxAndOpen) || (sender == this.MenuFileExportCsvAndOpen);
             string spreadsheetFileName = Path.GetFileName(saveFileDialog.FileName);
             string spreadsheetFilePath = saveFileDialog.FileName;
-            this.SetStatusMessage("Exporting data to {0}...", spreadsheetFileName);
+            this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusSpreadsheetExport, spreadsheetFileName);
             SpreadsheetReaderWriter spreadsheetWriter = new SpreadsheetReaderWriter(this.UpdateSpreadsheetProgress, this.State.Throttles.GetDesiredProgressUpdateInterval());
             try
             {
@@ -1076,7 +1080,7 @@ namespace Carnassial
                 this.HideLongRunningOperationFeedback();
             }
 
-            this.SetStatusMessage("Data exported to {0} in {1:0.000}s ({2:0} files/second).", spreadsheetFileName, stopwatch.Elapsed.TotalSeconds, this.DataHandler.FileDatabase.CurrentlySelectedFileCount / stopwatch.Elapsed.TotalSeconds);
+            this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusSpreadsheetExportCompleted, spreadsheetFileName, stopwatch.Elapsed.TotalSeconds, this.DataHandler.FileDatabase.CurrentlySelectedFileCount / stopwatch.Elapsed.TotalSeconds);
         }
 
         private async void MenuFileImportSpreadsheet_Click(object sender, RoutedEventArgs e)
@@ -1089,7 +1093,6 @@ namespace Carnassial
                     DateTimeHandler.ToDatabaseUtcOffsetString(TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours)),
                     Constant.Excel.FileDataWorksheetName,
                     Constant.File.FileDatabaseFileExtension);
-                messageBox.DontShowAgain.Visibility = Visibility.Visible;
 
                 if (messageBox.ShowDialog() != true)
                 {
@@ -1099,7 +1102,7 @@ namespace Carnassial
                 if (messageBox.DontShowAgain.IsChecked.HasValue)
                 {
                     this.State.SuppressSpreadsheetImportPrompt = messageBox.DontShowAgain.IsChecked.Value;
-                    this.MenuOptionsEnableCsvImportPrompt.IsChecked = !this.State.SuppressSpreadsheetImportPrompt;
+                    this.MenuOptionsEnableSpreadsheetImportPrompt.IsChecked = !this.State.SuppressSpreadsheetImportPrompt;
                 }
             }
 
@@ -1122,7 +1125,7 @@ namespace Carnassial
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            this.SetStatusMessage("Importing spreadsheet...");
+            this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusSpreadsheetImport);
 
             SpreadsheetReaderWriter spreadsheetReader = new SpreadsheetReaderWriter(this.UpdateSpreadsheetProgress, this.State.Throttles.GetDesiredProgressUpdateInterval());
             FileImportResult importResult = await Task.Run(() =>
@@ -1136,7 +1139,7 @@ namespace Carnassial
             if (importResult.Exception != null)
             {
                 stopwatch.Stop();
-                this.SetStatusMessage("Couldn't import spreadsheet.");
+                this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusSpreadsheetImportFailed);
 
                 MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImportSpreadsheetFailed, this,
                                                                 spreadsheetFilePath,
@@ -1151,8 +1154,8 @@ namespace Carnassial
                 MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImportSpreadsheetIncomplete, this, spreadsheetFilePath);
                 foreach (string importError in importResult.Errors)
                 {
-                    messageBox.Message.HintText.Inlines.Add(new LineBreak());
-                    messageBox.Message.HintText.Inlines.Add(new Run(importError));
+                    messageBox.Message.Hint.Inlines.Add(new LineBreak());
+                    messageBox.Message.Hint.Inlines.Add(new Run(importError));
                 }
                 messageBox.ShowDialog();
             }
@@ -1173,7 +1176,7 @@ namespace Carnassial
                 stopwatch.Stop();
             }
 
-            this.SetStatusMessage("{0} imported in {1:0.000}s: {2} files added, {3} files updated (processed {4:0} files/second).", Path.GetFileName(spreadsheetFilePath), stopwatch.Elapsed.TotalSeconds, importResult.FilesAdded, importResult.FilesUpdated, importResult.FilesProcessed / stopwatch.Elapsed.TotalSeconds);
+            this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusSpreadsheetImportCompleted, Path.GetFileName(spreadsheetFilePath), stopwatch.Elapsed.TotalSeconds, importResult.FilesAdded, importResult.FilesUpdated, importResult.FilesProcessed / stopwatch.Elapsed.TotalSeconds);
         }
 
         private async void MenuFileRecentImageSet_Click(object sender, RoutedEventArgs e)
@@ -1270,16 +1273,16 @@ namespace Carnassial
             this.MenuOptionsAudioFeedback.IsChecked = this.State.AudioFeedback;
         }
 
-        private void MenuOptionsEnableCsvImportPrompt_Click(object sender, RoutedEventArgs e)
-        {
-            this.State.SuppressSpreadsheetImportPrompt = !this.State.SuppressSpreadsheetImportPrompt;
-            this.MenuOptionsEnableCsvImportPrompt.IsChecked = !this.State.SuppressSpreadsheetImportPrompt;
-        }
-
         private void MenuOptionsEnableFileCountOnImportDialog_Click(object sender, RoutedEventArgs e)
         {
             this.State.SuppressFileCountOnImportDialog = !this.State.SuppressFileCountOnImportDialog;
             this.MenuOptionsEnableFileCountOnImportDialog.IsChecked = !this.State.SuppressFileCountOnImportDialog;
+        }
+
+        private void MenuOptionsEnableSpreadsheetImportPrompt_Click(object sender, RoutedEventArgs e)
+        {
+            this.State.SuppressSpreadsheetImportPrompt = !this.State.SuppressSpreadsheetImportPrompt;
+            this.MenuOptionsEnableSpreadsheetImportPrompt.IsChecked = !this.State.SuppressSpreadsheetImportPrompt;
         }
 
         internal async void MenuOptionsOrderFilesByDateTime_Click(object sender, RoutedEventArgs e)
@@ -1721,44 +1724,11 @@ namespace Carnassial
 
         private void OnFileSelectionChanged()
         {
-            // update status and menu state to reflect what ended up being selected
             FileSelection selection = this.DataHandler.FileDatabase.ImageSet.FileSelection;
-            string selectionDescription;
-            switch (selection)
-            {
-                case FileSelection.All:
-                    selectionDescription = "(all files)";
-                    break;
-                case FileSelection.Color:
-                    selectionDescription = "color images";
-                    break;
-                case FileSelection.Corrupt:
-                    selectionDescription = "corrupted files";
-                    break;
-                case FileSelection.Custom:
-                    selectionDescription = "(custom selection)";
-                    break;
-                case FileSelection.Dark:
-                    selectionDescription = "dark images";
-                    break;
-                case FileSelection.Greyscale:
-                    selectionDescription = "greyscale images";
-                    break;
-                case FileSelection.MarkedForDeletion:
-                    selectionDescription = "marked for deletion";
-                    break;
-                case FileSelection.NoLongerAvailable:
-                    selectionDescription = "no longer available";
-                    break;
-                case FileSelection.Video:
-                    selectionDescription = "videos";
-                    break;
-                default:
-                    throw new NotSupportedException(String.Format("Unhandled file selection {0}.", selection));
-            }
 
+            // update status and menu state to reflect what ended up being selected
             this.SetFileCount(this.DataHandler.FileDatabase.CurrentlySelectedFileCount);
-            this.SetSelection(selectionDescription);
+            this.SetSelection(App.FindResource<string>(nameof(FileSelection) + "." + selection.ToString()));
 
             this.EnableOrDisableMenusAndControls();
             this.MenuSelectAllFiles.IsChecked = selection == FileSelection.All;
@@ -1896,7 +1866,7 @@ namespace Carnassial
                 // This case is reached when 
                 // 1) datetime modifications result in no files matching a custom selection
                 // 2) all files which match the selection get deleted
-                this.SetStatusMessage("Selection changed to 'All files'.");
+                this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusSelectionReverted);
                 this.DataHandler.SelectFiles(FileSelection.All);
             }
 
@@ -1932,9 +1902,9 @@ namespace Carnassial
             numberOfFiles.Content = selectedFileCount.ToString(CultureInfo.CurrentCulture);
         }
 
-        private void SetStatusMessage(string format, params object[] args)
+        private void SetStatusMessage(string key, params object[] args)
         {
-            this.MessageBar.Text = String.Format(format, args);
+            this.MessageBar.Text = App.FormatResource(key, args);
         }
 
         // display a view in the view portion of the status bar
@@ -2230,11 +2200,11 @@ namespace Carnassial
             folderLoad.ReportStatus();
             if (this.State.SkipFileClassification)
             {
-                this.SetStatusMessage("Loading folders...");
+                this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusImageSetLoadingFolders);
             }
             else
             {
-                this.SetStatusMessage("Loading folders (if this is slower than you like and file classification isn't needed you can select Skip classification in the Options menu right now)...");
+                this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusImageSetLoadingFoldersWithClassification);
             }
 
             // if it's not already being displayed, change to the files tab so the long running progress bar is visible
@@ -2268,7 +2238,7 @@ namespace Carnassial
             this.HideLongRunningOperationFeedback();
             stopwatch.Stop();
             await this.OnFileDatabaseOpenedOrFilesAddedAsync(true);
-            this.SetStatusMessage("{0} of {1} files added to image set in {2:0.000}s ({3:0} files/second, {4:0.000}s IO, {5:0.000}s compute, {6:0.000}s database).", filesAddedToDatabase, folderLoad.FilesToLoad, stopwatch.Elapsed.TotalSeconds, folderLoad.FilesToLoad / stopwatch.Elapsed.TotalSeconds, folderLoad.IODuration.TotalSeconds, folderLoad.ComputeDuration.TotalSeconds, folderLoad.DatabaseDuration.TotalSeconds);
+            this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusImageSetLoadingFoldersComplete, filesAddedToDatabase, folderLoad.FilesToLoad, stopwatch.Elapsed.TotalSeconds, folderLoad.FilesToLoad / stopwatch.Elapsed.TotalSeconds, folderLoad.IODuration.TotalSeconds, folderLoad.ComputeDuration.TotalSeconds, folderLoad.DatabaseDuration.TotalSeconds);
 
             // update the user as to what files are in the database
             this.MaybeShowFileCountsDialog(true);
@@ -2368,7 +2338,7 @@ namespace Carnassial
             // request to open an image set is being processed since the user can see the tab change and controls render.
             imageSetSetupTime.Start();
             string fileDatabaseFileName = Path.GetFileName(fileDatabaseFilePath);
-            this.SetStatusMessage("Opening " + fileDatabaseFileName + "...");
+            this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusImageSetOpening, fileDatabaseFileName);
             this.MenuViewShowFiles_Click(this, null);
 
             // open file database
@@ -2455,7 +2425,7 @@ namespace Carnassial
             if (filesAdded == false)
             {
                 await this.OnFileDatabaseOpenedOrFilesAddedAsync(filesAdded);
-                this.SetStatusMessage("Image set opened in {0:0.000}s ({1:0} files/second for {2:0.000}s).", imageSetSetupTime.Elapsed.TotalSeconds, this.DataHandler.FileDatabase.CurrentlySelectedFileCount / fileLoadTime.Elapsed.TotalSeconds, fileLoadTime.Elapsed.TotalSeconds);
+                this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusImageSetOpened, imageSetSetupTime.Elapsed.TotalSeconds, this.DataHandler.FileDatabase.CurrentlySelectedFileCount / fileLoadTime.Elapsed.TotalSeconds, fileLoadTime.Elapsed.TotalSeconds);
             }
             return true;
         }
@@ -2533,19 +2503,19 @@ namespace Carnassial
             switch (result)
             {
                 case ImageDifferenceResult.CurrentImageNotAvailable:
-                    this.SetStatusMessage("Combined difference can't be shown since the current file is not a loadable image (typically it's a video, missing, or corrupt).");
+                    this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusCombinedDifferenceCurrentNotLoadable);
                     break;
                 case ImageDifferenceResult.NextImageNotAvailable:
-                    this.SetStatusMessage("Combined difference can't be shown since the next file is not available.");
+                    this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusCombinedDifferenceNextNotAvailable);
                     break;
                 case ImageDifferenceResult.NoLongerValid:
                     // nothing to do
                     break;
                 case ImageDifferenceResult.NotCalculable:
-                    this.SetStatusMessage("Previous or next file is not compatible with {0}, most likely because it's a different size.", this.DataHandler.ImageCache.Current.FileName);
+                    this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusCombinedDifferenceNotCalculable, this.DataHandler.ImageCache.Current.FileName);
                     break;
                 case ImageDifferenceResult.PreviousImageNotAvailable:
-                    this.SetStatusMessage("Combined difference can't be shown since the next file is not available.");
+                    this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusCombinedDifferencePreviousNotAvailable);
                     break;
                 case ImageDifferenceResult.Success:
                     this.FileDisplay.Display(this.DataHandler.ImageCache.GetCurrentImage());
@@ -2555,7 +2525,7 @@ namespace Carnassial
                     }
                     else
                     {
-                        this.SetStatusMessage("Viewing differences from both next and previous files ({0:0.0}ms).", 1000.0 * this.DataHandler.ImageCache.AverageCombinedDifferenceTimeInSeconds);
+                        this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusCombinedDifference, 1000.0 * this.DataHandler.ImageCache.AverageCombinedDifferenceTimeInSeconds);
                     }
                     break;
                 default:
@@ -2572,17 +2542,17 @@ namespace Carnassial
             switch (result)
             {
                 case ImageDifferenceResult.CurrentImageNotAvailable:
-                    this.SetStatusMessage("Difference can't be shown as the current file is not a displayable image (typically it's a video, missing, or corrupt).");
+                    this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusPreviousNextDifferenceCurrentNotLoadable);
                     break;
                 case ImageDifferenceResult.NextImageNotAvailable:
                 case ImageDifferenceResult.PreviousImageNotAvailable:
-                    this.SetStatusMessage("View of difference from {0} file unavailable as it is not a displayable image (typically it's a video, missing, or corrupt).", this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next");
+                    this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusPreviousNextDifferenceOtherNotLoadable, this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next");
                     break;
                 case ImageDifferenceResult.NoLongerValid:
                     // nothing to do
                     break;
                 case ImageDifferenceResult.NotCalculable:
-                    this.SetStatusMessage("{0} file is not compatible with {1}, most likely because it's a different size.", this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "Previous" : "Next", this.DataHandler.ImageCache.Current.FileName);
+                    this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusPreviousNextDifferenceOtherNotCompatible, this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "Previous" : "Next", this.DataHandler.ImageCache.Current.FileName);
                     break;
                 case ImageDifferenceResult.Success:
                     // display the differenced image
@@ -2595,7 +2565,7 @@ namespace Carnassial
                     }
                     else
                     {
-                        this.SetStatusMessage("Viewing difference from {0} file ({1:0.0}ms).", this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next", 1000.0 * this.DataHandler.ImageCache.AverageDifferenceTimeInSeconds);
+                        this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusPreviousNextDifference, this.DataHandler.ImageCache.CurrentDifferenceState == ImageDifference.Previous ? "previous" : "next", 1000.0 * this.DataHandler.ImageCache.AverageDifferenceTimeInSeconds);
                     }
                     break;
                 default:

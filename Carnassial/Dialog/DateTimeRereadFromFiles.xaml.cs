@@ -15,6 +15,7 @@ namespace Carnassial.Dialog
             this.InitializeComponent();
             this.desiredStatusInterval = desiredStatusInterval;
             this.fileDatabase = fileDatabase;
+            this.Message.SetVisibility();
             this.Owner = owner;
         }
 

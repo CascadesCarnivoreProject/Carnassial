@@ -25,6 +25,7 @@ namespace Carnassial.Dialog
         public ReclassifyFiles(FileDatabase database, ImageCache imageCache, CarnassialUserRegistrySettings state, Window owner)
         {
             this.InitializeComponent();
+            this.Message.SetVisibility();
             this.Owner = owner;
 
             this.fileDatabase = database;

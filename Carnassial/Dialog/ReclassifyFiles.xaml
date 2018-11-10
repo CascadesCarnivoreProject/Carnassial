@@ -53,7 +53,7 @@
                             Title="{StaticResource ReclassifyFiles.Messages.Title}"
                             What="{StaticResource ReclassifyFiles.Messages.What}"
                             Solution="{StaticResource ReclassifyFiles.Messages.Solution}"
-                            DisplayHideExplanationCheckbox="True" Grid.Row="0" Margin="-4,4,4,3" />
+                            DisplayHideExplanation="True" Grid.Row="0" Margin="-4,4,4,3" />
             <Rectangle Style="{StaticResource DialogHorizontalRule}" Grid.Row="1" />
             <Grid Width="Auto" Grid.Row="2">
                 <Grid.ColumnDefinitions>

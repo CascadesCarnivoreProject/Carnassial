@@ -1,9 +1,6 @@
 ﻿using Carnassial.Util;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Windows;
-using System.Windows.Documents;
 
 namespace Carnassial.Dialog
 {
@@ -15,18 +12,11 @@ namespace Carnassial.Dialog
         {
             this.InitializeComponent();
             this.ButtonType = message.Buttons;
-            this.Message.Image = message.Image;
-            this.Message.Title = message.Title;
-            this.Message.ProblemText.Inlines.AddRange(this.Format(message.Problem, args));
-            this.Message.WhatText.Inlines.AddRange(this.Format(message.What, args));
-            this.Message.ReasonText.Inlines.AddRange(this.Format(message.Reason, args));
-            this.Message.Solution.Inlines.AddRange(this.Format(message.Solution, args));
-            this.Message.ResultText.Inlines.AddRange(this.Format(message.Result, args));
-            this.Message.HintText.Inlines.AddRange(this.Format(message.Hint, args));
+            this.DisplayDontShowAgain = message.DisplayDontShowAgain;
+            this.Message.Initialize(message, args);
+            // this.Message.SetVisibility() not needed as it's called from Initialize()
             this.Owner = owner;
             this.Title = message.WindowTitle;
-
-            this.Message.SetVisibility();
         }
 
         public MessageBoxButton ButtonType
@@ -85,31 +75,6 @@ namespace Carnassial.Dialog
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             this.DialogResult = false;
-        }
-
-        private IEnumerable<object> Format(IEnumerable<Inline> textElements, object[] args)
-        {
-            if (textElements == null)
-            {
-                yield break;
-            }
-
-            foreach (TextElement textElement in textElements)
-            {
-                Debug.Assert(textElement != null, "Inline unexpectedly null.");
-                if (textElement is LineBreak)
-                {
-                    yield return new LineBreak();
-                }
-                else if (textElement is Run run)
-                {
-                    yield return new Run(String.Format(run.Text, args));
-                }
-                else
-                {
-                    throw new NotSupportedException(String.Format("Unhandled inline of type {0}.", textElement.GetType()));
-                }
-            }
         }
 
         public static MessageBox FromResource(string key, Window owner, params object[] args)

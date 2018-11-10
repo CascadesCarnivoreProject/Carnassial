@@ -12,6 +12,7 @@ namespace Carnassial.Dialog
         public AdvancedImageSetOptions(TemplateDatabase database, Window owner)
         {
             this.InitializeComponent();
+            this.Message.SetVisibility();
             this.Owner = owner;
             this.database = database;
 

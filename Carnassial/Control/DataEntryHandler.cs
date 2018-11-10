@@ -56,8 +56,8 @@ namespace Carnassial.Control
         private bool? ConfirmCopyCurrentValueToAll(string value, int filesAffected, bool checkForZero)
         {
             MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.DataEntryHandlerConfirmCopyAll, App.Current.MainWindow,
-                                                            filesAffected.ToString(CultureInfo.CurrentCulture),
-                                                            value);
+                                                            value,
+                                                            filesAffected.ToString(CultureInfo.CurrentCulture));
             return messageBox.ShowDialog();
         }
 

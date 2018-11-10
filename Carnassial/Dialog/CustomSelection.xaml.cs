@@ -28,6 +28,7 @@ namespace Carnassial.Dialog
         public CustomSelection(FileDatabase database, Window owner)
         {
             this.InitializeComponent();
+            this.Message.SetVisibility();
 
             this.fileDatabase = database;
             this.imageSetTimeZone = this.fileDatabase.ImageSet.GetTimeZoneInfo();

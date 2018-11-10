@@ -1,6 +1,11 @@
-﻿using System;
+﻿using Carnassial.Dialog;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 
 namespace Carnassial.Control
 {
@@ -12,8 +17,6 @@ namespace Carnassial.Control
         {
             this.InitializeComponent();
             this.Image = MessageBoxImage.Warning;
-
-            this.SetVisibility();
         }
 
         public MessageBoxImage Image
@@ -47,90 +50,12 @@ namespace Carnassial.Control
                         this.StatusImage.Source = Constant.Images.StatusError.Value;
                         break;
                     default:
-                        throw new NotSupportedException(String.Format("Unhandled icon type {0}.", this.Image));
+                        throw new NotSupportedException(String.Format("Unhandled icon type {0}.", value));
                 }
             }
         }
 
-        public string Title
-        {
-            get
-            {
-                return this.TitleText.Text;
-            }
-            set
-            {
-                this.TitleText.Text = value;
-                this.SetVisibility();
-            }
-        }
-
-        public string What
-        {
-            get
-            {
-                return this.WhatText.Text;
-            }
-            set
-            {
-                this.WhatText.Text = value;
-                this.SetVisibility();
-            }
-        }
-
-        public string Problem
-        {
-            get
-            {
-                return this.ProblemText.Text;
-            }
-            set
-            {
-                this.ProblemText.Text = value;
-                this.SetVisibility();
-            }
-        }
-
-        public string Reason
-        {
-            get
-            {
-                return this.ReasonText.Text;
-            }
-            set
-            {
-                this.ReasonText.Text = value;
-                this.SetVisibility();
-            }
-        }
-
-        public string Result
-        {
-            get
-            {
-                return this.ResultText.Text;
-            }
-            set
-            {
-                this.ResultText.Text = value;
-                this.SetVisibility();
-            }
-        }
-
-        public string Hint
-        {
-            get
-            {
-                return this.HintText.Text;
-            }
-            set
-            {
-                this.HintText.Text = value;
-                this.SetVisibility();
-            }
-        }
-
-        public bool DisplayHideExplanationCheckbox
+        public bool DisplayHideExplanation
         {
             get
             {
@@ -139,28 +64,52 @@ namespace Carnassial.Control
             set
             {
                 this.HideExplanation.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
-                this.SetVisibility();
+            }
+        }
+
+        private IEnumerable<object> Format(IEnumerable<Inline> textElements, object[] args)
+        {
+            if (textElements == null)
+            {
+                yield break;
+            }
+
+            foreach (TextElement textElement in textElements)
+            {
+                Debug.Assert(textElement != null, "Inline unexpectedly null.");
+                if (textElement is LineBreak)
+                {
+                    yield return new LineBreak();
+                }
+                else if (textElement is Run run)
+                {
+                    yield return new Run(String.Format(run.Text, args));
+                }
+                else
+                {
+                    throw new NotSupportedException(String.Format("Unhandled inline of type {0}.", textElement.GetType()));
+                }
             }
         }
 
         public static string GetHint(StockMessageControl message)
         {
-            return message.HintText.Text;
+            return message.Hint.Text;
         }
 
         public static string GetProblem(StockMessageControl message)
         {
-            return message.ProblemText.Text;
+            return message.Problem.Text;
         }
 
         public static string GetReason(StockMessageControl message)
         {
-            return message.ReasonText.Text;
+            return message.Reason.Text;
         }
 
         public static string GetResult(StockMessageControl message)
         {
-            return message.ResultText.Text;
+            return message.Result.Text;
         }
 
         public static string GetSolution(StockMessageControl message)
@@ -170,12 +119,34 @@ namespace Carnassial.Control
 
         public static string GetTitle(StockMessageControl message)
         {
-            return message.TitleText.Text;
+            return message.Title.Text;
+        }
+
+        public string GetWhat()
+        {
+            StringBuilder what = new StringBuilder();
+            foreach (Inline inline in this.What.Inlines)
+            {
+                if (inline is Run run)
+                {
+                    what.Append(run.Text);
+                }
+                else if (inline is LineBreak)
+                {
+                    what.Append(Environment.NewLine);
+                }
+                else
+                {
+                    // best effort as this method is called for reporting on unhandled exceptions
+                    Debug.Fail(String.Format("Unhandled inline type {0}.", inline.GetType()));
+                }
+            }
+            return what.ToString();
         }
 
         public static string GetWhat(StockMessageControl message)
         {
-            return message.WhatText.Text;
+            return message.GetWhat();
         }
 
         private void HideExplanation_CheckedChanged(object sender, RoutedEventArgs e)
@@ -183,46 +154,64 @@ namespace Carnassial.Control
             this.SetVisibility();
         }
 
+        public void Initialize(Message message, params object[] args)
+        {
+            Debug.Assert(String.IsNullOrWhiteSpace(message.Title) == false, "Message title unexpectedly empty.");
+
+            this.Image = message.Image;
+            this.Title.Text = String.Format(message.Title, args);
+            this.DisplayHideExplanation = message.DisplayHideExplanation;
+
+            this.Problem.Inlines.AddRange(this.Format(message.Problem, args));
+            this.What.Inlines.AddRange(this.Format(message.What, args));
+            this.Reason.Inlines.AddRange(this.Format(message.Reason, args));
+            this.Solution.Inlines.AddRange(this.Format(message.Solution, args));
+            this.Result.Inlines.AddRange(this.Format(message.Result, args));
+            this.Hint.Inlines.AddRange(this.Format(message.Hint, args));
+
+            this.SetVisibility();
+        }
+
         public void SetVisibility()
         {
             if (this.HideExplanation.IsChecked == true)
             {
-                this.HintText.Visibility = Visibility.Collapsed;
-                this.ProblemText.Visibility = Visibility.Collapsed;
-                this.ReasonText.Visibility = Visibility.Collapsed;
-                this.ResultText.Visibility = Visibility.Collapsed;
+                this.Hint.Visibility = Visibility.Collapsed;
+                this.Problem.Visibility = Visibility.Collapsed;
+                this.Reason.Visibility = Visibility.Collapsed;
+                this.Result.Visibility = Visibility.Collapsed;
                 this.Solution.Visibility = Visibility.Collapsed;
-                this.WhatText.Visibility = Visibility.Collapsed;
+                this.What.Visibility = Visibility.Collapsed;
             }
             else
             {
-                this.HintText.Visibility = this.HintText.Inlines.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-                this.ProblemText.Visibility = this.ProblemText.Inlines.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-                this.ReasonText.Visibility = this.ResultText.Inlines.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-                this.ResultText.Visibility = this.ResultText.Inlines.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+                this.Hint.Visibility = this.Hint.Inlines.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+                this.Problem.Visibility = this.Problem.Inlines.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+                this.Reason.Visibility = this.Reason.Inlines.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+                this.Result.Visibility = this.Result.Inlines.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
                 this.Solution.Visibility = this.Solution.Inlines.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
-                this.WhatText.Visibility = this.WhatText.Inlines.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+                this.What.Visibility = this.What.Inlines.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 
         public static void SetHint(StockMessageControl message, string value)
         {
-            message.HintText.Text = value;
+            message.Hint.Text = value;
         }
 
         public static void SetProblem(StockMessageControl message, string value)
         {
-            message.ProblemText.Text = value;
+            message.Problem.Text = value;
         }
 
         public static void SetReason(StockMessageControl message, string value)
         {
-            message.ReasonText.Text = value;
+            message.Reason.Text = value;
         }
 
         public static void SetResult(StockMessageControl message, string value)
         {
-            message.ResultText.Text = value;
+            message.Result.Text = value;
         }
 
         public static void SetSolution(StockMessageControl message, string value)
@@ -232,12 +221,12 @@ namespace Carnassial.Control
 
         public static void SetTitle(StockMessageControl message, string value)
         {
-            message.TitleText.Text = value;
+            message.Title.Text = value;
         }
 
         public static void SetWhat(StockMessageControl message, string value)
         {
-            message.WhatText.Text = value;
+            message.What.Text = value;
         }
     }
 }

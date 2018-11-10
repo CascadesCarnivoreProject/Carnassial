@@ -57,7 +57,7 @@
                         What="{StaticResource InspectMetadata.Message.What}"
                         Solution="{StaticResource InspectMetadata.Message.Solution}"
                         Hint="{StaticResource InspectMetadata.Message.Hint}"
-                        DisplayHideExplanationCheckbox="True" Grid.Row="0" />
+                        DisplayHideExplanation="True" Grid.Row="0" />
                 <Rectangle Style="{StaticResource DialogHorizontalRule}" Grid.Row="1" />
                 <Grid Name="PanelHeader" Grid.Row="2">
                     <Grid.ColumnDefinitions>

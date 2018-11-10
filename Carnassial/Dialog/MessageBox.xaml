@@ -49,7 +49,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <ScrollViewer Name="MessageViewer" VerticalScrollBarVisibility="Auto" Grid.Column="0" Grid.Row="0">
-                <control:StockMessageControl x:Name="Message" DisplayHideExplanationCheckbox="False" />
+                <control:StockMessageControl x:Name="Message" DisplayHideExplanation="False" />
             </ScrollViewer>
             <Grid Grid.Column="0" Grid.Row="1">
                 <Grid.RowDefinitions>

@@ -52,7 +52,7 @@
                             Solution="{StaticResource CustomSelection.Message.Solution}"
                             Result="{StaticResource CustomSelection.Message.Result}"
                             Hint="{StaticResource CustomSelection.Message.Hint}"
-                            DisplayHideExplanationCheckbox="True" Grid.Row="0" />
+                            DisplayHideExplanation="True" Grid.Row="0" />
             <StackPanel Orientation="Vertical" VerticalAlignment="Stretch" Grid.Row="1">
                 <Rectangle Style="{StaticResource DialogHorizontalRule}" />
                 <StackPanel Orientation="Horizontal">

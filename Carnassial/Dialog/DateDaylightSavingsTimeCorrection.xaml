@@ -55,7 +55,7 @@
                             Solution="{StaticResource DateDaylightSavingsTime.Message.Solution}"
                             Result="{StaticResource DateDaylightSavingsTime.Message.Hint}"
                             Hint="{StaticResource DateDaylightSavingsTime.Message.Title}"
-                            DisplayHideExplanationCheckbox="True" Grid.Row="0" />
+                            DisplayHideExplanation="True" Grid.Row="0" />
             <Rectangle Style="{StaticResource DialogHorizontalRule}" Grid.Row="1" />
             <Grid Grid.Row="2">
                 <Grid.ColumnDefinitions>

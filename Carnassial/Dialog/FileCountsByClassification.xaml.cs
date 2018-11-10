@@ -14,6 +14,7 @@ namespace Carnassial.Dialog
         public FileCountsByClassification(Dictionary<FileClassification, int> fileCountByClassification, Window owner)
         {
             this.InitializeComponent();
+            this.Message.SetVisibility();
             this.Owner = owner;
 
             // fill in the counts

@@ -52,7 +52,7 @@
                             Problem="{StaticResource DateTimeRereadFromFiles.Message.Problem}"
                             Solution="{StaticResource DateTimeRereadFromFiles.Message.Solution}"
                             Result="{StaticResource DateTimeRereadFromFiles.Message.Result}"
-                            DisplayHideExplanationCheckbox="True" Grid.Row="0" />
+                            DisplayHideExplanation="True" Grid.Row="0" />
             <DataGrid Name="FeedbackGrid" AutoGenerateColumns="False" SelectionMode="Single" SelectionUnit="FullRow" Margin="5,5,5,0" ColumnWidth="*" Grid.Row="2">
                 <DataGrid.Columns>
                     <DataGridTextColumn Binding="{Binding FileName}" Header="{StaticResource DateTimeRereadFromFiles.File}" Width="Auto" />

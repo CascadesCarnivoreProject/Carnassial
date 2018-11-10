@@ -20,6 +20,7 @@ namespace Carnassial.Dialog
             this.displayingPreview = false;
             this.fileDatabase = fileDatabase;
             this.imageCache = imageCache;
+            this.Message.SetVisibility();
             this.Owner = owner;
 
             // get the file's current time

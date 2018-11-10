@@ -57,7 +57,7 @@
 &#10;3. (Optional) If some images or videos are missing that metatdata, you can use the checkbox below to specify clearing the old data or leave it as is.
 &#10;4. Click the Populate button to apply the above selections to your files.  If you have a large number of files the edit make take some time."
                             Result="For each file the chosen data field will be filled in with the chosen metadata from that file.  These changes cannot be undone."
-                            DisplayHideExplanationCheckbox="True" Grid.Row="0" />
+                            DisplayHideExplanation="True" Grid.Row="0" />
             <StackPanel Orientation="Vertical" Grid.Row="1">
                 <Rectangle Style="{StaticResource DialogHorizontalRule}" />
                 <Grid Name="PanelHeader">
