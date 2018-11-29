@@ -87,6 +87,7 @@ Also helpful are
 * [DB Browser for SQLite](http://sqlitebrowser.org/)
 * The [Visual Studio Image Library](https://msdn.microsoft.com/en-us/library/ms246582.aspx) for icons.
 * John Skeet's discussion of [DateTime, DateTimeOffset, and TimeZoneInfo limitations](http://blog.nodatime.org/2011/08/what-wrong-with-datetime-anyway.html).
+* Microsoft's [terminology search](https://www.microsoft.com/en-us/language) for translations.
 
 
 ### Dependencies

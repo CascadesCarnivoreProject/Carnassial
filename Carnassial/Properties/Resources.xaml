@@ -913,8 +913,6 @@ More complex queries can be created by right clicking on a label and duplicating
             <Bold>Note:</Bold> Exporting overwrites the .csv file.  Edits made to an existing .csv will be lost.
         </Paragraph>
     </FlowDocument>
-    
-    <system:String x:Key="Keyboard.Control">Ctrl+</system:String>
 
     <system:String x:Key="Message.DontShowAgain">_Don't show this message again.</system:String>
 

@@ -652,6 +652,7 @@ namespace Carnassial
             public const string NoFindValue = "(none)";
 
             public static readonly Thickness FindCellMargin = new Thickness(5, 2, 5, 2);
+            public static readonly ReadOnlyCollection<string> Localizations = new List<string>() { "ar", "es", "hi", "ms", "ru", "zh-Hans" }.AsReadOnly();
         }
 
         [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1310:FieldNamesMustNotContainUnderscore", Justification = "Win32 naming.")]

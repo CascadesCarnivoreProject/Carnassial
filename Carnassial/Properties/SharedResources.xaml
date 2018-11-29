@@ -81,6 +81,8 @@
     <system:String x:Key="Dialog.OK">_Okay</system:String>
     <system:String x:Key="Dialog.Yes">_Yes</system:String>
 
+    <system:String x:Key="Keyboard.Control">Ctrl+</system:String>
+
     <!-- register Carnassial resource files so Visual Studio's XAML design window makes them available when calling into user controls such as StockMessageControl -->
     <BitmapImage x:Key="StatusCriticalError_64x.png" UriSource="pack://application:,,/Resources/StatusCriticalError_64x.png" />
     <BitmapImage x:Key="StatusHelp_64x.png" UriSource="pack://application:,,/Resources/StatusHelp_64x.png" />

@@ -42,7 +42,7 @@ namespace Carnassial.UnitTests
         public static void ClassInitialize(TestContext testContext)
         {
             #if DEBUG
-            ApplicationWindow.UseCurrentCulture = true;
+            LocalizedApplication.UseCurrentCulture = true;
             #endif
             CarnassialTest.TryChangeToTestCultures();
 

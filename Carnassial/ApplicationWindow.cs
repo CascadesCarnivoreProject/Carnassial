@@ -9,31 +9,6 @@ namespace Carnassial
 {
     public class ApplicationWindow : WindowWithSystemMenu
     {
-        #if DEBUG
-        // hook to allow tests to set culture
-        internal static bool UseCurrentCulture { get; set; }
-
-        static ApplicationWindow()
-        {
-            ApplicationWindow.UseCurrentCulture = false;
-        }
-        #endif
-
-        protected ApplicationWindow()
-        {
-            #if DEBUG
-            if (ApplicationWindow.UseCurrentCulture == false)
-            {
-                string debugCultureName = CultureInfo.CurrentCulture.Name.StartsWith("es", StringComparison.Ordinal) ? "en-IN" : "es-CL";
-                CultureInfo testCulture = CultureInfo.GetCultureInfo(debugCultureName);
-                CultureInfo.CurrentCulture = testCulture;
-                CultureInfo.CurrentUICulture = testCulture;
-                CultureInfo.DefaultThreadCurrentCulture = testCulture;
-                CultureInfo.DefaultThreadCurrentUICulture = testCulture;
-            }
-            #endif
-        }
-
         internal string GetDotNetVersion()
         {
             // adapted from https://msdn.microsoft.com/en-us/library/hh925568.aspx
