@@ -11,7 +11,7 @@ using namespace System::Security::Permissions;
 [assembly:AssemblyDescriptionAttribute(L"Carnassial C++/CLI and C++ components.")];
 [assembly:AssemblyCompanyAttribute(L"Cascades Carnivore Project")];
 [assembly:AssemblyProductAttribute(L"Carnassial")];
-[assembly:AssemblyCopyrightAttribute(L"Copyright © 2018 Cascades Carnivore Project")];
+[assembly:AssemblyCopyrightAttribute(L"Copyright © 2019 Cascades Carnivore Project")];
 [assembly:AssemblyTrademarkAttribute(L"")];
 [assembly:AssemblyCultureAttribute(L"")];
 

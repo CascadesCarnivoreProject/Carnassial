@@ -440,9 +440,7 @@ namespace Carnassial
 			__int32 result = tjDecompressHeader3(decompressor, jpeg, jpegLength, &width, &height, &subsampling, &colorspace);
 			if (result != 0)
 			{
-				// update to tjGetErrorStr2() once libjpeg-turbo 1.6 is available
-				// See https://github.com/libjpeg-turbo/libjpeg-turbo/issues/151.
-				throw std::runtime_error(tjGetErrorStr());
+				throw std::runtime_error(tjGetErrorStr2(decompressor));
 			}
 
 			if (requestedWidth != -1)

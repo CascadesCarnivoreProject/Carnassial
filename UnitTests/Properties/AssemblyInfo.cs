@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("Carnassial unit tests.")]
 [assembly: AssemblyCompany("Cascades Carnivore Project")]
 [assembly: AssemblyProduct("Carnassial")]
-[assembly: AssemblyCopyright("Copyright © 2018 Cascades Carnivore Project")]
+[assembly: AssemblyCopyright("Copyright © 2019 Cascades Carnivore Project")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
