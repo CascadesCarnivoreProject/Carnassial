@@ -74,7 +74,7 @@ namespace Carnassial.Data
             return nextDataLabel;
         }
 
-        private void LoadImageSet()
+        protected void LoadImageSet()
         {
             ImageSetTable imageSetTable = new ImageSetTable();
             this.LoadDataTableFromSelect(imageSetTable, new Select(Constant.DatabaseTable.ImageSet));
@@ -462,11 +462,11 @@ namespace Carnassial.Data
                 addIndex = true;
             }
 
-            if (String.Equals(currentSchema.ColumnDefinitions.Single(column => String.Equals(column.Name, Constant.ControlColumn.Copyable, StringComparison.Ordinal)).Type, Constant.SQLiteAffninity.Text, StringComparison.OrdinalIgnoreCase))
+            if (String.Equals(currentSchema.ColumnDefinitions.Single(column => String.Equals(column.Name, Constant.ControlColumn.Copyable, StringComparison.Ordinal)).Type, Constant.SQLiteAffinity.Text, StringComparison.OrdinalIgnoreCase))
             {
                 convertCopyableAndVisibleToInteger = true;
             }
-            if (String.Equals(currentSchema.ColumnDefinitions.Single(column => String.Equals(column.Name, Constant.ControlColumn.Type, StringComparison.Ordinal)).Type, Constant.SQLiteAffninity.Text, StringComparison.OrdinalIgnoreCase))
+            if (String.Equals(currentSchema.ColumnDefinitions.Single(column => String.Equals(column.Name, Constant.ControlColumn.Type, StringComparison.Ordinal)).Type, Constant.SQLiteAffinity.Text, StringComparison.OrdinalIgnoreCase))
             {
                 convertTypeToInteger = true;
             }
@@ -490,7 +490,7 @@ namespace Carnassial.Data
                 {
                     if (addAnalysisLabel)
                     {
-                        ColumnDefinition analysisLabel = new ColumnDefinition(Constant.ControlColumn.AnalysisLabel, Constant.SQLiteAffninity.Integer)
+                        ColumnDefinition analysisLabel = new ColumnDefinition(Constant.ControlColumn.AnalysisLabel, Constant.SQLiteAffinity.Integer)
                         {
                             DefaultValue = 0.ToString(Constant.InvariantCulture),
                             NotNull = true
@@ -499,7 +499,7 @@ namespace Carnassial.Data
                     }
                     if (addIndex)
                     {
-                        ColumnDefinition index = new ColumnDefinition(Constant.ControlColumn.IndexInFileTable, Constant.SQLiteAffninity.Integer)
+                        ColumnDefinition index = new ColumnDefinition(Constant.ControlColumn.IndexInFileTable, Constant.SQLiteAffinity.Integer)
                         {
                             DefaultValue = 0.ToString(Constant.InvariantCulture),
                             NotNull = true

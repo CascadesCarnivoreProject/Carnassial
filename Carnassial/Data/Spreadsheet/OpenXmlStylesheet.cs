@@ -3,7 +3,7 @@ using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 using System;
 
-namespace Carnassial.Spreadsheet
+namespace Carnassial.Data.Spreadsheet
 {
     internal class OpenXmlStylesheet
     {

@@ -209,13 +209,15 @@ namespace Carnassial
             public const string AviFileExtension = ".avi";
             public const string CsvFileExtension = ".csv";
             public const string CsvFilter = "CSV UTF-8 (comma delimited) (*.csv)|*.csv";
-            public const int RowsBetweenStatusReportChecks = 500;
+            public const string CurrentDirectory = ".";
             public const string DefaultFileDatabaseFileName = "CarnassialData.ddb";
             public const string DefaultTemplateDatabaseFileName = "CarnassialTemplate.tdb";
             public const string ExcelFileExtension = ".xlsx";
             public const string FileDatabaseFileExtension = ".ddb";
             public const string JpgFileExtension = ".jpg";
             public const string Mp4FileExtension = ".mp4";
+            public const string ParentDirectory = "..";
+            public const int RowsBetweenStatusReportChecks = 500;
             public const string TemplateFileExtension = ".tdb";
             public const string TemplateFileFilter = "Carnassial template files (*.tdb)|*.tdb";
         }
@@ -441,7 +443,7 @@ namespace Carnassial
 
                 // dialog opt outs
                 public const string SuppressFileCountOnImportDialog = "SuppressFileCountOnImportDialog";
-                public const string SuppressSpreadsheetImportPrompt = "SuppressSpreadsheetImportPrompt";
+                public const string SuppressImportPrompt = "SuppressImportPrompt";
 
                 public const string VideoSlowdown = "VideoSlowdown";
             }
@@ -469,9 +471,9 @@ namespace Carnassial
             public const string CarnassialWindowFileMoveIncomplete = "CarnassialWindow.FileMove.Incomplete";
             public const string CarnassialWindowExportSpreadsheetFailed = "CarnassialWindow.ExportSpreadsheet.Failed";
             public const string CarnassialWindowImageMetadataFailed = "CarnassialWindow.ImageMetadata.Failed";
-            public const string CarnassialWindowImportSpreadsheet = "CarnassialWindow.ImportSpreadsheet";
-            public const string CarnassialWindowImportSpreadsheetFailed = "CarnassialWindow.ImportSpreadsheet.Failed";
-            public const string CarnassialWindowImportSpreadsheetIncomplete = "CarnassialWindow.ImportSpreadsheet.Incomplete";
+            public const string CarnassialWindowImport = "CarnassialWindow.Import";
+            public const string CarnassialWindowImportFailed = "CarnassialWindow.Import.Failed";
+            public const string CarnassialWindowImportIncomplete = "CarnassialWindow.Import.Incomplete";
             public const string CarnassialWindowNoAmbiguousDates = "CarnassialWindow.NoAmbiguousDates";
             public const string CarnassialWindowNoDeletableFiles = "CarnassialWindow.NoDeleteableFiles";
             public const string CarnassialWindowNoMetadataAvailable = "CarnassialWindow.NoMetadataAvailable";
@@ -500,7 +502,7 @@ namespace Carnassial
             public const string CarnassialWindowStatusSpreadsheetExport = "CarnassialWindow.Status.Export";
             public const string CarnassialWindowStatusSpreadsheetExportCompleted = "CarnassialWindow.Status.Export.Completed";
             public const string CarnassialWindowStatusSpreadsheetExportExcelLimitExceeded = "CarnassialWindow.Status.Spreadsheet.Export.ExcelLimitExceeded";
-            public const string CarnassialWindowStatusSpreadsheetImport = "CarnassialWindow.Status.Import";
+            public const string CarnassialWindowStatusImport = "CarnassialWindow.Status.Import";
             public const string CarnassialWindowStatusSpreadsheetImportCompleted = "CarnassialWindow.Status.Import.Completed";
             public const string CarnassialWindowStatusSpreadsheetImportFailed = "CarnassialWindow.Status.Import.Failed";
             public const string CarnassialWindowStatusUndo = "CarnassialWindow.Status.Undo";
@@ -519,10 +521,24 @@ namespace Carnassial
             public const string DialogOK = "Dialog.OK";
             public const string DialogYes = "Dialog.Yes";
             public const string FileCountsByClassificationMessageHint = "FileCountsByClassification.Message.Hint";
+            public const string FileDatabaseImportColumnLayoutMismatch = "FileDatabase.Import.ColumnLayoutMismatch";
+            public const string FileDatabaseImportOtherColumnNotInThis = "FileDatabase.Import.OtherColumnNotInThis";
+            public const string FileDatabaseImportThisColumnNotInOther = "FileDatabase.Import.ThisColumnNotInOther";
             public const string GithubReleaseClientGetNewVersion = "GithubReleaseClient.GetNewVersion";
             public const string GithubReleaseClientNoUpdates = "GithubReleaseClient.NoUpdates";
             public const string GoToFileNumberRange = "GoToFile.FileNumberRange";
+            public const string ImageRowImportInvalidChoice = "ImageRow.Import.InvalidChoice";
+            public const string ImageRowImportInvalidClassification = "ImageRow.Import.InvalidClassification";
+            public const string ImageRowImportInvalidCount = "ImageRow.Import.InvalidCount";
+            public const string ImageRowImportInvalidDateTime = "ImageRow.Import.InvalidDateTime";
+            public const string ImageRowImportInvalidDeleteFlag = "ImageRow.Import.InvalidDeleteFlag";
+            public const string ImageRowImportInvalidFlag = "ImageRow.Import.InvalidFlag";
+            public const string ImageRowImportInvalidMarkerPosition = "ImageRow.Import.InvalidMarkerPosition";
+            public const string ImageRowImportInvalidUtcOffset = "ImageRow.Import.InvalidUtcOffset";
             public const string KeyboardControl = "Keyboard.Control";
+            public const string SpreadsheetImportColumnNotInImageSet = "Spreadsheet.Import.ColumnNotInImageSet";
+            public const string SpreadsheetImportColumnNotInSpreadsheet = "Spreadsheet.Import.ColumnNotInSpreadsheet";
+            public const string SpreadsheetImportRequiredColumnNotInSpreadsheet = "Spreadsheet.Import.RequiredColumnNotInSpreadsheet";
         }
 
         public static class ResourceName
@@ -552,7 +568,7 @@ namespace Carnassial
             public const string Where = " WHERE ";
         }
 
-        public static class SQLiteAffninity
+        public static class SQLiteAffinity
         {
             public const string Blob = "BLOB";
             public const string DateTime = "DATETIME";

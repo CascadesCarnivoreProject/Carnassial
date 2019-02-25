@@ -25,7 +25,7 @@ namespace Carnassial.Database
         }
 
         public ColumnDefinition(string name, DateTime defaultValue)
-            : this(name, Constant.SQLiteAffninity.DateTime)
+            : this(name, Constant.SQLiteAffinity.DateTime)
         {
             this.DefaultValue = DateTimeHandler.ToDatabaseDateTimeString(defaultValue);
             this.NotNull = true;
@@ -51,7 +51,7 @@ namespace Carnassial.Database
         }
 
         public ColumnDefinition(string name, TimeSpan defaultValue)
-            : this(name, Constant.SQLiteAffninity.Real)
+            : this(name, Constant.SQLiteAffinity.Real)
         {
             this.DefaultValue = DateTimeHandler.ToDatabaseUtcOffsetString(defaultValue);
             this.NotNull = true;
@@ -59,7 +59,7 @@ namespace Carnassial.Database
 
         public static ColumnDefinition CreateBoolean(string name)
         {
-            return new ColumnDefinition(name, Constant.SQLiteAffninity.Integer)
+            return new ColumnDefinition(name, Constant.SQLiteAffinity.Integer)
             {
                 DefaultValue = 0.ToString(Constant.InvariantCulture),
                 NotNull = true
@@ -68,7 +68,7 @@ namespace Carnassial.Database
 
         public static ColumnDefinition CreatePrimaryKey()
         {
-            return new ColumnDefinition(Constant.DatabaseColumn.ID, Constant.SQLiteAffninity.Integer)
+            return new ColumnDefinition(Constant.DatabaseColumn.ID, Constant.SQLiteAffinity.Integer)
             {
                 Autoincrement = true,
                 PrimaryKey = true
@@ -80,8 +80,8 @@ namespace Carnassial.Database
             StringBuilder columnDefinition = new StringBuilder(SQLiteDatabase.QuoteIdentifier(this.Name) + " " + this.Type);
             if (this.DefaultValue != null)
             {
-                if (String.Equals(this.Type, Constant.SQLiteAffninity.Text, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(this.Type, Constant.SQLiteAffninity.DateTime, StringComparison.OrdinalIgnoreCase))
+                if (String.Equals(this.Type, Constant.SQLiteAffinity.Text, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(this.Type, Constant.SQLiteAffinity.DateTime, StringComparison.OrdinalIgnoreCase))
                 {
                     columnDefinition.Append(" DEFAULT " + SQLiteDatabase.QuoteStringLiteral(this.DefaultValue));
                 }

@@ -71,34 +71,34 @@ namespace Carnassial.Data
         {
             SQLiteTableSchema schema = new SQLiteTableSchema(Constant.DatabaseTable.Controls);
             schema.ColumnDefinitions.Add(ColumnDefinition.CreatePrimaryKey());
-            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.Type, Constant.SQLiteAffninity.Integer)
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.Type, Constant.SQLiteAffinity.Integer)
             {
                 NotNull = true
             });
-            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.DataLabel, Constant.SQLiteAffninity.Text)
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.DataLabel, Constant.SQLiteAffinity.Text)
             {
                 NotNull = true
             });
-            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.Label, Constant.SQLiteAffninity.Text)
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.Label, Constant.SQLiteAffinity.Text)
             {
                 NotNull = true
             });
-            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.ControlOrder, Constant.SQLiteAffninity.Integer)
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.ControlOrder, Constant.SQLiteAffinity.Integer)
             {
                 NotNull = true
             });
-            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.SpreadsheetOrder, Constant.SQLiteAffninity.Integer)
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.SpreadsheetOrder, Constant.SQLiteAffinity.Integer)
             {
                 NotNull = true
             });
-            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.WellKnownValues, Constant.SQLiteAffninity.Text));
-            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.DefaultValue, Constant.SQLiteAffninity.Text));
-            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.Tooltip, Constant.SQLiteAffninity.Text));
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.WellKnownValues, Constant.SQLiteAffinity.Text));
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.DefaultValue, Constant.SQLiteAffinity.Text));
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.Tooltip, Constant.SQLiteAffinity.Text));
             schema.ColumnDefinitions.Add(ColumnDefinition.CreateBoolean(Constant.ControlColumn.AnalysisLabel));
             schema.ColumnDefinitions.Add(ColumnDefinition.CreateBoolean(Constant.ControlColumn.Copyable));
             schema.ColumnDefinitions.Add(ColumnDefinition.CreateBoolean(Constant.ControlColumn.IndexInFileTable));
             schema.ColumnDefinitions.Add(ColumnDefinition.CreateBoolean(Constant.ControlColumn.Visible));
-            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.MaxWidth, Constant.SQLiteAffninity.Integer)
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.MaxWidth, Constant.SQLiteAffinity.Integer)
             {
                 DefaultValue = Constant.ControlDefault.MaxWidth.ToString(Constant.InvariantCulture),
                 NotNull = true

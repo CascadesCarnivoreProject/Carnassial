@@ -165,11 +165,14 @@
     <Compile Include="Database\SQLiteTemporaryStore.cs" />
     <Compile Include="Database\SQLiteWalCheckpoint.cs" />
     <Compile Include="Database\WindowedTransactionSequence.cs" />
+    <Compile Include="Data\DataImportStatus.cs" />
     <Compile Include="Data\FileFindReplace.cs" />
+    <Compile Include="Data\FileTableColumnMap.cs" />
     <Compile Include="Data\FileTableSpreadsheetMap.cs" />
     <Compile Include="Data\ImageSetTransactionSequence.cs" />
     <Compile Include="Data\ControlTransactionSequence.cs" />
     <Compile Include="Data\FileTransactionSequence.cs" />
+    <Compile Include="Data\DataImportExportStatus.cs" />
     <Compile Include="Dialog\FindDialog.cs" />
     <Compile Include="Dialog\FindReplace.xaml.cs">
       <DependentUpon>FindReplace.xaml</DependentUpon>
@@ -177,8 +180,8 @@
     <Compile Include="Dialog\GridExtensions.cs" />
     <Compile Include="Dialog\Message.cs" />
     <Compile Include="LocalizedApplication.cs" />
-    <Compile Include="Spreadsheet\SharedStringIndex.cs" />
-    <Compile Include="Spreadsheet\OpenXmlStylesheet.cs" />
+    <Compile Include="Data\Spreadsheet\SharedStringIndex.cs" />
+    <Compile Include="Data\Spreadsheet\OpenXmlStylesheet.cs" />
     <Compile Include="Util\CommonUserInterface.cs" />
     <Compile Include="Util\ControlTypeConverter.cs" />
     <Compile Include="Util\TimeSpanExtensions.cs" />
@@ -216,7 +219,7 @@
     <Compile Include="Database\SQLiteTable.cs" />
     <Compile Include="Database\Select.cs" />
     <Compile Include="Data\ImageSetTable.cs" />
-    <Compile Include="Spreadsheet\SpreadsheetReadWriteStatus.cs" />
+    <Compile Include="Data\Spreadsheet\SpreadsheetReadWriteStatus.cs" />
     <Compile Include="Data\UpdateFileDateTimeOffsetTransactionSequence.cs" />
     <Compile Include="Data\UpdateFileColumnTransactionSequence.cs" />
     <Compile Include="Data\FileTableColumn.cs" />
@@ -486,7 +489,7 @@
     <Compile Include="Control\DataEntryFlag.cs" />
     <Compile Include="Control\DataEntryNote.cs" />
     <Compile Include="Interop\NativeMethods.cs" />
-    <Compile Include="Spreadsheet\SpreadsheetReaderWriter.cs" />
+    <Compile Include="Data\Spreadsheet\SpreadsheetReaderWriter.cs" />
     <Compile Include="Dialog\DateTimeFixedCorrection.xaml.cs">
       <DependentUpon>DateTimeFixedCorrection.xaml</DependentUpon>
     </Compile>

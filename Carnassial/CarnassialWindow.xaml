@@ -59,7 +59,7 @@
                         </MenuItem>
                         <MenuItem Name="MenuFileExportCsvAndOpen" Header="{StaticResource CarnassialWindow.MenuFile.Export.CsvAndOpen}" Click="MenuFileExportSpreadsheet_Click" ToolTip="{StaticResource CarnassialWindow.MenuFile.Export.CsvAndOpenTooltip}" />
                     </MenuItem>
-                    <MenuItem Name="MenuFileImport" Header="{StaticResource CarnassialWindow.MenuFile.Import}" IsEnabled="False" Click="MenuFileImportSpreadsheet_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuFile.ImportTooltip}">
+                    <MenuItem Name="MenuFileImport" Header="{StaticResource CarnassialWindow.MenuFile.Import}" IsEnabled="False" Click="MenuFileImport_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuFile.ImportTooltip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/ImportFile_16x.png" />
                         </MenuItem.Icon>
@@ -199,7 +199,7 @@
                     <Separator/>
                     <MenuItem Name="MenuOptionsDialogsOnOrOff" Header="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff}" IsEnabled="False" Style="{StaticResource ApplicationMenuItem}">
                         <MenuItem Name="MenuOptionsEnableFileCountOnImportDialog" IsCheckable="True" Header="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff.FileCountOnImport}" Click="MenuOptionsEnableFileCountOnImportDialog_Click" ToolTip="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff.FileCountOnImportToolTip}" />
-                        <MenuItem Name="MenuOptionsEnableSpreadsheetImportPrompt" IsCheckable="True" Header="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff.SpreadsheetImportPrompt}" Click="MenuOptionsEnableSpreadsheetImportPrompt_Click" ToolTip="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff.SpreadsheetImportPromptToolTip}" />
+                        <MenuItem Name="MenuOptionsEnableImportPrompt" IsCheckable="True" Header="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff.ImportPrompt}" Click="MenuOptionsEnableImportPrompt_Click" ToolTip="{StaticResource CarnassialWindow.MenuOptions.DialogsOnOrOff.ImportPromptToolTip}" />
                     </MenuItem>
                     <Separator/>
                     <MenuItem Name="MenuOptionsAdvancedImageSetOptions" Header="{StaticResource CarnassialWindow.MenuOptions.AdvancedImageSetOptions}" Click="MenuOptionsAdvancedImageSetOptions_Click" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuOptions.AdvancedImageSetOptionsToolTip}" />

@@ -1,12 +1,12 @@
 ﻿using Carnassial.Command;
 using Carnassial.Control;
 using Carnassial.Data;
+using Carnassial.Data.Spreadsheet;
 using Carnassial.Database;
 using Carnassial.Dialog;
 using Carnassial.Github;
 using Carnassial.Images;
 using Carnassial.Interop;
-using Carnassial.Spreadsheet;
 using Carnassial.Util;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System;
@@ -55,7 +55,7 @@ namespace Carnassial
             this.FileView.ColumnDefinitions[2].Width = new GridLength(this.ControlGrid.Width);
 
             this.MenuOptionsAudioFeedback.IsChecked = this.State.AudioFeedback;
-            this.MenuOptionsEnableSpreadsheetImportPrompt.IsChecked = !this.State.SuppressSpreadsheetImportPrompt;
+            this.MenuOptionsEnableImportPrompt.IsChecked = !this.State.SuppressImportPrompt;
             this.MenuOptionsOrderFilesByDateTime.IsChecked = this.State.OrderFilesByDateTime;
             this.MenuOptionsSkipFileClassification.IsChecked = this.State.SkipFileClassification;
 
@@ -1040,7 +1040,7 @@ namespace Carnassial
             string spreadsheetFileName = Path.GetFileName(saveFileDialog.FileName);
             string spreadsheetFilePath = saveFileDialog.FileName;
             this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusSpreadsheetExport, spreadsheetFileName);
-            SpreadsheetReaderWriter spreadsheetWriter = new SpreadsheetReaderWriter(this.UpdateSpreadsheetProgress, this.State.Throttles.GetDesiredProgressUpdateInterval());
+            SpreadsheetReaderWriter spreadsheetWriter = new SpreadsheetReaderWriter(this.UpdateImportOrExportProgress, this.State.Throttles.GetDesiredProgressUpdateInterval());
             try
             {
                 await Task.Run(() =>
@@ -1083,11 +1083,11 @@ namespace Carnassial
             this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusSpreadsheetExportCompleted, spreadsheetFileName, stopwatch.Elapsed.TotalSeconds, this.DataHandler.FileDatabase.CurrentlySelectedFileCount / stopwatch.Elapsed.TotalSeconds);
         }
 
-        private async void MenuFileImportSpreadsheet_Click(object sender, RoutedEventArgs e)
+        private async void MenuFileImport_Click(object sender, RoutedEventArgs e)
         {
-            if (this.State.SuppressSpreadsheetImportPrompt == false)
+            if (this.State.SuppressImportPrompt == false)
             {
-                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImportSpreadsheet, this,
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImport, this,
                     Constant.Time.DateTimeDatabaseFormat,
                     DateTimeHandler.ToDatabaseUtcOffsetString(TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours)), 
                     DateTimeHandler.ToDatabaseUtcOffsetString(TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours)),
@@ -1101,16 +1101,16 @@ namespace Carnassial
 
                 if (messageBox.DontShowAgain.IsChecked.HasValue)
                 {
-                    this.State.SuppressSpreadsheetImportPrompt = messageBox.DontShowAgain.IsChecked.Value;
-                    this.MenuOptionsEnableSpreadsheetImportPrompt.IsChecked = !this.State.SuppressSpreadsheetImportPrompt;
+                    this.State.SuppressImportPrompt = messageBox.DontShowAgain.IsChecked.Value;
+                    this.MenuOptionsEnableImportPrompt.IsChecked = !this.State.SuppressImportPrompt;
                 }
             }
 
             string defaultSpreadsheetFileName = Path.GetFileNameWithoutExtension(this.DataHandler.FileDatabase.FileName) + Constant.File.ExcelFileExtension;
-            if (CommonUserInterface.TryGetFileFromUser("Select a file to merge into the current image set",
+            if (CommonUserInterface.TryGetFileFromUser("Select a data file to merge into the current image set",
                                                        Path.Combine(this.DataHandler.FileDatabase.FolderPath, defaultSpreadsheetFileName),
-                                                       String.Format("Spreadsheet files (*{0};*{1})|*{0};*{1}", Constant.File.CsvFileExtension, Constant.File.ExcelFileExtension),
-                                                       out string spreadsheetFilePath) == false)
+                                                       String.Format("Data files (*{0};*{1};*{2})|*{0};*{1};*{2}", Constant.File.FileDatabaseFileExtension, Constant.File.CsvFileExtension, Constant.File.ExcelFileExtension),
+                                                       out string otherDataFilePath) == false)
             {
                 return;
             }
@@ -1125,24 +1125,44 @@ namespace Carnassial
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusSpreadsheetImport);
+            this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusImport);
 
-            SpreadsheetReaderWriter spreadsheetReader = new SpreadsheetReaderWriter(this.UpdateSpreadsheetProgress, this.State.Throttles.GetDesiredProgressUpdateInterval());
-            FileImportResult importResult = await Task.Run(() =>
+            // perform import
+            // Both image set and spreadsheet rely on System.Progress to report status as imports proceed.  Progress objects have to 
+            // be instantiated on the UI thread because System.Progress..ctor() binds to the available synchronization context which, 
+            // in WPF, includes the dispatcher. If the Progress is created on a worker thread an InvalidOperationException results 
+            // when the progress callback attempts to udpate UI because the UI thread dispatcher owns the objects.
+            FileImportResult importResult;
+            if (String.Equals(Path.GetExtension(otherDataFilePath), Constant.File.FileDatabaseFileExtension, StringComparison.OrdinalIgnoreCase))
             {
-                this.DataHandler.IsProgrammaticUpdate = true;
-                FileImportResult result = spreadsheetReader.TryImportFileData(spreadsheetFilePath, this.DataHandler.FileDatabase);
-                this.DataHandler.IsProgrammaticUpdate = false;
-                return result;
-            });
+                DataImportStatus importStatus = new DataImportStatus(this.UpdateImportOrExportProgress<DataImportStatus>, this.State.Throttles.GetDesiredProgressUpdateInterval());
+                importResult = await Task.Run(() =>
+                {
+                    this.DataHandler.IsProgrammaticUpdate = true;
+                    FileImportResult result = this.DataHandler.FileDatabase.TryImportData(otherDataFilePath, importStatus);
+                    this.DataHandler.IsProgrammaticUpdate = false;
+                    return result;
+                });
+            }
+            else
+            {
+                SpreadsheetReaderWriter spreadsheetReader = new SpreadsheetReaderWriter(this.UpdateImportOrExportProgress<SpreadsheetReadWriteStatus>, this.State.Throttles.GetDesiredProgressUpdateInterval());
+                importResult = await Task.Run(() =>
+                {
+                    this.DataHandler.IsProgrammaticUpdate = true;
+                    FileImportResult result = spreadsheetReader.TryImportData(otherDataFilePath, this.DataHandler.FileDatabase);
+                    this.DataHandler.IsProgrammaticUpdate = false;
+                    return result;
+                });
+            }
 
             if (importResult.Exception != null)
             {
                 stopwatch.Stop();
                 this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusSpreadsheetImportFailed);
 
-                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImportSpreadsheetFailed, this,
-                                                                spreadsheetFilePath,
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImportFailed, this,
+                                                                otherDataFilePath,
                                                                 importResult.Exception.GetType().FullName, 
                                                                 importResult.Exception.Message);
                 messageBox.ShowDialog();
@@ -1151,7 +1171,7 @@ namespace Carnassial
             {
                 stopwatch.Stop();
 
-                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImportSpreadsheetIncomplete, this, spreadsheetFilePath);
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImportIncomplete, this, otherDataFilePath);
                 foreach (string importError in importResult.Errors)
                 {
                     messageBox.Message.Hint.Inlines.Add(new LineBreak());
@@ -1176,7 +1196,7 @@ namespace Carnassial
                 stopwatch.Stop();
             }
 
-            this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusSpreadsheetImportCompleted, Path.GetFileName(spreadsheetFilePath), stopwatch.Elapsed.TotalSeconds, importResult.FilesAdded, importResult.FilesUpdated, importResult.FilesProcessed / stopwatch.Elapsed.TotalSeconds);
+            this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusSpreadsheetImportCompleted, Path.GetFileName(otherDataFilePath), stopwatch.Elapsed.TotalSeconds, importResult.FilesAdded, importResult.FilesUpdated, importResult.FilesProcessed / stopwatch.Elapsed.TotalSeconds);
         }
 
         private async void MenuFileRecentImageSet_Click(object sender, RoutedEventArgs e)
@@ -1279,10 +1299,10 @@ namespace Carnassial
             this.MenuOptionsEnableFileCountOnImportDialog.IsChecked = !this.State.SuppressFileCountOnImportDialog;
         }
 
-        private void MenuOptionsEnableSpreadsheetImportPrompt_Click(object sender, RoutedEventArgs e)
+        private void MenuOptionsEnableImportPrompt_Click(object sender, RoutedEventArgs e)
         {
-            this.State.SuppressSpreadsheetImportPrompt = !this.State.SuppressSpreadsheetImportPrompt;
-            this.MenuOptionsEnableSpreadsheetImportPrompt.IsChecked = !this.State.SuppressSpreadsheetImportPrompt;
+            this.State.SuppressImportPrompt = !this.State.SuppressImportPrompt;
+            this.MenuOptionsEnableImportPrompt.IsChecked = !this.State.SuppressImportPrompt;
         }
 
         internal async void MenuOptionsOrderFilesByDateTime_Click(object sender, RoutedEventArgs e)
@@ -2587,7 +2607,7 @@ namespace Carnassial
             }
         }
 
-        private void UpdateSpreadsheetProgress(SpreadsheetReadWriteStatus progress)
+        private void UpdateImportOrExportProgress<TProgress>(DataImportExportStatus<TProgress> progress)
         {
             this.ShowLongRunningOperationFeedback();
 

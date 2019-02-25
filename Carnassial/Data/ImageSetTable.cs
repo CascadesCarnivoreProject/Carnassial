@@ -10,27 +10,27 @@ namespace Carnassial.Data
         {
             SQLiteTableSchema schema = new SQLiteTableSchema(Constant.DatabaseTable.ImageSet);
             schema.ColumnDefinitions.Add(ColumnDefinition.CreatePrimaryKey());
-            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.FileSelection, Constant.SQLiteAffninity.Integer)
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.FileSelection, Constant.SQLiteAffinity.Integer)
             {
                 DefaultValue = ((int)default(FileSelection)).ToString(Constant.InvariantCulture),
                 NotNull = true
             });
-            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.InitialFolderName, Constant.SQLiteAffninity.Text)
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.InitialFolderName, Constant.SQLiteAffinity.Text)
             {
                 NotNull = true
             });
-            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.Log, Constant.SQLiteAffninity.Text));
-            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.Options, Constant.SQLiteAffninity.Integer)
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.Log, Constant.SQLiteAffinity.Text));
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.Options, Constant.SQLiteAffinity.Integer)
             {
                 DefaultValue = ((int)default(ImageSetOptions)).ToString(Constant.InvariantCulture),
                 NotNull = true
             });
-            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.MostRecentFileID, Constant.SQLiteAffninity.Integer)
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.MostRecentFileID, Constant.SQLiteAffinity.Integer)
             {
                 DefaultValue = Constant.Database.DefaultFileID.ToString(Constant.InvariantCulture),
                 NotNull = true
             });
-            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.TimeZone, Constant.SQLiteAffninity.Text)
+            schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ImageSetColumn.TimeZone, Constant.SQLiteAffinity.Text)
             {
                 NotNull = true
             });

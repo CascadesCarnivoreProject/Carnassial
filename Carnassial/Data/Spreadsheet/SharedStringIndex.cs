@@ -7,7 +7,7 @@ using System.Globalization;
 using System.IO;
 using System.Xml;
 
-namespace Carnassial.Spreadsheet
+namespace Carnassial.Data.Spreadsheet
 {
     internal class SharedStringIndex
     {

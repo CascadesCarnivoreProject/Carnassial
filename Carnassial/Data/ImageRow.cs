@@ -25,21 +25,6 @@ namespace Carnassial.Data
     /// </summary>
     public class ImageRow : SQLiteRow, INotifyPropertyChanged
     {
-        public class Foo
-        {
-            private readonly Bar field; // IDE0044: Make field readonly
-
-            public Foo()
-            {
-                this.field = new Bar();
-            }
-
-            public class Bar
-            {
-                public int Mutable { get; set; }
-            }
-        }
-
         private FileClassification classification;
         private DateTimeOffset dateTimeOffset;
         private bool deleteFlag;
@@ -678,42 +663,103 @@ namespace Carnassial.Data
             this.DateTimeOffset = new DateTimeOffset(earliestTimeLocal);
         }
 
-        public void SetValuesFromSpreadsheet(FileTableSpreadsheetMap spreadsheetMap, List<string> row, FileImportResult result)
+        public void SetValues(ImageRow other, FileTableColumnMap fileTableMap, FileImportResult result)
+        {
+            Debug.Assert(String.Equals(this.FileName, other.FileName, StringComparison.OrdinalIgnoreCase), "Unexpected file name mismatch.");
+
+            // sync standard controls
+            this.DateTimeOffset = other.DateTimeOffset;
+            this.Classification = other.Classification;
+            this.DeleteFlag = other.DeleteFlag;
+
+            // sync user controls
+            // As with the standard controls, all values are either value types or immutable reference types, so only shallow 
+            // copies are required.
+            // counters
+            for (int dataIndex = 0; dataIndex < this.UserCounters.Length; ++dataIndex)
+            {
+                if (this.UserCounters[dataIndex] != other.UserCounters[dataIndex])
+                {
+                    this.UserCounters[dataIndex] = other.UserCounters[dataIndex];
+                    this.HasChanges |= true;
+                    this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(fileTableMap.UserCounters[dataIndex].Control.DataLabel));
+                }
+                if (this.ByteArraysEqual(this.UserMarkerPositions[dataIndex], other.UserMarkerPositions[dataIndex]) == false)
+                {
+                    this.UserMarkerPositions[dataIndex] = other.UserMarkerPositions[dataIndex];
+                    this.HasChanges |= true;
+                    this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(fileTableMap.UserCounters[dataIndex].Control.DataLabel));
+                }
+            }
+
+            // flags
+            for (int dataIndex = 0; dataIndex < this.UserFlags.Length; ++dataIndex)
+            {
+                if (this.UserFlags[dataIndex] != other.UserFlags[dataIndex])
+                {
+                    this.UserFlags[dataIndex] = other.UserFlags[dataIndex];
+                    this.HasChanges |= true;
+                    this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(fileTableMap.UserFlags[dataIndex].Control.DataLabel));
+                }
+            }
+            
+            // notes and choices
+            for (int dataIndex = 0; dataIndex < this.UserNotesAndChoices.Length; ++dataIndex)
+            {
+                string value = other.UserNotesAndChoices[dataIndex];
+                if (String.Equals(this.UserNotesAndChoices[dataIndex], value, StringComparison.Ordinal) == false)
+                {
+                    List<string> choiceValues = fileTableMap.UserNoteAndChoiceValues[dataIndex];
+                    if ((choiceValues == null) || choiceValues.Contains(value, StringComparer.Ordinal))
+                    {
+                        this.UserNotesAndChoices[dataIndex] = other.UserNotesAndChoices[dataIndex];
+                        this.HasChanges |= true;
+                        this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(fileTableMap.UserNotesAndChoices[dataIndex].Control.DataLabel));
+                    }
+                    else
+                    {
+                        result.Errors.Add(App.FormatResource(Constant.ResourceKey.ImageRowImportInvalidChoice, value, fileTableMap.UserNotesAndChoices[dataIndex].Control.DataLabel));
+                    }
+                }
+            }
+        }
+
+        public void SetValuesFromSpreadsheet(List<string> row, FileTableSpreadsheetMap spreadsheetMap, FileImportResult result)
         {
             // obtain file's date time and UTC offset
-            if (DateTimeHandler.TryParseDatabaseDateTime(row[spreadsheetMap.DateTimeIndex], out DateTime dateTime))
+            if (DateTimeHandler.TryParseDatabaseDateTime(row[spreadsheetMap.DateTimeSpreadsheetIndex], out DateTime dateTime))
             {
-                if (DateTimeHandler.TryParseDatabaseUtcOffset(row[spreadsheetMap.UtcOffsetIndex], out TimeSpan utcOffset))
+                if (DateTimeHandler.TryParseDatabaseUtcOffset(row[spreadsheetMap.UtcOffsetSpreadsheetIndex], out TimeSpan utcOffset))
                 {
                     this.DateTimeOffset = DateTimeHandler.FromDatabaseDateTimeOffset(dateTime, utcOffset);
                 }
                 else
                 {
-                    result.Errors.Add(String.Format("Value '{0}' is not a valid UTC offset.  Neither the file's date time nor UTC offset will be updated.", row[spreadsheetMap.UtcOffsetIndex]));
+                    result.Errors.Add(App.FormatResource(Constant.ResourceKey.ImageRowImportInvalidUtcOffset, row[spreadsheetMap.UtcOffsetSpreadsheetIndex]));
                 }
             }
             else
             {
-                result.Errors.Add(String.Format("Value '{0}' is not a valid date time.  File's UTC offset will be ignored and neither its date time nor UTC offset will be updated.", row[spreadsheetMap.DateTimeIndex]));
+                result.Errors.Add(App.FormatResource(Constant.ResourceKey.ImageRowImportInvalidDateTime, row[spreadsheetMap.DateTimeSpreadsheetIndex]));
             }
 
             // remaining standard controls
-            if (spreadsheetMap.ClassificationIndex != -1)
+            if (spreadsheetMap.ClassificationSpreadsheetIndex != -1)
             {
-                if (ImageRow.TryParseFileClassification(row[spreadsheetMap.ClassificationIndex], out FileClassification classification))
+                if (ImageRow.TryParseFileClassification(row[spreadsheetMap.ClassificationSpreadsheetIndex], out FileClassification classification))
                 {
                     this.Classification = classification;
                 }
                 else
                 {
-                    result.Errors.Add(String.Format("Value '{0}' is not a valid file classification.", row[spreadsheetMap.ClassificationIndex]));
+                    result.Errors.Add(App.FormatResource(Constant.ResourceKey.ImageRowImportInvalidClassification, row[spreadsheetMap.ClassificationSpreadsheetIndex]));
                 }
             }
 
-            if (spreadsheetMap.DeleteFlagIndex != -1)
+            if (spreadsheetMap.DeleteFlagSpreadsheetIndex != -1)
             {
                 // Excel uses "0" and "1", as does Carnassial .csv export.  "False" and "True" are also allowed, case insensitive.
-                string flagAsString = row[spreadsheetMap.DeleteFlagIndex];
+                string flagAsString = row[spreadsheetMap.DeleteFlagSpreadsheetIndex];
                 if (flagAsString.Length == 1)
                 {
                     char flagAsCharacter = flagAsString[0];
@@ -727,7 +773,7 @@ namespace Carnassial.Data
                     }
                     else
                     {
-                        result.Errors.Add(String.Format("Value '{0}' is not a valid delete flag.", flagAsString));
+                        result.Errors.Add(App.FormatResource(Constant.ResourceKey.ImageRowImportInvalidDeleteFlag, flagAsString));
                     }
                 }
                 else if (Boolean.TryParse(flagAsString, out bool flag))
@@ -736,38 +782,15 @@ namespace Carnassial.Data
                 }
                 else
                 {
-                    result.Errors.Add(String.Format("Value '{0}' is not a valid delete flag.", flagAsString));
+                    result.Errors.Add(App.FormatResource(Constant.ResourceKey.ImageRowImportInvalidDeleteFlag, flagAsString));
                 }
             }
 
             // get values of user defined columns
-            // choices
-            for (int indexIndex = 0; indexIndex < spreadsheetMap.UserChoiceIndices.Count; ++indexIndex)
-            {
-                int spreadsheetIndex = spreadsheetMap.UserChoiceIndices[indexIndex];
-                int dataIndex = spreadsheetMap.UserChoiceDataIndices[indexIndex];
-                List<string> choiceValues = spreadsheetMap.UserChoiceValues[indexIndex];
-                string choice = row[spreadsheetIndex];
-
-                if (choiceValues.Contains(choice, StringComparer.Ordinal))
-                {
-                    if (String.Equals(this.UserNotesAndChoices[dataIndex], choice, StringComparison.Ordinal) == false)
-                    {
-                        this.HasChanges |= true;
-                        this.UserNotesAndChoices[dataIndex] = choice;
-                        this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(spreadsheetMap.UserCounters[dataIndex].Control.DataLabel));
-                    }
-                }
-                else
-                {
-                    result.Errors.Add(String.Format("Choice '{0}' is not a valid option for the column {1}.", choice, spreadsheetMap.UserChoices[indexIndex].Control.DataLabel));
-                }
-            }
-
             // counters
-            for (int dataIndex = 0; dataIndex < spreadsheetMap.UserCounterIndices.Count; ++dataIndex)
+            for (int dataIndex = 0; dataIndex < spreadsheetMap.UserCounterSpreadsheetIndices.Count; ++dataIndex)
             {
-                int counterSpreadsheetIndex = spreadsheetMap.UserCounterIndices[dataIndex];
+                int counterSpreadsheetIndex = spreadsheetMap.UserCounterSpreadsheetIndices[dataIndex];
                 string countAsString = row[counterSpreadsheetIndex];
                 if (Int32.TryParse(countAsString, NumberStyles.AllowLeadingSign, Constant.InvariantCulture, out int count))
                 {
@@ -780,10 +803,10 @@ namespace Carnassial.Data
                 }
                 else
                 {
-                    result.Errors.Add(String.Format("'{0}' is not an integer count for the column {1}.", countAsString, spreadsheetMap.UserCounters[dataIndex].Control.DataLabel));
+                    result.Errors.Add(App.FormatResource(Constant.ResourceKey.ImageRowImportInvalidCount, countAsString, spreadsheetMap.UserCounters[dataIndex].Control.DataLabel));
                 }
 
-                int markerSpreadsheetIndex = spreadsheetMap.UserMarkerIndices[dataIndex];
+                int markerSpreadsheetIndex = spreadsheetMap.UserMarkerSpreadsheetIndices[dataIndex];
                 string positionsAsString = row[markerSpreadsheetIndex];
                 if (MarkersForCounter.TryParseExcelStringToPackedFloats(positionsAsString, out byte[] packedFloats))
                 {
@@ -796,14 +819,14 @@ namespace Carnassial.Data
                 }
                 else
                 {
-                    result.Errors.Add(String.Format("Marker position sequence '{0}' is not valid for the column {1}.", positionsAsString, spreadsheetMap.UserCounters[dataIndex].Control.DataLabel));
+                    result.Errors.Add(App.FormatResource(Constant.ResourceKey.ImageRowImportInvalidMarkerPosition, positionsAsString, spreadsheetMap.UserCounters[dataIndex].Control.DataLabel));
                 }
             }
 
             // flags
-            for (int dataIndex = 0; dataIndex < spreadsheetMap.UserFlagIndices.Count; ++dataIndex)
+            for (int dataIndex = 0; dataIndex < spreadsheetMap.UserFlagSpreadsheetIndices.Count; ++dataIndex)
             {
-                int spreadsheetIndexIndex = spreadsheetMap.UserFlagIndices[dataIndex];
+                int spreadsheetIndexIndex = spreadsheetMap.UserFlagSpreadsheetIndices[dataIndex];
                 string flagAsString = row[spreadsheetIndexIndex];
 
                 bool flag;
@@ -820,7 +843,7 @@ namespace Carnassial.Data
                     }
                     else
                     {
-                        result.Errors.Add(String.Format("'{0}' is not a valid value for the flag column {1}.  Flags must be either true or false, case insensitive.", flagAsString, spreadsheetMap.UserCounters[dataIndex].Control.DataLabel));
+                        result.Errors.Add(App.FormatResource(Constant.ResourceKey.ImageRowImportInvalidFlag, flagAsString, spreadsheetMap.UserFlags[dataIndex].Control.DataLabel));
                         continue;
                     }
                 }
@@ -830,7 +853,7 @@ namespace Carnassial.Data
                 }
                 else
                 {
-                    result.Errors.Add(String.Format("'{0}' is not a valid value for the flag column {1}.  Flags must be either true or false, case insensitive.", flagAsString, spreadsheetMap.UserCounters[dataIndex].Control.DataLabel));
+                    result.Errors.Add(App.FormatResource(Constant.ResourceKey.ImageRowImportInvalidFlag, flagAsString, spreadsheetMap.UserFlags[dataIndex].Control.DataLabel));
                     continue;
                 }
 
@@ -842,18 +865,25 @@ namespace Carnassial.Data
                 }
             }
 
-            // notes
-            for (int indexIndex = 0; indexIndex < spreadsheetMap.UserNoteIndices.Count; ++indexIndex)
+            // notes and choices
+            for (int dataIndex = 0; dataIndex < spreadsheetMap.UserNoteAndChoiceSpreadsheetIndices.Count; ++dataIndex)
             {
-                int dataIndex = spreadsheetMap.UserNoteDataIndices[indexIndex];
-                int spreadsheetIndex = spreadsheetMap.UserNoteIndices[indexIndex];
+                int spreadsheetIndex = spreadsheetMap.UserNoteAndChoiceSpreadsheetIndices[dataIndex];
 
-                string note = row[spreadsheetIndex];
-                if (String.Equals(this.UserNotesAndChoices[dataIndex], note, StringComparison.Ordinal) == false)
+                string value = row[spreadsheetIndex];
+                if (String.Equals(this.UserNotesAndChoices[dataIndex], value, StringComparison.Ordinal) == false)
                 {
-                    this.HasChanges |= true;
-                    this.UserNotesAndChoices[dataIndex] = note;
-                    this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(spreadsheetMap.UserNotes[indexIndex].Control.DataLabel));
+                    List<string> choiceValues = spreadsheetMap.UserNoteAndChoiceValues[dataIndex];
+                    if ((choiceValues == null) || choiceValues.Contains(value, StringComparer.Ordinal))
+                    {
+                        this.HasChanges |= true;
+                        this.UserNotesAndChoices[dataIndex] = value;
+                        this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(spreadsheetMap.UserNotesAndChoices[dataIndex].Control.DataLabel));
+                    }
+                    else
+                    {
+                        result.Errors.Add(App.FormatResource(Constant.ResourceKey.ImageRowImportInvalidChoice, value, spreadsheetMap.UserNotesAndChoices[dataIndex].Control.DataLabel));
+                    }
                 }
             }
         }

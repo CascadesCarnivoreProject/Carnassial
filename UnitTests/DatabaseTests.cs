@@ -1,8 +1,8 @@
 ﻿using Carnassial.Data;
+using Carnassial.Data.Spreadsheet;
 using Carnassial.Database;
 using Carnassial.Dialog;
 using Carnassial.Images;
-using Carnassial.Spreadsheet;
 using Carnassial.Util;
 using MetadataExtractor.Formats.Exif;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -917,6 +917,87 @@ namespace Carnassial.UnitTests
         }
 
         [TestMethod]
+        public void ImportData()
+        {
+            using (FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName))
+            {
+                List<FileExpectations> fileExpectations = this.PopulateDefaultDatabase(fileDatabase, true);
+
+                // importing self should be a no op
+                DataImportStatus importStatus = new DataImportStatus((DataImportStatus status) => { }, Constant.ThrottleValues.DesiredIntervalBetweenStatusUpdates);
+                FileImportResult result = fileDatabase.TryImportData(fileDatabase.FilePath, importStatus);
+                Assert.IsTrue(result.Errors.Count == 0);
+                Assert.IsTrue(result.FilesAdded == 0);
+                Assert.IsTrue(result.FilesChanged == 0);
+                Assert.IsTrue(result.FilesProcessed == fileExpectations.Count);
+                Assert.IsTrue(result.FilesUpdated == 0);
+                TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
+
+                fileDatabase.SelectFiles(FileSelection.All);
+                this.VerifyFiles(fileDatabase, fileExpectations, imageSetTimeZone);
+
+                List<FileExpectations> fileExpectationsWithSubfolder;
+                string subfolderDatabasePath;
+                using (FileDatabase fileDatabaseWithSubfolderImages = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, "DefaultUnitTestWithSubfulder.ddb"))
+                {
+                    subfolderDatabasePath = fileDatabaseWithSubfolderImages.FilePath;
+                    fileExpectationsWithSubfolder = this.PopulateDefaultDatabase(fileDatabaseWithSubfolderImages);
+
+                    // add files from subfolder
+                    result = fileDatabase.TryImportData(subfolderDatabasePath, importStatus);
+                    Assert.IsTrue(result.Errors.Count == 0);
+                    Assert.IsTrue(result.FilesAdded == fileExpectationsWithSubfolder.Count - fileExpectations.Count);
+                    Assert.IsTrue(result.FilesChanged == result.FilesAdded);
+                    Assert.IsTrue(result.FilesProcessed == fileExpectationsWithSubfolder.Count);
+                    Assert.IsTrue(result.FilesUpdated == 0);
+
+                    fileDatabase.SelectFiles(FileSelection.All);
+                    this.VerifyFiles(fileDatabase, fileExpectationsWithSubfolder, imageSetTimeZone);
+
+                    // modify files in subfolder database
+                    FileExpectations martenPairExpectation = fileExpectationsWithSubfolder[fileExpectations.Count];
+                    martenPairExpectation.Classification = FileClassification.Greyscale;
+                    martenPairExpectation.DateTime += TimeSpan.FromHours(1);
+                    martenPairExpectation.DeleteFlag = true;
+                    martenPairExpectation.UserControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Choice0] = "choice c";
+                    martenPairExpectation.UserControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Counter0] = 2;
+                    martenPairExpectation.UserControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Flag3] = true;
+                    martenPairExpectation.UserControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Note3] = "American marten pair";
+
+                    ImageRow martenPair = fileDatabaseWithSubfolderImages.Files[fileExpectations.Count];
+                    martenPair.Classification = FileClassification.Greyscale;
+                    martenPair.DateTimeOffset += TimeSpan.FromHours(1);
+                    martenPair.DeleteFlag = true;
+                    martenPair[TestConstant.DefaultDatabaseColumn.Choice0] = "choice c";
+                    martenPair[TestConstant.DefaultDatabaseColumn.Counter0] = 2;
+                    martenPair[TestConstant.DefaultDatabaseColumn.Flag3] = true;
+                    martenPair[TestConstant.DefaultDatabaseColumn.Note3] = "American marten pair";
+                    Assert.IsTrue(fileDatabaseWithSubfolderImages.TrySyncFileToDatabase(martenPair));
+                    Assert.IsTrue(martenPair.HasChanges == false);
+
+                    FileExpectations coyoteExpectation = fileExpectationsWithSubfolder[fileExpectations.Count + 1];
+                    coyoteExpectation.UserControlsByDataLabel[TestConstant.DefaultDatabaseColumn.Note3] = "coyote modified";
+
+                    ImageRow coyote = fileDatabaseWithSubfolderImages.Files[fileExpectations.Count + 1];
+                    coyote[TestConstant.DefaultDatabaseColumn.Note3] = "coyote modified";
+                    Assert.IsTrue(fileDatabaseWithSubfolderImages.TrySyncFileToDatabase(coyote));
+                    Assert.IsTrue(coyote.HasChanges == false);
+                }
+
+                // re-import subfolder database to update with modifications
+                result = fileDatabase.TryImportData(subfolderDatabasePath, importStatus);
+                Assert.IsTrue(result.Errors.Count == 0);
+                Assert.IsTrue(result.FilesAdded == 0);
+                Assert.IsTrue(result.FilesChanged == 2);
+                Assert.IsTrue(result.FilesProcessed == fileExpectationsWithSubfolder.Count);
+                Assert.IsTrue(result.FilesUpdated == result.FilesChanged);
+
+                fileDatabase.SelectFiles(FileSelection.All);
+                this.VerifyFiles(fileDatabase, fileExpectationsWithSubfolder, imageSetTimeZone);
+            }
+        }
+
+        [TestMethod]
         public void MoveFile()
         {
             // remove any existing files from previous test executions
@@ -995,7 +1076,7 @@ namespace Carnassial.UnitTests
                         readerWriter.ExportFileDataToCsv(fileDatabase, initialFilePath);
                     }
 
-                    FileImportResult importResult = readerWriter.TryImportFileData(initialFilePath, fileDatabase);
+                    FileImportResult importResult = readerWriter.TryImportData(initialFilePath, fileDatabase);
                     Assert.IsTrue(importResult.Errors.Count == 0);
 
                     // verify file table content hasn't changed other than negligible truncation error in marker positions
@@ -1031,7 +1112,7 @@ namespace Carnassial.UnitTests
                     // merge and refresh in memory table
                     int filesBeforeMerge = fileDatabase.CurrentlySelectedFileCount;
                     string mergeFilePath = Path.Combine(Path.GetDirectoryName(initialFilePath), Path.GetFileNameWithoutExtension(initialFilePath) + ".FilesToMerge" + spreadsheetFileExtension);
-                    importResult = readerWriter.TryImportFileData(mergeFilePath, fileDatabase);
+                    importResult = readerWriter.TryImportData(mergeFilePath, fileDatabase);
                     Assert.IsTrue(importResult.Errors.Count == 0);
 
                     fileDatabase.SelectFiles(FileSelection.All);

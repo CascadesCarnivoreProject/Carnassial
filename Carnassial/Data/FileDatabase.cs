@@ -1,5 +1,6 @@
 ﻿using Carnassial.Control;
 using Carnassial.Database;
+using Carnassial.Interop;
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
@@ -365,6 +366,23 @@ namespace Carnassial.Data
                 distinctValues.Add(value.ToString());
             }
             return distinctValues;
+        }
+
+        public List<string> GetFileColumnNames()
+        {
+            List<string> columns = new List<string>(this.Controls.RowCount);
+            foreach (ControlRow control in this.Controls)
+            {
+                columns.Add(control.DataLabel);
+
+                if (control.Type == ControlType.Counter)
+                {
+                    string markerColumn = FileTable.GetMarkerPositionColumnName(control.DataLabel);
+                    columns.Add(markerColumn);
+                }
+            }
+
+            return columns;
         }
 
         public int GetFileCount(FileSelection selection)
@@ -746,6 +764,158 @@ namespace Carnassial.Data
             return fileDatabase.ControlSynchronizationIssues.Count == 0;
         }
 
+        public FileImportResult TryImportData(string otherDatabasePath, DataImportStatus importStatus)
+        {
+            if (this.ImageSet.FileSelection != FileSelection.All)
+            {
+                throw new ArgumentOutOfRangeException("this", "Database doesn't have all files selected.  Checking for files already added to the image set would fail.");
+            }
+
+            string relativePathFromThisToOther = NativeMethods.GetRelativePathFromDirectoryToDirectory(Path.GetDirectoryName(this.FilePath), Path.GetDirectoryName(otherDatabasePath));
+            if (String.Equals(relativePathFromThisToOther, Constant.File.CurrentDirectory, StringComparison.Ordinal))
+            {
+                relativePathFromThisToOther = null;
+            }
+            else if (relativePathFromThisToOther.IndexOf(Constant.File.ParentDirectory, StringComparison.Ordinal) != -1)
+            {
+                throw new NotSupportedException(String.Format("Canonicalization of relative path from database to spreadsheet '{0}' is not currently supported.", relativePathFromThisToOther));
+            }
+
+            FileImportResult result = new FileImportResult();
+            try
+            {
+                FileDatabase other = new FileDatabase(otherDatabasePath);
+                other.GetControlsSortedByControlOrder();
+
+                // validate file header against the database
+                List<string> columnsInOther = other.GetFileColumnNames();
+                List<string> columnsInThis = this.GetFileColumnNames();
+
+                List<string> columnsInThisButNotOther = columnsInThis.Except(columnsInOther).ToList();
+                foreach (string column in columnsInThisButNotOther)
+                {
+                    result.Errors.Add(App.FormatResource(Constant.ResourceKey.FileDatabaseImportThisColumnNotInOther, column));
+                }
+
+                List<string> columnsInOtherButNotThis = columnsInOther.Except(columnsInThis).ToList();
+                foreach (string column in columnsInOtherButNotThis)
+                {
+                    result.Errors.Add(App.FormatResource(Constant.ResourceKey.FileDatabaseImportOtherColumnNotInThis, column));
+                }
+
+                // validate user control data indices and types
+                // Requiring indices match simplifies the implementation of ImageRow.SetValue(). If needed, a map similar to the
+                // spreadsheet case can be used to accommodate changes in column ordering. However, it's expected such mismatches
+                // will be rare and, if they do occur, they can be worked around with spreadsheet export and import.
+                other.Files.SetUserControls(other.Controls);
+                other.LoadImageSet();
+                other.SelectFiles(FileSelection.All);
+                foreach (KeyValuePair<string, FileTableColumn> thisColumn in this.Files.UserColumnsByName)
+                {
+                    FileTableColumn otherColumn = other.Files.UserColumnsByName[thisColumn.Key];
+                    if ((thisColumn.Value.DataIndex != otherColumn.DataIndex) ||
+                        (thisColumn.Value.DataType != otherColumn.DataType))
+                    {
+                        result.Errors.Add(App.FormatResource(Constant.ResourceKey.FileDatabaseImportColumnLayoutMismatch, thisColumn.Key, thisColumn.Value.DataIndex, thisColumn.Value.DataType, otherColumn.DataIndex, otherColumn.DataType));
+                    }
+                }
+
+                if (result.Errors.Count > 0)
+                {
+                    return result;
+                }
+
+                // merge files from the other database
+                Dictionary<string, Dictionary<string, ImageRow>> filesAlreadyInThisByRelativePath = this.Files.GetFilesByRelativePathAndName();
+                importStatus.BeginRead(other.Files.RowCount);
+
+                FileTableColumnMap fileTableMap = new FileTableColumnMap(this.Files);
+                List<ImageRow> filesToInsert = new List<ImageRow>();
+                List<ImageRow> filesToUpdate = new List<ImageRow>();
+                int filesUnchanged = 0;
+                for (int fileIndex = 0, mostRecentReportCheck = 0; fileIndex < other.Files.RowCount; ++fileIndex)
+                {
+                    ImageRow otherFile = other.Files[fileIndex];
+                    if (String.IsNullOrWhiteSpace(otherFile.FileName))
+                    {
+                        result.Errors.Add(String.Format("No file name found in row {0}.  Row skipped, database will not be updated for this file.", fileIndex));
+                        continue;
+                    }
+
+                    string relativePath = otherFile.RelativePath;
+                    if (relativePathFromThisToOther != null)
+                    {
+                        relativePath = Path.Combine(relativePathFromThisToOther, relativePath);
+                    }
+
+                    bool addFile = false;
+                    if ((filesAlreadyInThisByRelativePath.TryGetValue(relativePath, out Dictionary<string, ImageRow> filesInFolder) == false) ||
+                        (filesInFolder.TryGetValue(otherFile.FileName, out ImageRow thisFile) == false))
+                    {
+                        addFile = true;
+                        thisFile = this.Files.CreateAndAppendFile(otherFile.FileName, relativePath);
+                    }
+                    Debug.Assert(addFile || (thisFile.HasChanges == false), "Existing file unexpectedly has changes.");
+
+                    // move row data into file
+                    thisFile.SetValues(otherFile, fileTableMap, result);
+
+                    if (addFile)
+                    {
+                        filesToInsert.Add(thisFile);
+                    }
+                    else if (thisFile.HasChanges)
+                    {
+                        filesToUpdate.Add(thisFile);
+                    }
+                    else
+                    {
+                        ++filesUnchanged;
+                    }
+
+                    if (fileIndex - mostRecentReportCheck > Constant.File.RowsBetweenStatusReportChecks)
+                    {
+                        if (importStatus.ShouldReport())
+                        {
+                            importStatus.Report(fileIndex);
+                        }
+                        mostRecentReportCheck = fileIndex;
+                    }
+                }
+
+                // perform inserts and updates
+                int totalFiles = filesToInsert.Count + filesToUpdate.Count;
+                importStatus.BeginTransactionCommit(totalFiles);
+                if (filesToInsert.Count > 0)
+                {
+                    using (FileTransactionSequence insertFiles = this.CreateInsertFileTransaction())
+                    {
+                        insertFiles.AddFiles(filesToInsert);
+                        insertFiles.Commit();
+                    }
+                    importStatus.Report(filesToInsert.Count);
+                }
+                if (filesToUpdate.Count > 0)
+                {
+                    using (FileTransactionSequence updateFiles = this.CreateUpdateFileTransaction())
+                    {
+                        updateFiles.AddFiles(filesToUpdate);
+                        updateFiles.Commit();
+                    }
+                    importStatus.Report(totalFiles);
+                }
+
+                result.FilesAdded = filesToInsert.Count;
+                result.FilesProcessed = filesToInsert.Count + filesToUpdate.Count + filesUnchanged;
+                result.FilesUpdated = filesToUpdate.Count;
+            }
+            catch (IOException ioException)
+            {
+                result.Exception = ioException;
+            }
+            return result;
+        }
+
         public bool TrySyncFileToDatabase(ImageRow file)
         {
             if (file.HasChanges == false)
@@ -823,7 +993,7 @@ namespace Carnassial.Data
             foreach (ControlRow control in this.Controls.Where(control => control.Type == ControlType.Flag))
             {
                 ColumnDefinition currentColumn = currentFileSchema.ColumnDefinitions.Single(column => String.Equals(column.Name, control.DataLabel, StringComparison.Ordinal));
-                if (String.Equals(currentColumn.Type, Constant.SQLiteAffninity.Integer, StringComparison.OrdinalIgnoreCase) == false)
+                if (String.Equals(currentColumn.Type, Constant.SQLiteAffinity.Integer, StringComparison.OrdinalIgnoreCase) == false)
                 {
                     this.ConvertBooleanStringColumnToInteger(transaction, Constant.DatabaseTable.Files, control.DataLabel);
                 }

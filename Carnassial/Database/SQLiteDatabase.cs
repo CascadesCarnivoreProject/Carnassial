@@ -117,7 +117,7 @@ namespace Carnassial.Database
         {
             this.ConvertStringColumnToInteger(transaction, table, column, () =>
             {
-                return new ColumnDefinition(column, Constant.SQLiteAffninity.Integer)
+                return new ColumnDefinition(column, Constant.SQLiteAffinity.Integer)
                 {
                     DefaultValue = 0.ToString(Constant.InvariantCulture),
                     NotNull = true
@@ -173,7 +173,7 @@ namespace Carnassial.Database
             {
                 throw new ArgumentOutOfRangeException(nameof(column), String.Format("Column '{0}' is not present in table '{1}'.", column, table));
             }
-            if (String.Equals(stringColumn.Type, Constant.SQLiteAffninity.Text, StringComparison.OrdinalIgnoreCase) == false)
+            if (String.Equals(stringColumn.Type, Constant.SQLiteAffinity.Text, StringComparison.OrdinalIgnoreCase) == false)
             {
                 throw new ArgumentException(nameof(column), String.Format("Column '{0}' has type '{1}'.", column, stringColumn.Type));
             }

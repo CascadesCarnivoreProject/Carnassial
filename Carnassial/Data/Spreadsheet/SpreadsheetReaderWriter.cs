@@ -1,5 +1,4 @@
-﻿using Carnassial.Data;
-using Carnassial.Database;
+﻿using Carnassial.Database;
 using Carnassial.Interop;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
@@ -12,7 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 
-namespace Carnassial.Spreadsheet
+namespace Carnassial.Data.Spreadsheet
 {
     /// <summary>
     /// Import and export .csv and .xlsx files.
@@ -595,7 +594,7 @@ namespace Carnassial.Spreadsheet
             return false;
         }
 
-        private FileImportResult TryImportFileData(FileDatabase fileDatabase, Func<bool> readLine, Func<long> getPosition, string spreadsheetFilePath)
+        private FileImportResult TryImportData(FileDatabase fileDatabase, Func<bool> readLine, Func<long> getPosition, string spreadsheetFilePath)
         {
             if (fileDatabase.ImageSet.FileSelection != FileSelection.All)
             {
@@ -607,7 +606,7 @@ namespace Carnassial.Spreadsheet
             {
                 relativePathFromDatabaseToSpreadsheet = null;
             }
-            else if (relativePathFromDatabaseToSpreadsheet.IndexOf("..", StringComparison.Ordinal) != -1)
+            else if (relativePathFromDatabaseToSpreadsheet.IndexOf(Constant.File.ParentDirectory, StringComparison.Ordinal) != -1)
             {
                 throw new NotSupportedException(String.Format("Canonicalization of relative path from database to spreadsheet '{0}' is not currently supported.", relativePathFromDatabaseToSpreadsheet));
             }
@@ -631,13 +630,13 @@ namespace Carnassial.Spreadsheet
             List<string> columnsInDatabaseButNotInHeader = columnsInDatabase.Except(columnsFromFileHeader).ToList();
             foreach (string column in columnsInDatabaseButNotInHeader)
             {
-                result.Errors.Add("- The column '" + column + "' is present in the image set but not in the spreadsheet file.");
+                result.Errors.Add(App.FormatResource(Constant.ResourceKey.SpreadsheetImportColumnNotInSpreadsheet, column));
             }
 
             List<string> columnsInHeaderButNotDatabase = columnsFromFileHeader.Except(columnsInDatabase).ToList();
             foreach (string column in columnsInHeaderButNotDatabase)
             {
-                result.Errors.Add("- The column '" + column + "' is present in the spreadsheet file but not in the image set.");
+                result.Errors.Add(App.FormatResource(Constant.ResourceKey.SpreadsheetImportColumnNotInImageSet, column));
             }
 
             if (result.Errors.Count > 0)
@@ -645,22 +644,22 @@ namespace Carnassial.Spreadsheet
                 return result;
             }
 
-            FileTableSpreadsheetMap spreadsheetMap = fileDatabase.Files.IndexSpreadsheetColumns(columnsFromFileHeader);
-            if (spreadsheetMap.FileNameIndex == -1)
+            FileTableSpreadsheetMap spreadsheetMap = new FileTableSpreadsheetMap(columnsFromFileHeader, fileDatabase.Files);
+            if (spreadsheetMap.FileNameSpreadsheetIndex == -1)
             {
-                result.Errors.Add("- The column '" + Constant.FileColumn.File + "' must be present in the spreadsheet file.");
+                result.Errors.Add(App.FormatResource(Constant.ResourceKey.SpreadsheetImportRequiredColumnNotInSpreadsheet, Constant.FileColumn.File));
             }
-            if (spreadsheetMap.RelativePathIndex == -1)
+            if (spreadsheetMap.RelativePathSpreadsheetIndex == -1)
             {
-                result.Errors.Add("- The column '" + Constant.FileColumn.RelativePath + "' must be present in the spreadsheet file.");
+                result.Errors.Add(App.FormatResource(Constant.ResourceKey.SpreadsheetImportRequiredColumnNotInSpreadsheet, Constant.FileColumn.RelativePath));
             }
-            if (spreadsheetMap.DateTimeIndex == -1)
+            if (spreadsheetMap.DateTimeSpreadsheetIndex == -1)
             {
-                result.Errors.Add("- The column '" + Constant.FileColumn.DateTime + "' must be present in the spreadsheet file.");
+                result.Errors.Add(App.FormatResource(Constant.ResourceKey.SpreadsheetImportRequiredColumnNotInSpreadsheet, Constant.FileColumn.DateTime));
             }
-            if (spreadsheetMap.UtcOffsetIndex == -1)
+            if (spreadsheetMap.UtcOffsetSpreadsheetIndex == -1)
             {
-                result.Errors.Add("- The column '" + Constant.FileColumn.UtcOffset + "' must be present in the spreadsheet file.");
+                result.Errors.Add(App.FormatResource(Constant.ResourceKey.SpreadsheetImportRequiredColumnNotInSpreadsheet, Constant.FileColumn.UtcOffset));
             }
 
             if (result.Errors.Count > 0)
@@ -674,7 +673,7 @@ namespace Carnassial.Spreadsheet
             List<ImageRow> filesToUpdate = new List<ImageRow>();
             int filesUnchanged = 0;
             int mostRecentReportCheck = 0;
-            int rowsWritten = 0;
+            int rowsRead = 0;
             this.status.Report(0);
             while (readLine.Invoke())
             {
@@ -694,14 +693,14 @@ namespace Carnassial.Spreadsheet
                 // determine whether a new file needs to be added or if this row corresponds to a file already in the image set
                 // For now, it's assumed all renames or moves are done through Carnassial and hence relative path + file name form 
                 // an immutable (and unique) ID.
-                string fileName = this.currentRow[spreadsheetMap.FileNameIndex];
+                string fileName = this.currentRow[spreadsheetMap.FileNameSpreadsheetIndex];
                 if (String.IsNullOrWhiteSpace(fileName))
                 {
                     result.Errors.Add(String.Format("No file name found in row {0}.  Row skipped, database will not be updated for this file.", filesToInsert.Count + filesToUpdate.Count + filesUnchanged + 1));
                     continue;
                 }
 
-                string relativePath = this.currentRow[spreadsheetMap.RelativePathIndex];
+                string relativePath = this.currentRow[spreadsheetMap.RelativePathSpreadsheetIndex];
                 if (relativePathFromDatabaseToSpreadsheet != null)
                 {
                     relativePath = Path.Combine(relativePathFromDatabaseToSpreadsheet, relativePath);
@@ -717,7 +716,7 @@ namespace Carnassial.Spreadsheet
                 Debug.Assert(addFile || (file.HasChanges == false), "Existing file unexpectedly has changes.");
 
                 // move row data into file
-                file.SetValuesFromSpreadsheet(spreadsheetMap, this.currentRow, result);
+                file.SetValuesFromSpreadsheet(this.currentRow, spreadsheetMap, result);
 
                 if (addFile)
                 {
@@ -732,14 +731,14 @@ namespace Carnassial.Spreadsheet
                     ++filesUnchanged;
                 }
 
-                ++rowsWritten;
-                if (rowsWritten - mostRecentReportCheck > Constant.File.RowsBetweenStatusReportChecks)
+                ++rowsRead;
+                if (rowsRead - mostRecentReportCheck > Constant.File.RowsBetweenStatusReportChecks)
                 {
                     if (this.status.ShouldReport())
                     {
                         this.status.Report(getPosition.Invoke());
                     }
-                    mostRecentReportCheck = rowsWritten;
+                    mostRecentReportCheck = rowsRead;
                 }
             }
 
@@ -771,17 +770,17 @@ namespace Carnassial.Spreadsheet
             return result;
         }
 
-        public FileImportResult TryImportFileData(string spreadsheetFilePath, FileDatabase fileDatabase)
+        public FileImportResult TryImportData(string spreadsheetFilePath, FileDatabase fileDatabase)
         {
             try
             {
                 if (spreadsheetFilePath.EndsWith(Constant.File.ExcelFileExtension, StringComparison.OrdinalIgnoreCase))
                 {
-                    return this.TryImportFileDataFromXlsx(spreadsheetFilePath, fileDatabase);
+                    return this.TryImportXlsx(spreadsheetFilePath, fileDatabase);
                 }
                 else
                 {
-                    return this.TryImportFileDataFromCsv(spreadsheetFilePath, fileDatabase);
+                    return this.TryImportCsv(spreadsheetFilePath, fileDatabase);
                 }
             }
             catch (IOException ioException)
@@ -793,14 +792,14 @@ namespace Carnassial.Spreadsheet
             }
         }
 
-        private FileImportResult TryImportFileDataFromCsv(string csvFilePath, FileDatabase fileDatabase)
+        private FileImportResult TryImportCsv(string csvFilePath, FileDatabase fileDatabase)
         {
             using (FileStream stream = new FileStream(csvFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 using (StreamReader csvReader = new StreamReader(stream))
                 {
                     this.status.BeginRead(csvReader.BaseStream.Length);
-                    FileImportResult result = this.TryImportFileData(fileDatabase, 
+                    FileImportResult result = this.TryImportData(fileDatabase, 
                         () => { return this.ReadAndParseCsvLine(csvReader); }, 
                         () => { return stream.Position; },
                         csvFilePath);
@@ -809,7 +808,7 @@ namespace Carnassial.Spreadsheet
             }
         }
 
-        private FileImportResult TryImportFileDataFromXlsx(string xlsxFilePath, FileDatabase fileDatabase)
+        private FileImportResult TryImportXlsx(string xlsxFilePath, FileDatabase fileDatabase)
         {
             try
             {
@@ -868,7 +867,7 @@ namespace Carnassial.Spreadsheet
                                 }
 
                                 reader.ReadToNextSibling(Constant.OpenXml.Element.SheetData, Constant.OpenXml.Namespace);
-                                FileImportResult result = this.TryImportFileData(fileDatabase,
+                                FileImportResult result = this.TryImportData(fileDatabase,
                                     () => { return this.ReadXlsxRow(reader, worksheetStream, sharedStrings); },
                                     () => { return worksheetStream.Position; },
                                     xlsxFilePath);

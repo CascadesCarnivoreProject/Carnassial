@@ -428,9 +428,9 @@ namespace Carnassial.UnitTests
                     this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowDaylightSavingsFailed, carnassial));
                     this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowExportSpreadsheetFailed, carnassial, "file path", "Exception.Type", "exception message"));
                     this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowFileMoveIncomplete, carnassial, 0, 1, 1));
-                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImportSpreadsheet, carnassial, Constant.Time.DateTimeDatabaseFormat, DateTimeHandler.ToDatabaseUtcOffsetString(TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours)), DateTimeHandler.ToDatabaseUtcOffsetString(TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours)), Constant.Excel.FileDataWorksheetName, Constant.File.FileDatabaseFileExtension));
-                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImportSpreadsheetFailed, carnassial, "file path", "Exception.Type", "exception message"));
-                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImportSpreadsheetIncomplete, carnassial, "file path"));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImport, carnassial, Constant.Time.DateTimeDatabaseFormat, DateTimeHandler.ToDatabaseUtcOffsetString(TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours)), DateTimeHandler.ToDatabaseUtcOffsetString(TimeSpan.FromHours(Constant.Time.MinimumUtcOffsetInHours)), Constant.Excel.FileDataWorksheetName, Constant.File.FileDatabaseFileExtension));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImportFailed, carnassial, "file path", "Exception.Type", "exception message"));
+                    this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImportIncomplete, carnassial, "file path"));
                     this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowNoAmbiguousDates, carnassial));
                     this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowNoDeletableFiles, carnassial));
                     this.ShowDialog(MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowNoMetadataAvailable, carnassial));
@@ -497,7 +497,7 @@ namespace Carnassial.UnitTests
                         List<FileExpectations> fileExpectations = this.PopulateDefaultDatabase(fileDatabase);
                         foreach (FileExpectations fileExpectation in fileExpectations)
                         {
-                            fileExpectation.RelativePath = "..";
+                            fileExpectation.RelativePath = Constant.File.ParentDirectory;
                         }
                         Assert.IsTrue(dataHandler.ImageCache.MoveNext());
 

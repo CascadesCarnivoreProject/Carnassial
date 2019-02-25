@@ -17,7 +17,7 @@ namespace Carnassial.Util
         public bool OrderFilesByDateTime { get; set; }
         public bool SkipFileClassification { get; set; }
         public bool SuppressFileCountOnImportDialog { get; set; }
-        public bool SuppressSpreadsheetImportPrompt { get; set; }
+        public bool SuppressImportPrompt { get; set; }
         public Throttles Throttles { get; private set; }
 
         public CarnassialUserRegistrySettings() :
@@ -47,7 +47,7 @@ namespace Carnassial.Util
                 this.OrderFilesByDateTime = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.OrderFilesByDateTime, false);
                 this.SkipFileClassification = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SkipFileClassification, false);
                 this.SuppressFileCountOnImportDialog = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressFileCountOnImportDialog, false);
-                this.SuppressSpreadsheetImportPrompt = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressSpreadsheetImportPrompt, false);
+                this.SuppressImportPrompt = registryKey.ReadBoolean(Constant.Registry.CarnassialKey.SuppressImportPrompt, false);
                 this.Throttles.ImageClassificationChangeSlowdown = registryKey.ReadDouble(Constant.Registry.CarnassialKey.ImageClassificationChangeSlowdown, Constant.ThrottleValues.ImageClassificationSlowdownDefault);
                 this.Throttles.SetDesiredImageRendersPerSecond(registryKey.ReadDouble(Constant.Registry.CarnassialKey.DesiredImageRendersPerSecond, Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault));
                 this.Throttles.VideoSlowdown = registryKey.ReadDouble(Constant.Registry.CarnassialKey.VideoSlowdown, Constant.ThrottleValues.VideoSlowdownDefault);
@@ -70,7 +70,7 @@ namespace Carnassial.Util
                 registryKey.Write(Constant.Registry.CarnassialKey.OrderFilesByDateTime, this.OrderFilesByDateTime);
                 registryKey.Write(Constant.Registry.CarnassialKey.SkipFileClassification, this.SkipFileClassification);
                 registryKey.Write(Constant.Registry.CarnassialKey.SuppressFileCountOnImportDialog, this.SuppressFileCountOnImportDialog);
-                registryKey.Write(Constant.Registry.CarnassialKey.SuppressSpreadsheetImportPrompt, this.SuppressSpreadsheetImportPrompt);
+                registryKey.Write(Constant.Registry.CarnassialKey.SuppressImportPrompt, this.SuppressImportPrompt);
                 registryKey.Write(Constant.Registry.CarnassialKey.VideoSlowdown, this.Throttles.VideoSlowdown);
             }
         }

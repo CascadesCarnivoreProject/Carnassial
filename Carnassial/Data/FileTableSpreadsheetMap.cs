@@ -1,56 +1,98 @@
-﻿using System;
+﻿using Carnassial.Database;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Carnassial.Data
 {
-    public class FileTableSpreadsheetMap
+    public class FileTableSpreadsheetMap : FileTableColumnMap
     {
-        public int ClassificationIndex { get; set; }
-        public int DateTimeIndex { get; set; }
-        public int DeleteFlagIndex { get; set; }
-        public int FileNameIndex { get; set; }
-        public int RelativePathIndex { get; set; }
-        public int UtcOffsetIndex { get; set; }
+        public int ClassificationSpreadsheetIndex { get; set; }
+        public int DateTimeSpreadsheetIndex { get; set; }
+        public int DeleteFlagSpreadsheetIndex { get; set; }
+        public int FileNameSpreadsheetIndex { get; set; }
+        public int RelativePathSpreadsheetIndex { get; set; }
+        public int UtcOffsetSpreadsheetIndex { get; set; }
 
-        public List<int> UserChoiceDataIndices { get; private set; }
-        public List<int> UserChoiceIndices { get; private set; }
-        public List<FileTableColumn> UserChoices { get; private set; }
-        public List<List<string>> UserChoiceValues { get; private set; }
-        public List<int> UserCounterIndices { get; private set; }
-        public List<FileTableColumn> UserCounters { get; private set; }
-        public List<int> UserFlagIndices { get; private set; }
-        public List<FileTableColumn> UserFlags { get; private set; }
-        public List<int> UserMarkerIndices { get; private set; }
-        public List<int> UserNoteDataIndices { get; private set; }
-        public List<int> UserNoteIndices { get; private set; }
-        public List<FileTableColumn> UserNotes { get; private set; }
+        public List<int> UserCounterSpreadsheetIndices { get; private set; }
+        public List<int> UserFlagSpreadsheetIndices { get; private set; }
+        public List<int> UserMarkerSpreadsheetIndices { get; private set; }
+        public List<int> UserNoteAndChoiceSpreadsheetIndices { get; private set; }
 
-        public FileTableSpreadsheetMap()
+        public FileTableSpreadsheetMap(List<string> columnsFromSpreadsheet, FileTable fileTable)
+            : base(fileTable)
         {
-            this.ClassificationIndex = -1;
-            this.DateTimeIndex = -1;
-            this.DeleteFlagIndex = -1;
-            this.FileNameIndex = -1;
-            this.RelativePathIndex = -1;
-            this.UtcOffsetIndex = -1;
+            this.ClassificationSpreadsheetIndex = -1;
+            this.DateTimeSpreadsheetIndex = -1;
+            this.DeleteFlagSpreadsheetIndex = -1;
+            this.FileNameSpreadsheetIndex = -1;
+            this.RelativePathSpreadsheetIndex = -1;
+            this.UtcOffsetSpreadsheetIndex = -1;
 
-            this.UserChoiceDataIndices = new List<int>();
-            this.UserChoiceIndices = new List<int>();
-            this.UserChoices = new List<FileTableColumn>();
-            this.UserChoiceValues = new List<List<string>>();
+            this.UserCounterSpreadsheetIndices = new List<int>(fileTable.UserCounters);
+            this.UserFlagSpreadsheetIndices = new List<int>(fileTable.UserFlags);
+            this.UserMarkerSpreadsheetIndices = new List<int>(fileTable.UserCounters);
+            this.UserNoteAndChoiceSpreadsheetIndices = new List<int>(fileTable.UserNotesAndChoices);
 
-            this.UserCounterIndices = new List<int>();
-            this.UserCounters = new List<FileTableColumn>();
-            this.UserFlagIndices = new List<int>();
-            this.UserFlags = new List<FileTableColumn>();
-            this.UserMarkerIndices = new List<int>();
-
-            this.UserNoteDataIndices = new List<int>();
-            this.UserNoteIndices = new List<int>();
-            this.UserNotes = new List<FileTableColumn>();
+            for (int spreadsheetIndex = 0; spreadsheetIndex < columnsFromSpreadsheet.Count; ++spreadsheetIndex)
+            {
+                string column = columnsFromSpreadsheet[spreadsheetIndex];
+                if (String.Equals(column, Constant.FileColumn.Classification, StringComparison.Ordinal))
+                {
+                    this.ClassificationSpreadsheetIndex = spreadsheetIndex;
+                }
+                else if (String.Equals(column, Constant.FileColumn.DateTime, StringComparison.Ordinal))
+                {
+                    this.DateTimeSpreadsheetIndex = spreadsheetIndex;
+                }
+                else if (String.Equals(column, Constant.FileColumn.DeleteFlag, StringComparison.Ordinal))
+                {
+                    this.DeleteFlagSpreadsheetIndex = spreadsheetIndex;
+                }
+                else if (String.Equals(column, Constant.FileColumn.File, StringComparison.Ordinal))
+                {
+                    this.FileNameSpreadsheetIndex = spreadsheetIndex;
+                }
+                else if (String.Equals(column, Constant.FileColumn.RelativePath, StringComparison.Ordinal))
+                {
+                    this.RelativePathSpreadsheetIndex = spreadsheetIndex;
+                }
+                else if (String.Equals(column, Constant.FileColumn.UtcOffset, StringComparison.Ordinal))
+                {
+                    this.UtcOffsetSpreadsheetIndex = spreadsheetIndex;
+                }
+                else
+                {
+                    FileTableColumn userColumn = fileTable.UserColumnsByName[column];
+                    switch (userColumn.Control.Type)
+                    {
+                        case ControlType.Counter:
+                            if (userColumn.DataType == SqlDataType.Integer)
+                            {
+                                this.UserCounterSpreadsheetIndices.Add(spreadsheetIndex);
+                            }
+                            else if (userColumn.DataType == SqlDataType.Blob)
+                            {
+                                this.UserMarkerSpreadsheetIndices.Add(spreadsheetIndex);
+                            }
+                            else
+                            {
+                                throw new NotSupportedException(String.Format("Unhandled data type {0} for column {1}.", userColumn.DataType, userColumn.Control.DataLabel));
+                            }
+                            break;
+                        case ControlType.FixedChoice:
+                            this.UserNoteAndChoiceSpreadsheetIndices.Add(spreadsheetIndex);
+                            break;
+                        case ControlType.Flag:
+                            this.UserFlagSpreadsheetIndices.Add(spreadsheetIndex);
+                            break;
+                        case ControlType.Note:
+                            this.UserNoteAndChoiceSpreadsheetIndices.Add(spreadsheetIndex);
+                            break;
+                        default:
+                            throw new NotSupportedException(String.Format("Unhandled control type {0} for column {1}.", userColumn.Control.Type, userColumn.Control.DataLabel));
+                    }
+                }
+            }
         }
     }
 }
