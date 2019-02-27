@@ -165,14 +165,14 @@
     <Compile Include="Database\SQLiteTemporaryStore.cs" />
     <Compile Include="Database\SQLiteWalCheckpoint.cs" />
     <Compile Include="Database\WindowedTransactionSequence.cs" />
-    <Compile Include="Data\DataImportStatus.cs" />
+    <Compile Include="Data\DataImportProgress.cs" />
     <Compile Include="Data\FileFindReplace.cs" />
     <Compile Include="Data\FileTableColumnMap.cs" />
     <Compile Include="Data\FileTableSpreadsheetMap.cs" />
     <Compile Include="Data\ImageSetTransactionSequence.cs" />
     <Compile Include="Data\ControlTransactionSequence.cs" />
     <Compile Include="Data\FileTransactionSequence.cs" />
-    <Compile Include="Data\DataImportExportStatus.cs" />
+    <Compile Include="Data\DataImportExportProgress.cs" />
     <Compile Include="Dialog\FindDialog.cs" />
     <Compile Include="Dialog\FindReplace.xaml.cs">
       <DependentUpon>FindReplace.xaml</DependentUpon>
@@ -184,6 +184,7 @@
     <Compile Include="Data\Spreadsheet\OpenXmlStylesheet.cs" />
     <Compile Include="Util\CommonUserInterface.cs" />
     <Compile Include="Util\ControlTypeConverter.cs" />
+    <Compile Include="Util\ExceptionPropagatingProgress.cs" />
     <Compile Include="Util\TimeSpanExtensions.cs" />
     <Compile Include="Util\WellKnownValueConverter.cs" />
     <Compile Include="Database\IndexedPropertyChangedEventArgs.cs" />

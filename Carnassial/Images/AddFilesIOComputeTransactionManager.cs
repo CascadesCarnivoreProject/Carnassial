@@ -102,21 +102,16 @@ namespace Carnassial.Images
                 // check if progress needs to be reported
                 bool addFilesToTransaction = false;
                 bool reportProgress = false;
-                UInt64 tickNow = NativeMethods.GetTickCount64();
-                if ((tickNow - this.Status.MostRecentStatusUpdate) > progressReportIntervalInMilliseconds)
+                if (this.Progress.ShouldUpdateProgress())
                 {
                     lock (this.Status)
                     {
-                        if ((tickNow - this.Status.MostRecentStatusUpdate) > progressReportIntervalInMilliseconds)
+                        if (this.Progress.ShouldUpdateProgress())
                         {
                             addFilesToTransaction = this.ShouldAddFilesToTransaction();
-                            if (loadAtom.First.MetadataReadResult != MetadataReadResult.Failed)
+                            if (addFilesToTransaction == false)
                             {
-                                if ((addFilesToTransaction == false) && (this.Status.StatusUpdateInProgress == false))
-                                {
-                                    reportProgress = true;
-                                    this.Status.StatusUpdateInProgress = true;
-                                }
+                                reportProgress = loadAtom.First.MetadataReadResult != MetadataReadResult.Failed;
                             }
                         }
                     }
@@ -128,19 +123,23 @@ namespace Carnassial.Images
                     this.AddToSequence();
                 }
 
-                // initiate progress report, if needed
+                // queue progress report and update display image, if needed
                 if (reportProgress)
                 {
                     this.Status.CurrentFile = loadAtom.First.File;
                     this.Status.CurrentFileIndex = this.FilesCompleted;
-                    CachedImage imageToDisplay = null;
-                    if (((tickNow - this.Status.MostRecentImageUpdate) > Constant.ThrottleValues.DesiredIntervalBetweenImageUpdates.TotalMilliseconds) && (loadAtom.First.File != null) && (loadAtom.First.File.IsVideo == false))
+                    this.QueueProgressUpdate();
+
+                    if ((loadAtom.First.File != null) && (loadAtom.First.File.IsVideo == false))
                     {
-                        imageToDisplay = loadAtom.First.File.TryLoadImageAsync(fileDatabase.FolderPath, this.Status.ImageRenderWidth).GetAwaiter().GetResult();
-                        this.Status.MostRecentImageUpdate = NativeMethods.GetTickCount64();
+                        ulong timeSinceLastImageUpdate = NativeMethods.GetTickCount64() - this.Status.MostRecentImageUpdate;
+                        if (timeSinceLastImageUpdate > Constant.ThrottleValues.DesiredIntervalBetweenImageUpdates.TotalMilliseconds)
+                        {
+                            CachedImage imageToDisplay = loadAtom.First.File.TryLoadImageAsync(fileDatabase.FolderPath, this.Status.ImageRenderWidth).GetAwaiter().GetResult();
+                            this.Status.SetImage(imageToDisplay);
+                            this.Status.MostRecentImageUpdate = NativeMethods.GetTickCount64();
+                        }
                     }
-                    this.Status.UpdateImage(imageToDisplay);
-                    this.ReportStatus();
                 }
 
                 loadAtom.DisposeJpegs();
@@ -188,11 +187,9 @@ namespace Carnassial.Images
             this.Status.TotalFiles = this.FilesToLoad;
         }
 
-        public void ReportStatus()
+        public void QueueProgressUpdate()
         {
-            this.Progress.Report(this.Status);
-            this.Status.MostRecentStatusUpdate = NativeMethods.GetTickCount64();
-            this.Status.StatusUpdateInProgress = false;
+            this.Progress.QueueProgressUpdate(this.Status);
         }
     }
 }

@@ -1,8 +1,8 @@
 ﻿using Carnassial.Util;
 using Microsoft.Win32;
 using System;
-using System.Globalization;
 using System.Windows;
+using System.Windows.Threading;
 using MessageBox = Carnassial.Dialog.MessageBox;
 
 namespace Carnassial
@@ -97,7 +97,7 @@ namespace Carnassial
             return false;
         }
 
-        protected void ShowExceptionReportingDialog(string alternativeTitle, string databasePath, UnhandledExceptionEventArgs e)
+        protected void ShowExceptionReportingDialog(string alternativeTitle, string databasePath, DispatcherUnhandledExceptionEventArgs e)
         {
             MessageBox exitNotification = MessageBox.FromResource(Constant.ResourceKey.ApplicationWindowException, this, 
                                                                   CarnassialConfigurationSettings.GetIssuesBrowserAddress(),
@@ -106,7 +106,7 @@ namespace Carnassial
                                                                   Environment.OSVersion, 
                                                                   this.GetDotNetVersion(), 
                                                                   databasePath,
-                                                                  e.ExceptionObject);
+                                                                  e.Exception);
             Clipboard.SetText(exitNotification.Message.GetWhat());
             exitNotification.ShowDialog();
         }

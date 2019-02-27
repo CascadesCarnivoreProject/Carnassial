@@ -115,16 +115,16 @@ namespace Carnassial.Data.Spreadsheet
 
                     if (fileIndex - mostRecentReportCheck > Constant.File.RowsBetweenStatusReportChecks)
                     {
-                        if (this.status.ShouldReport())
+                        if (this.status.ShouldUpdateProgress())
                         {
-                            this.status.Report(fileIndex);
+                            this.status.QueueProgressUpdate(fileIndex);
                         }
                         mostRecentReportCheck = fileIndex;
                     }
                 }
             }
 
-            this.status.Report(database.Files.RowCount);
+            this.status.QueueProgressUpdate(database.Files.RowCount);
         }
 
         /// <summary>
@@ -344,9 +344,9 @@ namespace Carnassial.Data.Spreadsheet
                             }
                             writer.WriteEndElement(); // row
 
-                            if ((fileIndex - mostRecentReportCheck > Constant.File.RowsBetweenStatusReportChecks) && this.status.ShouldReport())
+                            if ((fileIndex - mostRecentReportCheck > Constant.File.RowsBetweenStatusReportChecks) && this.status.ShouldUpdateProgress())
                             {
-                                this.status.Report(fileIndex);
+                                this.status.QueueProgressUpdate(fileIndex);
                             }
                         }
 
@@ -674,7 +674,7 @@ namespace Carnassial.Data.Spreadsheet
             int filesUnchanged = 0;
             int mostRecentReportCheck = 0;
             int rowsRead = 0;
-            this.status.Report(0);
+            this.status.QueueProgressUpdate(0);
             while (readLine.Invoke())
             {
                 if (this.currentRow.Count == columnsInDatabase.Count - 1)
@@ -734,9 +734,9 @@ namespace Carnassial.Data.Spreadsheet
                 ++rowsRead;
                 if (rowsRead - mostRecentReportCheck > Constant.File.RowsBetweenStatusReportChecks)
                 {
-                    if (this.status.ShouldReport())
+                    if (this.status.ShouldUpdateProgress())
                     {
-                        this.status.Report(getPosition.Invoke());
+                        this.status.QueueProgressUpdate(getPosition.Invoke());
                     }
                     mostRecentReportCheck = rowsRead;
                 }
@@ -752,7 +752,7 @@ namespace Carnassial.Data.Spreadsheet
                     insertFiles.AddFiles(filesToInsert);
                     insertFiles.Commit();
                 }
-                this.status.Report(filesToInsert.Count);
+                this.status.QueueProgressUpdate(filesToInsert.Count);
             }
             if (filesToUpdate.Count > 0)
             {
@@ -761,12 +761,14 @@ namespace Carnassial.Data.Spreadsheet
                     updateFiles.AddFiles(filesToUpdate);
                     updateFiles.Commit();
                 }
-                this.status.Report(totalFiles);
+                this.status.QueueProgressUpdate(totalFiles);
             }
 
             result.FilesAdded = filesToInsert.Count;
             result.FilesProcessed = filesToInsert.Count + filesToUpdate.Count + filesUnchanged;
             result.FilesUpdated = filesToUpdate.Count;
+
+            this.status.End();
             return result;
         }
 
@@ -790,6 +792,10 @@ namespace Carnassial.Data.Spreadsheet
                     Exception = ioException
                 };
             }
+            finally
+            {
+                this.status.End();
+            }
         }
 
         private FileImportResult TryImportCsv(string csvFilePath, FileDatabase fileDatabase)
@@ -803,6 +809,8 @@ namespace Carnassial.Data.Spreadsheet
                         () => { return this.ReadAndParseCsvLine(csvReader); }, 
                         () => { return stream.Position; },
                         csvFilePath);
+
+                    this.status.End();
                     return result;
                 }
             }
@@ -882,6 +890,10 @@ namespace Carnassial.Data.Spreadsheet
                 FileImportResult result = new FileImportResult();
                 result.Errors.Add(ioException.ToString());
                 return result;
+            }
+            finally
+            {
+                this.status.End();
             }
         }
 

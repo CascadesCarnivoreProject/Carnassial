@@ -2,9 +2,9 @@
 
 namespace Carnassial.Data
 {
-    public class DataImportStatus : DataImportExportStatus<DataImportStatus>
+    public class DataImportProgress : DataImportExportStatus<DataImportProgress>
     {
-        public DataImportStatus(Action<DataImportStatus> onProgressUpdate, TimeSpan progressUpdateInterval)
+        public DataImportProgress(Action<DataImportProgress> onProgressUpdate, TimeSpan progressUpdateInterval)
             : base(onProgressUpdate, progressUpdateInterval)
         {
         }
@@ -12,11 +12,6 @@ namespace Carnassial.Data
         public override string GetMessage()
         {
             return String.Format("Read {0} of {1} files...", this.CurrentPosition, this.EndPosition);
-        }
-
-        protected override void ReportProgress()
-        {
-            this.Progress.Report(this);
         }
     }
 }

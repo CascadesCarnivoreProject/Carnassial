@@ -1,6 +1,5 @@
 ﻿using Carnassial.Data;
 using Carnassial.Images;
-using Carnassial.Interop;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,12 +9,9 @@ namespace Carnassial.Dialog
 {
     internal class DateTimeRereadIOComputeTransactionManager : FileIOComputeTransactionManager<ObservableStatus<DateTimeRereadResult>>
     {
-        private UInt64 mostRecentStatusUpdate;
-
         public DateTimeRereadIOComputeTransactionManager(Action<ObservableStatus<DateTimeRereadResult>> onProgressUpdate, ObservableArray<DateTimeRereadResult> feedbackRows, TimeSpan desiredProgressInterval)
             : base(onProgressUpdate, desiredProgressInterval)
         {
-            this.mostRecentStatusUpdate = 0;
             this.Status.FeedbackRows = feedbackRows;
         }
 
@@ -38,14 +34,13 @@ namespace Carnassial.Dialog
                         this.Status.FeedbackRows[loadAtom.Offset + 1] = new DateTimeRereadResult(loadAtom.Second, originalDateTimeSecond);
                     }
 
-                    UInt64 tickNow = NativeMethods.GetTickCount64();
                     bool addFilesToTransaction = false;
                     bool updateStatus = false;
-                    if ((tickNow - this.mostRecentStatusUpdate) > this.DesiredStatusIntervalInMilliseconds)
+                    if (this.Progress.ShouldUpdateProgress())
                     {
                         lock (this.Status)
                         {
-                            if ((tickNow - this.mostRecentStatusUpdate) > this.DesiredStatusIntervalInMilliseconds)
+                            if (this.Progress.ShouldUpdateProgress())
                             {
                                 addFilesToTransaction = this.ShouldAddFilesToTransaction();
                                 updateStatus = true;
@@ -61,8 +56,7 @@ namespace Carnassial.Dialog
                     if (updateStatus)
                     {
                         this.Status.CurrentFileIndex = this.FilesCompleted;
-                        this.Progress.Report(this.Status);
-                        this.mostRecentStatusUpdate = NativeMethods.GetTickCount64();
+                        this.Progress.QueueProgressUpdate(this.Status);
                     }
 
                     loadAtom.DisposeJpegs();
@@ -91,8 +85,7 @@ namespace Carnassial.Dialog
             await this.RunTasksAsync(fileDatabase.CreateUpdateFileDateTimeTransaction(), filesToLoadByRelativePath, fileDatabase.CurrentlySelectedFileCount);
 
             this.Status.CurrentFileIndex = this.FilesCompleted;
-            this.Progress.Report(this.Status);
-            this.mostRecentStatusUpdate = NativeMethods.GetTickCount64();
+            this.Progress.QueueProgressUpdate(this.Status);
         }
     }
 }

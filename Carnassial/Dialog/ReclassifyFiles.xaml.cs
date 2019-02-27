@@ -252,9 +252,9 @@ namespace Carnassial.Dialog
                 this.FileName.ToolTip = this.FileName.Content;
                 this.DisplayClassification(status.File, status.ImageProperties, status.File.Classification);
             }
-            if (status.Image != null)
+            if (status.TryDetachImage(out CachedImage image))
             {
-                this.FileDisplay.Display(status.Image);
+                this.FileDisplay.Display(image);
             }
 
             this.isProgramaticNavigatiorSliderUpdate = true;

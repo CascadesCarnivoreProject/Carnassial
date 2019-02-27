@@ -924,7 +924,7 @@ namespace Carnassial.UnitTests
                 List<FileExpectations> fileExpectations = this.PopulateDefaultDatabase(fileDatabase, true);
 
                 // importing self should be a no op
-                DataImportStatus importStatus = new DataImportStatus((DataImportStatus status) => { }, Constant.ThrottleValues.DesiredIntervalBetweenStatusUpdates);
+                DataImportProgress importStatus = new DataImportProgress((DataImportProgress status) => { }, Constant.ThrottleValues.DesiredIntervalBetweenStatusUpdates);
                 FileImportResult result = fileDatabase.TryImportData(fileDatabase.FilePath, importStatus);
                 Assert.IsTrue(result.Errors.Count == 0);
                 Assert.IsTrue(result.FilesAdded == 0);

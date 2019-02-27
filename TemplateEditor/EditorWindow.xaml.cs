@@ -22,6 +22,7 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Navigation;
+using System.Windows.Threading;
 using MessageBox = Carnassial.Dialog.MessageBox;
 using SaveFileDialog = System.Windows.Forms.SaveFileDialog;
 
@@ -40,7 +41,7 @@ namespace Carnassial.Editor
 
         public EditorWindow()
         {
-            AppDomain.CurrentDomain.UnhandledException += this.OnUnhandledException;
+            App.Current.DispatcherUnhandledException += this.OnUnhandledException;
             this.InitializeComponent();
             this.AddCounterButton.Tag = ControlType.Counter;
             this.AddFixedChoiceButton.Tag = ControlType.FixedChoice;
@@ -687,7 +688,7 @@ namespace Carnassial.Editor
             this.templateDatabase.UpdateDisplayOrder(Constant.ControlColumn.SpreadsheetOrder, spreadsheetOrderByDataLabel);
         }
 
-        private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        private void OnUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             string databasePath = null;
             if (this.templateDatabase != null)

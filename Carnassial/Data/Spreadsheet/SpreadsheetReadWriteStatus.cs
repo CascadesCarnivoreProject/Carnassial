@@ -39,7 +39,7 @@ namespace Carnassial.Data.Spreadsheet
             this.EndPosition = sharedStringsToRead;
             this.isExcelLoad = true;
 
-            this.Report(0);
+            this.QueueProgressUpdate(0);
         }
 
         public void BeginExcelSave()
@@ -53,7 +53,7 @@ namespace Carnassial.Data.Spreadsheet
             this.EndPosition = 6.0;
             this.isExcelSave = true;
 
-            this.Report(0);
+            this.QueueProgressUpdate(0);
         }
 
         public void BeginWrite(int rowsToWrite)
@@ -63,7 +63,7 @@ namespace Carnassial.Data.Spreadsheet
             this.ClearFlags();
             this.EndPosition = (double)rowsToWrite;
 
-            this.Report(0);
+            this.QueueProgressUpdate(0);
         }
 
         protected override void ClearFlags()
@@ -76,7 +76,7 @@ namespace Carnassial.Data.Spreadsheet
 
         public void EndExcelWorkbookSave()
         {
-            this.Report(1);
+            this.QueueProgressUpdate(1);
         }
 
         public override string GetMessage()
@@ -98,11 +98,6 @@ namespace Carnassial.Data.Spreadsheet
                 return "Updating Carnassial database...";
             }
             return String.Format("Writing row {0} of {1}...", this.CurrentPosition, this.EndPosition);
-        }
-
-        protected override void ReportProgress()
-        {
-            this.Progress.Report(this);
         }
     }
 }

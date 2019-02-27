@@ -56,7 +56,7 @@
     <system:String x:Key="AnalysisButtons.PasteNextValuesTooltip">Copy the highlighted data (fields marked 'Copyable' in the template) from the next file.</system:String>
 
     <!-- @Title is overridden in code for the editor -->
-    <dialog:Message x:Key="ApplicationWindow.Exception" WindowTitle="Um, please pardon us while we crash now..." Image="Error" Title="Uh-oh, Carnassial needs to close.">
+    <dialog:Message x:Key="ApplicationWindow.Exception" WindowTitle="Oops." Image="Error" Title="Carnassial needs to close." Buttons="OK">
         <dialog:Message.Problem>
             <Run>This is a bug and we'd appreciate your help in fixing it.  The What section below has been copied to the clipboard.  Please paste it into a new issue at {0} or an email to {1}.  Please also include a clear and specific description of what you were doing at the time.</Run>
         </dialog:Message.Problem>

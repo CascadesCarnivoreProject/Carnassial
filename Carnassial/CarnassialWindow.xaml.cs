@@ -25,6 +25,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Threading;
 using MessageBox = Carnassial.Dialog.MessageBox;
 using SaveFileDialog = System.Windows.Forms.SaveFileDialog;
 
@@ -43,7 +44,7 @@ namespace Carnassial
 
         public CarnassialWindow()
         {
-            AppDomain.CurrentDomain.UnhandledException += this.OnUnhandledException;
+            App.Current.DispatcherUnhandledException += this.OnUnhandledException;
             this.InitializeComponent();
 
             this.speechSynthesizer = new Lazy<SpeechSynthesizer>(() => new SpeechSynthesizer());
@@ -1135,9 +1136,9 @@ namespace Carnassial
             FileImportResult importResult;
             if (String.Equals(Path.GetExtension(otherDataFilePath), Constant.File.FileDatabaseFileExtension, StringComparison.OrdinalIgnoreCase))
             {
-                DataImportStatus importStatus = new DataImportStatus(this.UpdateImportOrExportProgress<DataImportStatus>, this.State.Throttles.GetDesiredProgressUpdateInterval());
                 importResult = await Task.Run(() =>
                 {
+                    DataImportProgress importStatus = new DataImportProgress(this.UpdateImportOrExportProgress<DataImportProgress>, this.State.Throttles.GetDesiredProgressUpdateInterval());
                     this.DataHandler.IsProgrammaticUpdate = true;
                     FileImportResult result = this.DataHandler.FileDatabase.TryImportData(otherDataFilePath, importStatus);
                     this.DataHandler.IsProgrammaticUpdate = false;
@@ -1769,7 +1770,7 @@ namespace Carnassial
             this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(true);
         }
 
-        private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        private void OnUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             string databasePath = null;
             if (this.IsFileDatabaseAvailable())
@@ -2217,7 +2218,7 @@ namespace Carnassial
             // update UI for import
             this.ShowLongRunningOperationFeedback();
             this.MenuOptions.IsEnabled = true;
-            folderLoad.ReportStatus();
+            folderLoad.QueueProgressUpdate();
             if (this.State.SkipFileClassification)
             {
                 this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusImageSetLoadingFolders);
@@ -2607,7 +2608,7 @@ namespace Carnassial
             }
         }
 
-        private void UpdateImportOrExportProgress<TProgress>(DataImportExportStatus<TProgress> progress)
+        private void UpdateImportOrExportProgress<TProgress>(DataImportExportStatus<TProgress> progress) where TProgress : class
         {
             this.ShowLongRunningOperationFeedback();
 

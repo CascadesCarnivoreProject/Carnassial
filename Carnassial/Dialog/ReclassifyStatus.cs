@@ -1,29 +1,25 @@
 ﻿using Carnassial.Data;
 using Carnassial.Images;
-using Carnassial.Native;
 using System;
+using System.Threading;
 
 namespace Carnassial.Dialog
 {
     public class ReclassifyStatus : FileIOComputeTransactionStatus
     {
         private bool disposed;
+        private CachedImage image;
 
         public ImageRow File { get; set; }
-        public CachedImage Image { get; set; }
         public ImageProperties ImageProperties { get; set; }
         public UInt64 MostRecentImageUpdate { get; set; }
-        public UInt64 MostRecentStatusUpdate { get; set; }
-        public bool ProgressUpdateInProgress { get; set; }
 
         public ReclassifyStatus()
         {
             this.File = null;
-            this.Image = null;
+            this.image = null;
             this.ImageProperties = null;
             this.MostRecentImageUpdate = 0;
-            this.MostRecentStatusUpdate = 0;
-            this.ProgressUpdateInProgress = false;
         }
 
         public void Dispose()
@@ -39,11 +35,34 @@ namespace Carnassial.Dialog
                 return;
             }
 
-            if (disposing && (this.Image != null))
+            if (disposing && (this.image != null))
             {
-                this.Image.Dispose();
+                this.image.Dispose();
             }
             this.disposed = true;
+        }
+
+        public void SetImage(CachedImage imageToDisplay)
+        {
+            // see remarks for FileLoadStatus.SetImage()
+            CachedImage oldImage = Interlocked.Exchange(ref this.image, imageToDisplay);
+            if (oldImage != null)
+            {
+                oldImage.Dispose();
+            }
+        }
+
+        public bool TryDetachImage(out CachedImage image)
+        {
+            if (this.image == null)
+            {
+                image = null;
+                return false;
+            }
+
+            // see remarks in FileLoadStatus.TryDetachImage()
+            image = Interlocked.Exchange(ref this.image, null);
+            return image != null;
         }
     }
 }

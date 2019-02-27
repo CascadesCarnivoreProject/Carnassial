@@ -764,7 +764,7 @@ namespace Carnassial.Data
             return fileDatabase.ControlSynchronizationIssues.Count == 0;
         }
 
-        public FileImportResult TryImportData(string otherDatabasePath, DataImportStatus importStatus)
+        public FileImportResult TryImportData(string otherDatabasePath, DataImportProgress importStatus)
         {
             if (this.ImageSet.FileSelection != FileSelection.All)
             {
@@ -875,9 +875,9 @@ namespace Carnassial.Data
 
                     if (fileIndex - mostRecentReportCheck > Constant.File.RowsBetweenStatusReportChecks)
                     {
-                        if (importStatus.ShouldReport())
+                        if (importStatus.ShouldUpdateProgress())
                         {
-                            importStatus.Report(fileIndex);
+                            importStatus.QueueProgressUpdate(fileIndex);
                         }
                         mostRecentReportCheck = fileIndex;
                     }
@@ -893,7 +893,7 @@ namespace Carnassial.Data
                         insertFiles.AddFiles(filesToInsert);
                         insertFiles.Commit();
                     }
-                    importStatus.Report(filesToInsert.Count);
+                    importStatus.QueueProgressUpdate(filesToInsert.Count);
                 }
                 if (filesToUpdate.Count > 0)
                 {
@@ -902,7 +902,7 @@ namespace Carnassial.Data
                         updateFiles.AddFiles(filesToUpdate);
                         updateFiles.Commit();
                     }
-                    importStatus.Report(totalFiles);
+                    importStatus.QueueProgressUpdate(totalFiles);
                 }
 
                 result.FilesAdded = filesToInsert.Count;
@@ -913,6 +913,11 @@ namespace Carnassial.Data
             {
                 result.Exception = ioException;
             }
+            finally
+            {
+                importStatus.End();
+            }
+
             return result;
         }
 

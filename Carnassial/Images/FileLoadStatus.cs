@@ -1,5 +1,4 @@
 ﻿using Carnassial.Data;
-using Carnassial.Native;
 using System;
 using System.Threading;
 
@@ -13,8 +12,6 @@ namespace Carnassial.Images
         public ImageRow CurrentFile { get; set; }
         public int ImageRenderWidth { get; private set; }
         public UInt64 MostRecentImageUpdate { get; set; }
-        public UInt64 MostRecentStatusUpdate { get; set; }
-        public bool StatusUpdateInProgress { get; set; }
         public int TotalFiles { get; set; }
 
         public FileLoadStatus()
@@ -24,8 +21,6 @@ namespace Carnassial.Images
             this.image = null;
             this.MaybeUpdateImageRenderWidth(0);
             this.MostRecentImageUpdate = UInt64.MinValue;
-            this.MostRecentStatusUpdate = UInt64.MinValue;
-            this.StatusUpdateInProgress = false;
             this.TotalFiles = 0;
         }
 
@@ -42,7 +37,7 @@ namespace Carnassial.Images
                 return;
             }
 
-            if (disposing && this.image != null)
+            if (disposing && (this.image != null))
             {
                 this.image.Dispose();
             }
@@ -68,7 +63,7 @@ namespace Carnassial.Images
             this.ImageRenderWidth = Math.Max(Constant.Images.MinimumRenderWidth, possibleNewWidth);
         }
 
-        public void UpdateImage(CachedImage imageToDisplay)
+        public void SetImage(CachedImage imageToDisplay)
         {
             // a race condition potentially exists between calls to this function and calls to TryDetachImage()
             // To avoid, both functions use Interlocked.Exchange() and, in this function, the released image is diposed after
@@ -89,7 +84,7 @@ namespace Carnassial.Images
                 return false;
             }
 
-            // see remarks in UpdateImageAsync()
+            // see remarks in SetImage()
             image = Interlocked.Exchange(ref this.image, null);
             return image != null;
         }

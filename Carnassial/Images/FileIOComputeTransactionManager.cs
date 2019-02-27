@@ -1,6 +1,7 @@
 ﻿using Carnassial.Data;
 using Carnassial.Database;
 using Carnassial.Interop;
+using Carnassial.Util;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -20,8 +21,8 @@ namespace Carnassial.Images
     /// capability available, provide UI status updates as an operation proceeds, and accumulate the results of the compute tasks
     /// into a database transaction.
     /// </remarks>
-    /// <typeparam name="TStatus">The type of the status object passed to the progress update callback.</typeparam>
-    internal class FileIOComputeTransactionManager<TStatus> : IDisposable where TStatus : FileIOComputeTransactionStatus, new()
+    /// <typeparam name="TProgress">The type of the status object passed to the progress update callback.</typeparam>
+    internal class FileIOComputeTransactionManager<TProgress> : IDisposable where TProgress : FileIOComputeTransactionStatus, new()
     {
         private bool addFilesInProgress;
         private int addFileStartIndex;
@@ -47,18 +48,17 @@ namespace Carnassial.Images
         private WindowedTransactionSequence<FileLoad> transactionSequence;
 
         protected Func<int, int> ComputeTaskBody { get; set; }
-        protected UInt64 DesiredStatusIntervalInMilliseconds { get; private set; }
         protected Action<int> IOTaskBody { get; set; }
-        protected IProgress<TStatus> Progress { get; private set; }
-        public bool ShouldExitCurrentIteration { get; set; }
-        protected TStatus Status { get; private set; }
+        protected ExceptionPropagatingProgress<TProgress> Progress { get; private set; }
+        protected TProgress Status { get; private set; }
         protected int TransactionFileCount { get; private set; }
 
         public TimeSpan ComputeDuration { get; private set; }
         public TimeSpan DatabaseDuration { get; private set; }
         public TimeSpan IODuration { get; private set; }
+        public bool ShouldExitCurrentIteration { get; set; }
 
-        protected FileIOComputeTransactionManager(Action<TStatus> onProgressUpdate, TimeSpan desiredProgressInterval)
+        protected FileIOComputeTransactionManager(Action<TProgress> onProgressUpdate, TimeSpan desiredProgressInterval)
         {
             this.addFilesInProgress = false;
             this.addFileStartIndex = 0;
@@ -70,7 +70,6 @@ namespace Carnassial.Images
             this.ComputeTaskBody = null;
 
             this.DatabaseDuration = TimeSpan.Zero;
-            this.DesiredStatusIntervalInMilliseconds = (UInt64)desiredProgressInterval.TotalMilliseconds;
             this.disposed = false;
             this.fileLoads = null;
 
@@ -85,9 +84,9 @@ namespace Carnassial.Images
             this.isCompleted = false;
             this.isExceptional = false;
             this.loadAtoms = null;
-            this.Progress = new Progress<TStatus>(onProgressUpdate);
+            this.Progress = new ExceptionPropagatingProgress<TProgress>(onProgressUpdate, desiredProgressInterval);
             this.ShouldExitCurrentIteration = false;
-            this.Status = new TStatus();
+            this.Status = new TProgress();
 
             this.transactionSequence = null;
             this.TransactionFileCount = 0;
@@ -151,6 +150,8 @@ namespace Carnassial.Images
                 {
                     this.transactionSequence.Dispose();
                 }
+
+                this.Progress.End();
             }
 
             this.disposed = true;

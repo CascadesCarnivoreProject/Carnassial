@@ -69,9 +69,9 @@ namespace Carnassial.Data.Spreadsheet
                             this.sharedStrings.Add(value, this.sharedStrings.Count);
                             reader.ReadEndElement();
 
-                            if (status.ShouldReport())
+                            if (status.ShouldUpdateProgress())
                             {
-                                status.Report(this.sharedStrings.Count);
+                                status.QueueProgressUpdate(this.sharedStrings.Count);
                             }
                         }
                         else
@@ -143,9 +143,9 @@ namespace Carnassial.Data.Spreadsheet
                             sharedStrings.Add(reader.ReadElementContentAsString());
                             reader.ReadEndElement();
 
-                            if (status.ShouldReport())
+                            if (status.ShouldUpdateProgress())
                             {
-                                status.Report(sharedStrings.Count);
+                                status.QueueProgressUpdate(sharedStrings.Count);
                             }
                         }
                         else

@@ -1,30 +1,24 @@
 ﻿using Carnassial.Interop;
+using Carnassial.Util;
 using System;
 using System.Diagnostics;
 
 namespace Carnassial.Data
 {
-    public abstract class DataImportExportStatus<TProgress> 
+    public abstract class DataImportExportStatus<TProgress> : ExceptionPropagatingProgress<TProgress> where TProgress : class
     {
-        private readonly ulong progressUpdateIntervalInMilliseconds;
-
         protected double CurrentPosition { get; set; }
         protected double EndPosition { get; set; }
         protected bool IsRead { get; set; }
         protected bool IsTransactionCommit { get; set; }
-        protected ulong MostRecentStatusUpdate { get; set; }
-        protected IProgress<TProgress> Progress { get; private set; }
 
         protected DataImportExportStatus(Action<TProgress> onProgressUpdate, TimeSpan progressUpdateInterval)
+            : base(onProgressUpdate, progressUpdateInterval)
         {
-            this.progressUpdateIntervalInMilliseconds = (UInt64)progressUpdateInterval.TotalMilliseconds;
-
             this.CurrentPosition = 0.0;
             this.EndPosition = -1.0;
             this.IsRead = false;
             this.IsTransactionCommit = false;
-            this.MostRecentStatusUpdate = 0;
-            this.Progress = new Progress<TProgress>(onProgressUpdate);
         }
 
         public virtual void BeginRead(long entitiesToRead)
@@ -35,7 +29,7 @@ namespace Carnassial.Data
             this.EndPosition = (double)entitiesToRead;
             this.IsRead = true;
 
-            this.Report(0);
+            this.QueueProgressUpdate(0);
         }
 
         public void BeginTransactionCommit(int totalFilesToInsertOrUpdate)
@@ -46,7 +40,7 @@ namespace Carnassial.Data
             this.EndPosition = (double)totalFilesToInsertOrUpdate;
             this.IsTransactionCommit = true;
 
-            this.Report(0);
+            this.QueueProgressUpdate(0);
         }
 
         protected virtual void ClearFlags()
@@ -74,21 +68,12 @@ namespace Carnassial.Data
             return 100.0 * this.CurrentPosition / this.EndPosition;
         }
 
-        public void Report(long currentPosition)
+        public void QueueProgressUpdate(long currentPosition)
         {
             this.CurrentPosition = (double)currentPosition;
             Debug.Assert(this.CurrentPosition <= this.EndPosition, "Current position past end position.");
 
-            this.ReportProgress();
-            this.MostRecentStatusUpdate = NativeMethods.GetTickCount64();
-        }
-
-        protected abstract void ReportProgress();
-
-        public bool ShouldReport()
-        {
-            UInt64 tickNow = NativeMethods.GetTickCount64();
-            return (tickNow - this.MostRecentStatusUpdate) > this.progressUpdateIntervalInMilliseconds;
+            this.QueueProgressUpdate(this as TProgress);
         }
     }
 }
