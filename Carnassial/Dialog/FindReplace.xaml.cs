@@ -1,4 +1,5 @@
-﻿using Carnassial.Data;
+﻿using Carnassial.Control;
+using Carnassial.Data;
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ using WpfControl = System.Windows.Controls.Control;
 
 namespace Carnassial.Dialog
 {
-    public partial class FindReplace : FindDialog
+    public partial class FindReplace : WindowWithSystemMenu
     {
         private const int ReplaceRow = 2;
         private const int ReplaceValueTabIndex = 16;
@@ -91,7 +92,7 @@ namespace Carnassial.Dialog
 
                 // for now, glob is not supported
                 // Update FileFindReplace.MatchString() if this changes.            
-                operators = this.GetOperators(searchTerm);
+                operators = searchTerm.GetOperators();
                 operators.Remove(Constant.SearchTermOperator.Glob);
             }
 
@@ -107,11 +108,11 @@ namespace Carnassial.Dialog
             // update values
             if (searchTerm != null)
             {
-                WpfControl changingValue = this.CreateValueControl(searchTerm, this.carnassial.DataHandler.FileDatabase);
+                WpfControl changingValue = searchTerm.CreateValueControl(this.carnassial.DataHandler.FileDatabase.AutocompletionCache);
                 changingValue.TabIndex = changingOperator.TabIndex + 1;
                 changingGrid.ReplaceOrAddChild(row, FindReplace.ValueColumn, changingValue);
 
-                WpfControl synchronizingValue = this.CreateValueControl(searchTerm, this.carnassial.DataHandler.FileDatabase);
+                WpfControl synchronizingValue = searchTerm.CreateValueControl(this.carnassial.DataHandler.FileDatabase.AutocompletionCache);
                 synchronizingValue.TabIndex = synchronizingOperator.TabIndex + 1;
                 synchronizingGrid.ReplaceOrAddChild(row, FindReplace.ValueColumn, synchronizingValue);
 
@@ -125,7 +126,7 @@ namespace Carnassial.Dialog
                         this.ReplaceLabel.DataContext = replaceTerm;
                     }
 
-                    WpfControl replaceValue = this.CreateValueControl(replaceTerm, this.carnassial.DataHandler.FileDatabase);
+                    WpfControl replaceValue = replaceTerm.CreateValueControl(this.carnassial.DataHandler.FileDatabase.AutocompletionCache);
                     replaceValue.TabIndex = FindReplace.ReplaceValueTabIndex;
                     this.ReplaceGrid.ReplaceOrAddChild(FindReplace.ReplaceRow, FindReplace.ValueColumn, replaceValue);
                 }

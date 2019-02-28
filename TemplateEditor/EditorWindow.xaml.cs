@@ -31,10 +31,11 @@ namespace Carnassial.Editor
     public partial class EditorWindow : ApplicationWindow, IDisposable
     {
         // state tracking
+        private readonly EditorUserRegistrySettings userSettings;
+
         private bool controlDataGridBeingUpdatedByCode;
         private bool controlDataGridCellEditForcedByCode;
         private bool disposed;
-        private EditorUserRegistrySettings userSettings;
 
         // database where the controls and image set defaults are stored
         private TemplateDatabase templateDatabase;
@@ -72,7 +73,7 @@ namespace Carnassial.Editor
 
             if (this.InstructionsScrollViewer.Tag == null)
             {
-                Hyperlink tutorialLink = (Hyperlink)LogicalTreeHelper.FindLogicalNode(this.InstructionsScrollViewer.Document, Constant.ResourceName.InstructionsTutorialLink);
+                Hyperlink tutorialLink = (Hyperlink)LogicalTreeHelper.FindLogicalNode(this.InstructionsScrollViewer.Document, Constant.DialogControlName.InstructionsTutorialLink);
                 tutorialLink.NavigateUri = CarnassialConfigurationSettings.GetTutorialBrowserAddress();
                 tutorialLink.ToolTip = tutorialLink.NavigateUri.AbsoluteUri;
 
@@ -267,7 +268,7 @@ namespace Carnassial.Editor
                     }
                     DataGridRow currentRow = (DataGridRow)this.ControlDataGrid.ItemContainerGenerator.ContainerFromIndex(this.ControlDataGrid.SelectedIndex);
                     ControlRow control = (ControlRow)currentRow.Item;
-                    switch (control.Type)
+                    switch (control.ControlType)
                     {
                         case ControlType.Counter:
                             e.Handled = !Utilities.IsDigits(e.Text);
@@ -304,7 +305,7 @@ namespace Carnassial.Editor
                             // no restrictions on note or time controls
                             break;
                         default:
-                            throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.Type));
+                            throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.ControlType));
                     }
                     break;
                 // EditorConstant.Control.ID is not editable
@@ -495,7 +496,7 @@ namespace Carnassial.Editor
         // Code from: http://techiethings.blogspot.com/2010/05/get-wpf-datagrid-row-and-cell.html
         private static T GetVisualChild<T>(Visual parent) where T : Visual
         {
-            T child = default(T);
+            T child = default;
             int numVisuals = VisualTreeHelper.GetChildrenCount(parent);
             for (int i = 0; i < numVisuals; i++)
             {
@@ -872,7 +873,7 @@ namespace Carnassial.Editor
                 }
 
                 GithubReleaseClient updater = new GithubReleaseClient(EditorConstant.ApplicationName, latestVersionAddress);
-                updater.TryGetAndParseRelease(false, out Version publiclyAvailableVersion);
+                updater.TryGetAndParseRelease(false, out Version _);
                 this.userSettings.MostRecentCheckForUpdates = DateTime.UtcNow;
             }
 

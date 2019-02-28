@@ -98,7 +98,7 @@ namespace Carnassial.UnitTests
                     moveToFile = await cache.TryMoveToFileAsync(fileExpectations.Count, 0);
                     Assert.IsFalse(moveToFile.Succeeded);
 
-                    // combined diferences
+                    // combined differences
                     cache.Reset();
                     for (int file = 0; file < fileDatabase.Files.RowCount; ++file)
                     {

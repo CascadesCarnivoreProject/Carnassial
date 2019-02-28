@@ -427,7 +427,7 @@ namespace Carnassial.Data
                 }
 
                 defaultValues.Add(control.DataLabel, defaultValue);
-                if (control.Type == ControlType.Counter)
+                if (control.ControlType == ControlType.Counter)
                 {
                     defaultValues.Add(FileTable.GetMarkerPositionColumnName(control.DataLabel), Constant.ControlDefault.MarkerPositions);
                 }

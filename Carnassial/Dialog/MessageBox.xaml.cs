@@ -77,9 +77,9 @@ namespace Carnassial.Dialog
             this.DialogResult = false;
         }
 
-        public static MessageBox FromResource(string key, Window owner, params object[] args)
+        public static MessageBox FromResource(string messageResourceKey, Window owner, params object[] args)
         {
-            return new MessageBox(App.FindResource<Message>(key), owner, args);
+            return new MessageBox(App.FindResource<Message>(messageResourceKey), owner, args);
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)

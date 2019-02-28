@@ -56,7 +56,7 @@ namespace Carnassial.Database
                     {
                         valueIsNullOrEmpty = String.IsNullOrEmpty((string)clause.Value);
                     }
-                    if (valueIsNullOrEmpty && clause.Operator == Constant.SearchTermOperator.Equal)
+                    if (valueIsNullOrEmpty && (clause.Operator == Constant.SearchTermOperator.Equal))
                     {
                         whereClauses.Add("(" + quotedColumn + " IS NULL OR " + quotedColumn + " = '')");
                     }

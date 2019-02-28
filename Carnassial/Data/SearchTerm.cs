@@ -12,54 +12,54 @@ namespace Carnassial.Data
     /// <summary>
     /// A SearchTerm stores the search criteria for a field.
     /// </summary>
-    public abstract class SearchTerm : INotifyPropertyChanged
+    public class SearchTerm : INotifyPropertyChanged
     {
+        private ControlType controlType;
+        private Type databaseColumnType;
         private object databaseValue;
+        private string dataLabel;
+        private string label;
+        private bool importanceHint;
         private string op;
         private Lazy<ObservableCollection<object>> wellKnownValues;
         private bool useForSearching;
 
-        public ControlType ControlType { get; private set; }
-        public string DataLabel { get; private set; }
-        public string Label { get; private set; }
-
         public event PropertyChangedEventHandler PropertyChanged;
 
-        protected SearchTerm(ControlRow control)
+        public SearchTerm(ControlRow control)
         {
-            this.ControlType = control.Type;
-            this.databaseValue = null;
-            this.DataLabel = control.DataLabel;
-            this.Label = control.Label;
-            this.op = Constant.SearchTermOperator.Equal;
             this.useForSearching = false;
-            this.wellKnownValues = new Lazy<ObservableCollection<object>>(() =>
-            {
-                List<string> wellKnownStrings = control.GetWellKnownValues();
-                if (String.Equals(this.DataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal))
-                {
-                    // remove duplicate Color entry due to Ok being included as a well known value
-                    wellKnownStrings.Remove(FileClassification.Color.ToString());
-                }
+            // all other fields are initialized in SetControl()
 
-                ObservableCollection<object> wellKnownValues = new ObservableCollection<object>();
-                foreach (string wellKnownString in wellKnownStrings)
-                {
-                    wellKnownValues.Add(this.ConvertWellKnownValue(wellKnownString));
-                }
-                return wellKnownValues;
-            });
+            this.SetControl(control);
         }
 
         protected SearchTerm(SearchTerm other)
         {
             this.ControlType = other.ControlType;
+            this.databaseColumnType = other.databaseColumnType;
             this.databaseValue = other.databaseValue;
             this.DataLabel = other.DataLabel;
             this.Label = other.Label;
             this.Operator = other.Operator;
             this.UseForSearching = other.UseForSearching;
             this.wellKnownValues = other.wellKnownValues;
+        }
+
+        public ControlType ControlType
+        {
+            get
+            {
+                return this.controlType;
+            }
+            private set
+            {
+                if (this.controlType != value)
+                {
+                    this.controlType = value;
+                    this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.ControlType)));
+                }
+            }
         }
 
         public object DatabaseValue
@@ -70,8 +70,60 @@ namespace Carnassial.Data
             }
             set
             {
-                this.databaseValue = this.ConvertDatabaseValue(value);
-                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.DatabaseValue)));
+                object databaseValue = this.ConvertDatabaseValue(value);
+                if (Object.Equals(this.databaseValue, databaseValue) == false)
+                {
+                    this.databaseValue = databaseValue;
+                    this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.DatabaseValue)));
+                }
+            }
+        }
+
+        public string DataLabel
+        {
+            get
+            {
+                return this.dataLabel;
+            }
+            private set
+            {
+                if (String.Equals(this.dataLabel, value, StringComparison.Ordinal) == false)
+                {
+                    this.dataLabel = value;
+                    this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.DataLabel)));
+                }
+            }
+        }
+
+        public string Label
+        {
+            get
+            {
+                return this.label;
+            }
+            private set
+            {
+                if (String.Equals(this.label, value, StringComparison.Ordinal) == false)
+                {
+                    this.label = value;
+                    this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Label)));
+                }
+            }
+        }
+
+        public bool ImportanceHint
+        {
+            get
+            {
+                return this.importanceHint;
+            }
+            private set
+            {
+                if (this.importanceHint != value)
+                {
+                    this.importanceHint = value;
+                    this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.ImportanceHint)));
+                }
             }
         }
 
@@ -83,8 +135,11 @@ namespace Carnassial.Data
             }
             set
             {
-                this.op = value;
-                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Operator)));
+                if (String.Equals(this.op, value, StringComparison.Ordinal) == false)
+                {
+                    this.op = value;
+                    this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Operator)));
+                }
             }
         }
 
@@ -96,8 +151,11 @@ namespace Carnassial.Data
             }
             set
             {
-                this.useForSearching = value;
-                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.UseForSearching)));
+                if (this.useForSearching != value)
+                {
+                    this.useForSearching = value;
+                    this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.UseForSearching)));
+                }
             }
         }
 
@@ -106,9 +164,88 @@ namespace Carnassial.Data
             get { return this.wellKnownValues.Value; }
         }
 
-        public abstract SearchTerm Clone();
-        protected abstract object ConvertDatabaseValue(object value);
-        protected abstract object ConvertWellKnownValue(string value);
+        public SearchTerm Clone()
+        {
+            return new SearchTerm(this);
+        }
+
+        protected object ConvertDatabaseValue(object value)
+        {
+            if (value is string)
+            {
+                return this.ConvertWellKnownValue((string)value);
+            }
+
+            if (this.databaseColumnType == typeof(DateTime))
+            {
+                DateTime dateTime = (DateTime)value;
+                if (dateTime.Kind != DateTimeKind.Utc)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(value), "DateTime not UTC.");
+                }
+                return dateTime;
+            }
+
+            if (value == null)
+            {
+                if (this.databaseColumnType.IsByRef)
+                {
+                    return null;
+                }
+                throw new ArgumentOutOfRangeException(nameof(value), String.Format("Cannot convert null to database column type {0}.", this.databaseColumnType.Name));
+            }
+
+            Type typeOfValue = value.GetType();
+            if (this.databaseColumnType != typeOfValue)
+            {
+                throw new ArgumentOutOfRangeException(nameof(value), String.Format("Cannot convert {0} to database column type {1}.", typeOfValue, this.databaseColumnType.Name));
+            }
+
+            return value;
+        }
+
+        protected object ConvertWellKnownValue(string value)
+        {
+            if (this.databaseColumnType == typeof(bool))
+            {
+                int valueAsInt = Int32.Parse(value, NumberStyles.None, Constant.InvariantCulture);
+                if (valueAsInt == 0)
+                {
+                    return false;
+                }
+                if (valueAsInt == 1)
+                {
+                    return true;
+                }
+                throw new ArgumentOutOfRangeException(nameof(value), "Valid integer values for boolean database columns are 0 and 1.");
+            }
+            if (this.databaseColumnType == typeof(DateTime))
+            {
+                return DateTimeHandler.ParseDatabaseDateTime(value);
+            }
+            if (this.databaseColumnType == typeof(FileClassification))
+            {
+                if (ImageRow.TryParseFileClassification(value, out FileClassification classification))
+                {
+                    return classification;
+                }
+                throw new ArgumentOutOfRangeException(nameof(value), String.Format("Unknown file classification '{0}'.", value));
+            }
+            if (this.databaseColumnType == typeof(int))
+            {
+                return Int32.Parse(value, NumberStyles.AllowLeadingSign, Constant.InvariantCulture);
+            }
+            if (this.databaseColumnType == typeof(string))
+            {
+                return value;
+            }
+            if (this.databaseColumnType == typeof(double))
+            {
+                return DateTimeHandler.ToDatabaseUtcOffset(DateTimeHandler.ParseDisplayUtcOffsetString(value));
+            }
+
+            throw new NotSupportedException(String.Format("Unhandled type {0}.", this.databaseColumnType));
+        }
 
         public override bool Equals(object obj)
         {
@@ -165,6 +302,44 @@ namespace Carnassial.Data
             return Utilities.CombineHashCodes(this.ControlType, this.DatabaseValue, this.DataLabel, this.Label, this.Operator, this.UseForSearching);
         }
 
+        public List<string> GetOperators()
+        {
+            // keep in sync with FileFindReplace.Match*() and SearchTermPicker.LabelBox_SelectionChanged()
+            switch (this.ControlType)
+            {
+                case ControlType.Counter:
+                case ControlType.DateTime:
+                case ControlType.FixedChoice:
+                    return new List<string>()
+                    {
+                        Constant.SearchTermOperator.Equal,
+                        Constant.SearchTermOperator.NotEqual,
+                        Constant.SearchTermOperator.LessThan,
+                        Constant.SearchTermOperator.GreaterThan,
+                        Constant.SearchTermOperator.LessThanOrEqual,
+                        Constant.SearchTermOperator.GreaterThanOrEqual
+                    };
+                case ControlType.Flag:
+                    return new List<string>()
+                    {
+                        Constant.SearchTermOperator.Equal,
+                        Constant.SearchTermOperator.NotEqual
+                    };
+                default:
+                    // notes
+                    return new List<string>()
+                    {
+                        Constant.SearchTermOperator.Equal,
+                        Constant.SearchTermOperator.NotEqual,
+                        Constant.SearchTermOperator.LessThan,
+                        Constant.SearchTermOperator.GreaterThan,
+                        Constant.SearchTermOperator.LessThanOrEqual,
+                        Constant.SearchTermOperator.GreaterThanOrEqual,
+                        Constant.SearchTermOperator.Glob
+                    };
+            }
+        }
+
         public WhereClause GetWhereClause()
         {
             // convert operator from unicode to SQL expression
@@ -198,124 +373,79 @@ namespace Carnassial.Data
 
             return new WhereClause(this.DataLabel, sqlOperator, this.DatabaseValue);
         }
-    }
 
-    [SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1402:FileMayOnlyContainASingleClass", Justification = "StyleCop limitation.")]
-    public class SearchTerm<TColumnType> : SearchTerm
-    {
-        public SearchTerm(ControlRow control)
-            : base(control)
+        public void SetControl(ControlRow control)
         {
-        }
-
-        protected SearchTerm(SearchTerm<TColumnType> other)
-            : base(other)
-        {
-        }
-
-        public override SearchTerm Clone()
-        {
-            return new SearchTerm<TColumnType>(this);
-        }
-
-        protected override object ConvertDatabaseValue(object value)
-        {
-            if (value is string)
+            // set fields directly rather than through properties to suppress per-field change notifications
+            this.controlType = control.ControlType;
+            this.databaseColumnType = control.GetDatabaseColumnType();
+            this.dataLabel = control.DataLabel;
+            this.databaseValue = control.GetDefaultDatabaseValue();
+            this.label = control.Label;
+            this.importanceHint = control.AnalysisLabel;
+            this.op = Constant.SearchTermOperator.Equal;
+            if (this.controlType == ControlType.Counter)
             {
-                return this.ConvertWellKnownValue((string)value);
+                this.op = Constant.SearchTermOperator.GreaterThan;
             }
-
-            if (typeof(TColumnType) == typeof(DateTime))
+            else if (this.controlType == ControlType.DateTime)
             {
-                DateTime dateTime = (DateTime)value;
-                if (dateTime.Kind != DateTimeKind.Utc)
+                this.op = Constant.SearchTermOperator.GreaterThanOrEqual;
+            }
+            // leave this.useForSearching unchanged
+            // This method is only called at construction and when the user retargets a SearchTerm to a different database column. 
+            // In the latter case, modifying UseForSearching is most likely not the user's intent.
+            this.wellKnownValues = new Lazy<ObservableCollection<object>>(() =>
+            {
+                List<string> wellKnownStrings = control.GetWellKnownValues();
+                if (String.Equals(this.DataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal))
                 {
-                    throw new ArgumentOutOfRangeException(nameof(value), "DateTime not UTC.");
+                    // remove duplicate Color entry due to Ok being included as a well known value
+                    wellKnownStrings.Remove(FileClassification.Color.ToString());
                 }
-                return dateTime;
-            }
 
-            return (TColumnType)value;
-        }
+                ObservableCollection<object> wellKnownValues = new ObservableCollection<object>();
+                foreach (string wellKnownString in wellKnownStrings)
+                {
+                    wellKnownValues.Add(this.ConvertWellKnownValue(wellKnownString));
+                }
+                return wellKnownValues;
+            });
 
-        protected override object ConvertWellKnownValue(string value)
-        {
-            if (typeof(TColumnType) == typeof(bool))
-            {
-                int valueAsInt = Int32.Parse(value, NumberStyles.None, Constant.InvariantCulture);
-                if (valueAsInt == 0)
-                {
-                    return false;
-                }
-                if (valueAsInt == 1)
-                {
-                    return true;
-                }
-                throw new ArgumentOutOfRangeException(nameof(value), "Valid integer values for boolean database columns are 0 and 1.");
-            }
-            if (typeof(TColumnType) == typeof(DateTime))
-            {
-                return DateTimeHandler.ParseDatabaseDateTime(value);
-            }
-            if (typeof(TColumnType) == typeof(FileClassification))
-            {
-                if (ImageRow.TryParseFileClassification(value, out FileClassification classification))
-                {
-                    return classification;
-                }
-                throw new ArgumentOutOfRangeException(nameof(value), String.Format("Unknown file classification '{0}'.", value));
-            }
-            if (typeof(TColumnType) == typeof(int))
-            {
-                return Int32.Parse(value, NumberStyles.AllowLeadingSign, Constant.InvariantCulture);
-            }
-            if (typeof(TColumnType) == typeof(string))
-            {
-                return value;
-            }
-            if (typeof(TColumnType) == typeof(TimeSpan))
-            {
-                return DateTimeHandler.ParseDisplayUtcOffsetString(value).TotalHours;
-            }
-
-            throw new NotSupportedException(String.Format("Unhandled type {0}.", typeof(TColumnType)));
+            // send whole object changed notification
+            this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
         }
 
         public override string ToString()
         {
             string displayValue;
-            if (typeof(TColumnType) == typeof(bool))
+            if (this.databaseColumnType == typeof(bool))
             {
                 displayValue = (bool)this.DatabaseValue ? Boolean.TrueString : Boolean.FalseString;
             }
-            else if (typeof(TColumnType) == typeof(DateTime))
+            else if (this.databaseColumnType == typeof(DateTime))
             {
                 displayValue = DateTimeHandler.ToDisplayDateTimeString((DateTime)this.DatabaseValue);
             }
-            else if ((typeof(TColumnType) == typeof(FileClassification)) || 
-                     (typeof(TColumnType) == typeof(int)))
+            else if ((this.databaseColumnType == typeof(FileClassification)) ||
+                     (this.databaseColumnType == typeof(int)))
             {
                 displayValue = this.DatabaseValue.ToString();
             }
-            else if (typeof(TColumnType) == typeof(string))
+            else if (this.databaseColumnType == typeof(string))
             {
                 displayValue = (string)this.DatabaseValue;
             }
-            else if (typeof(TColumnType) == typeof(TimeSpan))
+            else if (this.databaseColumnType == typeof(double))
             {
                 displayValue = DateTimeHandler.ToDisplayUtcOffsetString(DateTimeHandler.FromDatabaseUtcOffset((double)this.DatabaseValue));
             }
             else
             {
-                throw new NotSupportedException(String.Format("Unhandled type {0}.", typeof(TColumnType)));
+                throw new NotSupportedException(String.Format("Unhandled type {0}.", this.databaseColumnType));
             }
 
-            if (String.IsNullOrEmpty(displayValue))
-            {
-                displayValue = "\"\"";  // an empty string, display it as ""
-            }
-
-            return this.DataLabel + " " + this.Operator + " " + displayValue;
+            return this.DataLabel + " " + this.Operator + " \"" + displayValue + "\"";
         }
     }
 }

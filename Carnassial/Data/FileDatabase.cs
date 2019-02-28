@@ -15,20 +15,19 @@ namespace Carnassial.Data
 {
     public class FileDatabase : TemplateDatabase
     {
+        public AutocompletionCache AutocompletionCache { get; private set; }
         public List<string> ControlSynchronizationIssues { get; private set; }
-
         public CustomSelection CustomSelection { get; set; }
 
         /// <summary>Gets the file name of the database on disk.</summary>
         public string FileName { get; private set; }
-
         public FileTable Files { get; private set; }
-
         public bool OrderFilesByDateTime { get; set; }
 
         private FileDatabase(string filePath)
             : base(filePath)
         {
+            this.AutocompletionCache = new AutocompletionCache(this);
             this.ControlSynchronizationIssues = new List<string>();
             this.FileName = Path.GetFileName(filePath);
             this.Files = new FileTable();
@@ -167,7 +166,7 @@ namespace Carnassial.Data
                     select.Where.Add(new WhereClause(Constant.FileColumn.Classification, Constant.SqlOperator.Equal, (int)FileClassification.Video));
                     break;
                 case FileSelection.MarkedForDeletion:
-                    select.Where.Add(new WhereClause(Constant.FileColumn.DeleteFlag, Constant.SqlOperator.Equal, Constant.Sql.TrueString));
+                    select.Where.Add(new WhereClause(Constant.FileColumn.DeleteFlag, Constant.SqlOperator.Equal, true));
                     break;
                 case FileSelection.Custom:
                     return this.CustomSelection.CreateSelect();
@@ -375,7 +374,7 @@ namespace Carnassial.Data
             {
                 columns.Add(control.DataLabel);
 
-                if (control.Type == ControlType.Counter)
+                if (control.ControlType == ControlType.Counter)
                 {
                     string markerColumn = FileTable.GetMarkerPositionColumnName(control.DataLabel);
                     columns.Add(markerColumn);
@@ -511,15 +510,15 @@ namespace Carnassial.Data
                     continue;
                 }
 
-                if (fileDatabaseControl.Type != templateControl.Type)
+                if (fileDatabaseControl.ControlType != templateControl.ControlType)
                 {
                     // controls are potentially interchangeable if their values are compatible
                     // For example, any other control can be converted to a note and a note can be changed to a choice if the choices
                     // include all values in use.  For now, however, such conversions aren't supported.
-                    this.ControlSynchronizationIssues.Add(String.Format("The field {0} is of type '{1}' in the file database but of type '{2}' in the template.", dataLabel, ControlTypeConverter.Convert(fileDatabaseControl.Type), ControlTypeConverter.Convert(templateControl.Type)));
+                    this.ControlSynchronizationIssues.Add(String.Format("The field {0} is of type '{1}' in the file database but of type '{2}' in the template.", dataLabel, ControlTypeConverter.Convert(fileDatabaseControl.ControlType), ControlTypeConverter.Convert(templateControl.ControlType)));
                 }
 
-                if (fileDatabaseControl.Type == ControlType.FixedChoice)
+                if (fileDatabaseControl.ControlType == ControlType.FixedChoice)
                 {
                     List<string> fileDatabaseChoices = fileDatabaseControl.GetWellKnownValues();
                     List<string> templateChoices = templateControl.GetWellKnownValues();
@@ -995,7 +994,7 @@ namespace Carnassial.Data
             }
 
             // convert flag controls from text to integer columns
-            foreach (ControlRow control in this.Controls.Where(control => control.Type == ControlType.Flag))
+            foreach (ControlRow control in this.Controls.Where(control => control.ControlType == ControlType.Flag))
             {
                 ColumnDefinition currentColumn = currentFileSchema.ColumnDefinitions.Single(column => String.Equals(column.Name, control.DataLabel, StringComparison.Ordinal));
                 if (String.Equals(currentColumn.Type, Constant.SQLiteAffinity.Integer, StringComparison.OrdinalIgnoreCase) == false)

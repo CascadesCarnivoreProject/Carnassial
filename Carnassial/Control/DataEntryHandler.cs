@@ -311,8 +311,8 @@ namespace Carnassial.Control
                 // add propagate context menu to copyable fields
                 if (dataEntryControl.Copyable)
                 {
-                    Debug.Assert(control.Type != ControlType.DateTime, "Propagate context menu unexpectedly enabled on DateTime control.");
-                    Debug.Assert(control.Type != ControlType.UtcOffset, "Propagate context menu unexpectedly enabled on UTC offset control.");
+                    Debug.Assert(control.ControlType != ControlType.DateTime, "Propagate context menu unexpectedly enabled on DateTime control.");
+                    Debug.Assert(control.ControlType != ControlType.UtcOffset, "Propagate context menu unexpectedly enabled on UTC offset control.");
 
                     MenuItem menuItemPropagateFromLastValue = new MenuItem()
                     {

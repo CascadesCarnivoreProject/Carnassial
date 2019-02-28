@@ -37,7 +37,7 @@ namespace Carnassial
     public partial class CarnassialWindow : ApplicationWindow, IDisposable
     {
         private bool disposed;
-        private Lazy<SpeechSynthesizer> speechSynthesizer;
+        private readonly Lazy<SpeechSynthesizer> speechSynthesizer;
 
         public DataEntryHandler DataHandler { get; private set; }
         public CarnassialState State { get; private set; }
@@ -1328,8 +1328,8 @@ namespace Carnassial
         {
             // the first time the custom selection dialog is launched update the DateTime and UtcOffset search terms to the time of the current file
             // Don't need to check CustomSelectionChange.HasChanges() as a change is guaranteed.
-            SearchTerm firstDateTimeSearchTerm = this.DataHandler.FileDatabase.CustomSelection.SearchTerms.First(searchTerm => String.Equals(searchTerm.DataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal));
-            if ((DateTime)firstDateTimeSearchTerm.DatabaseValue == Constant.ControlDefault.DateTimeValue.UtcDateTime)
+            SearchTerm firstDateTimeSearchTerm = this.DataHandler.FileDatabase.CustomSelection.SearchTerms.FirstOrDefault(searchTerm => String.Equals(searchTerm.DataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal));
+            if ((firstDateTimeSearchTerm != null) && ((DateTime)firstDateTimeSearchTerm.DatabaseValue == Constant.ControlDefault.DateTimeValue.UtcDateTime))
             {
                 Data.CustomSelection customSelectionInitialSnapshot = new Data.CustomSelection(this.DataHandler.FileDatabase.CustomSelection);
                 DateTimeOffset defaultDate = this.DataHandler.ImageCache.Current.DateTimeOffset;
@@ -1595,13 +1595,11 @@ namespace Carnassial
 
         private void MenuViewZoomIn_Click(object sender, RoutedEventArgs e)
         {
-            Point mousePosition = Mouse.GetPosition(this.FileDisplay.FileDisplay.Image);
             this.FileDisplay.ZoomIn();
         }
 
         private void MenuViewZoomOut_Click(object sender, RoutedEventArgs e)
         {
-            Point mousePosition = Mouse.GetPosition(this.FileDisplay.FileDisplay.Image);
             this.FileDisplay.ZoomOut();
         }
 
@@ -1780,9 +1778,9 @@ namespace Carnassial
             this.ShowExceptionReportingDialog(null, databasePath, e);
         }
 
-        private void PasteAnalysis_Click(object sender, int analsisSlot)
+        private void PasteAnalysis_Click(object sender, int analysisSlot)
         {
-            this.TryPasteValuesFromAnalysis(analsisSlot);
+            this.TryPasteValuesFromAnalysis(analysisSlot);
         }
 
         /// <summary>
@@ -2654,7 +2652,7 @@ namespace Carnassial
                 }
 
                 GithubReleaseClient updater = new GithubReleaseClient(Constant.ApplicationName, latestVersionAddress);
-                updater.TryGetAndParseRelease(false, out Version publiclyAvailableVersion);
+                updater.TryGetAndParseRelease(false, out Version _);
                 this.State.MostRecentCheckForUpdates = DateTime.UtcNow;
             }
 

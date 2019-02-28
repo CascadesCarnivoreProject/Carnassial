@@ -104,7 +104,7 @@ namespace Carnassial.Data
             }
 
             ColumnDefinition column = new ColumnDefinition(control.DataLabel, Constant.SQLiteAffinity.Text);
-            switch (control.Type)
+            switch (control.ControlType)
             {
                 case ControlType.Counter:
                 case ControlType.Flag:
@@ -127,7 +127,7 @@ namespace Carnassial.Data
             }
             yield return column;
 
-            if (control.Type == ControlType.Counter)
+            if (control.ControlType == ControlType.Counter)
             {
                 yield return new ColumnDefinition(FileTable.GetMarkerPositionColumnName(control.DataLabel), Constant.SQLiteAffinity.Blob);
             }
@@ -359,7 +359,7 @@ namespace Carnassial.Data
                 if (control.IsUserControl())
                 {
                     this.UserColumnsByName.Add(control.DataLabel, new FileTableColumn(control));
-                    switch (control.Type)
+                    switch (control.ControlType)
                     {
                         case ControlType.Counter:
                             string markerColumnName = FileTable.GetMarkerPositionColumnName(control.DataLabel);
@@ -377,7 +377,7 @@ namespace Carnassial.Data
                         case ControlType.DateTime:
                         case ControlType.UtcOffset:
                         default:
-                            throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.Type));
+                            throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.ControlType));
                     }
                 }
             }

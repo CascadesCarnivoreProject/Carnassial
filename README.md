@@ -1,30 +1,30 @@
 ﻿### Overview
-This repository contains the source code for and releases of Carnassial and its associated tenplate editor.  Refer to Github's wiki tab above to find out how to get started and learn more about Carnassial.
+This repository contains the source code for and releases of Carnassial and its associated tenplate editor. Refer to Github's wiki tab above to find out how to get started and learn more about Carnassial.
 
 ### Contributing
-Bug reports, feature requests, and feedback are most welcome.  Let us know!  We'd also really appreciate sample images and videos to test our code on and expand some features.  Shoot us an email at carnassialdev@gmail.com if you've some you'd like to share.  We're particularly looking for samples from
+Bug reports, feature requests, and feedback are most welcome. Let us know!  We'd also really appreciate sample images and videos to test our code on and expand some features. Shoot us an email at carnassialdev@gmail.com if you've some you'd like to share. We're particularly looking for samples from
 
 * Bushnell Trophy or Trophy HD cameras from 2013 back to 2006
 * Reconyx HyperFire, UltraFire, MicroFire, and RapidFire cameras
 * SpyPoint Force-10D and 11D cameras from 2016 or newer
 
-Having these in our archives helps us help you, so don't be shy.  See "Contacting the Carnassial Development Team" below for how to reach us.
+Having these in our archives helps us help you, so don't be shy. See "Contacting the Carnassial Development Team" below for how to reach us.
 
-If you'd like to translate Carnassial into your language it's easy.  Send us your edited version of Resources.xaml or drop us a line and we'll set you up.
+If you'd like to translate Carnassial into your language it's easy. Send us your edited version of Resources.xaml or drop us a line and we'll set you up.
 
 If you're a developer and would like to submit a pull request please see below.
 
 ### Requirements
 * Carnassial and the template editor are supported and tested on current releases of Windows 10.
-* Carnassial and the template editor should also run on Windows Server 2008 or newer and legacy Windows 8.1, 8, and 7 SP1 systems not updated to Windows 10.  This isn't offically supported, though.
-* Windows Vista SP2 and earlier and all 32 bit versions of Windows are not supported.  Carnassial is 64 bit only and has minor reliance on Windows 7 common dialogs.
+* Carnassial and the template editor should also run on Windows Server 2008 or newer and legacy Windows 8.1, 8, and 7 SP1 systems not updated to Windows 10. This isn't offically supported, though.
+* Windows Vista SP2 and earlier and all 32 bit versions of Windows are not supported. Carnassial is 64 bit only and has minor reliance on Windows 7 common dialogs.
 
-Screen sizes of 1600 x 900 or larger are recommended.  Carnassial should run on any x64 processor but optimization effort generally targets hardware from the last five years.
+Screen sizes of 1600 x 900 or larger are recommended. Carnassial should run on any x64 processor but optimization effort generally targets hardware from the last five years.
 
 Known limitations:
 
-* Carnassial is developed primarily for midrange processors with the ability to execute four threads concurrently.  Its algorithms also support two concurrent threads (most Celerons, some Pentiums) and scale to six or more cores but may not perform optimally.
-* Microsoft Windows does not report file times consistently at sub-millisecond precision.  While it's not been observed, it's possible rounding within the operating system may cause rereading date times from files without metadata to change the millisecond component of timestamps.
+* Carnassial is developed primarily for midrange processors with the ability to execute four threads concurrently. Its algorithms also support two concurrent threads (most Celerons, some Pentiums) and scale to six or more cores but may not perform optimally.
+* Microsoft Windows does not report file times consistently at sub-millisecond precision. While it's not been observed, it's possible rounding within the operating system may cause rereading date times from files without metadata to change the millisecond component of timestamps.
 
 Known limitations with earlier versions of Windows:
 
@@ -35,28 +35,29 @@ Known limitations with earlier versions of Windows:
 ### History
 Carnassial is named for [carnassials](https://en.wikipedia.org/wiki/Carnassial) as its function is analogous (though unfortunately it lacks the teeth's self-sharpening properties).
 
-Carnassial began as a substantial overhaul of Timelapse 2.0 for improved code quality and sufficient flexibility to accomodate typical carnivore studies.  [Timelapse 2.1](http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.HomePage) includes several months of the initial Carnassial coding effort but is now diverged.
+Carnassial began as a substantial overhaul of Timelapse 2.0 for improved code quality and sufficient flexibility to accomodate typical carnivore studies. [Timelapse 2.1](http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.HomePage) includes several months of the initial Carnassial coding effort but is now diverged.
 
 ### Alternatives
-The need to analyze remote camera data is a common one.  In addition to Carnassial and Timelapse we're aware of [CPW Photo Warehouse​](http://cpw.state.co.us/learn/Pages/ResearchMammalsSoftware.aspx) and [eMammal](http://emammal.si.edu/).  Key differences are
+The need to analyze remote camera data is a common one. In addition to Carnassial and Timelapse we're aware of [CPW Photo Warehouse​](http://cpw.state.co.us/learn/Pages/ResearchMammalsSoftware.aspx) and [eMammal](http://emammal.si.edu/). Key differences are
 
-* Carnassial is fully free whilst CPW Photo Warehouse​ requires a Microsoft Access license (and permissions configuration).  Carnassial is more flexible and smoother in data entry but presently lacks equivalents to CPW's station information, occupancy analysis, and mark recapture analysis.  [CritterShell](https://github.com/CascadesCarnivoreProject/CritterShell) offers detection and occupancy analysis.
-* Carnassial is readily available.  Obtaining the eMammal client requires a logon be issued, which can be hard to get.
-* Carnassial and Timelapse are broadly similar.  As of March 2017 Carnassial offers faster analysis, more flexibility, and fewer defects than Timelapse.
+* Carnassial is fully free whilst CPW Photo Warehouse​ requires a Microsoft Access license (and permissions configuration). Carnassial is more flexible and smoother in data entry but presently lacks equivalents to CPW's station information, occupancy analysis, and mark recapture analysis. [CritterShell](https://github.com/CascadesCarnivoreProject/CritterShell) offers detection and occupancy analysis.
+* Carnassial is readily available. Obtaining the eMammal client requires a logon be issued, which can be hard to get.
+* Carnassial and Timelapse are broadly similar. As of March 2017 Carnassial offers faster analysis, more flexibility, and fewer defects than Timelapse.
 
-If you know of others please let us know.
+If you know of other analysis tools please let us know.
 
 ### Contacting the Carnassial Development Team
-Feel free to open new issues on Carnassial here on github.  Or email us at carnassialdev@gmail.com.
+Feel free to open new issues on Carnassial here on github. Or email us at carnassialdev@gmail.com.
 
 ### Development Environment
-Install [Visual Studio 2017 Community](https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx) or newer with the below options in addition to the defaults:
+Install [Visual Studio 2019 Community](https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx) or newer with the below options in addition to the defaults:
 
-* .NET 4.7.1 development and targeting
-* Visual C++ MFC for x86 and x64
+* .NET 4.7.1 development tools
+* C++ MFC for v142 build tools (x86 & x64)
+* C++/CLI support for v142 build tools
 * Common Tools -> GitHub Extension for Visual Studio
 
-Higher Visual Studio SKUs such as Enterprise are fine.  After Visual Studio installation:
+Higher Visual Studio SKUs such as Enterprise are fine. After Visual Studio installation:
 
 * clone the repo locally through Visual Studio's Team Explorer or GitHub's clone or download options
 * install Visual StyleCop (Tools -> Extensions and Updates -> Online)
@@ -67,19 +68,20 @@ Commits should
 * include appropriate test coverage
 * have no build warnings, pass code analysis (Analyze -> Run Code Analysis), and be free of StyleCop issues (right click solution -> Run StyleCop)
 
-Application and test development is done against .NET 4.7.1.  Carnassial is a 64 bit app and for the most part only an x64 build is needed for development and testing
-(the installer automatically rewires itself to build x86 under an x64 build).  However, the Visual Studio development UI is a 32 bit app and is therefore unable to
-load controls from the regular Carnassial build for display in the WPF designer.  As a result, Carnassial has a vestigial x86 build which needs to be selected when 
-doing UI tasks if the view in the designer is to match what's displayed at x64 runtime.  (Building Carnassial as AnyCPU in the x64 build isn't an option as 
+Application and test development is done against .NET 4.7.1. Carnassial is a 64 bit app and for the most part only an x64 build is needed for development and testing
+(the installer automatically rewires itself to build x86 under an x64 build). However, the Visual Studio development UI is a 32 bit app and is therefore unable to
+load controls from the regular Carnassial build for display in the WPF designer. As a result, Carnassial has a vestigial x86 build which needs to be selected when 
+doing UI tasks if the view in the designer is to match what's displayed at x64 runtime. (Building Carnassial as AnyCPU in the x64 build isn't an option as 
 StockMessageControl hits call graphs which go into Carnassial.Native, an approach which is anyways undesirable as there's a moderate performance penalty to building 
 AnyCPU rather than x64.)
 
-Visual Studio behaves similarly for unit test discovery, looking for an x86 build unless Test -> Test Settings -> Default Processor Architecture -> x64 is set.  In some 
-cases it's possible to specify a .runsettings without x64 selected and sometimes not, but test discovery does not honor the target platform specified in the .runsettings file.
-In such situations VS can fail to find any unit tests until restarted, though setting x64 and forcing a build typically gets test discovery unstuck.
+Visual Studio behaves similarly for unit test discovery, looking for an x86 build unless Test -> Test Settings -> Default Processor Architecture -> x64 is set. In some 
+cases it's possible to specify a .runsettings without x64 selected and sometimes not, but test discovery does not honor the target platform specified in the .runsettings
+file. In such situations VS can fail to find any unit tests until restarted, though setting x64 and forcing a build typically gets test discovery unstuck.
 
-Carnassial uses WPF resource dictionaries for localization as the approach is lighter weight and more flexible than .resx files or locbaml type methods.  Culture
-specific resources are merged in Carnassial\LocalizedApplication.cs
+Carnasial is not currently MVVM. In general, greater use of MVVM would be beneficial but current UX development effort is primarily directed to model-view adoption in
+order to enable refactoring to view models. Carnassial uses WPF resource dictionaries for localization as the approach is lighter weight and more flexible than .resx 
+files or locbaml type methods. Culture specific resources are merged in Carnassial\LocalizedApplication.cs
 
 Also helpful are
 
@@ -91,10 +93,10 @@ Also helpful are
 
 
 ### Dependencies
-* Visual Studio 2017 or newer is required for development.
+* Visual Studio for development
 * nuget packages as referenced by the solution
-* libjpeg-turbo, which is managed manually as desribed below
+* libjpeg-turbo, which is managed manually as described below
 
-A nuget package for libjpeg-turbo exists but is not being maintained so the library is comitted to the Carnassial repro.  To update, download the [libjpeg-turbo](https://libjpeg-turbo.org/) VC and VC64 installers, copy the new bits to Native\libjpeg-turbo\{bin, include, lib}, git add -f them, and update additional dependencies in Native.vcxproj's linker input settings to point to the new .lib.
+A nuget package for libjpeg-turbo exists but is not being maintained so the library is comitted to the Carnassial repro. To update, download the [libjpeg-turbo](https://libjpeg-turbo.org/) VC and VC64 installers, copy the new bits to Native\libjpeg-turbo\{bin, include, lib}, git add -f them, and update additional dependencies in Native.vcxproj's linker input settings to point to the new .lib.
 
 Carnassial needs MFC only for the version header of Carnassial.Native.dll. Another detail is app.rc must be Unicode as Microsoft's resource compiler does not support UTF-8. This is incompatible with git differencing's lack of Unicode support and is undesirable with respect to the de facto convention of using UTF-8 for source files.

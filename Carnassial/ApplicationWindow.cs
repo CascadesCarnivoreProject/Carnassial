@@ -25,9 +25,13 @@ namespace Carnassial
                 }
             }
 
+            if (release >= 528040)
+            {
+                return "4.8 or later";
+            }
             if (release >= 461808)
             {
-                return "4.7.2 or later";
+                return "4.7.2";
             }
             if (release >= 461308)
             {
@@ -67,7 +71,7 @@ namespace Carnassial
 
         protected void Instructions_PreviewDrag(object sender, DragEventArgs dragEvent)
         {
-            if (this.IsSingleTemplateFileDrag(dragEvent, out string templateDatabaseFilePath))
+            if (this.IsSingleTemplateFileDrag(dragEvent, out string _))
             {
                 dragEvent.Effects = DragDropEffects.All;
             }
@@ -107,6 +111,10 @@ namespace Carnassial
                                                                   this.GetDotNetVersion(), 
                                                                   databasePath,
                                                                   e.Exception);
+            if (alternativeTitle != null)
+            {
+                exitNotification.Title = alternativeTitle;
+            }
             Clipboard.SetText(exitNotification.Message.GetWhat());
             exitNotification.ShowDialog();
         }

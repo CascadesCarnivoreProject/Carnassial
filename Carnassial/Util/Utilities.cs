@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace Carnassial.Util
 {
@@ -10,16 +11,27 @@ namespace Carnassial.Util
         // Tuple.Create().GetHashCode() without the instantiation overhead, see Tuple.cs at https://github.com/dotnet/coreclr/
         public static int CombineHashCodes(object obj1, object obj2)
         {
+            Debug.Assert(obj1 != null, "obj1 unexpectedly null.");
+            Debug.Assert(obj2 != null, "obj2 unexpectedly null.");
+
             int hash = obj1.GetHashCode();
             return (hash << 5) + hash ^ obj2.GetHashCode();
         }
 
         public static int CombineHashCodes(params object[] objects)
         {
+            Debug.Assert(objects[0] != null, "obj0 unexpectedly null.");
+
             int hash = objects[0].GetHashCode();
             for (int index = 1; index < objects.Length; ++index)
             {
-                hash = (hash << 5) + hash ^ objects[index].GetHashCode();
+                object obj = objects[index];
+                int objectHash = 0;
+                if (obj != null)
+                {
+                    objectHash = obj.GetHashCode();
+                }
+                hash = (hash << 5) + hash ^ objectHash;
             }
             return hash;
         }

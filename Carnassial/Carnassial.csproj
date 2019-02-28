@@ -159,12 +159,20 @@
     </Compile>
     <Compile Include="Control\HorizontalLineAdorner.cs" />
     <Compile Include="Control\FileDisplayMessage.cs" />
+    <Compile Include="Control\SearchTermExtensions.cs" />
+    <Compile Include="Control\SearchTermList.xaml.cs">
+      <DependentUpon>SearchTermList.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Control\SearchTermPicker.xaml.cs">
+      <DependentUpon>SearchTermPicker.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Control\UtcOffsetPicker.cs" />
     <Compile Include="Database\SQLiteAutoVacuum.cs" />
     <Compile Include="Database\SQLiteLockMode.cs" />
     <Compile Include="Database\SQLiteTemporaryStore.cs" />
     <Compile Include="Database\SQLiteWalCheckpoint.cs" />
     <Compile Include="Database\WindowedTransactionSequence.cs" />
+    <Compile Include="Data\AutocompletionCache.cs" />
     <Compile Include="Data\DataImportProgress.cs" />
     <Compile Include="Data\FileFindReplace.cs" />
     <Compile Include="Data\FileTableColumnMap.cs" />
@@ -173,11 +181,10 @@
     <Compile Include="Data\ControlTransactionSequence.cs" />
     <Compile Include="Data\FileTransactionSequence.cs" />
     <Compile Include="Data\DataImportExportProgress.cs" />
-    <Compile Include="Dialog\FindDialog.cs" />
     <Compile Include="Dialog\FindReplace.xaml.cs">
       <DependentUpon>FindReplace.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Dialog\GridExtensions.cs" />
+    <Compile Include="Util\GridExtensions.cs" />
     <Compile Include="Dialog\Message.cs" />
     <Compile Include="LocalizedApplication.cs" />
     <Compile Include="Data\Spreadsheet\SharedStringIndex.cs" />
@@ -281,7 +288,6 @@
     <Compile Include="Github\GithubAuthor.cs" />
     <Compile Include="Github\GithubRelease.cs" />
     <Compile Include="Util\EnumExtensions.cs" />
-    <Compile Include="Util\SequentialPartitioner.cs" />
     <Compile Include="Util\RegistryKeyExtensions.cs" />
     <Compile Include="Util\Throttles.cs" />
     <Compile Include="Control\VideoPlayer.xaml.cs">
@@ -329,6 +335,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Control\FileDisplayWithMarkers.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Control\SearchTermList.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Control\SearchTermPicker.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

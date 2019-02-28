@@ -15,7 +15,7 @@ namespace Carnassial.Editor.Util
             //   Constant.ControlColumn.Tooltip
             //   Constant.ControlColumn.Visible
             //   EditorConstant.ColumnHeader.MaxWidth
-            if ((control.Type == ControlType.DateTime) ||
+            if ((control.ControlType == ControlType.DateTime) ||
                 String.Equals(control.DataLabel, Constant.FileColumn.File, StringComparison.Ordinal))
             {
                 // these standard controls have no editable properties other than width
@@ -39,8 +39,8 @@ namespace Carnassial.Editor.Util
                        (String.Equals(columnHeader, Constant.ControlColumn.Visible, StringComparison.Ordinal) == false) &&
                        (String.Equals(columnHeader, EditorConstant.ColumnHeader.MaxWidth, StringComparison.Ordinal) == false);
             }
-            else if ((control.Type == ControlType.Counter) ||
-                     (control.Type == ControlType.Flag))
+            else if ((control.ControlType == ControlType.Counter) ||
+                     (control.ControlType == ControlType.Flag))
             {
                 // all properties are editable except list
                 return String.Equals(columnHeader, EditorConstant.ColumnHeader.WellKnownValues, StringComparison.Ordinal);

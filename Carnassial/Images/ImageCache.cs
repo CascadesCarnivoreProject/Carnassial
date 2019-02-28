@@ -276,7 +276,7 @@ namespace Carnassial.Images
             {
                 CachedImage nextImage = await nextFile.TryLoadImageAsync((string)this.FileDatabase.FolderPath);
                 this.CacheImage(nextFile.ID, nextImage);
-                this.prefetechesByID.TryRemove(nextFile.ID, out Task ignored);
+                this.prefetechesByID.TryRemove(nextFile.ID, out Task _);
             }));
             this.prefetechesByID.AddOrUpdate(nextFile.ID, prefetch, (long id, Task newPrefetch) => { return newPrefetch; });
             return true;

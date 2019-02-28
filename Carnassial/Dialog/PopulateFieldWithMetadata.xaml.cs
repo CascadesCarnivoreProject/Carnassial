@@ -60,7 +60,7 @@ namespace Carnassial.Dialog
 
             foreach (ControlRow control in this.fileDatabase.Controls)
             {
-                if (control.Type == ControlType.Note)
+                if (control.ControlType == ControlType.Note)
                 {
                     this.dataLabelByLabel.Add(control.Label, control.DataLabel);
                     this.DataFields.Items.Add(control.Label);

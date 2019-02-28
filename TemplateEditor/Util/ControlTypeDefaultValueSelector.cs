@@ -10,7 +10,7 @@ namespace Carnassial.Editor.Util
         {
             if (item is ControlRow control)
             {
-                switch (control.Type)
+                switch (control.ControlType)
                 {
                     case ControlType.FixedChoice:
                         return (DataTemplate)App.Current.MainWindow.FindResource(EditorConstant.Resources.DefaultValueChoiceComboBox);

@@ -24,7 +24,7 @@ namespace Carnassial.Data
             this.ParameterName = SQLiteDatabase.ToParameterName(dataLabel);
             this.QuotedName = SQLiteDatabase.QuoteIdentifier(dataLabel);
 
-            switch (control.Type)
+            switch (control.ControlType)
             {
                 case ControlType.Counter:
                     if (String.Equals(dataLabel, control.DataLabel))
@@ -51,7 +51,7 @@ namespace Carnassial.Data
                     this.DataType = SqlDataType.Real;
                     break;
                 default:
-                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.Type));
+                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.ControlType));
             }
         }
     }

@@ -27,7 +27,7 @@ namespace Carnassial.Data
                 {
                     userControlDataLabels.Add(SQLiteDatabase.QuoteIdentifier(control.DataLabel));
                     string defaultValue;
-                    switch (control.Type)
+                    switch (control.ControlType)
                     {
                         case ControlType.Counter:
                             Debug.Assert(Utilities.IsDigits(control.DefaultValue), "Default values for counters should be numeric.");
@@ -44,7 +44,7 @@ namespace Carnassial.Data
                         case ControlType.DateTime:
                         case ControlType.UtcOffset:
                         default:
-                            throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.Type));
+                            throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.ControlType));
                     }
                     userControlDefaultValues.Add(defaultValue);
                 }

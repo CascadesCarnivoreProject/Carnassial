@@ -93,7 +93,7 @@ namespace Carnassial.Data
                 this.insertOrUpdateControls.Parameters[7].Value = control.SpreadsheetOrder;
                 this.insertOrUpdateControls.Parameters[8].Value = control.MaxWidth;
                 this.insertOrUpdateControls.Parameters[9].Value = control.Tooltip;
-                this.insertOrUpdateControls.Parameters[10].Value = (int)control.Type;
+                this.insertOrUpdateControls.Parameters[10].Value = (int)control.ControlType;
                 this.insertOrUpdateControls.Parameters[11].Value = control.Visible;
                 this.insertOrUpdateControls.Parameters[12].Value = control.WellKnownValues;
                 this.insertOrUpdateControls.Parameters[13].Value = control.ID;

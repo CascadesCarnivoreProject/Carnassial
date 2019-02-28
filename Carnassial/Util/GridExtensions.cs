@@ -2,7 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace Carnassial.Dialog
+namespace Carnassial.Util
 {
     internal static class GridExtensions
     {
@@ -61,7 +61,7 @@ namespace Carnassial.Dialog
 
         public static bool TryRemoveChild(this Grid grid, int row, int column)
         {
-            return grid.TryRemoveChild(row, column, out int unused);
+            return grid.TryRemoveChild(row, column, out int _);
         }
 
         public static bool TryRemoveChild(this Grid grid, int row, int column, out int existingIndex)

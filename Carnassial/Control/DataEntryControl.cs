@@ -54,7 +54,7 @@ namespace Carnassial.Control
             this.Copyable = control.Copyable;
             this.DataLabel = control.DataLabel;
             this.PropertyName = ImageRow.GetPropertyName(control.DataLabel);
-            this.Type = control.Type;
+            this.Type = control.ControlType;
 
             // create the grid which will contain the label and ontent
             this.Container = new Grid();

@@ -388,48 +388,6 @@ namespace Carnassial.Data
             return true;
         }
 
-        /// <summary>
-        /// Set the order of the specified control to the specified value, shifting other controls' orders as needed.
-        /// </summary>
-        private void SetControlOrders(string dataLabel, int order)
-        {
-            if ((order < 1) || (order > this.Controls.RowCount))
-            {
-                throw new ArgumentOutOfRangeException(nameof(order), "Control and spreadsheet orders must be contiguous ones based values.");
-            }
-
-            Dictionary<string, int> newControlOrderByDataLabel = new Dictionary<string, int>(StringComparer.Ordinal);
-            Dictionary<string, int> newSpreadsheetOrderByDataLabel = new Dictionary<string, int>(StringComparer.Ordinal);
-            foreach (ControlRow control in this.Controls)
-            {
-                if (String.Equals(control.DataLabel, dataLabel, StringComparison.Ordinal))
-                {
-                    newControlOrderByDataLabel.Add(dataLabel, order);
-                    newSpreadsheetOrderByDataLabel.Add(dataLabel, order);
-                }
-                else
-                {
-                    int currentControlOrder = control.ControlOrder;
-                    if (currentControlOrder >= order)
-                    {
-                        ++currentControlOrder;
-                    }
-                    newControlOrderByDataLabel.Add(control.DataLabel, currentControlOrder);
-
-                    int currentSpreadsheetOrder = control.SpreadsheetOrder;
-                    if (currentSpreadsheetOrder >= order)
-                    {
-                        ++currentSpreadsheetOrder;
-                    }
-                    newSpreadsheetOrderByDataLabel.Add(control.DataLabel, currentSpreadsheetOrder);
-                }
-            }
-
-            this.UpdateDisplayOrder(Constant.ControlColumn.ControlOrder, newControlOrderByDataLabel);
-            this.UpdateDisplayOrder(Constant.ControlColumn.SpreadsheetOrder, newSpreadsheetOrderByDataLabel);
-            this.GetControlsSortedByControlOrder();
-        }
-
         private void SyncControlToDatabase(ControlRow control)
         {
             Debug.Assert(control.HasChanges, "Unexpected call to sync control without changes.");
@@ -568,7 +526,7 @@ namespace Carnassial.Data
             }
 
             // update defaults for flags to Carnassial 2.2.0.3 schema if they're not already set as such
-            foreach (ControlRow flag in this.Controls.Where(control => control.Type == ControlType.Flag))
+            foreach (ControlRow flag in this.Controls.Where(control => control.ControlType == ControlType.Flag))
             {
                 if (String.Equals(flag.DefaultValue, Boolean.FalseString, StringComparison.OrdinalIgnoreCase))
                 {

@@ -63,7 +63,7 @@ namespace Carnassial.Data
                 else
                 {
                     FileTableColumn userColumn = fileTable.UserColumnsByName[column];
-                    switch (userColumn.Control.Type)
+                    switch (userColumn.Control.ControlType)
                     {
                         case ControlType.Counter:
                             if (userColumn.DataType == SqlDataType.Integer)
@@ -89,7 +89,7 @@ namespace Carnassial.Data
                             this.UserNoteAndChoiceSpreadsheetIndices.Add(spreadsheetIndex);
                             break;
                         default:
-                            throw new NotSupportedException(String.Format("Unhandled control type {0} for column {1}.", userColumn.Control.Type, userColumn.Control.DataLabel));
+                            throw new NotSupportedException(String.Format("Unhandled control type {0} for column {1}.", userColumn.Control.ControlType, userColumn.Control.DataLabel));
                     }
                 }
             }

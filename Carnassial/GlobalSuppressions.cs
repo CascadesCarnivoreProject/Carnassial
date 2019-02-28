@@ -1,4 +1,8 @@
-﻿[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1009:DeclareEventHandlersCorrectly", Scope = "member", Target = "Carnassial.Control.AnalysisButtons.#MouseEnterButton")]
+﻿// This file is used by Code Analysis to maintain SuppressMessage 
+// attributes that are applied to this project.
+// Project-level suppressions either have no target or are given 
+// a specific target and scoped to a namespace, type, member, etc.
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1009:DeclareEventHandlersCorrectly", Scope = "member", Target = "Carnassial.Control.AnalysisButtons.#MouseEnterButton")]
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1009:DeclareEventHandlersCorrectly", Scope = "member", Target = "Carnassial.Control.AnalysisButtons.#MouseLeaveButton")]
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1009:DeclareEventHandlersCorrectly", Scope = "member", Target = "Carnassial.Control.AnalysisButtons.#PasteAnalysis")]
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1009:DeclareEventHandlersCorrectly", Scope = "member", Target = "Carnassial.Control.AnalysisButtons.#PasteNext")]
@@ -65,12 +69,6 @@
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times", Scope = "member", Target = "Carnassial.Spreadsheet.SpreadsheetReaderWriter.#ExportFileDataToXlsx(Carnassial.Data.FileDatabase,System.String)")]
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times", Scope = "member", Target = "Carnassial.Spreadsheet.SpreadsheetReaderWriter.#TryImportFileDataFromXlsx(System.String,Carnassial.Data.FileDatabase)")]
 [assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2202:Do not dispose objects multiple times", Scope = "member", Target = "Carnassial.Spreadsheet.SharedStringIndex.#GetSharedStrings(DocumentFormat.OpenXml.Packaging.SharedStringTablePart,Carnassial.Spreadsheet.SpreadsheetReadWriteStatus)")]
-// This file is used by Code Analysis to maintain SuppressMessage 
-// attributes that are applied to this project.
-// Project-level suppressions either have no target or are given 
-// a specific target and scoped to a namespace, type, member, etc.
-//
-// To add a suppression to this file, right-click the message in the 
-// Code Analysis results, point to "Suppress Message", and click 
-// "In Suppression File".
-// You do not need to add suppressions to this file manually.
+
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "<Pending>", Scope = "member", Target = "~M:Carnassial.CarnassialWindow.PasteAnalysis_Click(System.Object,System.Int32)")]// This file is used by Code Analysis to maintain SuppressMessage 
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "<Pending>", Scope = "member", Target = "~M:Carnassial.CarnassialWindow.PasteAnalysis_Click(System.Object,System.Int32)")]// attributes that are applied to this project.

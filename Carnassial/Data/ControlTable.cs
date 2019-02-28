@@ -268,7 +268,7 @@ namespace Carnassial.Data
                     MaxWidth = reader.GetInt32(maxWidthIndex),
                     SpreadsheetOrder = reader.GetInt32(spreadsheetOrderIndex),
                     Tooltip = reader.GetString(tooltipIndex),
-                    Type = (ControlType)reader.GetInt32(typeIndex),
+                    ControlType = (ControlType)reader.GetInt32(typeIndex),
                     Visible = reader.GetBoolean(visibleIndex)
                 };
                 control.AcceptChanges();

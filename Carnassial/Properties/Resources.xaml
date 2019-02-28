@@ -537,12 +537,8 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="CustomSelection.CombineSearches">Combine searches using:</system:String>
     <system:String x:Key="CustomSelection.CombineSearches.And">_And</system:String>
     <system:String x:Key="CustomSelection.CombineSearches.And.Description">to select images and videos matching all search terms</system:String>
-    <system:String x:Key="CustomSelection.CombineSearches.Or">O_r</system:String>
+    <system:String x:Key="CustomSelection.CombineSearches.Or">_Or</system:String>
     <system:String x:Key="CustomSelection.CombineSearches.Or.Description">to select images and videos matching any one of the search terms</system:String>
-    <system:String x:Key="CustomSelection.SearchTerms.Label">Label</system:String>
-    <system:String x:Key="CustomSelection.SearchTerms.Expression">Expression</system:String>
-    <system:String x:Key="CustomSelection.SearchTerms.Value">Value</system:String>
-    <system:String x:Key="CustomSelection.SearchTerms.DatabaseQuery">Database Query</system:String>
     <system:String x:Key="CustomSelection.Reset">_Reset</system:String>
     <system:String x:Key="CustomSelection.QueryMatches">files match your query</system:String>
 
@@ -980,6 +976,13 @@ At any time, you can reset thresholds to their initial values or to the Carnassi
     <system:String x:Key="RenameFileDatabaseFile.Message.Solution">In the field below, rename that file to whatever you want.</system:String>
     <system:String x:Key="RenameFileDatabaseFile.Message.Result">The file will be renamed, and Carnassial will subsequently save data to the renamed file.</system:String>
     <system:String x:Key="RenameFileDatabaseFile.Rename">Rename</system:String>
+
+    <Thickness x:Key="SearchTermList.CellMargin">4,1,4,1</Thickness>
+    <system:String x:Key="SearchTermList.Use">Use</system:String>
+    <system:String x:Key="SearchTermList.Label">Label</system:String>
+    <system:String x:Key="SearchTermList.Operator">Operator</system:String>
+    <system:String x:Key="SearchTermList.Value">Value</system:String>
+    <system:String x:Key="SearchTermList.Query">Database Query</system:String>
 
     <system:String x:Key="Spreadsheet.Import.ColumnNotInImageSet">- The column '{0}' is present in the spreadsheet file but not in the image set.</system:String>
     <system:String x:Key="Spreadsheet.Import.ColumnNotInSpreadsheet">- The column '{0}' is present in the image set but not in the spreadsheet file.</system:String>

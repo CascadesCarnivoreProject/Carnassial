@@ -1,5 +1,4 @@
-﻿using Carnassial.Data;
-using Carnassial.Database;
+﻿using Carnassial.Database;
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
@@ -20,24 +19,22 @@ namespace Carnassial.Data
             this.SearchTerms = new List<SearchTerm>();
             this.TermCombiningOperator = termCombiningOperator;
 
-            // generate search terms for all visible controls
+            // generate search terms as a starting point for custom selections
+            // The initial set of search terms corresponds to
+            // 
+            // - controls which indicate they're likely to be important
+            // - controls which are visible and copyable
+            // 
+            // Copyable is mild form of an importance hint, as copyable values are ones which are included in analysis slots
+            // and may be bulk edited during data entry.  Hidden controls are skipped as they're not normally part of the user
+            // experience (marking them hidden is often a form of deprecation).  Search terms for hidden or non-copyable controls
+            // can be set up manually if  needed.
             foreach (ControlRow control in controls)
             {
-                // skip hidden controls as they're not normally a part of the user experience
-                // This is potentially problematic in corner cases; an option to show terms for all controls can be added if needed.
-                if (control.Visible)
+                SearchTerm searchTerm = control.CreateSearchTerm();
+                if (searchTerm.ImportanceHint || (control.Copyable && control.Visible))
                 {
-                    SearchTerm searchTerm = control.CreateSearchTerm();
                     this.SearchTerms.Add(searchTerm);
-
-                    if (control.Type == ControlType.DateTime)
-                    {
-                        // provide turnkey support for querying on a range of datetimes by giving the user two search terms, one configured for the start of 
-                        // an interval and one for the end
-                        SearchTerm dateTimeLessThanOrEqual = searchTerm.Clone();
-                        dateTimeLessThanOrEqual.Operator = Constant.SearchTermOperator.LessThanOrEqual;
-                        this.SearchTerms.Add(dateTimeLessThanOrEqual);
-                    }
                 }
             }
         }
@@ -128,7 +125,7 @@ namespace Carnassial.Data
             SearchTerm utcOffsetTerm = this.SearchTerms.FirstOrDefault(term => String.Equals(term.DataLabel, Constant.FileColumn.UtcOffset, StringComparison.Ordinal));
             if (utcOffsetTerm != null)
             {
-                utcOffsetTerm.DatabaseValue = dateTimeOffset.Offset;
+                utcOffsetTerm.DatabaseValue = DateTimeHandler.ToDatabaseUtcOffset(dateTimeOffset.Offset);
             }
         }
     }

@@ -71,7 +71,7 @@ namespace Carnassial.UnitTests
 
                 // check images after initial add and again after reopen and application of selection
                 // checks are not performed after last selection in list is applied
-                List<ControlRow> counterControls = fileDatabase.Controls.Where(control => control.Type == ControlType.Counter).ToList();
+                List<ControlRow> counterControls = fileDatabase.Controls.Where(control => control.ControlType == ControlType.Counter).ToList();
                 Assert.IsTrue(counterControls.Count == 4);
                 string currentDirectoryName = Path.GetFileName(fileDatabase.FolderPath);
                 fileDatabase.SelectFiles(FileSelection.All);
@@ -211,8 +211,9 @@ namespace Carnassial.UnitTests
                 fileDatabase.ExchangeDayAndMonthInFileDates(0, fileDatabase.Files.RowCount - 1);
 
                 // custom selection coverage
-                // search terms should be created for all visible controls except Folder, but DateTime gets two
-                Assert.IsTrue((fileDatabase.Controls.RowCount - 4) == fileDatabase.CustomSelection.SearchTerms.Count);
+                // search terms should be created for all visible and copyable controls except Folder, but DateTime gets two
+                int expectedSearchTerms = fileDatabase.Controls.Count(control => control.Copyable && control.Visible);
+                Assert.IsTrue(expectedSearchTerms == fileDatabase.CustomSelection.SearchTerms.Count);
                 Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 0);
                 Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Custom) == -1);
                 foreach (SearchTerm searchTerm in fileDatabase.CustomSelection.SearchTerms)
@@ -220,9 +221,11 @@ namespace Carnassial.UnitTests
                     Assert.IsTrue(String.IsNullOrWhiteSpace(searchTerm.ToString()) == false);
                 }
 
-                SearchTerm dateTime = fileDatabase.CustomSelection.SearchTerms.First(term => String.Equals(term.DataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal));
+                ControlRow dateTimeControl = fileDatabase.Controls[Constant.FileColumn.DateTime];
+                SearchTerm dateTime = dateTimeControl.CreateSearchTerm();
                 dateTime.UseForSearching = true;
                 dateTime.DatabaseValue = new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                fileDatabase.CustomSelection.SearchTerms.Add(dateTime);
                 Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 1);
                 fileDatabase.SelectFiles(FileSelection.Custom);
                 Assert.IsTrue(fileDatabase.Files.RowCount == fileExpectations.Count);
@@ -235,45 +238,53 @@ namespace Carnassial.UnitTests
                 dateTime.UseForSearching = false;
                 fileDatabase.CustomSelection.TermCombiningOperator = LogicalOperator.And;
 
-                SearchTerm fileName = fileDatabase.CustomSelection.SearchTerms.Single(term => String.Equals(term.DataLabel, Constant.FileColumn.File, StringComparison.Ordinal));
+                ControlRow fileControl = fileDatabase.Controls[Constant.FileColumn.File];
+                SearchTerm fileName = fileControl.CreateSearchTerm();
                 fileName.UseForSearching = true;
                 fileName.Operator = Constant.SearchTermOperator.Glob;
                 fileName.DatabaseValue = "*" + Constant.File.JpgFileExtension.ToUpperInvariant();
+                fileDatabase.CustomSelection.SearchTerms.Add(fileName);
                 Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 1);
                 fileDatabase.SelectFiles(FileSelection.Custom);
                 Assert.IsTrue(fileDatabase.Files.RowCount == fileExpectations.Count);
 
-                SearchTerm fileClassification = fileDatabase.CustomSelection.SearchTerms.Single(term => String.Equals(term.DataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal));
+                ControlRow classificationControl = fileDatabase.Controls[Constant.FileColumn.Classification];
+                SearchTerm fileClassification = classificationControl.CreateSearchTerm();
                 fileClassification.UseForSearching = true;
                 fileClassification.Operator = Constant.SearchTermOperator.Equal;
-                fileClassification.DatabaseValue = (int)FileClassification.Color;
+                fileClassification.DatabaseValue = FileClassification.Color;
+                fileDatabase.CustomSelection.SearchTerms.Add(fileClassification);
                 Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 2);
                 fileDatabase.SelectFiles(FileSelection.Custom);
                 Assert.IsTrue(fileDatabase.Files.RowCount == expectedColorImageCount);
 
-                fileClassification.DatabaseValue = (int)FileClassification.Greyscale;
+                fileClassification.DatabaseValue = FileClassification.Greyscale;
                 Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 2);
                 fileDatabase.SelectFiles(FileSelection.Custom);
                 Assert.IsTrue(fileDatabase.Files.RowCount == expectedGreyscaleImageCount);
 
-                fileClassification.DatabaseValue = (int)FileClassification.Color;
-                SearchTerm relativePath = fileDatabase.CustomSelection.SearchTerms.Single(term => String.Equals(term.DataLabel, Constant.FileColumn.RelativePath, StringComparison.Ordinal));
+                fileClassification.DatabaseValue = FileClassification.Color;
+                ControlRow relativePathControl = fileDatabase.Controls[Constant.FileColumn.RelativePath];
+                SearchTerm relativePath = relativePathControl.CreateSearchTerm();
                 relativePath.UseForSearching = true;
                 relativePath.Operator = Constant.SearchTermOperator.Equal;
                 relativePath.DatabaseValue = fileExpectations[0].RelativePath;
+                fileDatabase.CustomSelection.SearchTerms.Add(relativePath);
                 Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 3);
                 fileDatabase.SelectFiles(FileSelection.Custom);
                 Assert.IsTrue(fileDatabase.Files.RowCount == 1);
 
-                SearchTerm markedForDeletion = fileDatabase.CustomSelection.SearchTerms.Single(term => String.Equals(term.DataLabel, Constant.FileColumn.DeleteFlag, StringComparison.Ordinal));
+                ControlRow deleteControl = fileDatabase.Controls[Constant.FileColumn.DeleteFlag];
+                SearchTerm markedForDeletion = deleteControl.CreateSearchTerm();
                 markedForDeletion.UseForSearching = true;
                 markedForDeletion.Operator = Constant.SearchTermOperator.Equal;
                 markedForDeletion.DatabaseValue = false;
+                fileDatabase.CustomSelection.SearchTerms.Add(markedForDeletion);
                 Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 4);
                 fileDatabase.SelectFiles(FileSelection.Custom);
                 Assert.IsTrue(fileDatabase.Files.RowCount == 1);
 
-                fileClassification.DatabaseValue = (int)FileSelection.Dark;
+                fileClassification.DatabaseValue = FileClassification.Dark;
                 Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 4);
                 Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.All) == fileExpectations.Count);
                 Assert.IsTrue(fileDatabase.GetFileCount(FileSelection.Color) == expectedColorImageCount);
@@ -449,7 +460,7 @@ namespace Carnassial.UnitTests
 
                     int defaultValueIndex = numberOfStandardControls + (3 * iterations) - 4;
                     ControlRow defaultValueControl = templateDatabase.Controls[defaultValueIndex];
-                    Assert.IsTrue(defaultValueControl.Type == ControlType.Flag); // check
+                    Assert.IsTrue(defaultValueControl.ControlType == ControlType.Flag); // check
                     int modifiedDefaultValue = 1;
                     defaultValueControl.DefaultValue = modifiedDefaultValue.ToString(Constant.InvariantCulture);
                     templateDatabase.TrySyncControlToDatabase(defaultValueControl);
@@ -529,7 +540,7 @@ namespace Carnassial.UnitTests
                             Assert.IsTrue(fileDatabaseReopened.Controls[widthIndex].MaxWidth == modifiedWidth);
 
                             ControlRow newControlInFileDatabase = fileDatabaseReopened.Controls.Single(control => String.Equals(control.DataLabel, newControl.DataLabel, StringComparison.Ordinal));
-                            Assert.IsTrue(fileDatabaseReopened.Files.UserColumnsByName.Count == expectedControlCount - numberOfStandardControls + fileDatabaseReopened.Controls.Count(control => control.Type == ControlType.Counter)); // counters have two columns each
+                            Assert.IsTrue(fileDatabaseReopened.Files.UserColumnsByName.Count == expectedControlCount - numberOfStandardControls + fileDatabaseReopened.Controls.Count(control => control.ControlType == ControlType.Counter)); // counters have two columns each
                         }
                     }
                 }
@@ -579,19 +590,19 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(maxUtcOffset.DateTime == utcNowUnspecified);
 
             // DateTimeHandler
-            this.DateTimeHandling(new DateTimeOffset(utcNowUnspecified, minUtcOffsetTimeZone.GetUtcOffset(utcNowUnspecified)), minUtcOffsetTimeZone);
+            this.DateTimeHandling(new DateTimeOffset(utcNowUnspecified, minUtcOffsetTimeZone.GetUtcOffset(utcNowUnspecified)));
 
             DateTime now = DateTime.Now;
             DateTime nowWithoutMicroseconds = new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, now.Second, now.Millisecond, DateTimeKind.Local);
-            this.DateTimeHandling(new DateTimeOffset(nowWithoutMicroseconds), TimeZoneInfo.Local);
+            this.DateTimeHandling(new DateTimeOffset(nowWithoutMicroseconds));
             DateTime nowUnspecified = now.AsUnspecifed();
-            this.DateTimeHandling(new DateTimeOffset(nowUnspecified, TimeZoneInfo.Local.GetUtcOffset(nowUnspecified)), TimeZoneInfo.Local);
+            this.DateTimeHandling(new DateTimeOffset(nowUnspecified, TimeZoneInfo.Local.GetUtcOffset(nowUnspecified)));
 
-            this.DateTimeHandling(new DateTimeOffset(utcNowWithoutMicroseconds), TimeZoneInfo.Utc);
+            this.DateTimeHandling(new DateTimeOffset(utcNowWithoutMicroseconds));
 
-            this.DateTimeHandling(new DateTimeOffset(utcNowUnspecified, maxUtcOffsetTimeZone.GetUtcOffset(utcNowUnspecified)), maxUtcOffsetTimeZone);
+            this.DateTimeHandling(new DateTimeOffset(utcNowUnspecified, maxUtcOffsetTimeZone.GetUtcOffset(utcNowUnspecified)));
 
-            DateTime nowWithoutMilliseconds = new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, now.Second, DateTimeKind.Local);
+            DateTime nowWithoutMilliseconds = new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, now.Second);
             foreach (string format in new List<string>() { "yyyy:MM:dd HH:mm:ss", "ddd MMM dd HH:mm:ss K yyyy" })
             {
                 string metadataDateAsString = now.ToString(format, Constant.InvariantCulture);
@@ -602,9 +613,9 @@ namespace Carnassial.UnitTests
             }
 
             DateTimeOffset swappable = new DateTimeOffset(new DateTime(now.Year, 1, 12, now.Hour, now.Minute, now.Second, now.Millisecond), TimeZoneInfo.Local.BaseUtcOffset);
-            Assert.IsTrue(DateTimeHandler.TrySwapDayMonth(swappable, out DateTimeOffset swapped));
+            Assert.IsTrue(DateTimeHandler.TrySwapDayMonth(swappable, out DateTimeOffset _));
             DateTimeOffset notSwappable = new DateTimeOffset(new DateTime(now.Year, 1, 13, now.Hour, now.Minute, now.Second, now.Millisecond), TimeZoneInfo.Local.BaseUtcOffset);
-            Assert.IsFalse(DateTimeHandler.TrySwapDayMonth(notSwappable, out swapped));
+            Assert.IsFalse(DateTimeHandler.TrySwapDayMonth(notSwappable, out DateTimeOffset _));
 
             string timeSpanDisplayStringLessThanOneDay = DateTimeHandler.ToDisplayTimeSpanString(new TimeSpan(-1, -45, -15));
             string timeSpanDisplayStringOneDay = DateTimeHandler.ToDisplayTimeSpanString(new TimeSpan(1, 13, 00, 18));
@@ -614,7 +625,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(timeSpanDisplayStringMoreThanOneDay == "-2 days -22:22:22");
         }
 
-        private void DateTimeHandling(DateTimeOffset dateTimeOffset, TimeZoneInfo timeZone)
+        private void DateTimeHandling(DateTimeOffset dateTimeOffset)
         {
             // database format roundtrips
             string dateTimeAsDatabaseString = DateTimeHandler.ToDatabaseDateTimeString(dateTimeOffset);
@@ -697,7 +708,7 @@ namespace Carnassial.UnitTests
                     choiceControl.WellKnownValues = "Choice0|Choice1|Choice2|Choice3|Choice4|Choice5|Choice6|Choice7";
                     templateDatabase.TrySyncControlToDatabase(choiceControl);
                     ControlRow noteControl = templateDatabase.Controls[TestConstant.DefaultDatabaseColumn.Note0];
-                    noteControl.Type = ControlType.FixedChoice;
+                    noteControl.ControlType = ControlType.FixedChoice;
                     templateDatabase.TrySyncControlToDatabase(noteControl);
 
                     Assert.IsFalse(FileDatabase.TryCreateOrOpen(fileDatabase.FileName, templateDatabase, false, LogicalOperator.And, out FileDatabase fileDatabaseReopened));
@@ -1268,7 +1279,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(control.SpreadsheetOrder > 0);
             Assert.IsTrue(control.MaxWidth > 0);
             Assert.IsFalse(String.IsNullOrWhiteSpace(control.Tooltip));
-            Assert.IsTrue(Enum.IsDefined(typeof(ControlType), control.Type));
+            Assert.IsTrue(Enum.IsDefined(typeof(ControlType), control.ControlType));
             Assert.IsTrue((control.Visible == true) || (control.Visible == false));
         }
 
@@ -1304,11 +1315,6 @@ namespace Carnassial.UnitTests
             }
         }
 
-        private void VerifyFileTimeAdjustment(List<DateTimeOffset> fileTimesBeforeAdjustment, List<DateTimeOffset> fileTimesAfterAdjustment, TimeSpan expectedAdjustment)
-        {
-            this.VerifyFileTimeAdjustment(fileTimesBeforeAdjustment, fileTimesAfterAdjustment, 0, fileTimesBeforeAdjustment.Count - 1, expectedAdjustment);
-        }
-
         private void VerifyFileTimeAdjustment(List<DateTimeOffset> fileTimesBeforeAdjustment, List<DateTimeOffset> fileTimesAfterAdjustment, int startRow, int endRow, TimeSpan expectedAdjustment)
         {
             for (int row = 0; row < startRow; ++row)
@@ -1325,29 +1331,6 @@ namespace Carnassial.UnitTests
             {
                 TimeSpan actualAdjustment = fileTimesAfterAdjustment[row] - fileTimesBeforeAdjustment[row];
                 Assert.IsTrue(actualAdjustment == TimeSpan.Zero, "Expected file time not to change but it shifted by {0}.", actualAdjustment);
-            }
-        }
-
-        private void VerifyMarkers(ImageRow file, List<ControlRow> counterControls, List<List<Point>> expectedMarkerPositions)
-        {
-            Assert.IsTrue(counterControls.Count == expectedMarkerPositions.Count);
-            for (int counterIndex = 0; counterIndex < counterControls.Count; ++counterIndex)
-            {
-                MarkersForCounter markersForCounter = file.GetMarkersForCounter(counterControls[counterIndex].DataLabel);
-                List<Point> expectedPositions = expectedMarkerPositions[counterIndex];
-                Assert.IsTrue(markersForCounter.Markers.Count == expectedPositions.Count);
-                for (int markerIndex = 0; markerIndex < expectedPositions.Count; ++markerIndex)
-                {
-                    Marker marker = markersForCounter.Markers[markerIndex];
-                    // only Point is persisted to the database so other Marker fields should have default values on read
-                    Assert.IsFalse(marker.ShowLabel);
-                    Assert.IsTrue(marker.LabelShownPreviously);
-                    Assert.IsTrue(String.Equals(marker.DataLabel, markersForCounter.DataLabel, StringComparison.Ordinal));
-                    Assert.IsFalse(marker.Emphasize);
-                    Assert.IsFalse(marker.Highlight);
-                    Assert.IsTrue(marker.Position == expectedPositions[markerIndex]);
-                    Assert.IsNull(marker.Tooltip);
-                }
             }
         }
 

@@ -138,7 +138,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(control.MaxWidth == this.MaxWidth, "{0}: Expected TextBoxWidth '{1}' but found '{2}'.", this.DataLabel, this.MaxWidth, control.MaxWidth);
             Assert.IsTrue(control.SpreadsheetOrder == this.SpreadsheetOrder, "{0}: Expected SpreadsheetOrder '{1}' but found '{2}'.", this.DataLabel, this.SpreadsheetOrder, control.SpreadsheetOrder);
             Assert.IsTrue(control.Tooltip == this.Tooltip, "{0}: Expected Tooltip '{1}' but found '{2}'.", this.DataLabel, this.Tooltip, control.Tooltip);
-            Assert.IsTrue(control.Type == this.Type, "{0}: Expected Type '{1}' but found '{2}'.", this.DataLabel, this.Type, control.Type);
+            Assert.IsTrue(control.ControlType == this.Type, "{0}: Expected Type '{1}' but found '{2}'.", this.DataLabel, this.Type, control.ControlType);
             Assert.IsTrue(control.Visible == this.Visible, "{0}: Expected Visible '{1}' but found '{2}'.", this.DataLabel, this.Visible, control.Visible);
             Assert.IsTrue(control.WellKnownValues == this.WellKnownValues, "{0}: Expected List '{1}' but found '{2}'.", this.DataLabel, this.WellKnownValues, control.WellKnownValues);
         }

@@ -93,7 +93,7 @@ namespace Carnassial.Data.Spreadsheet
                     fileWriter.Write(this.EscapeForCsv(control.DataLabel));
                     fileWriter.Write(',');
 
-                    if (control.Type == ControlType.Counter)
+                    if (control.ControlType == ControlType.Counter)
                     {
                         string markerColumn = FileTable.GetMarkerPositionColumnName(control.DataLabel);
                         columns.Add(markerColumn);
@@ -219,7 +219,7 @@ namespace Carnassial.Data.Spreadsheet
                             columnDataTypes.Add(userColumn.DataType);
                         }
 
-                        if (control.Type == ControlType.Counter)
+                        if (control.ControlType == ControlType.Counter)
                         {
                             columns.Add(FileTable.GetMarkerPositionColumnName(control.DataLabel));
                             columnDataTypes.Add(SqlDataType.Blob);
@@ -619,7 +619,7 @@ namespace Carnassial.Data.Spreadsheet
             {
                 columnsInDatabase.Add(control.DataLabel);
 
-                if (control.Type == ControlType.Counter)
+                if (control.ControlType == ControlType.Counter)
                 {
                     string markerColumn = FileTable.GetMarkerPositionColumnName(control.DataLabel);
                     columnsInDatabase.Add(markerColumn);

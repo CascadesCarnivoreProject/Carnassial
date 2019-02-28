@@ -180,6 +180,13 @@ namespace Carnassial
             public const string ImageSet = "ImageSet"; // table containing information common to the entire image set
         }
 
+        public static class DialogControlName
+        {
+            public const string AboutEmailLink = "EmailLink";
+            public const string AboutIssuesLink = "IssuesLink";
+            public const string InstructionsTutorialLink = "TutorialLink";
+        }
+
         public static class Excel
         {
             public const int AutoFilterDropdownWidth = 15;
@@ -499,8 +506,8 @@ namespace Carnassial
             public const string CarnassialWindowStatusPreviousNextDifferenceOtherNotCompatible = "CarnassialWindow.Status.PreviousNextDifference.OtherNotCompatible";
             public const string CarnassialWindowStatusRedo = "CarnassialWindow.Status.Redo";
             public const string CarnassialWindowStatusSelectionReverted = "CarnassialWindow.Status.Selection.Reverted";
-            public const string CarnassialWindowStatusSpreadsheetExport = "CarnassialWindow.Status.Export";
-            public const string CarnassialWindowStatusSpreadsheetExportCompleted = "CarnassialWindow.Status.Export.Completed";
+            public const string CarnassialWindowStatusSpreadsheetExport = "CarnassialWindow.Status.Spreadsheet.Export";
+            public const string CarnassialWindowStatusSpreadsheetExportCompleted = "CarnassialWindow.Status.Spreadsheet.Export.Completed";
             public const string CarnassialWindowStatusSpreadsheetExportExcelLimitExceeded = "CarnassialWindow.Status.Spreadsheet.Export.ExcelLimitExceeded";
             public const string CarnassialWindowStatusImport = "CarnassialWindow.Status.Import";
             public const string CarnassialWindowStatusSpreadsheetImportCompleted = "CarnassialWindow.Status.Import.Completed";
@@ -536,16 +543,10 @@ namespace Carnassial
             public const string ImageRowImportInvalidMarkerPosition = "ImageRow.Import.InvalidMarkerPosition";
             public const string ImageRowImportInvalidUtcOffset = "ImageRow.Import.InvalidUtcOffset";
             public const string KeyboardControl = "Keyboard.Control";
+            public const string SearchTermListCellMargin = "SearchTermList.CellMargin";
             public const string SpreadsheetImportColumnNotInImageSet = "Spreadsheet.Import.ColumnNotInImageSet";
             public const string SpreadsheetImportColumnNotInSpreadsheet = "Spreadsheet.Import.ColumnNotInSpreadsheet";
             public const string SpreadsheetImportRequiredColumnNotInSpreadsheet = "Spreadsheet.Import.RequiredColumnNotInSpreadsheet";
-        }
-
-        public static class ResourceName
-        {
-            public const string AboutEmailLink = "EmailLink";
-            public const string AboutIssuesLink = "IssuesLink";
-            public const string InstructionsTutorialLink = "TutorialLink";
         }
 
         public static class SearchTermOperator
@@ -620,10 +621,8 @@ namespace Carnassial
             public const double MaximumUtcOffsetInHours = 14.0;
             public const double MinimumUtcOffsetInHours = -12.0;
             public const int MonthsInYear = 12;
-            public const string TimeFormat = "HH:mm:ss";
             public const string TimeSpanDisplayFormat = @"hh\:mm\:ss";
-            public const string UtcOffsetDatabaseFormat = "0.00";
-            public const string UtcOffsetDisplayFormat = @"hh\:mm";
+            public const string UtcOffsetDisplayFormat = @"h\:mm";
             public const int UtcOffsetGranularityInMinutes = 15;
             public const string VideoPositionFormat = @"mm\:ss";
 

@@ -189,6 +189,7 @@
         <Setter Property="Grid.Column" Value="6" />
         <Setter Property="Grid.Row" Value="0" />
         <Setter Property="Height" Value="{x:Static SystemParameters.WindowCaptionButtonHeight}" />
+        <Setter Property="IsTabStop" Value="False" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -228,6 +229,7 @@
         <Setter Property="Grid.Column" Value="5" />
         <Setter Property="Grid.Row" Value="0" />
         <Setter Property="Height" Value="{x:Static SystemParameters.WindowCaptionButtonHeight}" />
+        <Setter Property="IsTabStop" Value="False" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -302,6 +304,7 @@
         <Setter Property="Grid.Column" Value="4" />
         <Setter Property="Grid.Row" Value="0" />
         <Setter Property="Height" Value="{x:Static SystemParameters.WindowCaptionButtonHeight}" />
+        <Setter Property="IsTabStop" Value="False" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">

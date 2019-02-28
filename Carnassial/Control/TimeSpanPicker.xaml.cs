@@ -346,7 +346,7 @@ namespace Carnassial.Control
         {
             if (this.TryParseTimeSpan(out TimeSpan timeSpan))
             {
-                this.ErrorIcon.Visibility = Visibility.Hidden;
+                this.ErrorIcon.Visibility = Visibility.Collapsed;
                 this.Value = timeSpan;
             }
             else

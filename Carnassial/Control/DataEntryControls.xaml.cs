@@ -136,12 +136,12 @@ namespace Carnassial.Control
                     continue;
                 }
 
-                if (control.Type == ControlType.DateTime)
+                if (control.ControlType == ControlType.DateTime)
                 {
                     dateTimeControl = new DataEntryDateTimeOffset(control, this);
                     visibleControls.Add(dateTimeControl);
                 }
-                else if (control.Type == ControlType.Note)
+                else if (control.ControlType == ControlType.Note)
                 {
                     // standard controls rendering as notes aren't editable by the user 
                     List<string> autocompletions = null;
@@ -153,28 +153,28 @@ namespace Carnassial.Control
                     DataEntryNote noteControl = new DataEntryNote(control, autocompletions, readOnly, this);
                     visibleControls.Add(noteControl);
                 }
-                else if (control.Type == ControlType.Flag)
+                else if (control.ControlType == ControlType.Flag)
                 {
                     DataEntryFlag flagControl = new DataEntryFlag(control, this);
                     visibleControls.Add(flagControl);
                 }
-                else if (control.Type == ControlType.Counter)
+                else if (control.ControlType == ControlType.Counter)
                 {
                     DataEntryCounter counterControl = new DataEntryCounter(control, this);
                     visibleControls.Add(counterControl);
                 }
-                else if (control.Type == ControlType.FixedChoice)
+                else if (control.ControlType == ControlType.FixedChoice)
                 {
                     DataEntryChoice choiceControl = new DataEntryChoice(control, this);
                     visibleControls.Add(choiceControl);
                 }
-                else if (control.Type == ControlType.UtcOffset)
+                else if (control.ControlType == ControlType.UtcOffset)
                 {
                     showUtcOffset = true;
                 }
                 else
                 {
-                    Debug.Fail(String.Format("Unhandled control type {0}.", control.Type));
+                    Debug.Fail(String.Format("Unhandled control type {0}.", control.ControlType));
                     continue;
                 }
             }

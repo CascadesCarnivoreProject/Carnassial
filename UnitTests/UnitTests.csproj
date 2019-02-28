@@ -80,6 +80,7 @@
     <Compile Include="DateTimeExtensions.cs" />
     <Compile Include="DateTimeOffsetExtensions.cs" />
     <Compile Include="DefaultControlsExpectation.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="LowLevelTests.cs" />
     <Compile Include="FileDatabaseExtensions.cs" />
     <Compile Include="FileExpectations.cs" />

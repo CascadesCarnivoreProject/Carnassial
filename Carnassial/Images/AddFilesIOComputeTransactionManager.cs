@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Carnassial.Images
@@ -63,11 +64,25 @@ namespace Carnassial.Images
             {
                 return this.AddFilesCompute(fileDatabase, state, computeTaskNumber);
             };
+
+            ReaderWriterLockSlim fileCreateAndAppendLock = new ReaderWriterLockSlim();
             this.IOTaskBody = (int ioTaskNumber) =>
             {
                 for (FileLoadAtom loadAtom = this.GetNextIOAtom(ioTaskNumber); loadAtom != null; loadAtom = this.GetNextIOAtom(ioTaskNumber))
                 {
-                    if (loadAtom.CreateAndAppendFiles(filesAlreadyInFileTableByRelativePath, fileDatabase.Files))
+                    // CreateAndAppendFiles() ultimately calls List.Add(), which is not thread safe for more than one IO task
+                    // Considerig core counts in target hardware, assume at least two IO tasks will be running.
+                    bool filesCreated = false;
+                    fileCreateAndAppendLock.EnterWriteLock();
+                    try
+                    {
+                        filesCreated = loadAtom.CreateAndAppendFiles(filesAlreadyInFileTableByRelativePath, fileDatabase.Files);
+                    }
+                    finally
+                    {
+                        fileCreateAndAppendLock.ExitWriteLock();
+                    }
+                    if (filesCreated)
                     {
                         loadAtom.CreateJpegs(fileDatabase.FolderPath, false);
                     }

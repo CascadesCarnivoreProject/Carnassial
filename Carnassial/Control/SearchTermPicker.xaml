@@ -1,0 +1,39 @@
+﻿<UserControl x:Class="Carnassial.Control.SearchTermPicker"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             mc:Ignorable="d" 
+             d:DesignWidth="300">
+    <Grid Name="Grid">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition SharedSizeGroup="Use" Width="Auto" />
+            <ColumnDefinition SharedSizeGroup="Label" Width="Auto" />
+            <ColumnDefinition SharedSizeGroup="Operator" Width="Auto" />
+            <ColumnDefinition SharedSizeGroup="Value" Width="Auto" />
+            <ColumnDefinition SharedSizeGroup="Query" Width="*" />
+            <ColumnDefinition SharedSizeGroup="Shortcut" Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <!-- WPF fully binds UseCheckBox.IsChecked to SearchTerm.UseForSearching but binds OperatorBox.IsEnabeled and the value
+             control's IsEnabled only on changes, initially disabling both controls even when the underlying SearchTerm has 
+             UseForSearching = true. As a workaround, use UseCheckBox's Checked and Unchecked events to perform the binding's
+             equivalent in code behind. -->
+        <CheckBox Name="UseCheckBox" Checked="UseCheckBox_CheckedOrUnchecked" IsChecked="{Binding Path=UseForSearching}" Margin="{StaticResource SearchTermList.CellMargin}" TabIndex="0" MinWidth="20" Unchecked="UseCheckBox_CheckedOrUnchecked" VerticalAlignment="Center" Grid.Column="0" Grid.Row="0" />
+        <ComboBox Name="LabelBox" MinWidth="50" SelectionChanged="LabelBox_SelectionChanged" Margin="{StaticResource SearchTermList.CellMargin}" TabIndex="1" Grid.Column="1" Grid.Row="0" />
+        <ComboBox Name="OperatorBox" IsEnabled="False" Margin="{StaticResource SearchTermList.CellMargin}" MinWidth="50" SelectionChanged="OperatorBox_SelectionChanged" TabIndex="2" Grid.Column="2" Grid.Row="0" />
+        <Label Name="Query" Margin="{StaticResource SearchTermList.CellMargin}" VerticalAlignment="Center" Grid.Column="4" Grid.Row="0" />
+        <!-- For user convenience, a keyboard shortcut is assigned to navigate to and potentially toggle UseCheckBox. This is
+             most easily done with the usual underscore prefix to label content and a label target but WPF disables the shortcut
+             when the label is collapsed and does not support targeting from a ComboBox. A column of transparent labels at the end 
+             of the grid is used as a workaround. A lighter weight approach may be to create KeyGestures in code behind and command
+             bind them but WPF's support for conversion between Unicode characters and keyboard keys is restricted to ASCII alphanumeric
+             characters. Localization may be possible by p/invoke to the Win32 virtual key and scan code APIs and conversion back to
+             System.Windows.Input.Key values but use of this path requires a FromUnicode() peer to ToUnicode() which is not obviously
+             present in the Win32 API. At present, it doesn't appear the development cost of this approach is worth the runtime benefit.
+             -->
+        <Label Name="Shortcut" Foreground="Transparent" Margin="{StaticResource SearchTermList.CellMargin}" Target="{Binding ElementName=UseCheckBox}" VerticalAlignment="Center" Grid.Column="5" Grid.Row="0" />
+    </Grid>
+</UserControl>

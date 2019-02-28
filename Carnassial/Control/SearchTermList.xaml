@@ -1,0 +1,68 @@
+﻿<UserControl x:Class="Carnassial.Control.SearchTermList"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="700">
+    <Grid Background="{StaticResource ApplicationBackgroundBrush}" Grid.IsSharedSizeScope="true">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Rectangle Margin="0,0,10,0" Style="{StaticResource DialogHorizontalRule}" Grid.Column="0" Grid.Row="0" />
+        <Grid Grid.Column="0" Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            
+            <TextBlock Margin="0,0,5,0" FontWeight="Bold" Text="{StaticResource CustomSelection.CombineSearches}" VerticalAlignment="Center" Grid.Column="0" Grid.Row="0" />
+            <RadioButton Name="TermCombiningAnd" Margin="3,3,4,3" FontWeight="Bold" Content="{StaticResource CustomSelection.CombineSearches.And}" GroupName="LogicalOperators" IsChecked="True" VerticalAlignment="Center" Grid.Column="1" Grid.Row="0" />
+            <RadioButton Name="TermCombiningOr" Margin="3,3,4,3" FontWeight="Bold" Content="{StaticResource CustomSelection.CombineSearches.Or}" GroupName="LogicalOperators" Grid.Column="1" VerticalAlignment="Center" Grid.Row="1" />
+            <TextBlock Text="{StaticResource CustomSelection.CombineSearches.And.Description}" VerticalAlignment="Center" Grid.Column="2" Grid.Row="0" />
+            <TextBlock Text="{StaticResource CustomSelection.CombineSearches.Or.Description}" VerticalAlignment="Center" Grid.Column="2" Grid.Row="1" />
+        </Grid>
+        <Rectangle Margin="0,0,10,0" Style="{StaticResource DialogHorizontalRule}" Grid.Column="0" Grid.Row="2" />
+        <Grid Grid.Column="0" Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition SharedSizeGroup="Use" Width="Auto" />
+                <ColumnDefinition SharedSizeGroup="Label" Width="Auto" />
+                <ColumnDefinition SharedSizeGroup="Operator" Width="Auto" />
+                <ColumnDefinition SharedSizeGroup="Value" Width="Auto" />
+                <ColumnDefinition SharedSizeGroup="Query" Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <TextBlock Name="UseHeader" FontWeight="Bold" Margin="{StaticResource SearchTermList.CellMargin}" Text="{StaticResource SearchTermList.Use}" Grid.Row="0" Grid.Column="0"/>
+            <TextBlock Name="LabelHeader" FontWeight="Bold" Margin="{StaticResource SearchTermList.CellMargin}" Text="{StaticResource SearchTermList.Label}" Grid.Row="0" Grid.Column="1"/>
+            <TextBlock Name="OperatorHeader" FontWeight="Bold" Margin="{StaticResource SearchTermList.CellMargin}" Text="{StaticResource SearchTermList.Operator}" Grid.Row="0" Grid.Column="2"/>
+            <TextBlock Name="ValueHeader" FontWeight="Bold" Margin="{StaticResource SearchTermList.CellMargin}" Text="{StaticResource SearchTermList.Value}" Grid.Row="0" Grid.Column="3"/>
+            <TextBlock Name="QueryHeader" FontWeight="Bold" Margin="{StaticResource SearchTermList.CellMargin}" Text="{StaticResource SearchTermList.Query}" Grid.Row="0" Grid.Column="4"/>
+        </Grid>
+        <ListView Name="SearchTerms" Background="{StaticResource ApplicationBackgroundBrush}" BorderThickness="0" 
+                  HorizontalContentAlignment="Stretch" KeyboardNavigation.TabNavigation="Continue" MinWidth="100"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" 
+                  SelectionMode="Single" Grid.Column="0" Grid.Row="4">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="KeyboardNavigation.IsTabStop" Value="False" />
+                    <EventSetter Event="GotFocus" Handler="ListViewItem_GotFocus" />
+                </Style>
+            </ListView.ItemContainerStyle>
+        </ListView>
+    </Grid>
+</UserControl>

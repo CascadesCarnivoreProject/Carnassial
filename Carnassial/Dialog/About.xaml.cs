@@ -44,14 +44,14 @@ namespace Carnassial.Dialog
             Span termsOfUse = App.FindResource<Span>(Constant.ResourceKey.AboutTermsOfUse);
             if (termsOfUse.Tag == null)
             {
-                Hyperlink emailLink = (Hyperlink)LogicalTreeHelper.FindLogicalNode(termsOfUse, Constant.ResourceName.AboutEmailLink);
+                Hyperlink emailLink = (Hyperlink)LogicalTreeHelper.FindLogicalNode(termsOfUse, Constant.DialogControlName.AboutEmailLink);
                 emailLink.NavigateUri = CarnassialConfigurationSettings.GetDevTeamEmailLink();
                 emailLink.Inlines.Clear();
                 emailLink.Inlines.Add(emailLink.NavigateUri.ToEmailAddress());
                 emailLink.RequestNavigate += this.Hyperlink_RequestNavigate;
                 emailLink.ToolTip = emailLink.NavigateUri.ToEmailAddress();
 
-                Hyperlink issuesLink = (Hyperlink)LogicalTreeHelper.FindLogicalNode(termsOfUse, Constant.ResourceName.AboutIssuesLink);
+                Hyperlink issuesLink = (Hyperlink)LogicalTreeHelper.FindLogicalNode(termsOfUse, Constant.DialogControlName.AboutIssuesLink);
                 issuesLink.NavigateUri = CarnassialConfigurationSettings.GetIssuesBrowserAddress();
                 issuesLink.Inlines.Clear();
                 issuesLink.Inlines.Add(issuesLink.NavigateUri.AbsoluteUri);

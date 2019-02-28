@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 
 namespace Carnassial.Data
@@ -272,7 +273,7 @@ namespace Carnassial.Data
             }
         }
 
-        public ControlType Type
+        public ControlType ControlType
         {
             get
             {
@@ -286,7 +287,7 @@ namespace Carnassial.Data
                 }
                 this.HasChanges |= true;
                 this.type = value;
-                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Type)));
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.ControlType)));
             }
         }
 
@@ -328,60 +329,75 @@ namespace Carnassial.Data
 
         public SearchTerm CreateSearchTerm()
         {
-            switch (this.Type)
+            SearchTerm searchTerm = new SearchTerm(this);
+
+            return searchTerm;
+        }
+
+        public Type GetDatabaseColumnType()
+        {
+            switch (this.ControlType)
             {
                 case ControlType.Counter:
-                    return new SearchTerm<int>(this)
-                    {
-                        DatabaseValue = 0,
-                        Operator = Constant.SearchTermOperator.GreaterThan
-                    };
+                    return typeof(int);
                 case ControlType.DateTime:
-                    // before the CustomViewSelection dialog is first opened CarnassialWindow changes the default date time to the date time of the 
-                    // current file
-                    return new SearchTerm<DateTime>(this)
-                    {
-                        DatabaseValue = Constant.ControlDefault.DateTimeValue.UtcDateTime,
-                        Operator = Constant.SearchTermOperator.GreaterThanOrEqual
-                    };
+                    return typeof(DateTime);
                 case ControlType.Flag:
-                    return new SearchTerm<bool>(this)
-                    {
-                        DatabaseValue = this.DefaultValue
-                    };
+                    return typeof(bool);
                 case ControlType.FixedChoice:
                     if (String.Equals(this.DataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal))
                     {
-                        if (ImageRow.TryParseFileClassification(this.DefaultValue, out FileClassification defaultValue) == false)
-                        {
-                            defaultValue = FileClassification.Color;
-                        }
-                        SearchTerm searchTerm = new SearchTerm<FileClassification>(this)
-                        {
-                            DatabaseValue = defaultValue
-                        };
-                        return searchTerm;
+                        return typeof(FileClassification);
                     }
-                    else
-                    {
-                        return new SearchTerm<string>(this)
-                        {
-                            DatabaseValue = this.DefaultValue
-                        };
-                    }
+                    return typeof(string);
                 case ControlType.Note:
-                    return new SearchTerm<string>(this)
-                    {
-                        DatabaseValue = this.DefaultValue
-                    };
+                    return typeof(string);
                 case ControlType.UtcOffset:
-                    // the first time it's opened CustomViewSelection dialog changes this default to the offset of the current file
-                    return new SearchTerm<TimeSpan>(this)
-                    {
-                        DatabaseValue = Constant.ControlDefault.DateTimeValue.Offset
-                    };
+                    return typeof(double);
                 default:
-                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", this.Type));
+                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", this.ControlType));
+            }
+        }
+
+        public object GetDefaultDatabaseValue()
+        {
+            switch (this.ControlType)
+            {
+                case ControlType.Counter:
+                    return Int32.Parse(this.DefaultValue, NumberStyles.None, Constant.InvariantCulture);
+                case ControlType.DateTime:
+                    // the first time the custom selection dialog is launched CarnassialWindow calls 
+                    // CustomSelection.SetDateTimesAndOffset() to change this placeholder to the offset of the current file
+                    return Constant.ControlDefault.DateTimeValue.UtcDateTime;
+                case ControlType.Flag:
+                    Debug.Assert(String.IsNullOrWhiteSpace(this.DefaultValue) == false, String.Format("Default value for flag {0} unexpectedly null or whitespace.", this.DataLabel));
+                    if (String.Equals(this.DefaultValue, Constant.Sql.FalseString, StringComparison.Ordinal))
+                    {
+                        return false;
+                    }
+                    if (String.Equals(this.DefaultValue, Constant.Sql.TrueString, StringComparison.Ordinal))
+                    {
+                        return true;
+                    }
+                    return Boolean.Parse(this.DefaultValue);
+                case ControlType.FixedChoice:
+                    if (String.Equals(this.DataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal))
+                    {
+                        if (ImageRow.TryParseFileClassification(this.DefaultValue, out FileClassification defaultFileClassification) == false)
+                        {
+                            defaultFileClassification = FileClassification.Color;
+                        }
+                        return defaultFileClassification;
+                    }
+                    return this.DefaultValue;
+                case ControlType.Note:
+                    return this.DefaultValue;
+                case ControlType.UtcOffset:
+                    // the first time the custom selection dialog is launched CarnassialWindow calls 
+                    // CustomSelection.SetDateTimesAndOffset() to change this placeholder to the offset of the current file
+                    return DateTimeHandler.ToDatabaseUtcOffset(Constant.ControlDefault.DateTimeValue.Offset);
+                default:
+                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", this.ControlType));
             }
         }
 
