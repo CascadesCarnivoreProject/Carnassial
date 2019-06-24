@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Windows.Media;
-
-namespace Carnassial.Editor
+﻿namespace Carnassial.Editor
 {
     internal static class EditorConstant
     {

@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Configuration;
+using System.Globalization;
 
 namespace Carnassial.Util
 {
-    public class CarnassialConfigurationSettings
+    public static class CarnassialConfigurationSettings
     {
         public static Uri GetDevTeamEmailLink()
         {
             UriBuilder mailto = new UriBuilder(Uri.UriSchemeMailto + ":" + ConfigurationManager.AppSettings[Constant.ApplicationSettings.DevTeamEmail])
             {
-                Query = String.Format("subject={0} {1}: feedback", Constant.ApplicationName, typeof(CarnassialConfigurationSettings).Assembly.GetName().Version)
+                Query = String.Format(CultureInfo.InvariantCulture, "subject={0} {1}: feedback", Constant.ApplicationName, typeof(CarnassialConfigurationSettings).Assembly.GetName().Version)
             };
             return mailto.Uri;
         }

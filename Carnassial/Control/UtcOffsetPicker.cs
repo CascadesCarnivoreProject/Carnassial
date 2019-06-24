@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 
 namespace Carnassial.Control
 {
@@ -20,7 +21,7 @@ namespace Carnassial.Control
                 case 'm':
                     return TimeSpan.FromMinutes(incrementOrDecrement * Constant.Time.UtcOffsetGranularityInMinutes);
                 default:
-                    throw new NotSupportedException(String.Format("Unhandled part format {0}.", partFormat));
+                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled part format {0}.", partFormat));
             }
         }
     }

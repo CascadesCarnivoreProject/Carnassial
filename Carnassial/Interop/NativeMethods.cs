@@ -27,7 +27,7 @@ namespace Carnassial.Interop
             {
                 throw new Win32Exception(Marshal.GetLastWin32Error());
             }
-            
+
             return fileHandle;
         }
 
@@ -85,7 +85,7 @@ namespace Carnassial.Interop
             }
 
             string relativePath = relativePathBuilder.ToString();
-            if (relativePath.StartsWith(".\\"))
+            if (relativePath.StartsWith(".\\", StringComparison.Ordinal))
             {
                 relativePath = relativePath.Substring(2);
             }
@@ -146,7 +146,7 @@ namespace Carnassial.Interop
             }
             if (moveToBin.fAnyOperationsAborted)
             {
-                throw new Win32Exception(String.Format("Move of '{0}' to recycle bin was aborted.", filePath));
+                throw new Win32Exception(String.Format(CultureInfo.CurrentCulture, "Move of '{0}' to recycle bin was aborted.", filePath));
             }
         }
 

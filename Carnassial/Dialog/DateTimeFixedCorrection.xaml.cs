@@ -1,7 +1,6 @@
 ﻿using Carnassial.Control;
 using Carnassial.Data;
 using Carnassial.Images;
-using Carnassial.Native;
 using Carnassial.Util;
 using System;
 using System.Diagnostics;
@@ -16,11 +15,10 @@ namespace Carnassial.Dialog
     /// </summary>
     public partial class DateTimeFixedCorrection : WindowWithSystemMenu
     {
+        private bool displayingPreview;
         private readonly FileDatabase fileDatabase;
         private readonly ImageCache imageCache;
         private readonly DateTimeOffset initialDateTime;
-
-        private bool displayingPreview;
 
         public DateTimeFixedCorrection(FileDatabase fileDatabase, ImageCache imageCache, Window owner)
         {
@@ -114,7 +112,7 @@ namespace Carnassial.Dialog
             CommonUserInterface.SetDefaultDialogPosition(this);
             CommonUserInterface.TryFitWindowInWorkingArea(this);
 
-            await this.FileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.imageCache);
+            await this.FileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.imageCache).ConfigureAwait(true);
         }
     }
 }

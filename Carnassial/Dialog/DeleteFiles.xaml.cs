@@ -16,10 +16,9 @@ namespace Carnassial.Dialog
     /// </summary>
     public partial class DeleteFiles : WindowWithSystemMenu
     {
-        // these variables will hold the values of the passed in parameters
-        private bool deleteFileAndData;
-        private FileDatabase fileDatabase;
-        private List<ImageRow> filesToDelete;
+        private readonly bool deleteFileAndData;
+        private readonly FileDatabase fileDatabase;
+        private readonly List<ImageRow> filesToDelete;
 
         /// <summary>
         /// Ask the user if he/she wants to delete one or more files and (depending on whether deleteData is set) the data associated with those files.

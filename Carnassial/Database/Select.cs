@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.Globalization;
 
 namespace Carnassial.Database
 {
@@ -8,7 +9,7 @@ namespace Carnassial.Database
     {
         public string OrderBy { get; set; }
         public string Table { get; set; }
-        public List<WhereClause> Where { get; set; }
+        public List<WhereClause> Where { get; private set; }
         public LogicalOperator WhereCombiningOperator { get; set; }
 
         public Select(string table)
@@ -80,7 +81,7 @@ namespace Carnassial.Database
                         whereCombiningTerm = " OR ";
                         break;
                     default:
-                        throw new NotSupportedException(String.Format("Unhandled logical operator {0}.", this.WhereCombiningOperator));
+                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled logical operator {0}.", this.WhereCombiningOperator));
                 }
 
                 query += Constant.Sql.Where + String.Join(whereCombiningTerm, whereClauses);

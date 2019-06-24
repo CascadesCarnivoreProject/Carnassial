@@ -2,6 +2,7 @@
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Windows;
 
 namespace Carnassial.Dialog
@@ -19,20 +20,20 @@ namespace Carnassial.Dialog
 
             // fill in the counts
             int color = fileCountByClassification[FileClassification.Color];
-            this.Color.Text = String.Format("{0,5}", color);
+            this.Color.Text = String.Format(CultureInfo.InvariantCulture, "{0,5}", color);
             int greyscale = fileCountByClassification[FileClassification.Greyscale];
-            this.Greyscale.Text = String.Format("{0,5}", greyscale);
+            this.Greyscale.Text = String.Format(CultureInfo.InvariantCulture, "{0,5}", greyscale);
             int video = fileCountByClassification[FileClassification.Video];
-            this.Video.Text = String.Format("{0,5}", video);
+            this.Video.Text = String.Format(CultureInfo.InvariantCulture, "{0,5}", video);
             int fileNoLongerAvailable = fileCountByClassification[FileClassification.NoLongerAvailable];
-            this.FileNoLongerAvailable.Text = String.Format("{0,5}", fileNoLongerAvailable);
+            this.FileNoLongerAvailable.Text = String.Format(CultureInfo.InvariantCulture, "{0,5}", fileNoLongerAvailable);
             int dark = fileCountByClassification[FileClassification.Dark];
-            this.Dark.Text = String.Format("{0,5}", dark);
+            this.Dark.Text = String.Format(CultureInfo.InvariantCulture, "{0,5}", dark);
             int corrupted = fileCountByClassification[FileClassification.Corrupt];
-            this.Corrupted.Text = String.Format("{0,5}", corrupted);
+            this.Corrupted.Text = String.Format(CultureInfo.InvariantCulture, "{0,5}", corrupted);
 
             int total = color + greyscale + dark + video + corrupted + fileNoLongerAvailable;
-            this.Total.Text = String.Format("{0,5}", total);
+            this.Total.Text = String.Format(CultureInfo.InvariantCulture, "{0,5}", total);
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)

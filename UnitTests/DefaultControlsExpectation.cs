@@ -1,5 +1,4 @@
 ﻿using Carnassial.Data;
-using System;
 
 namespace Carnassial.UnitTests
 {
@@ -22,8 +21,8 @@ namespace Carnassial.UnitTests
         public ControlExpectations Note3 { get; private set; }
         public ControlExpectations Flag3 { get; private set; }
 
-        public DefaultControlsExpectation(Version version)
-            : base(version)
+        public DefaultControlsExpectation()
+            : base()
         {
             long id = Constant.Control.StandardControls.Count + 1;
             this.Counter0 = ControlExpectations.CreateCounter(TestConstant.DefaultDatabaseColumn.Counter0, id++);

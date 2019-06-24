@@ -9,8 +9,9 @@ namespace Carnassial.Control
 {
     public partial class VideoPlayer : UserControl
     {
+        private readonly DispatcherTimer positionUpdateTimer;
+
         private bool isProgrammaticUpdate;
-        private DispatcherTimer positionUpdateTimer;
 
         public VideoPlayer()
         {
@@ -131,7 +132,7 @@ namespace Carnassial.Control
         // pause video when user starts moving the slider so the two actions don't interfere with eachother
         private void VideoPosition_PreviewMouseDown(object sender, MouseButtonEventArgs e)
         {
-           this.Pause();
+            this.Pause();
         }
 
         // Scrub the video to the current slider position

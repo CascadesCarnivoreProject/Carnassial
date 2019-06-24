@@ -312,12 +312,12 @@ namespace Carnassial
             static Images()
             {
                 Images.FileCorruptMessage = new FileDisplayMessage("Image or video not available.",
-                    ":-(", 72, 
+                    ":-(", 72,
                     "The file appears corrupted and cannot be displayed.");
-                Images.FileNoLongerAvailableMessage = new FileDisplayMessage("Image or video not available.", 
+                Images.FileNoLongerAvailableMessage = new FileDisplayMessage("Image or video not available.",
                     ":-(", 72,
                     "The file cannot be found.  Was it moved or deleted?");
-                Images.NoSelectableFileMessage = new FileDisplayMessage("No file is available to display.", 
+                Images.NoSelectableFileMessage = new FileDisplayMessage("No file is available to display.",
                     "This occurs when\n• no image set is open\n• the image set has no files in it, or\n• no files are selected.", 12,
                     "To resolve this\n• open an image set if one isn't open (File menu)\n• add files if the image set is empty (File menu), or\n• change the selection (Select menu)");
             }

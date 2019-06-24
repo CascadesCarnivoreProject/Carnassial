@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,10 +26,10 @@ namespace Carnassial.Database
         public int RowsInsertedSinceLastBackup { get; set; }
         public int RowsUpdatedSinceLastBackup { get; set; }
 
-        /// <summary>
+        /// <remarks>
         /// Prepares a database connection.  Creates the database file if it does not exist.
-        /// </summary>
-        /// <param name="filePath">the file containing the database</param>
+        /// </remarks>
+        /// <param name="filePath">The file containing the database.</param>
         protected SQLiteDatabase(string filePath)
         {
             this.BackupTask = null;
@@ -56,11 +57,11 @@ namespace Carnassial.Database
             SQLiteTableSchema currentSchema = this.GetTableSchema(table);
             if (currentSchema.ColumnDefinitions.Any(column => String.Equals(column.Name, columnDefinition.Name, StringComparison.Ordinal)))
             {
-                throw new ArgumentException(String.Format("Column '{0}' is already present in table '{1}'.", columnDefinition.Name, table), nameof(columnDefinition));
+                throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, "Column '{0}' is already present in table '{1}'.", columnDefinition.Name, table), nameof(columnDefinition));
             }
             if (columnNumber > currentSchema.ColumnDefinitions.Count)
             {
-                throw new ArgumentOutOfRangeException(String.Format("Attempt to add column in position {0} but the '{1}' table has only {2} columns.", columnNumber, table, currentSchema.ColumnDefinitions.Count));
+                throw new ArgumentOutOfRangeException(String.Format(CultureInfo.CurrentCulture, "Attempt to add column in position {0} but the '{1}' table has only {2} columns.", columnNumber, table, currentSchema.ColumnDefinitions.Count));
             }
 
             // optimization for appending column to end of table
@@ -99,7 +100,7 @@ namespace Carnassial.Database
             },
             (SQLiteTableSchema newSchema) =>
             {
-                string commandText = String.Format("UPDATE {0} SET {1} = @BooleanAsBoolean WHERE {2} IN (SELECT {2} FROM {3} WHERE {1} = @BooleanAsString)", newSchema.Table, SQLiteDatabase.QuoteIdentifier(column), Constant.DatabaseColumn.ID, table);
+                string commandText = String.Format(CultureInfo.InvariantCulture, "UPDATE {0} SET {1} = @BooleanAsBoolean WHERE {2} IN (SELECT {2} FROM {3} WHERE {1} = @BooleanAsString)", newSchema.Table, SQLiteDatabase.QuoteIdentifier(column), Constant.DatabaseColumn.ID, table);
                 using (SQLiteCommand command = new SQLiteCommand(commandText, this.Connection, transaction))
                 {
                     SQLiteParameter integerParameter = new SQLiteParameter("@BooleanAsBoolean", true);
@@ -125,7 +126,7 @@ namespace Carnassial.Database
             },
             (SQLiteTableSchema newSchema) =>
             {
-                string commandText = String.Format("UPDATE {0} SET {1} = @EnumAsInteger WHERE {2} IN (SELECT {2} FROM {3} WHERE {1} = @EnumAsString)", newSchema.Table, SQLiteDatabase.QuoteIdentifier(column), Constant.DatabaseColumn.ID, table);
+                string commandText = String.Format(CultureInfo.InvariantCulture, "UPDATE {0} SET {1} = @EnumAsInteger WHERE {2} IN (SELECT {2} FROM {3} WHERE {1} = @EnumAsString)", newSchema.Table, SQLiteDatabase.QuoteIdentifier(column), Constant.DatabaseColumn.ID, table);
                 using (SQLiteCommand command = new SQLiteCommand(commandText, this.Connection, transaction))
                 {
                     SQLiteParameter integerParameter = new SQLiteParameter("@EnumAsInteger");
@@ -171,11 +172,11 @@ namespace Carnassial.Database
             }
             if (stringColumn == null)
             {
-                throw new ArgumentOutOfRangeException(nameof(column), String.Format("Column '{0}' is not present in table '{1}'.", column, table));
+                throw new ArgumentOutOfRangeException(nameof(column), String.Format(CultureInfo.CurrentCulture, "Column '{0}' is not present in table '{1}'.", column, table));
             }
             if (String.Equals(stringColumn.Type, Constant.SQLiteAffinity.Text, StringComparison.OrdinalIgnoreCase) == false)
             {
-                throw new ArgumentException(nameof(column), String.Format("Column '{0}' has type '{1}'.", column, stringColumn.Type));
+                throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, "Column '{0}' has type '{1}'.", column, stringColumn.Type), nameof(column));
             }
 
             // change the column from string to integer
@@ -215,11 +216,11 @@ namespace Carnassial.Database
         {
             if (sourceColumns.Count != destinationColumns.Count)
             {
-                throw new ArgumentException(String.Format("Source and destination column lists must be of the same length. Source list has {0} columns and destination list has {1} columns.", sourceColumns.Count, destinationColumns.Count));
+                throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, "Source and destination column lists must be of the same length. Source list has {0} columns and destination list has {1} columns.", sourceColumns.Count, destinationColumns.Count));
             }
             if (newSchema.ColumnDefinitions.Count < sourceColumns.Count)
             {
-                throw new ArgumentException(String.Format("Source and destination column lists exceed length of new column list. New column list has {0} columns while the other lists have {1} columns.", newSchema.ColumnDefinitions.Count, sourceColumns.Count));
+                throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, "Source and destination column lists exceed length of new column list. New column list has {0} columns while the other lists have {1} columns.", newSchema.ColumnDefinitions.Count, sourceColumns.Count));
             }
 
             // create replacement table with the new schema
@@ -272,7 +273,7 @@ namespace Carnassial.Database
             }
             if (columnToRemove == -1)
             {
-                throw new ArgumentOutOfRangeException(nameof(column), String.Format("Column '{0}' not found in table '{1}'.", column, table));
+                throw new ArgumentOutOfRangeException(nameof(column), String.Format(CultureInfo.CurrentCulture, "Column '{0}' not found in table '{1}'.", column, table));
             }
             newSchema.ColumnDefinitions.RemoveAt(columnToRemove);
 
@@ -402,7 +403,7 @@ namespace Carnassial.Database
                 }
                 else
                 {
-                    throw new NotSupportedException(String.Format("Unhandled synchronous mode '{0}'.", mode));
+                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled synchronous mode '{0}'.", mode));
                 }
             }
         }
@@ -424,7 +425,7 @@ namespace Carnassial.Database
                 }
                 else
                 {
-                    throw new NotSupportedException(String.Format("Unhandled synchronous mode '{0}'.", mode));
+                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled synchronous mode '{0}'.", mode));
                 }
             }
         }
@@ -480,7 +481,7 @@ namespace Carnassial.Database
                         if ((reader.FieldCount > 4) && (reader.IsDBNull(4) == false))
                         {
                             columnDefinition.DefaultValue = reader.GetString(4);
-                            if ((reader.GetFieldType(4) == typeof(string)) && 
+                            if ((reader.GetFieldType(4) == typeof(string)) &&
                                 (columnDefinition.DefaultValue.Length > 1) &&
                                 (columnDefinition.DefaultValue[0] == '\'') &&
                                 (columnDefinition.DefaultValue[columnDefinition.DefaultValue.Length - 1] == '\''))
@@ -531,7 +532,7 @@ namespace Carnassial.Database
                         }
                         else
                         {
-                            throw new NotSupportedException(String.Format("Unhandled index origin '{0}'.", origin));
+                            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled index origin '{0}'.", origin));
                         }
                     }
                     Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Done, "Result code indicates error.");
@@ -671,11 +672,11 @@ namespace Carnassial.Database
             SQLiteTableSchema currentSchema = this.GetTableSchema(table);
             if (currentSchema.ColumnDefinitions.Any(column => String.Equals(column.Name, currentColumnName, StringComparison.Ordinal)) == false)
             {
-                throw new ArgumentException(String.Format("No column named '{0}' exists to rename.", currentColumnName), nameof(currentColumnName));
+                throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, "No column named '{0}' exists to rename.", currentColumnName), nameof(currentColumnName));
             }
             if (currentSchema.ColumnDefinitions.Any(column => String.Equals(column.Name, newColumnName, StringComparison.Ordinal)))
             {
-                throw new ArgumentException(String.Format("Column named '{0}' already exists.", newColumnName), nameof(newColumnName));
+                throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, "Column named '{0}' already exists.", newColumnName), nameof(newColumnName));
             }
 
             SQLiteTableSchema newSchema = new SQLiteTableSchema(currentSchema)
@@ -829,7 +830,7 @@ namespace Carnassial.Database
                 }
                 return true;
             });
-            return await this.BackupTask;
+            return await this.BackupTask.ConfigureAwait(false);
         }
 
         protected void WalCheckpoint(SQLiteWalCheckpoint checkpoint)

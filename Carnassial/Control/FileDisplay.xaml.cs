@@ -76,7 +76,7 @@ namespace Carnassial.Control
             }
             else
             {
-                await this.DisplayAsync(folderPath, imageCache.Current);
+                await this.DisplayAsync(folderPath, imageCache.Current).ConfigureAwait(true);
             }
         }
 
@@ -103,7 +103,7 @@ namespace Carnassial.Control
                     expectedDisplayWidth = (int)(4.0 / 3.0 * this.ActualHeight);
                 }
 
-                using (CachedImage image = await file.TryLoadImageAsync(folderPath, expectedDisplayWidth))
+                using (CachedImage image = await file.TryLoadImageAsync(folderPath, expectedDisplayWidth).ConfigureAwait(true))
                 {
                     this.Display(image);
                 }

@@ -34,7 +34,7 @@ namespace Carnassial.Util
                 case ControlType.UtcOffset:
                     return "UtcOffset";
                 default:
-                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", type));
+                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled control type {0}.", type));
             }
         }
 
@@ -71,7 +71,7 @@ namespace Carnassial.Util
                 return ControlType.UtcOffset;
             }
 
-            throw new NotSupportedException(String.Format("Unhandled control type '{0}'.", type));
+            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled control type '{0}'.", type));
         }
     }
 }

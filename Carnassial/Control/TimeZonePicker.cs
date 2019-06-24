@@ -33,7 +33,7 @@ namespace Carnassial.Control
         {
             foreach (string item in this.Items)
             {
-                if (item != null && item.StartsWith(timeZone.DisplayName))
+                if (item != null && item.StartsWith(timeZone.DisplayName, StringComparison.Ordinal))
                 {
                     this.SelectedItem = item;
                 }

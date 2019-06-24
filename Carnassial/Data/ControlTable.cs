@@ -6,6 +6,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Data.SQLite;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 
 namespace Carnassial.Data
@@ -225,7 +226,7 @@ namespace Carnassial.Data
                         maxWidthIndex = column;
                         break;
                     default:
-                        throw new NotSupportedException(String.Format("Unhandled column '{0}' in {1} table schema.", columnName, reader.GetTableName(0)));
+                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column '{0}' in {1} table schema.", columnName, reader.GetTableName(0)));
                 }
             }
 

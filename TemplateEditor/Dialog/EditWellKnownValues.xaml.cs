@@ -11,7 +11,7 @@ namespace Carnassial.Editor.Dialog
     {
         private static readonly string[] NewLineDelimiter = { Environment.NewLine };
 
-        private UIElement positionReference;
+        private readonly UIElement positionReference;
 
         public List<string> Values { get; private set; }
 

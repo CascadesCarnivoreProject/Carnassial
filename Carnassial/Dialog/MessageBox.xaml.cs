@@ -1,5 +1,6 @@
 ﻿using Carnassial.Util;
 using System;
+using System.Globalization;
 using System.Windows;
 
 namespace Carnassial.Dialog
@@ -54,7 +55,7 @@ namespace Carnassial.Dialog
                         break;
                     case MessageBoxButton.YesNoCancel:
                     default:
-                        throw new ArgumentOutOfRangeException(nameof(value), String.Format("Unhandled button type {0}.", value));
+                        throw new ArgumentOutOfRangeException(nameof(value), String.Format(CultureInfo.CurrentCulture, "Unhandled button type {0}.", value));
                 }
                 this.buttonType = value;
             }

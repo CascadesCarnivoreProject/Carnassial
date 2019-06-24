@@ -14,7 +14,7 @@ namespace Carnassial.UnitTests
         public ControlExpectations UtcOffset { get; private set; }
         public ControlExpectations DeleteFlag { get; private set; }
 
-        protected ControlsExpectation(Version version)
+        protected ControlsExpectation()
         {
             long id = 1;
             this.File = ControlExpectations.CreateNote(Constant.FileColumn.File, id++);

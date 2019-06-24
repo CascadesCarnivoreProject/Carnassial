@@ -65,31 +65,32 @@ namespace Carnassial.Images
                 return this.AddFilesCompute(fileDatabase, state, computeTaskNumber);
             };
 
-            ReaderWriterLockSlim fileCreateAndAppendLock = new ReaderWriterLockSlim();
-            this.IOTaskBody = (int ioTaskNumber) =>
+            using (ReaderWriterLockSlim fileCreateAndAppendLock = new ReaderWriterLockSlim())
             {
-                for (FileLoadAtom loadAtom = this.GetNextIOAtom(ioTaskNumber); loadAtom != null; loadAtom = this.GetNextIOAtom(ioTaskNumber))
+                this.IOTaskBody = (int ioTaskNumber) =>
                 {
-                    // CreateAndAppendFiles() ultimately calls List.Add(), which is not thread safe for more than one IO task
-                    // Considerig core counts in target hardware, assume at least two IO tasks will be running.
-                    bool filesCreated = false;
-                    fileCreateAndAppendLock.EnterWriteLock();
-                    try
+                    for (FileLoadAtom loadAtom = this.GetNextIOAtom(ioTaskNumber); loadAtom != null; loadAtom = this.GetNextIOAtom(ioTaskNumber))
                     {
-                        filesCreated = loadAtom.CreateAndAppendFiles(filesAlreadyInFileTableByRelativePath, fileDatabase.Files);
+                        // CreateAndAppendFiles() ultimately calls List.Add(), which is not thread safe for more than one IO task
+                        // Considerig core counts in target hardware, assume at least two IO tasks will be running.
+                        bool filesCreated = false;
+                        fileCreateAndAppendLock.EnterWriteLock();
+                        try
+                        {
+                            filesCreated = loadAtom.CreateAndAppendFiles(filesAlreadyInFileTableByRelativePath, fileDatabase.Files);
+                        }
+                        finally
+                        {
+                            fileCreateAndAppendLock.ExitWriteLock();
+                        }
+                        if (filesCreated)
+                        {
+                            loadAtom.CreateJpegs(fileDatabase.FolderPath, false);
+                        }
                     }
-                    finally
-                    {
-                        fileCreateAndAppendLock.ExitWriteLock();
-                    }
-                    if (filesCreated)
-                    {
-                        loadAtom.CreateJpegs(fileDatabase.FolderPath, false);
-                    }
-                }
-            };
-            await this.RunTasksAsync(fileDatabase.CreateAddFilesTransaction(), this.filesToLoadByRelativeFolderPath, this.FilesToLoad);
-
+                };
+                await this.RunTasksAsync(fileDatabase.CreateAddFilesTransaction(), this.filesToLoadByRelativeFolderPath, this.FilesToLoad).ConfigureAwait(true);
+            }
             return this.TransactionFileCount;
         }
 
@@ -97,7 +98,6 @@ namespace Carnassial.Images
         {
             int atoms = 0;
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
-            UInt64 progressReportIntervalInMilliseconds = (UInt64)state.Throttles.GetDesiredProgressUpdateInterval().TotalMilliseconds;
             MemoryImage preallocatedThumbnail = null;
             for (FileLoadAtom loadAtom = this.GetNextComputeAtom(computeTaskNumber); loadAtom != null; loadAtom = this.GetNextComputeAtom(computeTaskNumber))
             {
@@ -126,7 +126,7 @@ namespace Carnassial.Images
                             addFilesToTransaction = this.ShouldAddFilesToTransaction();
                             if (addFilesToTransaction == false)
                             {
-                                reportProgress = loadAtom.First.MetadataReadResult != MetadataReadResult.Failed;
+                                reportProgress = loadAtom.First.MetadataReadResult != MetadataReadResults.Failed;
                             }
                         }
                     }

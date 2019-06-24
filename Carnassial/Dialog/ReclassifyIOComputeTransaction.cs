@@ -96,7 +96,7 @@ namespace Carnassial.Dialog
             };
 
             SortedDictionary<string, List<string>> filesToLoadByRelativePath = fileDatabase.Files.GetFileNamesByRelativePath();
-            await this.RunTasksAsync(fileDatabase.CreateUpdateFileColumnTransaction(Constant.FileColumn.Classification), filesToLoadByRelativePath, fileDatabase.CurrentlySelectedFileCount);
+            await this.RunTasksAsync(fileDatabase.CreateUpdateFileColumnTransaction(Constant.FileColumn.Classification), filesToLoadByRelativePath, fileDatabase.CurrentlySelectedFileCount).ConfigureAwait(false);
 
             this.Status.CurrentFileIndex = this.FilesCompleted;
             this.Progress.QueueProgressUpdate(this.Status);

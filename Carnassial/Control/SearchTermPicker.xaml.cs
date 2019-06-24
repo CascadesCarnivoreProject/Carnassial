@@ -11,13 +11,13 @@ namespace Carnassial.Control
 {
     public partial class SearchTermPicker : UserControl
     {
-        private static readonly int DatabaseValueColumn = 3;
+        private const int DatabaseValueColumn = 3;
 
         private readonly AutocompletionCache autocompletionCache;
+        private WpfControl databaseValueControl;
         private readonly SearchTermList parentSearchTermList;
         private readonly SearchTermPicker previousSearchTermPicker;
         private readonly int termIndex;
-        private WpfControl databaseValueControl;
 
         public SearchTerm SearchTerm { get; private set; }
 

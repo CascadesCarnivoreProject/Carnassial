@@ -3,7 +3,7 @@
 namespace Carnassial.Images
 {
     [Flags]
-    public enum MetadataReadResult
+    public enum MetadataReadResults
     {
         None = 0x0,
         Classification = 0x1,

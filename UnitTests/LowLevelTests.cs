@@ -1,5 +1,4 @@
 ﻿using Carnassial.Command;
-using Carnassial.Editor;
 using Carnassial.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
@@ -125,13 +124,6 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(leastRecent == 4);
         }
 
-        [TestMethod]
-        public void RequiredBinaries()
-        {
-            Assert.IsTrue(Dependencies.AreRequiredBinariesPresent(Constant.ApplicationName, this.GetType().Assembly));
-            Assert.IsTrue(Dependencies.AreRequiredBinariesPresent(EditorConstant.ApplicationName, this.GetType().Assembly));
-        }
-
         /// <summary>
         /// Basic functional validation of <see cref="UndoRedoChain" />.
         /// </summary>
@@ -146,8 +138,8 @@ namespace Carnassial.UnitTests
             Assert.IsFalse(undoRedoChain.TryMoveToNextUndo(out state));
 
             // basic lifecycle with two different states
-            undoRedoChain.AddCommand(new TestCommand(0, true));
-            undoRedoChain.AddCommand(new TestCommand(1, true));
+            undoRedoChain.AddCommand(new TestCommand(0));
+            undoRedoChain.AddCommand(new TestCommand(1));
             Assert.IsFalse(undoRedoChain.CanRedo);
             Assert.IsTrue(undoRedoChain.CanUndo);
 
@@ -192,7 +184,7 @@ namespace Carnassial.UnitTests
             Assert.IsFalse(undoRedoChain.TryMoveToNextUndo(out state));
 
             // one state
-            TestCommand firstState = new TestCommand(3, true);
+            TestCommand firstState = new TestCommand(3);
             undoRedoChain.AddCommand(firstState);
             Assert.IsFalse(undoRedoChain.CanRedo);
             Assert.IsTrue(undoRedoChain.CanUndo);
@@ -206,7 +198,7 @@ namespace Carnassial.UnitTests
         {
             public int ID { get; private set; }
 
-            public TestCommand(int id, bool executed)
+            public TestCommand(int id)
             {
                 this.ID = id;
                 this.IsExecuted = true;

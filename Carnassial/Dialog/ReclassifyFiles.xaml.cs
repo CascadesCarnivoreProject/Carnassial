@@ -12,15 +12,13 @@ namespace Carnassial.Dialog
 {
     public partial class ReclassifyFiles : WindowWithSystemMenu, IDisposable
     {
-        private const int MinimumDarkColorRectangleHeight = 10;
-
         private bool disposed;
-        private FileDatabase fileDatabase;
-        private FileTableEnumerator fileEnumerator;
+        private readonly FileDatabase fileDatabase;
+        private readonly FileTableEnumerator fileEnumerator;
         private bool isProgramaticNavigatiorSliderUpdate;
         private ImageRow previousFile;
         private ReclassifyIOComputeTransaction reclassification;
-        private CarnassialUserRegistrySettings userSettings;
+        private readonly CarnassialUserRegistrySettings userSettings;
 
         public ReclassifyFiles(FileDatabase database, ImageCache imageCache, CarnassialUserRegistrySettings state, Window owner)
         {
@@ -60,7 +58,7 @@ namespace Carnassial.Dialog
                         {
                             MemoryImage preallocatedImage = null;
                             imageProperties = jpeg.GetThumbnailProperties(ref preallocatedImage);
-                            if (imageProperties.MetadataResult.HasFlag(MetadataReadResult.Thumbnail) == false)
+                            if (imageProperties.MetadataResult.HasFlag(MetadataReadResults.Thumbnail) == false)
                             {
                                 imageProperties = jpeg.GetProperties(Constant.Images.NoThumbnailClassificationRequestedWidthInPixels, ref preallocatedImage);
                             }
@@ -110,7 +108,7 @@ namespace Carnassial.Dialog
                 return;
             }
 
-            await this.FileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.fileEnumerator.Current);
+            await this.FileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.fileEnumerator.Current).ConfigureAwait(true);
             this.FileName.Content = this.fileEnumerator.Current.FileName;
             this.FileName.ToolTip = this.FileName.Content;
 
@@ -137,6 +135,10 @@ namespace Carnassial.Dialog
                 {
                     this.fileEnumerator.Dispose();
                 }
+                if (this.reclassification != null)
+                {
+                    this.reclassification.Dispose();
+                }
             }
 
             this.disposed = true;
@@ -162,10 +164,10 @@ namespace Carnassial.Dialog
 
             using (this.reclassification = new ReclassifyIOComputeTransaction(this.UpdateClassificationStatus, this.userSettings.Throttles.GetDesiredProgressUpdateInterval()))
             {
-                await reclassification.ReclassifyFilesAsync(this.fileDatabase, 0.01 * this.userSettings.DarkLuminosityThreshold, (int)this.ActualWidth);
+                await this.reclassification.ReclassifyFilesAsync(this.fileDatabase, 0.01 * this.userSettings.DarkLuminosityThreshold, (int)this.ActualWidth).ConfigureAwait(true);
             }
 
-            await this.DisplayFileAndClassificationAsync();
+            await this.DisplayFileAndClassificationAsync().ConfigureAwait(true);
             this.ApplyDoneButton.IsEnabled = true;
             this.CancelStopButton.IsEnabled = false;
         }
@@ -188,7 +190,7 @@ namespace Carnassial.Dialog
             }
 
             this.fileEnumerator.TryMoveToFile((int)this.FileNavigatorSlider.Value);
-            await this.DisplayFileAndClassificationAsync();
+            await this.DisplayFileAndClassificationAsync().ConfigureAwait(true);
         }
 
         private void MenuResetCurrent_Click(object sender, RoutedEventArgs e)
@@ -213,7 +215,7 @@ namespace Carnassial.Dialog
             int increment = CommonUserInterface.GetIncrement(forward, modifiers);
             int newFileIndex = this.fileEnumerator.CurrentRow + increment;
 
-            await this.ShowFileWithoutSliderCallbackAsync(newFileIndex);
+            await this.ShowFileWithoutSliderCallbackAsync(newFileIndex).ConfigureAwait(true);
         }
 
         private async Task ShowFileWithoutSliderCallbackAsync(int newFileIndex)
@@ -241,7 +243,7 @@ namespace Carnassial.Dialog
                 this.FileNavigatorSlider.Value = this.fileEnumerator.CurrentRow;
                 this.isProgramaticNavigatiorSliderUpdate = false;
             }
-            await this.DisplayFileAndClassificationAsync();
+            await this.DisplayFileAndClassificationAsync().ConfigureAwait(true);
         }
 
         private void UpdateClassificationStatus(ReclassifyStatus status)
@@ -286,19 +288,19 @@ namespace Carnassial.Dialog
             {
                 case Key.End:
                     e.Handled = true;
-                    await this.ShowFileWithoutSliderCallbackAsync(this.fileDatabase.CurrentlySelectedFileCount - 1);
+                    await this.ShowFileWithoutSliderCallbackAsync(this.fileDatabase.CurrentlySelectedFileCount - 1).ConfigureAwait(true);
                     break;
                 case Key.Home:
                     e.Handled = true;
-                    await this.ShowFileWithoutSliderCallbackAsync(0);
+                    await this.ShowFileWithoutSliderCallbackAsync(0).ConfigureAwait(true);
                     break;
                 case Key.Left:  // previous file
                     e.Handled = true;
-                    await this.ShowFileWithoutSliderCallbackAsync(false, Keyboard.Modifiers);
+                    await this.ShowFileWithoutSliderCallbackAsync(false, Keyboard.Modifiers).ConfigureAwait(true);
                     break;
                 case Key.Right: // next file
                     e.Handled = true;
-                    await this.ShowFileWithoutSliderCallbackAsync(true, Keyboard.Modifiers);
+                    await this.ShowFileWithoutSliderCallbackAsync(true, Keyboard.Modifiers).ConfigureAwait(true);
                     break;
                 default:
                     return;

@@ -25,7 +25,7 @@ namespace Carnassial.Command
 
         public async override Task ExecuteAsync(CarnassialWindow carnassial)
         {
-            await carnassial.SelectFilesAndShowFileAsync(this.newFileID, this.newSelection, false);
+            await carnassial.SelectFilesAndShowFileAsync(this.newFileID, this.newSelection, false).ConfigureAwait(true);
             this.IsExecuted = true;
         }
 
@@ -45,7 +45,7 @@ namespace Carnassial.Command
 
         public async override Task UndoAsync(CarnassialWindow carnassial)
         {
-            await carnassial.SelectFilesAndShowFileAsync(this.previousFileID, this.previousSelection, false);
+            await carnassial.SelectFilesAndShowFileAsync(this.previousFileID, this.previousSelection, false).ConfigureAwait(true);
             this.IsExecuted = false;
         }
     }

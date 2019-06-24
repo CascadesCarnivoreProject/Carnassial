@@ -1,6 +1,7 @@
 ﻿using Carnassial.Database;
 using System;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace Carnassial.Data
 {
@@ -27,13 +28,13 @@ namespace Carnassial.Data
             switch (control.ControlType)
             {
                 case ControlType.Counter:
-                    if (String.Equals(dataLabel, control.DataLabel))
+                    if (String.Equals(dataLabel, control.DataLabel, StringComparison.Ordinal))
                     {
                         this.DataType = SqlDataType.Integer;
                     }
                     else
                     {
-                        Debug.Assert(dataLabel.EndsWith(Constant.FileColumn.MarkerPositionSuffix, StringComparison.Ordinal));
+                        Debug.Assert(dataLabel.EndsWith(Constant.FileColumn.MarkerPositionSuffix, StringComparison.Ordinal), "Since data label and control data label don't match the data label is expected to indicate a marker position column.");
                         this.DataType = SqlDataType.Blob;
                     }
                     break;
@@ -51,7 +52,7 @@ namespace Carnassial.Data
                     this.DataType = SqlDataType.Real;
                     break;
                 default:
-                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.ControlType));
+                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled control type {0}.", control.ControlType));
             }
         }
     }

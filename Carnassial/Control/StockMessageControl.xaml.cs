@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -50,7 +51,7 @@ namespace Carnassial.Control
                         this.StatusImage.Source = Constant.Images.StatusError.Value;
                         break;
                     default:
-                        throw new NotSupportedException(String.Format("Unhandled icon type {0}.", value));
+                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled icon type {0}.", value));
                 }
             }
         }
@@ -83,11 +84,11 @@ namespace Carnassial.Control
                 }
                 else if (textElement is Run run)
                 {
-                    yield return new Run(String.Format(run.Text, args));
+                    yield return new Run(String.Format(CultureInfo.CurrentCulture, run.Text, args));
                 }
                 else
                 {
-                    throw new NotSupportedException(String.Format("Unhandled inline of type {0}.", textElement.GetType()));
+                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled inline of type {0}.", textElement.GetType()));
                 }
             }
         }
@@ -138,7 +139,7 @@ namespace Carnassial.Control
                 else
                 {
                     // best effort as this method is called for reporting on unhandled exceptions
-                    Debug.Fail(String.Format("Unhandled inline type {0}.", inline.GetType()));
+                    Debug.Fail(String.Format(CultureInfo.InvariantCulture, "Unhandled inline type {0}.", inline.GetType()));
                 }
             }
             return what.ToString();
@@ -159,7 +160,7 @@ namespace Carnassial.Control
             Debug.Assert(String.IsNullOrWhiteSpace(message.Title) == false, "Message title unexpectedly empty.");
 
             this.Image = message.Image;
-            this.Title.Text = String.Format(message.Title, args);
+            this.Title.Text = String.Format(CultureInfo.CurrentCulture, message.Title, args);
             this.DisplayHideExplanation = message.DisplayHideExplanation;
 
             this.Problem.Inlines.AddRange(this.Format(message.Problem, args));

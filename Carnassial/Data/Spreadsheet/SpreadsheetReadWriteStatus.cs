@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace Carnassial.Data.Spreadsheet
 {
-    public class SpreadsheetReadWriteStatus : DataImportExportStatus<SpreadsheetReadWriteStatus>
+    public class SpreadsheetReadWriteStatus : DataImportExportProgress<SpreadsheetReadWriteStatus>
     {
         private bool isExcelLoad;
         private bool isExcelSave;
@@ -91,13 +92,13 @@ namespace Carnassial.Data.Spreadsheet
             }
             if (this.IsRead)
             {
-                return String.Format("Read {0:0.0} of {1:0.0}{2}...", this.CurrentPosition / this.spreadsheetReadPositionDivisor, this.EndPosition / this.spreadsheetReadPositionDivisor, this.spreadsheetReadPositionUnit);
+                return String.Format(CultureInfo.CurrentCulture, "Read {0:0.0} of {1:0.0}{2}...", this.CurrentPosition / this.spreadsheetReadPositionDivisor, this.EndPosition / this.spreadsheetReadPositionDivisor, this.spreadsheetReadPositionUnit);
             }
             if (this.IsTransactionCommit)
             {
                 return "Updating Carnassial database...";
             }
-            return String.Format("Writing row {0} of {1}...", this.CurrentPosition, this.EndPosition);
+            return String.Format(CultureInfo.CurrentCulture, "Writing row {0} of {1}...", this.CurrentPosition, this.EndPosition);
         }
     }
 }

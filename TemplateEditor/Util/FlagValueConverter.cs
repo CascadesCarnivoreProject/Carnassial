@@ -40,7 +40,7 @@ namespace Carnassial.Editor.Util
                 case Constant.Sql.TrueString:
                     return EditorConstant.Resources.DisplayTrueString;
                 default:
-                    throw new NotSupportedException(String.Format("Unhandled value '{0}'.", value));
+                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled value '{0}'.", value));
             }
         }
 
@@ -73,7 +73,7 @@ namespace Carnassial.Editor.Util
                 case EditorConstant.Resources.DisplayTrueString:
                     return Constant.Sql.TrueString;
                 default:
-                    throw new NotSupportedException(String.Format("Unhandled value '{0}'.", value));
+                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled value '{0}'.", value));
             }
         }
     }

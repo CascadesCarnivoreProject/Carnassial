@@ -14,7 +14,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -51,13 +50,6 @@ namespace Carnassial.Editor
             this.DataEntryControls.AllowDrop = true;
             this.Title = EditorConstant.MainWindowBaseTitle;
             CommonUserInterface.TryFitWindowInWorkingArea(this);
-
-            // abort if some of the required dependencies are missing
-            if (Dependencies.AreRequiredBinariesPresent(EditorConstant.ApplicationName, Assembly.GetExecutingAssembly()) == false)
-            {
-                Dependencies.ShowMissingBinariesDialog(EditorConstant.ApplicationName);
-                Application.Current.Shutdown();
-            }
 
             this.controlDataGridBeingUpdatedByCode = false;
             this.controlDataGridCellEditForcedByCode = false;
@@ -111,9 +103,9 @@ namespace Carnassial.Editor
             if ((e.EditAction == DataGridEditAction.Commit) && (this.controlDataGridCellEditForcedByCode == false))
             {
                 // flush changes in each cell as user exits it to database and trigger a redraw to update control display
-                // Generating a call to ControlDataGrid_RowEditEnding() isn't the most elegant approach but it avoids separate commit 
+                // Generating a call to ControlDataGrid_RowEditEnding() isn't the most elegant approach but it avoids separate commit
                 // pathways for cell and row edits.  Since this is an ending event (rather than an ended devent, which DataGrid lacks)
-                // first comitting the cell edit is necessary to flush the change to the ControlRow so that it's visible to the row 
+                // first comitting the cell edit is necessary to flush the change to the ControlRow so that it's visible to the row
                 // edit ending handler.
                 this.controlDataGridCellEditForcedByCode = true;
                 this.ControlDataGrid.CommitEdit(DataGridEditingUnit.Cell, false);
@@ -189,7 +181,7 @@ namespace Carnassial.Editor
                     }
 
                     string columnHeader = (string)this.ControlDataGrid.Columns[column].Header;
-                    bool disableCell = cell.ShouldDisable(control, columnHeader);
+                    bool disableCell = DataGridCellExtensions.ShouldDisableCell(control, columnHeader);
                     if (disableCell)
                     {
                         cell.IsEnabled = false;
@@ -200,9 +192,9 @@ namespace Carnassial.Editor
 
                         if (String.Equals(columnHeader, EditorConstant.ColumnHeader.MaxWidth, StringComparison.Ordinal))
                         {
-                            // set up text boxes in the width column for immediate data binding so user sees the control preview 
+                            // set up text boxes in the width column for immediate data binding so user sees the control preview
                             // update promptly
-                            // A guard is required as above.  When the DataGrid is first instantiated TextBlocks are used for the 
+                            // A guard is required as above.  When the DataGrid is first instantiated TextBlocks are used for the
                             // cell content; these are changed to TextBoxes when the user initiates an edit. Therefore, it's OK if
                             // TryGetControl() returns false.
                             if (cell.TryGetControl(out TextBox textBox))
@@ -305,7 +297,7 @@ namespace Carnassial.Editor
                             // no restrictions on note or time controls
                             break;
                         default:
-                            throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.ControlType));
+                            throw new NotSupportedException(String.Format(CultureInfo.InvariantCulture, "Unhandled control type {0}.", control.ControlType));
                     }
                     break;
                 // EditorConstant.Control.ID is not editable
@@ -330,7 +322,7 @@ namespace Carnassial.Editor
         }
 
         /// <summary>
-        /// enable or disable the remove control button as appropriate
+        /// Enable or disable the remove control button as appropriate.
         /// </summary>
         private void ControlDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -367,9 +359,9 @@ namespace Carnassial.Editor
             if (checkBox.IsChecked.HasValue)
             {
                 // immediately propagate change in check to underlying data table so user sees control appear or disappear
-                // Data grids don't particularly support immediate data binding (though they can be coerced into it by providing 
+                // Data grids don't particularly support immediate data binding (though they can be coerced into it by providing
                 // unknown template cell types at the expense of other state management issues) so a change in cell focus is,
-                // within their model, needed to trigger an update of the control layout preview for Width and Visible at the data 
+                // within their model, needed to trigger an update of the control layout preview for Width and Visible at the data
                 // grid level.
                 ControlRow control = this.templateDatabase.Controls[rowIndex];
                 control.Visible = checkBox.IsChecked.Value;
@@ -437,11 +429,11 @@ namespace Carnassial.Editor
         // raise a dialog box that lets the user edit the list of choices or note control default autocompletions
         private void EditWellKnownValues_Click(object sender, RoutedEventArgs e)
         {
-            // the button's tag is bound to the ControlOrder of the ControlRow the button is associated with in xaml; find the 
+            // the button's tag is bound to the ControlOrder of the ControlRow the button is associated with in xaml; find the
             // control with the same control order
             Button button = (Button)sender;
             ControlRow choiceOrNote = this.templateDatabase.Controls.FirstOrDefault(control => control.ControlOrder == (int)button.Tag);
-            Debug.Assert(choiceOrNote != null, String.Format("Control with tag {0} not found.", button.Tag));
+            Debug.Assert(choiceOrNote != null, String.Format(CultureInfo.InvariantCulture, "Control with tag {0} not found.", button.Tag));
 
             EditWellKnownValues wellKnownValuesDialog = new EditWellKnownValues(button, choiceOrNote.GetWellKnownValues(), this);
             if (wellKnownValuesDialog.ShowDialog() == true)
@@ -569,22 +561,22 @@ namespace Carnassial.Editor
         /// </summary>
         private void MenuFileNewTemplate_Click(object sender, RoutedEventArgs e)
         {
-            SaveFileDialog saveFileDialog = new SaveFileDialog()
+            using (SaveFileDialog saveFileDialog = new SaveFileDialog())
             {
-                AddExtension = true,
-                AutoUpgradeEnabled = true,
-                CheckPathExists = true,
-                CreatePrompt = false,
-                DefaultExt = Constant.File.TemplateFileExtension,
-                FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName),
-                Filter = Constant.File.TemplateFileFilter,
-                OverwritePrompt = true,
-                Title = App.FindResource<string>(EditorConstant.ResourceKey.EditorWindowTemplateFileSaveNew)
-            };
+                saveFileDialog.AddExtension = true;
+                saveFileDialog.AutoUpgradeEnabled = true;
+                saveFileDialog.CheckPathExists = true;
+                saveFileDialog.CreatePrompt = false;
+                saveFileDialog.DefaultExt = Constant.File.TemplateFileExtension;
+                saveFileDialog.FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName);
+                saveFileDialog.Filter = Constant.File.TemplateFileFilter;
+                saveFileDialog.OverwritePrompt = true;
+                saveFileDialog.Title = App.FindResource<string>(EditorConstant.ResourceKey.EditorWindowTemplateFileSaveNew);
 
-            if (saveFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                this.InitializeDataGrid(saveFileDialog.FileName);
+                if (saveFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    this.InitializeDataGrid(saveFileDialog.FileName);
+                }
             }
         }
 
@@ -627,7 +619,7 @@ namespace Carnassial.Editor
             {
                 MenuItem recentImageSetItem = new MenuItem();
                 recentImageSetItem.Click += this.MenuFileRecentTemplate_Click;
-                recentImageSetItem.Header = String.Format("_{0} {1}", index, recentTemplatePath);
+                recentImageSetItem.Header = String.Format(CultureInfo.CurrentCulture, "_{0} {1}", index, recentTemplatePath);
                 recentImageSetItem.ToolTip = recentTemplatePath;
                 this.MenuFileRecentTemplates.Items.Add(recentImageSetItem);
                 ++index;
@@ -650,7 +642,7 @@ namespace Carnassial.Editor
         }
 
         /// <summary>
-        /// Depending on the menu's checkbox state, show all columns or hide selected columns
+        /// Depending on the menu's checkbox state, show all columns or hide selected columns.
         /// </summary>
         private void MenuOptionsShowAllColumns_Click(object sender, RoutedEventArgs e)
         {
@@ -667,11 +659,11 @@ namespace Carnassial.Editor
         }
 
         /// <summary>
-        /// Show the dialog that allows a user to inspect image metadata
+        /// Show the dialog that allows a user to inspect image metadata.
         /// </summary>
         private void MenuViewInspectMetadata_Click(object sender, RoutedEventArgs e)
         {
-            InspectMetadata inspectMetadata = new InspectMetadata(this.templateDatabase.FilePath, this);
+            InspectMetadata inspectMetadata = new InspectMetadata(this);
             inspectMetadata.ShowDialog();
         }
 
@@ -851,7 +843,7 @@ namespace Carnassial.Editor
             for (int row = 0; row < this.templateDatabase.Controls.RowCount; row++)
             {
                 ControlRow control = this.templateDatabase.Controls[row];
-                if ((this.ControlDataGrid.SelectedIndex != row) && dataLabel.Equals(control.DataLabel))
+                if ((this.ControlDataGrid.SelectedIndex != row) && dataLabel.Equals(control.DataLabel, StringComparison.Ordinal))
                 {
                     MessageBox messageBox = MessageBox.FromResource(EditorConstant.ResourceKey.EditorWindowDataLabelNotUnique, this, textBox.Text);
                     messageBox.ShowDialog();

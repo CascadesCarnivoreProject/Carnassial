@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace Carnassial.Dialog
 {
-    public class ReclassifyStatus : FileIOComputeTransactionStatus
+    public class ReclassifyStatus : FileIOComputeTransactionStatus, IDisposable
     {
         private bool disposed;
         private CachedImage image;

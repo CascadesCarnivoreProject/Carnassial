@@ -9,7 +9,7 @@ namespace Carnassial.UnitTests
 {
     public class FileExpectations
     {
-        private TimeZoneInfo timeZoneForDateTime;
+        private readonly TimeZoneInfo timeZoneForDateTime;
 
         public FileClassification Classification { get; set; }
         public double Coloration { get; set; }
@@ -153,14 +153,15 @@ namespace Carnassial.UnitTests
             int expectedCount = (int)this.UserControlsByDataLabel[dataLabel];
             Assert.IsTrue(markersForCounter.Count == expectedCount);
 
-            string actualPositions = markersForCounter.MarkerPositionsToSpreadsheetString();
-            string[] actualTokens = actualPositions == null ? new string[0] : actualPositions.Split(Constant.Excel.MarkerPositionSeparator);
+            string spreadsheetPositions = markersForCounter.MarkerPositionsToSpreadsheetString();
+            string[] spreadsheetTokens = spreadsheetPositions == null ? Array.Empty<string>() : spreadsheetPositions.Split(Constant.Excel.MarkerPositionSeparator);
 
             string markerColummn = FileTable.GetMarkerPositionColumnName(dataLabel);
             byte[] expectedPositions = (byte[])this.UserControlsByDataLabel[markerColummn];
             MarkersForCounter expectedMarkersForCounter = new MarkersForCounter(dataLabel, expectedCount);
             expectedMarkersForCounter.MarkerPositionsFromFloatArray(expectedPositions);
 
+            Assert.IsTrue(expectedMarkersForCounter.Markers.Count == spreadsheetTokens.Length);
             Assert.IsTrue(expectedMarkersForCounter.Markers.Count == markersForCounter.Markers.Count);
 
             // marker positions

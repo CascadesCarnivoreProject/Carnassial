@@ -1,6 +1,7 @@
 ﻿using Carnassial.Data;
 using Carnassial.Util;
 using System;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -14,8 +15,8 @@ namespace Carnassial.Control
             set { this.ContentControl.IsEnabled = !value; }
         }
 
-        public DataEntryDateTimeOffset(ControlRow control, DataEntryControls styleProvider) : 
-            base(control, styleProvider, ControlContentStyle.DateTimeOffsetPicker, ControlLabelStyle.Label)
+        public DataEntryDateTimeOffset(ControlRow control, DataEntryControls styleProvider)
+            : base(control, styleProvider, ControlContentStyle.DateTimeOffsetPicker, ControlLabelStyle.Label)
         {
             this.Container.ToolTip = "Enter a date/time";
 
@@ -38,7 +39,7 @@ namespace Carnassial.Control
                 {
                     if (DateTimeHandler.TryParseDisplayDateTime((string)valueAsObject, out value) == false)
                     {
-                        throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format("Unsupported date time format {0}.", valueAsObject));
+                        throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format(CultureInfo.CurrentCulture, "Unsupported date time format {0}.", valueAsObject));
                     }
                 }
             }
@@ -52,14 +53,14 @@ namespace Carnassial.Control
                 {
                     throw new ArgumentNullException(nameof(valueAsObject));
                 }
-                throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format("Unsupported value type {0}.", valueAsObject.GetType().Name));
+                throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format(CultureInfo.CurrentCulture, "Unsupported value type {0}.", valueAsObject.GetType().Name));
             }
 
             // persist selection through value changes
             int selectionStart = this.ContentControl.DateTimeDisplay.SelectionStart;
             int selectionLength = this.ContentControl.DateTimeDisplay.SelectionLength;
             this.ContentControl.Value = value;
-            this.ContentControl.DateTimeDisplay.ToolTip = value.ToString(this.ContentControl.Format);
+            this.ContentControl.DateTimeDisplay.ToolTip = value.ToString(this.ContentControl.Format, CultureInfo.CurrentCulture);
             this.ContentControl.DateTimeDisplay.SelectionStart = selectionStart;
             this.ContentControl.DateTimeDisplay.SelectionLength = selectionLength;
         }

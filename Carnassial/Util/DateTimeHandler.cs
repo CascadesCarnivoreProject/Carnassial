@@ -46,7 +46,7 @@ namespace Carnassial.Util
             {
                 return dateTime;
             }
-            throw new ArgumentOutOfRangeException(nameof(dateTimeAsString), String.Format("'{0}' is not in the format '{1}'.", dateTimeAsString, Constant.Time.DateTimeDatabaseFormat));
+            throw new ArgumentOutOfRangeException(nameof(dateTimeAsString), String.Format(CultureInfo.CurrentCulture, "'{0}' is not in the format '{1}'.", dateTimeAsString, Constant.Time.DateTimeDatabaseFormat));
         }
 
         public static DateTime ParseDisplayDateTimeString(string dateTimeAsString)

@@ -7,8 +7,8 @@ namespace Carnassial.Dialog
 {
     public partial class DateTimeRereadFromFiles : WindowWithSystemMenu
     {
-        private FileDatabase fileDatabase;
         private TimeSpan desiredStatusInterval;
+        private readonly FileDatabase fileDatabase;
 
         public DateTimeRereadFromFiles(FileDatabase fileDatabase, TimeSpan desiredStatusInterval, Window owner)
         {
@@ -50,7 +50,7 @@ namespace Carnassial.Dialog
 
             using (DateTimeRereadIOComputeTransactionManager rereadDateTimes = new DateTimeRereadIOComputeTransactionManager(this.ReportStatus, feedbackRows, this.desiredStatusInterval))
             {
-                await rereadDateTimes.RereadDateTimesAsync(this.fileDatabase);
+                await rereadDateTimes.RereadDateTimesAsync(this.fileDatabase).ConfigureAwait(true);
             }
 
             // enable done button so user can exit dialog

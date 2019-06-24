@@ -1,6 +1,7 @@
 ﻿using Carnassial.Data;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Windows.Controls;
 
@@ -33,8 +34,8 @@ namespace Carnassial.Control
             }
         }
 
-        public DataEntryNote(ControlRow control, List<string> autocompletionsFromDatabase, bool readOnly, DataEntryControls styleProvider) :
-            base(control, styleProvider, ControlContentStyle.NoteCounterTextBox, ControlLabelStyle.Label, readOnly)
+        public DataEntryNote(ControlRow control, List<string> autocompletionsFromDatabase, bool readOnly, DataEntryControls styleProvider)
+            : base(control, styleProvider, ControlContentStyle.NoteCounterTextBox, ControlLabelStyle.Label, readOnly)
         {
             this.SetWellKnownValues(control.GetWellKnownValues());
             this.autocompletionsFromList = control.GetWellKnownValues();
@@ -83,7 +84,7 @@ namespace Carnassial.Control
                 {
                     throw new ArgumentNullException(nameof(valueAsObject));
                 }
-                throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format("Unsupported value type {0}.", valueAsObject.GetType()));
+                throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format(CultureInfo.CurrentCulture, "Unsupported value type {0}.", valueAsObject.GetType()));
             }
 
             this.ContentControl.SuppressAutocompletion = true;

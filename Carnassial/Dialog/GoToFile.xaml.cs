@@ -13,7 +13,7 @@ namespace Carnassial.Dialog
     /// </summary>
     public partial class GoToFile : WindowWithSystemMenu
     {
-        private int selectedFiles;
+        private readonly int selectedFiles;
 
         public int FileIndex { get; private set; }
 

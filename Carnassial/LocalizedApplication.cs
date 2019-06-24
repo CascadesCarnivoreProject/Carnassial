@@ -70,7 +70,7 @@ namespace Carnassial
         public static string FormatResource(string key, params object[] args)
         {
             string format = LocalizedApplication.FindResource<string>(key);
-            return String.Format(format, args);
+            return String.Format(CultureInfo.CurrentCulture, format, args);
         }
 
         protected override void OnStartup(StartupEventArgs e)

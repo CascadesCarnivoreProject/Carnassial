@@ -23,7 +23,7 @@ namespace Carnassial.Dialog
         private static double MostRecentLeft;
         private static double MostRecentTop;
 
-        private CarnassialWindow carnassial;
+        private readonly CarnassialWindow carnassial;
 
         static FindReplace()
         {
@@ -36,7 +36,7 @@ namespace Carnassial.Dialog
             this.InitializeComponent();
             this.carnassial = carnassial;
             this.Owner = carnassial;
-            
+
             this.FindTerm1Label.ItemsSource = this.carnassial.DataHandler.FindReplace.FindTerm1Labels;
             this.FindTerm1Label.SelectedItem = this.carnassial.DataHandler.FindReplace.FindTerm1.DataLabel;
             this.FindTerm1Label.Margin = Constant.UserInterface.FindCellMargin;
@@ -180,7 +180,7 @@ namespace Carnassial.Dialog
                 }
                 else
                 {
-                    await this.carnassial.ShowFileAsync(fileIndex);
+                    await this.carnassial.ShowFileAsync(fileIndex).ConfigureAwait(true);
                     this.MessageBar.Text = null;
                 }
             }
@@ -192,7 +192,7 @@ namespace Carnassial.Dialog
 
         private async void FindPrevious_Click(object sender, RoutedEventArgs e)
         {
-            await this.TryFindNext();
+            await this.TryFindNext().ConfigureAwait(true);
         }
 
         private async void Replace_Click(object sender, RoutedEventArgs e)
@@ -204,7 +204,7 @@ namespace Carnassial.Dialog
                 this.carnassial.DataHandler.FindReplace.TryReplace(currentFile);
             }
 
-            await this.TryFindNext();
+            await this.TryFindNext().ConfigureAwait(true);
         }
 
         private void ReplaceAll_Click(object sender, RoutedEventArgs e)
@@ -240,7 +240,7 @@ namespace Carnassial.Dialog
                 }
                 else
                 {
-                    await this.carnassial.ShowFileAsync(fileIndex);
+                    await this.carnassial.ShowFileAsync(fileIndex).ConfigureAwait(true);
                     this.MessageBar.Text = null;
                 }
                 return true;

@@ -154,7 +154,7 @@ namespace Carnassial.UnitTests
                     FileName = "Reconyx-HC500-20150128-201.JPG",
                     Luminosity = 0.20386141575831992,
                     Classification = FileClassification.Color,
-                    RelativePath = TestConstant.File.CarnivoreDirectoryName,
+                    RelativePath = TestConstant.File.CarnivoreDirectoryName
                 };
 
                 FileExpectation.InfraredMarten = new FileExpectations(pacificTime)

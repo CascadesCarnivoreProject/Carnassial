@@ -87,7 +87,7 @@ namespace Carnassial.Data.Spreadsheet
                 ApplyNumberFormat = BooleanValue.FromBoolean(true),
                 FontId = UInt32Value.FromUInt32(0),
                 FormatId = UInt32Value.FromUInt32(0),
-                NumberFormatId = UInt32Value.FromUInt32(0),
+                NumberFormatId = UInt32Value.FromUInt32(0)
             });
             cellFormats.Append(new CellFormat()
             {
@@ -142,7 +142,7 @@ namespace Carnassial.Data.Spreadsheet
                 },
                 CellStyleFormats = new CellStyleFormats()
                 {
-                    Count = UInt32Value.FromUInt32(1),
+                    Count = UInt32Value.FromUInt32(1)
                 },
                 CellStyles = new CellStyles()
                 {

@@ -6,8 +6,8 @@ namespace Carnassial.Dialog
 {
     public partial class AdvancedCarnassialOptions : WindowWithSystemMenu
     {
-        private CarnassialState carnassialState;
-        private FileDisplayWithMarkers fileDisplay;
+        private readonly CarnassialState carnassialState;
+        private readonly FileDisplayWithMarkers fileDisplay;
 
         public AdvancedCarnassialOptions(CarnassialState state, FileDisplayWithMarkers fileDisplay, Window owner)
         {

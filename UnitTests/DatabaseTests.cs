@@ -9,6 +9,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -160,7 +161,7 @@ namespace Carnassial.UnitTests
                             expectedValues = 3;
                             break;
                         default:
-                            throw new NotSupportedException(String.Format("Unhandled data label '{0}'.", control.DataLabel));
+                            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled data label '{0}'.", control.DataLabel));
                     }
                     Assert.IsTrue(distinctValues != null && distinctValues.Count == expectedValues);
                     Assert.IsTrue(distinctValues.Count == distinctValues.Distinct().Count());
@@ -645,7 +646,7 @@ namespace Carnassial.UnitTests
 
             DateTimeOffset dateTimeOffsetWithoutMilliseconds = new DateTimeOffset(new DateTime(dateTimeOffset.Year, dateTimeOffset.Month, dateTimeOffset.Day, dateTimeOffset.Hour, dateTimeOffset.Minute, dateTimeOffset.Second), dateTimeOffset.Offset);
             Assert.IsTrue(dateTimeParse == dateTimeOffsetWithoutMilliseconds.DateTime);
-            
+
             // display only formats
             string dateTimeOffsetAsDisplayString = DateTimeHandler.ToDisplayDateTimeUtcOffsetString(dateTimeOffset);
             string utcOffsetAsDisplayString = DateTimeHandler.ToDisplayUtcOffsetString(dateTimeOffset.Offset);
@@ -744,7 +745,7 @@ namespace Carnassial.UnitTests
                     folderLoad.FindFilesToLoad(fileDatabase.FolderPath);
                     Assert.IsTrue(folderLoad.FilesToLoad == imagesAndVideos.Length);
 
-                    int filesLoaded = await folderLoad.AddFilesAsync(fileDatabase, state, Constant.Images.MinimumRenderWidth);
+                    int filesLoaded = await folderLoad.AddFilesAsync(fileDatabase, state, Constant.Images.MinimumRenderWidth).ConfigureAwait(false);
                     Assert.IsTrue(filesLoaded == imagesAndVideos.Length);
                     Assert.IsTrue(fileDatabase.Files.RowCount == imagesAndVideos.Length);
                     fileDatabase.SelectFiles(FileSelection.All);
@@ -775,7 +776,7 @@ namespace Carnassial.UnitTests
 
                     if (expectedIsVideo == false)
                     {
-                        using (CachedImage image = await file.TryLoadImageAsync(fileDatabase.FolderPath, Constant.Images.MinimumRenderWidth))
+                        using (CachedImage image = await file.TryLoadImageAsync(fileDatabase.FolderPath, Constant.Images.MinimumRenderWidth).ConfigureAwait(true))
                         {
                             stopwatch.Restart();
                             double luminosity = image.Image.GetLuminosityAndColoration(0, out double coloration);
@@ -801,7 +802,7 @@ namespace Carnassial.UnitTests
                         firstLoad = new FileLoad(previousFile);
                         isSecondFile = true;
                     }
-                    MetadataReadResult metadataReadResult;
+                    MetadataReadResults metadataReadResult;
                     using (FileLoadAtom loadAtom = new FileLoadAtom(file.RelativePath, firstLoad, secondLoad, 0))
                     {
                         loadAtom.CreateJpegs(fileDatabase.FolderPath);
@@ -809,25 +810,25 @@ namespace Carnassial.UnitTests
                         metadataReadResult = isSecondFile ? loadAtom.Second.MetadataReadResult : loadAtom.First.MetadataReadResult;
                     }
 
-                    Assert.IsFalse(metadataReadResult.HasFlag(MetadataReadResult.Failed));
+                    Assert.IsFalse(metadataReadResult.HasFlag(MetadataReadResults.Failed));
                     Assert.IsTrue(this.DateTimesWithinOneMillisecond(file.DateTimeOffset, dateTimeOffsetAsAdded));
                     if (String.Equals(file.FileName, "06260001.AVI", StringComparison.OrdinalIgnoreCase) ||
                         String.Equals(Path.GetFileNameWithoutExtension(file.FileName), "06260048", StringComparison.OrdinalIgnoreCase))
                     {
                         // 06260001.AVI, 06260048.AVI, and 06260048.mp4 lack an associated .jpg to read metadata from
-                        Assert.IsTrue(metadataReadResult == MetadataReadResult.None);
+                        Assert.IsTrue(metadataReadResult == MetadataReadResults.None);
                         Assert.IsTrue(file.DateTimeOffset.Date >= TestConstant.FileExpectation.HybridVideoFileDate);
                         Assert.IsTrue(file.DateTimeOffset.Date < DateTime.Now);
                     }
                     else if (String.Equals(Path.GetExtension(file.FileName), Constant.File.JpgFileExtension, StringComparison.OrdinalIgnoreCase))
                     {
                         Assert.IsTrue(file.DateTimeOffset.Date == TestConstant.FileExpectation.HybridVideoFileDate);
-                        Assert.IsTrue(metadataReadResult == MetadataReadResult.DateTime);
+                        Assert.IsTrue(metadataReadResult == MetadataReadResults.DateTime);
                     }
                     else
                     {
                         Assert.IsTrue(file.DateTimeOffset.Date == TestConstant.FileExpectation.HybridVideoFileDate);
-                        Assert.IsTrue(metadataReadResult == MetadataReadResult.DateTimeInferredFromPrevious);
+                        Assert.IsTrue(metadataReadResult == MetadataReadResults.DateTimeInferredFromPrevious);
                     }
 
                     fileDateTimes.Add(dateTimeOffsetAsAdded);
@@ -839,7 +840,7 @@ namespace Carnassial.UnitTests
                 {
                     folderLoad.FolderPaths.Add(folderToLoad);
                     folderLoad.FindFilesToLoad(fileDatabase.FolderPath);
-                    int filesLoaded = await folderLoad.AddFilesAsync(fileDatabase, state, Constant.Images.MinimumRenderWidth);
+                    int filesLoaded = await folderLoad.AddFilesAsync(fileDatabase, state, Constant.Images.MinimumRenderWidth).ConfigureAwait(false);
                     Assert.IsTrue(filesLoaded == 0);
                 }
                 fileDatabase.SelectFiles(FileSelection.All);
@@ -849,7 +850,7 @@ namespace Carnassial.UnitTests
                 ObservableArray<DateTimeRereadResult> dateTimeResults = new ObservableArray<DateTimeRereadResult>(imagesAndVideos.Length, DateTimeRereadResult.Default);
                 using (DateTimeRereadIOComputeTransactionManager rereadDateTimes = new DateTimeRereadIOComputeTransactionManager(this.UpdateDateTimeRereadProgress, dateTimeResults, desiredStatusUpdateInterval))
                 {
-                    await rereadDateTimes.RereadDateTimesAsync(fileDatabase);
+                    await rereadDateTimes.RereadDateTimesAsync(fileDatabase).ConfigureAwait(false);
                     Assert.IsTrue(rereadDateTimes.FilesCompleted == imagesAndVideos.Length);
                     foreach (DateTimeRereadResult feedbackRow in dateTimeResults)
                     {
@@ -871,7 +872,7 @@ namespace Carnassial.UnitTests
                 // reclassify
                 using (ReclassifyIOComputeTransaction reclassify = new ReclassifyIOComputeTransaction(this.UpdateReclassifyProgress, desiredStatusUpdateInterval))
                 {
-                    await reclassify.ReclassifyFilesAsync(fileDatabase, state.DarkLuminosityThreshold, Constant.Images.MinimumRenderWidth);
+                    await reclassify.ReclassifyFilesAsync(fileDatabase, state.DarkLuminosityThreshold, Constant.Images.MinimumRenderWidth).ConfigureAwait(false);
                 }
                 fileDatabase.SelectFiles(FileSelection.All);
                 filesByRelativePathAndName = fileDatabase.Files.GetFilesByRelativePathAndName();
@@ -902,7 +903,7 @@ namespace Carnassial.UnitTests
                 ObservableArray<MetadataFieldResult> metadataResults = new ObservableArray<MetadataFieldResult>(imagesAndVideos.Length, MetadataFieldResult.Default);
                 using (MetadataIOComputeTransactionManager readMetadata = new MetadataIOComputeTransactionManager(this.UpdateMetadataProgress, metadataResults, desiredStatusUpdateInterval))
                 {
-                    await readMetadata.ReadFieldAsync(fileDatabase, TestConstant.DefaultDatabaseColumn.Note0, note0Tag, false);
+                    await readMetadata.ReadFieldAsync(fileDatabase, TestConstant.DefaultDatabaseColumn.Note0, note0Tag, false).ConfigureAwait(false);
                 }
                 fileDatabase.SelectFiles(FileSelection.All);
                 foreach (MetadataFieldResult result in metadataResults)
@@ -915,7 +916,7 @@ namespace Carnassial.UnitTests
                 metadataResults = new ObservableArray<MetadataFieldResult>(imagesAndVideos.Length, MetadataFieldResult.Default);
                 using (MetadataIOComputeTransactionManager readMetadata = new MetadataIOComputeTransactionManager(this.UpdateMetadataProgress, metadataResults, desiredStatusUpdateInterval))
                 {
-                    await readMetadata.ReadFieldAsync(fileDatabase, TestConstant.DefaultDatabaseColumn.Note3, note3Tag, true);
+                    await readMetadata.ReadFieldAsync(fileDatabase, TestConstant.DefaultDatabaseColumn.Note3, note3Tag, true).ConfigureAwait(false);
                 }
                 fileDatabase.SelectFiles(FileSelection.All);
                 foreach (MetadataFieldResult result in metadataResults)
@@ -1201,10 +1202,10 @@ namespace Carnassial.UnitTests
                 this.VerifyFiles(fileDatabase, fileExpectations, initialImageSetTimeZone, initialFileCount, secondImageSetTimeZone);
 
                 // add more images
-                ImageRow martenPairImage = this.CreateFile(fileDatabase, secondImageSetTimeZone, TestConstant.FileExpectation.DaylightMartenPair, out MetadataReadResult metadataReadResult);
-                Assert.IsTrue(metadataReadResult == MetadataReadResult.DateTime);
+                ImageRow martenPairImage = this.CreateFile(fileDatabase, secondImageSetTimeZone, TestConstant.FileExpectation.DaylightMartenPair, out MetadataReadResults metadataReadResult);
+                Assert.IsTrue(metadataReadResult == MetadataReadResults.DateTime);
                 ImageRow coyoteImage = this.CreateFile(fileDatabase, secondImageSetTimeZone, TestConstant.FileExpectation.DaylightCoyote, out metadataReadResult);
-                Assert.IsTrue(metadataReadResult == MetadataReadResult.DateTime);
+                Assert.IsTrue(metadataReadResult == MetadataReadResults.DateTime);
 
                 using (AddFilesTransactionSequence addFiles = fileDatabase.CreateAddFilesTransaction())
                 {
@@ -1343,8 +1344,8 @@ namespace Carnassial.UnitTests
 
             // FilePath checks
             string templateDatabaseFileName = Path.GetFileName(templateDatabase.FilePath);
-            Assert.IsTrue(templateDatabaseFileName.StartsWith(Path.GetFileNameWithoutExtension(templateDatabaseBaseFileName)));
-            Assert.IsTrue(templateDatabaseFileName.EndsWith(Path.GetExtension(templateDatabaseBaseFileName)));
+            Assert.IsTrue(templateDatabaseFileName.StartsWith(Path.GetFileNameWithoutExtension(templateDatabaseBaseFileName), StringComparison.Ordinal));
+            Assert.IsTrue(templateDatabaseFileName.EndsWith(Path.GetExtension(templateDatabaseBaseFileName), StringComparison.Ordinal));
             Assert.IsTrue(File.Exists(templateDatabase.FilePath));
 
             // TemplateTable checks

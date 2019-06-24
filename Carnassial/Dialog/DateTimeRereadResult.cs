@@ -15,11 +15,11 @@ namespace Carnassial.Dialog
         public DateTimeRereadResult(FileLoad fileLoad, DateTimeOffset originalDateTime)
             : base(fileLoad.FileName)
         {
-            if (fileLoad.MetadataReadResult == MetadataReadResult.None)
+            if (fileLoad.MetadataReadResult == MetadataReadResults.None)
             {
                 this.Message = "Read file date/time: ";
             }
-            else if (fileLoad.MetadataReadResult == MetadataReadResult.DateTimeInferredFromPrevious)
+            else if (fileLoad.MetadataReadResult == MetadataReadResults.DateTimeInferredFromPrevious)
             {
                 this.Message = "Read previous metadata date/time: ";
             }

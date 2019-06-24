@@ -47,7 +47,7 @@ namespace Carnassial.UnitTests
 
             // modify
             userSettings.AudioFeedback = true;
-            int windowLocation = 100; 
+            int windowLocation = 100;
             int windowSize = 1000;
             userSettings.CarnassialWindowPosition = new Rect(windowLocation, windowLocation, windowSize, windowSize);
             int controlGridWidth = userSettings.ControlGridWidth + 22;
@@ -121,7 +121,7 @@ namespace Carnassial.UnitTests
             editorRegistry.ReadFromRegistry();
             Assert.IsNotNull(editorRegistry.MostRecentTemplates);
             Assert.IsTrue(editorRegistry.MostRecentTemplates.Count == 0);
-            Assert.IsFalse(editorRegistry.MostRecentTemplates.TryGetMostRecent(out string mostRecentTemplatePath));
+            Assert.IsFalse(editorRegistry.MostRecentTemplates.TryGetMostRecent(out string _));
 
             // overwrite
             editorRegistry.WriteToRegistry();
@@ -134,7 +134,7 @@ namespace Carnassial.UnitTests
 
             Assert.IsNotNull(editorRegistry.MostRecentTemplates);
             Assert.IsTrue(editorRegistry.MostRecentTemplates.Count == 1);
-            Assert.IsTrue(editorRegistry.MostRecentTemplates.TryGetMostRecent(out mostRecentTemplatePath));
+            Assert.IsTrue(editorRegistry.MostRecentTemplates.TryGetMostRecent(out string mostRecentTemplatePath));
             Assert.IsTrue(mostRecentTemplatePath == templatePath);
 
             Registry.CurrentUser.DeleteSubKeyTree(testRootKey);

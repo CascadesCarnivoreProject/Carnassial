@@ -102,33 +102,33 @@ namespace Carnassial.Util
 
         public static bool TryGetFileFromUser(string title, string defaultFilePath, string filter, out string selectedFilePath)
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog()
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
-                AutoUpgradeEnabled = true,
-                CheckFileExists = true,
-                CheckPathExists = true,
-                DefaultExt = Constant.File.TemplateFileExtension,
-                Filter = filter,
-                Multiselect = false,
-                Title = title
-            };
+                openFileDialog.AutoUpgradeEnabled = true;
+                openFileDialog.CheckFileExists = true;
+                openFileDialog.CheckPathExists = true;
+                openFileDialog.DefaultExt = Constant.File.TemplateFileExtension;
+                openFileDialog.Filter = filter;
+                openFileDialog.Multiselect = false;
+                openFileDialog.Title = title;
 
-            if (String.IsNullOrWhiteSpace(defaultFilePath))
-            {
-                openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            }
-            else
-            {
-                // it would be ideal to reapply the filter and assign a new default file name when the folder changes
-                // Unfortunately this is not supported by CommonOpenFileDialog, the WinForms OpenFileDialog, or the WPF OpenFileDialog.
-                openFileDialog.InitialDirectory = Path.GetDirectoryName(defaultFilePath);
-                openFileDialog.FileName = Path.GetFileName(defaultFilePath);
-            }
+                if (String.IsNullOrWhiteSpace(defaultFilePath))
+                {
+                    openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                }
+                else
+                {
+                    // it would be ideal to reapply the filter and assign a new default file name when the folder changes
+                    // Unfortunately this is not supported by CommonOpenFileDialog, the WinForms OpenFileDialog, or the WPF OpenFileDialog.
+                    openFileDialog.InitialDirectory = Path.GetDirectoryName(defaultFilePath);
+                    openFileDialog.FileName = Path.GetFileName(defaultFilePath);
+                }
 
-            if (openFileDialog.ShowDialog() == DialogResult.OK)
-            {
-                selectedFilePath = openFileDialog.FileName;
-                return true;
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    selectedFilePath = openFileDialog.FileName;
+                    return true;
+                }
             }
 
             selectedFilePath = null;

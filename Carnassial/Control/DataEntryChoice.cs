@@ -1,6 +1,7 @@
 ﻿using Carnassial.Data;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Windows.Controls;
 using System.Windows.Input;
 
@@ -70,7 +71,7 @@ namespace Carnassial.Control
             bool emptyChoiceAllowed = false;
             foreach (string choice in wellKnownValues)
             {
-                if (choice == String.Empty)
+                if (String.IsNullOrEmpty(choice))
                 {
                     emptyChoiceAllowed = true;
                 }
@@ -85,7 +86,7 @@ namespace Carnassial.Control
                     bool success = ImageRow.TryParseFileClassification(choice, out FileClassification classification);
                     if (success == false)
                     {
-                        throw new ArgumentOutOfRangeException(nameof(wellKnownValues), String.Format("'{0}' is not a valid FileClassification.", choice));
+                        throw new ArgumentOutOfRangeException(nameof(wellKnownValues), String.Format(CultureInfo.CurrentCulture, "'{0}' is not a valid FileClassification.", choice));
                     }
                     this.ContentControl.Items.Add(classification);
                 }
@@ -118,7 +119,7 @@ namespace Carnassial.Control
             }
             else
             {
-                throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format("Unsupported value type {0}.", valueAsObject.GetType()));
+                throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format(CultureInfo.CurrentCulture, "Unsupported value type {0}.", valueAsObject.GetType()));
             }
 
             this.ContentControl.SelectedValue = valueAsString;

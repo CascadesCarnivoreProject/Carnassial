@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Reflection;
-using System.Windows;
 using MessageBox = Carnassial.Dialog.MessageBox;
 
 namespace Carnassial.Github
@@ -31,7 +30,6 @@ namespace Carnassial.Github
         {
             publiclyAvailableVersion = null;
 
-            string description = null;
             using (WebClient webClient = new WebClient())
             {
                 webClient.Headers.Add(HttpRequestHeader.UserAgent, "Carnassial-GithubReleaseClient");
@@ -58,7 +56,6 @@ namespace Carnassial.Github
                             {
                                 return false;
                             }
-                            description = latestRelease.Name + Environment.NewLine + latestRelease.Body;
                         }
                     }
                 }
@@ -74,7 +71,7 @@ namespace Carnassial.Github
                 catch (Exception exception)
                 {
                     Debug.Fail(exception.ToString());
-                    return false;
+                    throw;
                 }
             }
 
@@ -86,7 +83,7 @@ namespace Carnassial.Github
             {
                 // ask the user if they would like to download the new version  
                 MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.GithubReleaseClientGetNewVersion, App.Current.MainWindow,
-                                                                publiclyAvailableVersion,                                            
+                                                                publiclyAvailableVersion,
                                                                 this.applicationName,
                                                                 currentVersion,
                                                                 CarnassialConfigurationSettings.GetReleasesBrowserAddress());

@@ -12,7 +12,7 @@ namespace Carnassial.Images
         public ImageRow File { get; set; }
         public string FileName { get; private set; }
         public JpegImage Jpeg { get; set; }
-        public MetadataReadResult MetadataReadResult { get; set; }
+        public MetadataReadResults MetadataReadResult { get; set; }
 
         public FileLoad(ImageRow file)
         {
@@ -20,7 +20,7 @@ namespace Carnassial.Images
             this.File = file;
             this.FileName = file.FileName;
             this.Jpeg = null;
-            this.MetadataReadResult = MetadataReadResult.None;
+            this.MetadataReadResult = MetadataReadResults.None;
         }
 
         public FileLoad(string fileName)
@@ -29,7 +29,7 @@ namespace Carnassial.Images
             this.File = null;
             this.FileName = fileName;
             this.Jpeg = null;
-            this.MetadataReadResult = MetadataReadResult.None;
+            this.MetadataReadResult = MetadataReadResults.None;
         }
 
         public void Dispose()

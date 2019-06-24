@@ -1,5 +1,6 @@
 ﻿using Carnassial.Data;
 using System;
+using System.Globalization;
 using System.Threading;
 
 namespace Carnassial.Images
@@ -48,9 +49,9 @@ namespace Carnassial.Images
         {
             if (this.CurrentFileIndex == 0)
             {
-                return String.Format("File {0} of {1}...", this.CurrentFileIndex, this.TotalFiles);
+                return String.Format(CultureInfo.CurrentCulture, "File {0} of {1}...", this.CurrentFileIndex, this.TotalFiles);
             }
-            return String.Format("Loading file {0} of {1} ({2})...", this.CurrentFileIndex, this.TotalFiles, this.CurrentFile.FileName);
+            return String.Format(CultureInfo.CurrentCulture, "Loading file {0} of {1} ({2})...", this.CurrentFileIndex, this.TotalFiles, this.CurrentFile.FileName);
         }
 
         public double GetPercentage()

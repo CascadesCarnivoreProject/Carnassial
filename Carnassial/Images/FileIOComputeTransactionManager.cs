@@ -77,7 +77,7 @@ namespace Carnassial.Images
             this.IODuration = TimeSpan.Zero;
             this.ioFilesInCurrentFolderIndex = 0;
             this.ioFileIndex = 0;
-            this.ioFilesByRelativePathEnumerator = default(SortedDictionary<string, List<string>>.Enumerator);
+            this.ioFilesByRelativePathEnumerator = default;
             this.ioFilesInCurrentFolder = null;
             this.IOTaskBody = null;
 
@@ -382,11 +382,11 @@ namespace Carnassial.Images
                 });
             }
 
-            await Task.WhenAll(this.ioTasks);
+            await Task.WhenAll(this.ioTasks).ConfigureAwait(false);
             this.ioTasksActive = 0;
             this.IODuration = stopwatch.Elapsed;
 
-            await Task.WhenAll(this.computeTasks);
+            await Task.WhenAll(this.computeTasks).ConfigureAwait(false);
             this.ComputeDuration = stopwatch.Elapsed;
 
             // if not aborted, flush any remaining commits to database on success

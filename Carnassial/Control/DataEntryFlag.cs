@@ -1,6 +1,7 @@
 ﻿using Carnassial.Data;
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Windows.Controls;
 
 namespace Carnassial.Control
@@ -31,7 +32,7 @@ namespace Carnassial.Control
         {
             if (valueAsObject is string valueAsString)
             {
-                Debug.Assert(String.Equals(valueAsString, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) || String.Equals(valueAsString, "1", StringComparison.Ordinal), String.Format("Unknown boolean value '{0}'.", valueAsString));
+                Debug.Assert(String.Equals(valueAsString, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) || String.Equals(valueAsString, "1", StringComparison.Ordinal), String.Format(CultureInfo.InvariantCulture, "Unknown boolean value '{0}'.", valueAsString));
                 this.ContentControl.IsChecked = String.Equals(valueAsString, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) == false;
                 this.ContentControl.ToolTip = valueAsString;
             }
@@ -46,7 +47,7 @@ namespace Carnassial.Control
                 {
                     throw new ArgumentNullException(nameof(valueAsObject));
                 }
-                throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format("Unexpected value type {0}.", valueAsObject.GetType()));
+                throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format(CultureInfo.CurrentCulture, "Unexpected value type {0}.", valueAsObject.GetType()));
             }
         }
     }

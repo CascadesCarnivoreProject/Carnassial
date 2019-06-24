@@ -14,9 +14,9 @@ namespace Carnassial.Dialog
     /// </summary>
     public partial class DateCorrectAmbiguous : WindowWithSystemMenu
     {
-        private List<AmbiguousDate> ambiguousDatesList; // all initial images containing ambiguous dates and their state
+        private readonly List<AmbiguousDate> ambiguousDatesList; // all initial images containing ambiguous dates and their state
         private int ambiguousDatesListIndex;
-        private FileDatabase database;
+        private readonly FileDatabase database;
         private bool displayingPreview;
 
         // whether the operation should be aborted, ie., because there are no ambiguous dates
@@ -54,9 +54,9 @@ namespace Carnassial.Dialog
             CommonUserInterface.SetDefaultDialogPosition(this);
             CommonUserInterface.TryFitWindowInWorkingArea(this);
 
-            await this.MoveToAmbiguousDateAsync(null); // go to first ambiguous date
+            await this.MoveToAmbiguousDateAsync(null).ConfigureAwait(true); // go to first ambiguous date
             // If the caller invokes Show with Abort = true (i.e., count = 0), this will at least show an empty dialog.
-            await this.UpdateDisplayAsync(this.ambiguousDatesList.Count > 0);
+            await this.UpdateDisplayAsync(this.ambiguousDatesList.Count > 0).ConfigureAwait(true);
         }
 
         // Create a list of all initial images containing ambiguous dates.
@@ -165,7 +165,7 @@ namespace Carnassial.Dialog
 
             this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString(CultureInfo.CurrentCulture);
 
-            await this.FileDisplay.DisplayAsync(this.database.FolderPath, file);
+            await this.FileDisplay.DisplayAsync(this.database.FolderPath, file).ConfigureAwait(true);
             this.FileName.Content = file.FileName;
             this.FileName.ToolTip = this.FileName.Content;
 
@@ -187,7 +187,7 @@ namespace Carnassial.Dialog
 
                 this.NumberOfImagesWithSameDate.Content = this.ambiguousDatesList[this.ambiguousDatesListIndex].Count.ToString(CultureInfo.CurrentCulture);
 
-                await this.FileDisplay.DisplayAsync(this.database.FolderPath, file);
+                await this.FileDisplay.DisplayAsync(this.database.FolderPath, file).ConfigureAwait(true);
                 this.FileName.Content = file.FileName;
                 this.FileName.ToolTip = this.FileName.Content;
 
@@ -284,8 +284,8 @@ namespace Carnassial.Dialog
         private async void NextPreviousButton_Click(object senderAsObject, RoutedEventArgs e)
         {
             Button sender = senderAsObject as Button;
-            bool result = await this.MoveToAmbiguousDateAsync(sender == this.NextDate);
-            await this.UpdateDisplayAsync(result);
+            bool result = await this.MoveToAmbiguousDateAsync(sender == this.NextDate).ConfigureAwait(true);
+            await this.UpdateDisplayAsync(result).ConfigureAwait(true);
         }
 
         private async void SwapAllButton_Click(object sender, RoutedEventArgs e)
@@ -294,7 +294,7 @@ namespace Carnassial.Dialog
             {
                 ambDate.Swapped = true;
             }
-            await this.UpdateDisplayAsync(true);
+            await this.UpdateDisplayAsync(true).ConfigureAwait(true);
         }
 
         // A class that stores various properties for each ambiguous date found

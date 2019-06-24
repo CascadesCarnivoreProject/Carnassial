@@ -1,5 +1,4 @@
-﻿using Carnassial.Control;
-using Carnassial.Data;
+﻿using Carnassial.Data;
 using Carnassial.Images;
 using System.Diagnostics;
 
@@ -20,7 +19,6 @@ namespace Carnassial.Command
         private void AddMarker(CarnassialWindow carnassial)
         {
             // insert the new marker and include it in the display list
-            DataEntryCounter counter = (DataEntryCounter)carnassial.DataEntryControls.ControlsByDataLabel[this.marker.DataLabel];
             MarkersForCounter markersForCounter = carnassial.DataHandler.ImageCache.Current.GetMarkersForCounter(this.marker.DataLabel);
             carnassial.DataHandler.IsProgrammaticUpdate = true;
             markersForCounter.AddMarker(this.marker);

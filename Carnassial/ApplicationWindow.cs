@@ -13,14 +13,17 @@ namespace Carnassial
         {
             // adapted from https://msdn.microsoft.com/en-us/library/hh925568.aspx
             int release = 0;
-            using (RegistryKey ndpKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32).OpenSubKey(@"SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full\"))
+            using (RegistryKey localMachineHive = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32))
             {
-                if (ndpKey != null)
+                using (RegistryKey dotNet40key = localMachineHive.OpenSubKey(@"SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full\"))
                 {
-                    object releaseAsObject = ndpKey.GetValue("Release");
-                    if (releaseAsObject != null)
+                    if (dotNet40key != null)
                     {
-                        release = (int)releaseAsObject;
+                        object releaseAsObject = dotNet40key.GetValue("Release");
+                        if (releaseAsObject != null)
+                        {
+                            release = (int)releaseAsObject;
+                        }
                     }
                 }
             }
@@ -103,12 +106,12 @@ namespace Carnassial
 
         protected void ShowExceptionReportingDialog(string alternativeTitle, string databasePath, DispatcherUnhandledExceptionEventArgs e)
         {
-            MessageBox exitNotification = MessageBox.FromResource(Constant.ResourceKey.ApplicationWindowException, this, 
+            MessageBox exitNotification = MessageBox.FromResource(Constant.ResourceKey.ApplicationWindowException, this,
                                                                   CarnassialConfigurationSettings.GetIssuesBrowserAddress(),
                                                                   CarnassialConfigurationSettings.GetDevTeamEmailLink().ToEmailAddress(),
-                                                                  typeof(CarnassialWindow).Assembly.GetName(), 
-                                                                  Environment.OSVersion, 
-                                                                  this.GetDotNetVersion(), 
+                                                                  typeof(CarnassialWindow).Assembly.GetName(),
+                                                                  Environment.OSVersion,
+                                                                  this.GetDotNetVersion(),
                                                                   databasePath,
                                                                   e.Exception);
             if (alternativeTitle != null)

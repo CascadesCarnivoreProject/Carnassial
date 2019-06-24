@@ -7,7 +7,7 @@ namespace Carnassial.Editor.Util
 {
     internal static class DataGridCellExtensions
     {
-        public static bool ShouldDisable(this DataGridCell cell, ControlRow control, string columnHeader)
+        public static bool ShouldDisableCell(ControlRow control, string columnHeader)
         {
             // columns disabled in xaml: ID, Type, ControlOrder, SpreadsheetOrder
             // These columns are always editable:
@@ -33,7 +33,7 @@ namespace Carnassial.Editor.Util
             {
                 return control.Copyable == false;
             }
-            else if (String.Equals(control.DataLabel, Constant.FileColumn.DeleteFlag))
+            else if (String.Equals(control.DataLabel, Constant.FileColumn.DeleteFlag, StringComparison.Ordinal))
             {
                 return (String.Equals(columnHeader, Constant.ControlColumn.Copyable, StringComparison.Ordinal) == false) &&
                        (String.Equals(columnHeader, Constant.ControlColumn.Visible, StringComparison.Ordinal) == false) &&

@@ -2,7 +2,6 @@
 using Carnassial.Util;
 using System;
 using System.Diagnostics;
-using System.Linq;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Navigation;
@@ -11,8 +10,8 @@ namespace Carnassial.Dialog
 {
     public partial class About : WindowWithSystemMenu
     {
-        private Uri latestReleaseAddress;
-        private Uri releasesAddress;
+        private readonly Uri latestReleaseAddress;
+        private readonly Uri releasesAddress;
 
         public Nullable<DateTime> MostRecentCheckForUpdate { get; private set; }
 
@@ -65,7 +64,7 @@ namespace Carnassial.Dialog
         private void CheckForUpdate_Click(object sender, RoutedEventArgs e)
         {
             GithubReleaseClient updater = new GithubReleaseClient(Constant.ApplicationName, this.latestReleaseAddress);
-            if (updater.TryGetAndParseRelease(true, out Version publiclyAvailableVersion))
+            if (updater.TryGetAndParseRelease(true, out Version _))
             {
                 this.MostRecentCheckForUpdate = DateTime.UtcNow;
             }

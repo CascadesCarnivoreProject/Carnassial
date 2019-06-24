@@ -1,6 +1,4 @@
-﻿using Carnassial.Native;
-using System;
-using System.Diagnostics;
+﻿using System;
 using System.Threading.Tasks;
 
 namespace Carnassial.Data

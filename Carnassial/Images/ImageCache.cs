@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Threading.Tasks;
 
 namespace Carnassial.Images
@@ -23,8 +24,8 @@ namespace Carnassial.Images
 
         public ImageDifference CurrentDifferenceState { get; private set; }
 
-        public ImageCache(FileDatabase fileDatabase) :
-            base(fileDatabase)
+        public ImageCache(FileDatabase fileDatabase)
+            : base(fileDatabase)
         {
             this.CurrentDifferenceState = ImageDifference.Unaltered;
             this.differenceCache = new Dictionary<ImageDifference, CachedImage>(4);
@@ -150,7 +151,7 @@ namespace Carnassial.Images
             {
                 // cache the image, replacing any existing image with the one passed
                 this.unalteredImagesByID.AddOrUpdate(id,
-                    (long newID) => 
+                    (long newID) =>
                     {
                         // if the image cache is full make room for the incoming image
                         if (this.mostRecentlyUsedIDs.IsFull())
@@ -167,7 +168,7 @@ namespace Carnassial.Images
                         // indicate to add the image
                         return image;
                     },
-                    (long existingID, CachedImage newImage) => 
+                    (long existingID, CachedImage newImage) =>
                     {
                         // indicate to update the image
                         return newImage;
@@ -210,7 +211,7 @@ namespace Carnassial.Images
                 return null;
             }
 
-            return await this.TryGetImageAsync(file, 0);
+            return await this.TryGetImageAsync(file, 0).ConfigureAwait(true);
         }
 
         private async Task<CachedImage> TryGetImageAsync(ImageRow file, int prefetchStride)
@@ -221,14 +222,14 @@ namespace Carnassial.Images
                 if (this.prefetechesByID.TryGetValue(file.ID, out Task prefetch))
                 {
                     // image retrieval's already in progress, so wait for it to complete
-                    await prefetch;
+                    await prefetch.ConfigureAwait(true);
                     image = this.unalteredImagesByID[file.ID];
                 }
                 else
                 {
                     // load the requested image from disk as it isn't cached, doesn't have a prefetch running, and is needed right now 
                     // by the caller
-                    image = await file.TryLoadImageAsync(this.FileDatabase.FolderPath);
+                    image = await file.TryLoadImageAsync(this.FileDatabase.FolderPath).ConfigureAwait(true);
                     this.CacheImage(file.ID, image);
                 }
             }
@@ -274,7 +275,7 @@ namespace Carnassial.Images
 
             Task prefetch = Task.Run((Func<Task>)(async () =>
             {
-                CachedImage nextImage = await nextFile.TryLoadImageAsync((string)this.FileDatabase.FolderPath);
+                CachedImage nextImage = await nextFile.TryLoadImageAsync((string)this.FileDatabase.FolderPath).ConfigureAwait(true);
                 this.CacheImage(nextFile.ID, nextImage);
                 this.prefetechesByID.TryRemove(nextFile.ID, out Task _);
             }));
@@ -340,7 +341,7 @@ namespace Carnassial.Images
             // if this file is an image ensure it's loaded from disk and cached
             if (afterMoveFile.IsVideo == false)
             {
-                this.differenceCache[ImageDifference.Unaltered] = await this.TryGetImageAsync(afterMoveFile, prefetchStride);
+                this.differenceCache[ImageDifference.Unaltered] = await this.TryGetImageAsync(afterMoveFile, prefetchStride).ConfigureAwait(true);
             }
 
             return new MoveToFileResult(movedToNewFile);
@@ -384,13 +385,13 @@ namespace Carnassial.Images
                 initialRow = this.CurrentRow;
             }
 
-            CachedImage previous = await this.TryGetImageAsync(initialRow - 1);
+            CachedImage previous = await this.TryGetImageAsync(initialRow - 1).ConfigureAwait(true);
             if ((previous == null) || (previous.Image == null))
             {
                 return ImageDifferenceResult.PreviousImageNotAvailable;
             }
 
-            CachedImage next = await this.TryGetImageAsync(initialRow + 1);
+            CachedImage next = await this.TryGetImageAsync(initialRow + 1).ConfigureAwait(true);
             if ((next == null) || (next.Image == null))
             {
                 return ImageDifferenceResult.NextImageNotAvailable;
@@ -420,7 +421,7 @@ namespace Carnassial.Images
                     }
                 }
                 return ImageDifferenceResult.NotCalculable;
-            });
+            }).ConfigureAwait(true);
         }
 
         public async Task<ImageDifferenceResult> TryMoveToNextDifferenceImageAsync(byte differenceThreshold)
@@ -465,7 +466,7 @@ namespace Carnassial.Images
                         break;
                     case ImageDifference.Combined:
                     default:
-                        throw new NotSupportedException(String.Format("Unhandled difference state {0}.", nextDifferenceState));
+                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled difference state {0}.", nextDifferenceState));
                 }
 
                 CachedImage cachedDifference = this.differenceCache[nextDifferenceState];
@@ -477,7 +478,7 @@ namespace Carnassial.Images
             }
 
             // determine which image to use for differencing
-            CachedImage comparisonImage = await this.TryGetImageAsync(comparisonRow);
+            CachedImage comparisonImage = await this.TryGetImageAsync(comparisonRow).ConfigureAwait(true);
             if ((comparisonImage == null) || (comparisonImage.Image == null))
             {
                 return comparisonImageNotAvailable;
@@ -505,7 +506,7 @@ namespace Carnassial.Images
                     }
                 }
                 return ImageDifferenceResult.NotCalculable;
-            });
+            }).ConfigureAwait(true);
         }
     }
 }

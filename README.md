@@ -2,7 +2,9 @@
 This repository contains the source code for and releases of Carnassial and its associated tenplate editor. Refer to Github's wiki tab above to find out how to get started and learn more about Carnassial.
 
 ### Contributing
-Bug reports, feature requests, and feedback are most welcome. Let us know!  We'd also really appreciate sample images and videos to test our code on and expand some features. Shoot us an email at carnassialdev@gmail.com if you've some you'd like to share. We're particularly looking for samples from
+Bug reports, feature requests, and feedback are most welcome. Let us know!  We'd also really appreciate sample images and videos to test our 
+code on and expand some features. Shoot us an email at carnassialdev@gmail.com if you've some you'd like to share. We're particularly looking 
+for samples from
 
 * Bushnell Trophy or Trophy HD cameras from 2013 back to 2006
 * Reconyx HyperFire, UltraFire, MicroFire, and RapidFire cameras
@@ -10,7 +12,8 @@ Bug reports, feature requests, and feedback are most welcome. Let us know!  We'd
 
 Having these in our archives helps us help you, so don't be shy. See "Contacting the Carnassial Development Team" below for how to reach us.
 
-If you'd like to translate Carnassial into your language it's easy. Send us your edited version of Resources.xaml or drop us a line and we'll set you up.
+If you'd like to translate Carnassial into your language it's easy. Send us your edited version of Resources.xaml or drop us a line and we'll
+set you up.
 
 If you're a developer and would like to submit a pull request please see below.
 
@@ -19,7 +22,8 @@ If you're a developer and would like to submit a pull request please see below.
 * Carnassial and the template editor should also run on Windows Server 2008 or newer and legacy Windows 8.1, 8, and 7 SP1 systems not updated to Windows 10. This isn't offically supported, though.
 * Windows Vista SP2 and earlier and all 32 bit versions of Windows are not supported. Carnassial is 64 bit only and has minor reliance on Windows 7 common dialogs.
 
-Screen sizes of 1600 x 900 or larger are recommended. Carnassial should run on any x64 processor but optimization effort generally targets hardware from the last five years.
+Screen sizes of 1600 x 900 or larger are recommended. Carnassial should run on any x64 processor but optimization effort generally targets 
+hardware from the last five years.
 
 Known limitations:
 
@@ -30,12 +34,15 @@ Known limitations with earlier versions of Windows:
 
 * Users may need to [install .NET 4.7.1 or newer](https://msdn.microsoft.com/en-us/library/bb822049.aspx) if it's not already present using, for example, the [.NET installer](https://www.microsoft.com/net/download/dotnet-framework-runtime).
 * Users may need to [install the Universal C Runtime](https://www.microsoft.com/en-us/download/details.aspx?id=48234) if it or the Microsoft Visual C++ 2015 or 2017 redistributable is not already installed.
-* The Recycle Bin part of age out of automatic .tdb and .ddb backups and deletion of files is untested on Windows 7.
+* Recycle Bin integration is untested on Windows 7.
 
 ### History
-Carnassial is named for [carnassials](https://en.wikipedia.org/wiki/Carnassial) as its function is analogous (though unfortunately it lacks the teeth's self-sharpening properties).
+Carnassial is named for [carnassials](https://en.wikipedia.org/wiki/Carnassial) as its function is analogous (though unfortunately it lacks 
+the teeth's self-sharpening properties).
 
-Carnassial began as a substantial overhaul of Timelapse 2.0 for improved code quality and sufficient flexibility to accomodate typical carnivore studies. [Timelapse 2.1](http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.HomePage) includes several months of the initial Carnassial coding effort but is now diverged.
+Carnassial began as a substantial overhaul of Timelapse 2.0 for improved code quality and sufficient flexibility to accomodate typical 
+carnivore studies. [Timelapse 2.1](http://saul.cpsc.ucalgary.ca/timelapse/pmwiki.php?n=Main.HomePage) includes several months of the initial 
+Carnassial coding effort but is now diverged.
 
 ### Alternatives
 The need to analyze remote camera data is a common one. In addition to Carnassial and Timelapse we're aware of [CPW Photo Warehouse​](http://cpw.state.co.us/learn/Pages/ResearchMammalsSoftware.aspx) and [eMammal](http://emammal.si.edu/). Key differences are
@@ -60,28 +67,33 @@ Install [Visual Studio 2019 Community](https://www.visualstudio.com/en-us/produc
 Higher Visual Studio SKUs such as Enterprise are fine. After Visual Studio installation:
 
 * clone the repo locally through Visual Studio's Team Explorer or GitHub's clone or download options
-* install Visual StyleCop (Tools -> Extensions and Updates -> Online)
 * install the [WiX Toolset](http://wixtoolset.org/releases/) 3.11 or later and Visual Studio WiX extension
 
 Commits should
 
 * include appropriate test coverage
-* have no build warnings, pass code analysis (Analyze -> Run Code Analysis), and be free of StyleCop issues (right click solution -> Run StyleCop)
+* have no build warnings or live code analysis messages
 
-Application and test development is done against .NET 4.7.1. Carnassial is a 64 bit app and for the most part only an x64 build is needed for development and testing
-(the installer automatically rewires itself to build x86 under an x64 build). However, the Visual Studio development UI is a 32 bit app and is therefore unable to
-load controls from the regular Carnassial build for display in the WPF designer. As a result, Carnassial has a vestigial x86 build which needs to be selected when 
-doing UI tasks if the view in the designer is to match what's displayed at x64 runtime. (Building Carnassial as AnyCPU in the x64 build isn't an option as 
-StockMessageControl hits call graphs which go into Carnassial.Native, an approach which is anyways undesirable as there's a moderate performance penalty to building 
-AnyCPU rather than x64.)
+Application and test development is done against .NET 4.7.1. Carnassial is a 64 bit app and for the most part only an x64 build is needed
+for development and testing (the installer automatically rewires itself to build x86 under an x64 build). However, the Visual Studio 
+development UI is a 32 bit app and is therefore unable to load controls from the regular Carnassial build for display in the WPF designer. 
+As a result, Carnassial has a vestigial x86 build which needs to be selected when doing UI tasks if the view in the designer is to match 
+what's displayed at x64 runtime. (Building Carnassial as AnyCPU in the x64 build isn't an option as StockMessageControl hits call graphs 
+which go into Carnassial.Native, an approach which is anyways undesirable as there's a moderate performance penalty to building AnyCPU 
+rather than x64.)
 
-Visual Studio behaves similarly for unit test discovery, looking for an x86 build unless Test -> Test Settings -> Default Processor Architecture -> x64 is set. In some 
-cases it's possible to specify a .runsettings without x64 selected and sometimes not, but test discovery does not honor the target platform specified in the .runsettings
-file. In such situations VS can fail to find any unit tests until restarted, though setting x64 and forcing a build typically gets test discovery unstuck.
+Historically, Visual Studio's discovery and honoring of test.runsettings has been unreliable, requiring manual selection of x64 test execution.
+In such situations VS can fail to find any unit tests until restarted, though setting x64 and forcing a build typically resulted in test 
+discovery.
 
-Carnasial is not currently MVVM. In general, greater use of MVVM would be beneficial but current UX development effort is primarily directed to model-view adoption in
-order to enable refactoring to view models. Carnassial uses WPF resource dictionaries for localization as the approach is lighter weight and more flexible than .resx 
-files or locbaml type methods. Culture specific resources are merged in Carnassial\LocalizedApplication.cs
+Carnassial is not currently MVVM. In general, greater use of MVVM would be beneficial but current UX development effort is primarily directed
+to model-view adoption in order to enable refactoring to view models. Carnassial uses WPF resource dictionaries for localization as the 
+approach is lighter weight and more flexible than .resx files or locbaml type methods. Culture specific resources are merged in 
+Carnassial\LocalizedApplication.cs
+
+While Carnassial is onboarded to the Roslyn FxCop and StyleCop nugets, some code analysis and several style rules are disabled. Some disables
+are due to low value of the rules, misalignments with default Visual Studio behaviors, or contradictions with common code layout practices.
+Others are due to defective code analysis rules which do not honor GlobalSuppressions.cs.
 
 Also helpful are
 

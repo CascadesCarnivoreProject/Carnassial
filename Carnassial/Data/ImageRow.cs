@@ -189,7 +189,7 @@ namespace Carnassial.Data
                             case SqlDataType.String:
                                 return this.UserNotesAndChoices[userColumn.DataIndex];
                             default:
-                                throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataIndex));
+                                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", userColumn.DataIndex));
                         }
                 }
             }
@@ -249,7 +249,7 @@ namespace Carnassial.Data
                                 this.UserNotesAndChoices[userColumn.DataIndex] = valueAsString;
                                 break;
                             default:
-                                throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataType));
+                                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", userColumn.DataType));
                         }
                         if (valueDifferent)
                         {
@@ -291,7 +291,7 @@ namespace Carnassial.Data
                 case Constant.FileColumn.DateTime:
                     return this.UtcDateTime;
                 case nameof(this.DateTimeOffset):
-                    throw new NotSupportedException(String.Format("Database values for {0} and {1} must be accessed through {2}.", nameof(this.UtcDateTime), nameof(this.UtcOffset), nameof(this.DateTimeOffset)));
+                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Database values for {0} and {1} must be accessed through {2}.", nameof(this.UtcDateTime), nameof(this.UtcOffset), nameof(this.DateTimeOffset)));
                 case Constant.FileColumn.DeleteFlag:
                     return this.DeleteFlag;
                 case Constant.FileColumn.File:
@@ -317,7 +317,7 @@ namespace Carnassial.Data
                         case SqlDataType.String:
                             return this.UserNotesAndChoices[userColumn.DataIndex];
                         default:
-                            throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataIndex));
+                            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", userColumn.DataIndex));
                     }
             }
         }
@@ -326,7 +326,7 @@ namespace Carnassial.Data
         public static string GetDataBindingPath(ControlRow control)
         {
             string dataLabel = control.DataLabel;
-            Debug.Assert(dataLabel != Constant.FileColumn.UtcOffset, String.Format("Display and editing of UTC offset should be integrated into {0}.", nameof(DataEntryDateTimeOffset)));
+            Debug.Assert(dataLabel != Constant.FileColumn.UtcOffset, String.Format(CultureInfo.InvariantCulture, "Display and editing of UTC offset should be integrated into {0}.", nameof(DataEntryDateTimeOffset)));
 
             if (String.Equals(dataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal))
             {
@@ -393,7 +393,7 @@ namespace Carnassial.Data
                         }
                         else
                         {
-                            throw new ArgumentOutOfRangeException(control.DataLabel, String.Format("'{0}' is not a valid classification.", control.DefaultValue));
+                            throw new ArgumentOutOfRangeException(control.DataLabel, String.Format(CultureInfo.CurrentCulture, "'{0}' is not a valid classification.", control.DefaultValue));
                         }
                         break;
                     // not currently supported
@@ -401,7 +401,7 @@ namespace Carnassial.Data
                     //     dateTime = DateTimeHandler.ParseDatabaseDateTime(control.DefaultValue);
                     //     continue;
                     case SqlDataType.Integer:
-                        if (String.Equals(control.DataLabel, Constant.FileColumn.Classification))
+                        if (String.Equals(control.DataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal))
                         {
                             // classification doesn't have a default value
                             continue;
@@ -423,7 +423,7 @@ namespace Carnassial.Data
                         break;
                     case SqlDataType.Blob:
                     default:
-                        throw new NotSupportedException(String.Format("Unhandled SQL data type {0} for column '{1}'.", dataType, control.DataLabel));
+                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled SQL data type {0} for column '{1}'.", dataType, control.DataLabel));
                 }
 
                 defaultValues.Add(control.DataLabel, defaultValue);
@@ -446,7 +446,7 @@ namespace Carnassial.Data
             switch (control.PropertyName)
             {
                 case Constant.FileColumn.DateTime:
-                    throw new NotSupportedException(String.Format("Control has unexpected property name {0}.", Constant.FileColumn.DateTime));
+                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Control has unexpected property name {0}.", Constant.FileColumn.DateTime));
                 case nameof(this.DateTimeOffset):
                     return this.GetDisplayDateTime();
                 case Constant.FileColumn.DeleteFlag:
@@ -473,7 +473,7 @@ namespace Carnassial.Data
                             return this.UserNotesAndChoices[userColumn.DataIndex];
                         case SqlDataType.Blob:
                         default:
-                            throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataType));
+                            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", userColumn.DataType));
                     }
             }
         }
@@ -502,7 +502,7 @@ namespace Carnassial.Data
 
         public static string GetPropertyName(string dataLabel)
         {
-            Debug.Assert(dataLabel != Constant.FileColumn.UtcOffset, String.Format("UTC offset should be accessed by {0}.", nameof(ImageRow.DateTimeOffset)));
+            Debug.Assert(dataLabel != Constant.FileColumn.UtcOffset, String.Format(CultureInfo.InvariantCulture, "UTC offset should be accessed by {0}.", nameof(ImageRow.DateTimeOffset)));
 
             if (String.Equals(dataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal))
             {
@@ -533,7 +533,7 @@ namespace Carnassial.Data
                 case Constant.FileColumn.DeleteFlag:
                     return this.DeleteFlag ? Constant.Sql.TrueString : Constant.Sql.FalseString;
                 case nameof(this.DateTimeOffset):
-                    throw new NotSupportedException(String.Format("Unexpected data label {0}.", nameof(this.DateTimeOffset)));
+                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unexpected data label {0}.", nameof(this.DateTimeOffset)));
                 case Constant.FileColumn.File:
                     return this.FileName;
                 case Constant.DatabaseColumn.ID:
@@ -562,7 +562,7 @@ namespace Carnassial.Data
                         case SqlDataType.String:
                             return this.UserNotesAndChoices[userColumn.DataIndex];
                         default:
-                            throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataType));
+                            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", userColumn.DataType));
                     }
             }
         }
@@ -577,7 +577,7 @@ namespace Carnassial.Data
                 { nameof(this.FileName), this.FileName },
                 { Constant.DatabaseColumn.ID, this.ID },
                 { Constant.FileColumn.Classification, this.Classification },
-                { Constant.FileColumn.RelativePath, this.RelativePath },
+                { Constant.FileColumn.RelativePath, this.RelativePath }
             };
             foreach (KeyValuePair<string, FileTableColumn> columnAndName in this.table.UserColumnsByName)
             {
@@ -598,7 +598,7 @@ namespace Carnassial.Data
                         value = this.UserNotesAndChoices[userColumn.DataIndex];
                         break;
                     default:
-                        throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataIndex));
+                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", userColumn.DataIndex));
                 }
                 valuesByDataLabel[columnAndName.Key] = value;
             }
@@ -626,7 +626,7 @@ namespace Carnassial.Data
         {
             string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(this.FileName);
             string previousFileNameWithoutExtension;
-            if (fileNameWithoutExtension.EndsWith("0001"))
+            if (fileNameWithoutExtension.EndsWith("0001", StringComparison.Ordinal))
             {
                 previousFileNameWithoutExtension = fileNameWithoutExtension.Substring(0, 4) + "0999";
             }
@@ -702,7 +702,7 @@ namespace Carnassial.Data
                     this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(fileTableMap.UserFlags[dataIndex].Control.DataLabel));
                 }
             }
-            
+
             // notes and choices
             for (int dataIndex = 0; dataIndex < this.UserNotesAndChoices.Length; ++dataIndex)
             {
@@ -905,13 +905,13 @@ namespace Carnassial.Data
                 case FileClassification.Video:
                     return "Video";
                 default:
-                    throw new NotSupportedException(String.Format("Unhandled classification {0}.", classification));
+                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled classification {0}.", classification));
             }
         }
 
         public async Task<CachedImage> TryLoadImageAsync(string imageSetFolderPath)
         {
-            return await this.TryLoadImageAsync(imageSetFolderPath, null);
+            return await this.TryLoadImageAsync(imageSetFolderPath, null).ConfigureAwait(true);
         }
 
         public async virtual Task<CachedImage> TryLoadImageAsync(string imageSetFolderPath, Nullable<int> expectedDisplayWidth)
@@ -938,7 +938,7 @@ namespace Carnassial.Data
                 }
 
                 byte[] buffer = new byte[stream.Length];
-                await stream.ReadAsync(buffer, 0, buffer.Length);
+                await stream.ReadAsync(buffer, 0, buffer.Length).ConfigureAwait(true);
                 MemoryImage image = new MemoryImage(buffer, expectedDisplayWidth);
                 // stopwatch.Stop();
                 // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
@@ -980,7 +980,7 @@ namespace Carnassial.Data
             }
 
             string relativePath = NativeMethods.GetRelativePathFromDirectoryToDirectory(imageSetFolderPath, destinationFolderPath);
-            if (String.Equals(relativePath, String.Empty, StringComparison.Ordinal) || String.Equals(relativePath, ".", StringComparison.Ordinal))
+            if (String.IsNullOrEmpty(relativePath) || String.Equals(relativePath, ".", StringComparison.Ordinal))
             {
                 relativePath = null;
             }
@@ -1017,20 +1017,20 @@ namespace Carnassial.Data
             }
             else
             {
-                classification = default(FileClassification);
+                classification = default;
                 return false;
             }
 
             return true;
         }
 
-        public MetadataReadResult TryReadDateTimeFromMetadata(IReadOnlyList<MetadataDirectory> metadataDirectories, TimeZoneInfo imageSetTimeZone)
+        public MetadataReadResults TryReadDateTimeFromMetadata(IReadOnlyList<MetadataDirectory> metadataDirectories, TimeZoneInfo imageSetTimeZone)
         {
             ExifSubIfdDirectory exifSubIfd = metadataDirectories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
             if (exifSubIfd == null)
             {
                 // no EXIF information and no other plausible source of metadata
-                return MetadataReadResult.None;
+                return MetadataReadResults.None;
             }
 
             object dateTimeOriginalAsObject = exifSubIfd.GetObject(ExifSubIfdDirectory.TagDateTimeOriginal);
@@ -1056,23 +1056,23 @@ namespace Carnassial.Data
             // work around https://github.com/drewnoakes/metadata-extractor-dotnet/issues/138
             if (dateTimeOriginalAsObject == null)
             {
-                return MetadataReadResult.None;
+                return MetadataReadResults.None;
             }
             else if (dateTimeOriginalAsObject is DateTime dateTimeOriginalAsDateTime)
             {
                 this.DateTimeOffset = DateTimeHandler.CreateDateTimeOffset(dateTimeOriginalAsDateTime, imageSetTimeZone);
-                return MetadataReadResult.DateTime;
+                return MetadataReadResults.DateTime;
             }
             else if (dateTimeOriginalAsObject is StringValue dateTimeOriginalAsStringValue)
             {
                 if (DateTimeHandler.TryParseMetadataDateTaken(dateTimeOriginalAsStringValue.ToString(), imageSetTimeZone, out DateTimeOffset dateTimeOriginal))
                 {
                     this.DateTimeOffset = dateTimeOriginal;
-                    return MetadataReadResult.DateTime;
+                    return MetadataReadResults.DateTime;
                 }
                 else
                 {
-                    return MetadataReadResult.None;
+                    return MetadataReadResults.None;
                 }
             }
             else

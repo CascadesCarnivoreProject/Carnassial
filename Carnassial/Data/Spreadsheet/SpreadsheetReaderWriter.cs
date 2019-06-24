@@ -6,6 +6,7 @@ using DocumentFormat.OpenXml.Spreadsheet;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -337,7 +338,7 @@ namespace Carnassial.Data.Spreadsheet
                                 }
                                 else
                                 {
-                                    throw new NotSupportedException(String.Format("Unhandled column data type {0}.", columnType));
+                                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", columnType));
                                 }
 
                                 this.WriteCellToXlsx(writer, columnReferences[columnIndex] + rowReference, cellType, null, value);
@@ -417,7 +418,7 @@ namespace Carnassial.Data.Spreadsheet
             }
             else
             {
-                throw new NotSupportedException(String.Format("Unable to translate column {0} to an Excel cell reference.", index));
+                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unable to translate column {0} to an Excel cell reference.", index));
             }
         }
 
@@ -515,7 +516,7 @@ namespace Carnassial.Data.Spreadsheet
             return true;
         }
 
-        protected bool ReadXlsxRow(XmlReader worksheetReader, Stream worksheetStream, List<string> sharedStrings)
+        protected bool ReadXlsxRow(XmlReader worksheetReader, List<string> sharedStrings)
         {
             while (worksheetReader.EOF == false)
             {
@@ -608,7 +609,7 @@ namespace Carnassial.Data.Spreadsheet
             }
             else if (relativePathFromDatabaseToSpreadsheet.IndexOf(Constant.File.ParentDirectory, StringComparison.Ordinal) != -1)
             {
-                throw new NotSupportedException(String.Format("Canonicalization of relative path from database to spreadsheet '{0}' is not currently supported.", relativePathFromDatabaseToSpreadsheet));
+                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Canonicalization of relative path from database to spreadsheet '{0}' is not currently supported.", relativePathFromDatabaseToSpreadsheet));
             }
 
             // validate file header against the database
@@ -686,7 +687,7 @@ namespace Carnassial.Data.Spreadsheet
                 }
                 else if (this.currentRow.Count != columnsInDatabase.Count)
                 {
-                    result.Errors.Add(String.Format("Expected {0} fields in row '{1}' but found {2}.  Row skipped, database will not be updated for this file.", columnsInDatabase.Count, String.Join(",", this.currentRow), this.currentRow.Count));
+                    result.Errors.Add(String.Format(CultureInfo.CurrentCulture, "Expected {0} fields in row '{1}' but found {2}.  Row skipped, database will not be updated for this file.", columnsInDatabase.Count, String.Join(",", this.currentRow), this.currentRow.Count));
                     continue;
                 }
 
@@ -696,7 +697,7 @@ namespace Carnassial.Data.Spreadsheet
                 string fileName = this.currentRow[spreadsheetMap.FileNameSpreadsheetIndex];
                 if (String.IsNullOrWhiteSpace(fileName))
                 {
-                    result.Errors.Add(String.Format("No file name found in row {0}.  Row skipped, database will not be updated for this file.", filesToInsert.Count + filesToUpdate.Count + filesUnchanged + 1));
+                    result.Errors.Add(String.Format(CultureInfo.CurrentCulture, "No file name found in row {0}.  Row skipped, database will not be updated for this file.", filesToInsert.Count + filesToUpdate.Count + filesUnchanged + 1));
                     continue;
                 }
 
@@ -805,8 +806,8 @@ namespace Carnassial.Data.Spreadsheet
                 using (StreamReader csvReader = new StreamReader(stream))
                 {
                     this.status.BeginRead(csvReader.BaseStream.Length);
-                    FileImportResult result = this.TryImportData(fileDatabase, 
-                        () => { return this.ReadAndParseCsvLine(csvReader); }, 
+                    FileImportResult result = this.TryImportData(fileDatabase,
+                        () => { return this.ReadAndParseCsvLine(csvReader); },
                         () => { return stream.Position; },
                         csvFilePath);
 
@@ -830,7 +831,7 @@ namespace Carnassial.Data.Spreadsheet
                         if (worksheetInfo == null)
                         {
                             FileImportResult worksheetNotFound = new FileImportResult();
-                            worksheetNotFound.Errors.Add(String.Format("Worksheet {0} not found.", Constant.Excel.FileDataWorksheetName));
+                            worksheetNotFound.Errors.Add(String.Format(CultureInfo.CurrentCulture, "Worksheet {0} not found.", Constant.Excel.FileDataWorksheetName));
                             return worksheetNotFound;
                         }
                         WorksheetPart worksheet = (WorksheetPart)workbook.GetPartById(worksheetInfo.Id);
@@ -858,7 +859,7 @@ namespace Carnassial.Data.Spreadsheet
                                 string[] range = dimension.Split(':');
                                 if ((range == null) || (range.Length != 2))
                                 {
-                                    throw new XmlException(String.Format("Worksheet dimension reference '{0}' is malformed.", dimension));
+                                    throw new XmlException(String.Format(CultureInfo.CurrentCulture, "Worksheet dimension reference '{0}' is malformed.", dimension));
                                 }
                                 int maximumColumnIndex = this.GetExcelColumnIndex(range[1]);
 
@@ -876,7 +877,7 @@ namespace Carnassial.Data.Spreadsheet
 
                                 reader.ReadToNextSibling(Constant.OpenXml.Element.SheetData, Constant.OpenXml.Namespace);
                                 FileImportResult result = this.TryImportData(fileDatabase,
-                                    () => { return this.ReadXlsxRow(reader, worksheetStream, sharedStrings); },
+                                    () => { return this.ReadXlsxRow(reader, sharedStrings); },
                                     () => { return worksheetStream.Position; },
                                     xlsxFilePath);
                                 return result;

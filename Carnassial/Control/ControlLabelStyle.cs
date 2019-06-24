@@ -3,6 +3,6 @@
     public enum ControlLabelStyle
     {
         CounterButton,
-        Label,
+        Label
     }
 }

@@ -25,9 +25,9 @@ namespace Carnassial.Control
         public static readonly DependencyProperty MinimumProperty = DependencyProperty.Register("Minimum", typeof(TimeSpan), typeof(TimeSpanPicker), new FrameworkPropertyMetadata(TimeSpan.MinValue, null, TimeSpanPicker.CoerceMinimum));
         public static readonly DependencyProperty ValueProperty = DependencyProperty.Register("Value", typeof(TimeSpan), typeof(TimeSpanPicker), new FrameworkPropertyMetadata(TimeSpan.Zero, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault, TimeSpanPicker.SetValue, TimeSpanPicker.CoerceValue, false, UpdateSourceTrigger.LostFocus));
 
+        private readonly List<IndexedDateTimePart> parts;
         private int currentPartIndex;
-        private List<IndexedDateTimePart> parts;
-        private TextBoxUpDownAdorner upDownButtons;
+        private readonly TextBoxUpDownAdorner upDownButtons;
 
         public event Action<TimeSpanPicker, TimeSpan> ValueChanged;
 
@@ -52,7 +52,7 @@ namespace Carnassial.Control
 
         public string Format
         {
-            get { return Convert.ToString(this.GetValue(TimeSpanPicker.FormatProperty)); }
+            get { return (string)this.GetValue(TimeSpanPicker.FormatProperty); }
             set { this.SetValue(TimeSpanPicker.FormatProperty, value); }
         }
 
@@ -130,7 +130,7 @@ namespace Carnassial.Control
                 case 's':
                     return TimeSpan.FromSeconds(incrementOrDecrement);
                 default:
-                    throw new NotSupportedException(String.Format("Unhandled part format {0}.", partFormat));
+                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled part format {0}.", partFormat));
             }
         }
 
@@ -174,7 +174,7 @@ namespace Carnassial.Control
                         // skip delimiters and spaces
                         continue;
                     default:
-                        throw new NotSupportedException(String.Format("Unsupported format character '{0}'.", formatCharacter));
+                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unsupported format character '{0}'.", formatCharacter));
                 }
 
                 if (formatCharacter != previousFormatCharacter)
@@ -213,7 +213,7 @@ namespace Carnassial.Control
             }
 
             // ensure displayed value uses current format
-            timeSpanPicker.TimeSpanDisplay.Text = timeSpanPicker.Value.ToString(timeSpanPicker.Format);
+            timeSpanPicker.TimeSpanDisplay.Text = timeSpanPicker.Value.ToString(timeSpanPicker.Format, CultureInfo.CurrentCulture);
         }
 
         private static void SetValue(DependencyObject obj, DependencyPropertyChangedEventArgs args)
@@ -264,8 +264,7 @@ namespace Carnassial.Control
                 case Key.Down:
                 case Key.Right:
                 case Key.Left:
-                    TimeSpan currentValue;
-                    if (this.TryParseTimeSpan(out currentValue) == false)
+                    if (this.TryParseTimeSpan(out TimeSpan _) == false)
                     {
                         // action can't be be performed as the value isn't currently well formed
                         return;

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace Carnassial.Data
 {
@@ -18,7 +19,7 @@ namespace Carnassial.Data
         {
             this.dataLabel = dataLabel;
 
-            string fileUpdateText = String.Format("UPDATE {0} SET {1}=@Value WHERE {2}=@{2}", Constant.DatabaseTable.Files, SQLiteDatabase.QuoteIdentifier(dataLabel), Constant.DatabaseColumn.ID);
+            string fileUpdateText = String.Format(CultureInfo.InvariantCulture, "UPDATE {0} SET {1}=@Value WHERE {2}=@{2}", Constant.DatabaseTable.Files, SQLiteDatabase.QuoteIdentifier(dataLabel), Constant.DatabaseColumn.ID);
             this.Transaction = database.Connection.BeginTransaction();
             this.updateFiles = new SQLiteCommand(fileUpdateText, this.Database.Connection, this.Transaction);
             this.updateFiles.Parameters.Add(new SQLiteParameter("@" + Constant.DatabaseColumn.ID));
@@ -30,7 +31,7 @@ namespace Carnassial.Data
             Debug.Assert(files != null, nameof(files) + " is null.");
             Debug.Assert(offset >= 0, nameof(offset) + " is less than zero.");
             Debug.Assert(length >= 0, nameof(length) + " is less than zero.");
-            Debug.Assert((offset + length) <= files.Count, String.Format("Offset {0} plus length {1} exceeds length of files ({2}.", offset, length, files.Count));
+            Debug.Assert((offset + length) <= files.Count, String.Format(CultureInfo.InvariantCulture, "Offset {0} plus length {1} exceeds length of files ({2}.", offset, length, files.Count));
 
             int filesAdded = 0;
             int stopIndex = offset + length;

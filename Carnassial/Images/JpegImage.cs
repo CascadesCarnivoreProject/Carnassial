@@ -5,6 +5,7 @@ using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.Jpeg;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using MetadataDirectory = MetadataExtractor.Directory;
 
@@ -65,8 +66,8 @@ namespace Carnassial.Images
             // Folder loading becomes jpeg decoding bound at larger decoding sizes.  Using a thumbnail is acceptable 
             // here because luminosity and coloration are average image properties and therefore well preserved even with
             // the aggressive subsampling of thubnails.
-            MetadataReadResult thumbnailReadResult = this.TryGetThumbnail(ref preallocatedThumbnail);
-            if (thumbnailReadResult != MetadataReadResult.Thumbnail)
+            MetadataReadResults thumbnailReadResult = this.TryGetThumbnail(ref preallocatedThumbnail);
+            if (thumbnailReadResult != MetadataReadResults.Thumbnail)
             {
                 return new ImageProperties(thumbnailReadResult);
             }
@@ -84,7 +85,7 @@ namespace Carnassial.Images
             double luminosity = preallocatedThumbnail.GetLuminosityAndColoration(infoBarHeight, out double coloration);
             return new ImageProperties(luminosity, coloration)
             {
-                MetadataResult = MetadataReadResult.Thumbnail
+                MetadataResult = MetadataReadResults.Thumbnail
             };
         }
 
@@ -165,7 +166,7 @@ namespace Carnassial.Images
             return this.Metadata != null;
         }
 
-        public MetadataReadResult TryGetThumbnail(ref MemoryImage preallocatedThumbnail)
+        public MetadataReadResults TryGetThumbnail(ref MemoryImage preallocatedThumbnail)
         {
             if (this.Metadata == null)
             {
@@ -179,25 +180,25 @@ namespace Carnassial.Images
                 (thumbnailDirectory.ContainsTag(ExifThumbnailDirectory.TagThumbnailLength) == false) ||
                 (thumbnailDirectory.GetDescription(ExifThumbnailDirectory.TagCompression).StartsWith(Constant.Exif.JpegCompression, StringComparison.OrdinalIgnoreCase) == false))
             {
-                return MetadataReadResult.None;
+                return MetadataReadResults.None;
             }
 
             int thumbnailOffset = thumbnailDirectory.GetInt32(ExifThumbnailDirectory.TagThumbnailOffset);
             int thumbnailLength = thumbnailDirectory.GetInt32(ExifThumbnailDirectory.TagThumbnailLength);
             if (thumbnailLength < Constant.Images.SmallestValidJpegSizeInBytes)
             {
-                throw new ImageProcessingException(String.Format("Jpeg thumbnail sizeof {0} bytes is below smallest expected size {1}.", thumbnailLength, Constant.Images.SmallestValidJpegSizeInBytes));
+                throw new ImageProcessingException(String.Format(CultureInfo.CurrentCulture, "Jpeg thumbnail sizeof {0} bytes is below smallest expected size {1}.", thumbnailLength, Constant.Images.SmallestValidJpegSizeInBytes));
             }
             if ((thumbnailOffset + thumbnailLength + Constant.Exif.MaxMetadataExtractorIssue35Offset) > this.reader.Buffer.Length)
             {
-                throw new ImageProcessingException(String.Format("End position of thumbnail (byte {0}) may exceed file buffer length of '{1}'.", thumbnailOffset + thumbnailLength, this.reader.Buffer.Length));
+                throw new ImageProcessingException(String.Format(CultureInfo.CurrentCulture, "End position of thumbnail (byte {0}) may exceed file buffer length of '{1}'.", thumbnailOffset + thumbnailLength, this.reader.Buffer.Length));
             }
 
             // work around Metadata Extractor issue #35
             // https://github.com/drewnoakes/metadata-extractor-dotnet/issues/35
             if (thumbnailLength <= Constant.Exif.MaxMetadataExtractorIssue35Offset + 1)
             {
-                throw new NotSupportedException(String.Format("Unhandled thumbnail length {0}.", thumbnailLength));
+                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled thumbnail length {0}.", thumbnailLength));
             }
             int issue35Offset = 0;
             for (int offset = 0; offset <= Constant.Exif.MaxMetadataExtractorIssue35Offset; ++offset)
@@ -215,7 +216,7 @@ namespace Carnassial.Images
             thumbnailOffset += issue35Offset;
             if ((thumbnailOffset + thumbnailLength) > this.reader.Buffer.Length)
             {
-                throw new ImageProcessingException(String.Format("End position of thumbnail (byte {0}) is beyond the file's buffer length of '{1}'.", thumbnailOffset + thumbnailLength, this.reader.Buffer.Length));
+                throw new ImageProcessingException(String.Format(CultureInfo.CurrentCulture, "End position of thumbnail (byte {0}) is beyond the file's buffer length of '{1}'.", thumbnailOffset + thumbnailLength, this.reader.Buffer.Length));
             }
 
             if ((preallocatedThumbnail == null) || (preallocatedThumbnail.TryDecode(this.reader.Buffer, thumbnailOffset, thumbnailLength, null) == false))
@@ -224,9 +225,9 @@ namespace Carnassial.Images
             }
             if (preallocatedThumbnail.DecodeError)
             {
-                return MetadataReadResult.Failed;
+                return MetadataReadResults.Failed;
             }
-            return MetadataReadResult.Thumbnail;
+            return MetadataReadResults.Thumbnail;
         }
     }
 }

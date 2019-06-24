@@ -14,8 +14,9 @@ namespace Carnassial.UnitTests
 {
     public class CarnassialTest
     {
+        private static readonly object CultureLock;
+
         private static bool CultureChanged;
-        private static object CultureLock;
         private static CultureInfo CurrentCulture;
         private static CultureInfo CurrentUICulture;
         private static CultureInfo DefaultThreadCurrentCulture;
@@ -134,7 +135,7 @@ namespace Carnassial.UnitTests
         /// <summary>
         /// Creates a file data table row from the specified FileExpectation.  Verifies the file isn't already in the database and does not add it to the database.
         /// </summary>
-        protected ImageRow CreateFile(FileDatabase fileDatabase, TimeZoneInfo imageSetTimeZone, FileExpectations fileExpectation, out MetadataReadResult metadataReadResult)
+        protected ImageRow CreateFile(FileDatabase fileDatabase, TimeZoneInfo imageSetTimeZone, FileExpectations fileExpectation, out MetadataReadResults metadataReadResult)
         {
             FileInfo fileInfo = new FileInfo(Path.Combine(this.WorkingDirectory, fileExpectation.RelativePath, fileExpectation.FileName));
             string relativePath = Path.GetDirectoryName(NativeMethods.GetRelativePathFromDirectoryToFile(fileDatabase.FolderPath, fileInfo));
@@ -231,7 +232,7 @@ namespace Carnassial.UnitTests
             byte[] bytes = new byte[hex.Length / 2];
             for (int byteIndex = 0; byteIndex < bytes.Length; ++byteIndex)
             {
-                bytes[byteIndex] = byte.Parse(hex.Substring(2 * byteIndex, 2), NumberStyles.HexNumber);
+                bytes[byteIndex] = byte.Parse(hex.Substring(2 * byteIndex, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
             }
             return bytes;
         }
@@ -246,11 +247,11 @@ namespace Carnassial.UnitTests
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
 
             // files in same folder as .tdb and .ddb
-            ImageRow martenImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.InfraredMarten, out MetadataReadResult martenMetadataRead);
-            Assert.IsTrue(martenMetadataRead.HasFlag(MetadataReadResult.DateTime));
+            ImageRow martenImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.InfraredMarten, out MetadataReadResults martenMetadataRead);
+            Assert.IsTrue(martenMetadataRead.HasFlag(MetadataReadResults.DateTime));
 
-            ImageRow bobcatImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightBobcat, out MetadataReadResult bobcatMetadataRead);
-            Assert.IsTrue(bobcatMetadataRead.HasFlag(MetadataReadResult.DateTime));
+            ImageRow bobcatImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightBobcat, out MetadataReadResults bobcatMetadataRead);
+            Assert.IsTrue(bobcatMetadataRead.HasFlag(MetadataReadResults.DateTime));
 
             using (AddFilesTransactionSequence addFiles = fileDatabase.CreateAddFilesTransaction())
             {
@@ -259,188 +260,190 @@ namespace Carnassial.UnitTests
             }
             fileDatabase.SelectFiles(FileSelection.All);
 
-            FileTableEnumerator fileEnumerator = new FileTableEnumerator(fileDatabase);
-            Assert.IsTrue(fileEnumerator.TryMoveToFile(0));
-            martenImage = fileEnumerator.Current;
-            Assert.IsTrue(fileEnumerator.MoveNext());
-            bobcatImage = fileEnumerator.Current;
-
-            FileExpectations bobcatExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightBobcat)
+            using (FileTableEnumerator fileEnumerator = new FileTableEnumerator(fileDatabase))
             {
-                ID = 2
-            };
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, "choice b");
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice3].DefaultValue);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, 1);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, TestConstant.DefaultMarkerPositions);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, TestConstant.DefaultMarkerPositions);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, TestConstant.DefaultMarkerPositions);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, TestConstant.DefaultMarkerPositions);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, true);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Note0].DefaultValue);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, "bobcat");
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel].DefaultValue);
-            bobcatImage[TestConstant.DefaultDatabaseColumn.Choice0] = "choice b";
-            bobcatImage[TestConstant.DefaultDatabaseColumn.Counter0] = 1;
-            bobcatImage[TestConstant.DefaultDatabaseColumn.FlagNotVisible] = true;
-            bobcatImage[TestConstant.DefaultDatabaseColumn.Note3] = "bobcat";
-            bobcatImage[TestConstant.DefaultDatabaseColumn.NoteNotVisible] = "adult";
-            Assert.IsTrue(fileDatabase.TrySyncFileToDatabase(bobcatImage));
+                Assert.IsTrue(fileEnumerator.TryMoveToFile(0));
+                martenImage = fileEnumerator.Current;
+                Assert.IsTrue(fileEnumerator.MoveNext());
+                bobcatImage = fileEnumerator.Current;
 
-            byte[] counter0MarkerPositions = this.HexStringToByteArray("7d31fc3ebeaa103f72a80b3f1db70f3fbb2c153f9ae80b3f");
-            FileExpectations martenExpectation = new FileExpectations(TestConstant.FileExpectation.InfraredMarten)
-            {
-                ID = 1
-            };
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, "choice b");
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice3].DefaultValue);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, 3);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, counter0MarkerPositions);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, TestConstant.DefaultMarkerPositions);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, TestConstant.DefaultMarkerPositions);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, TestConstant.DefaultMarkerPositions);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, true);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Note0].DefaultValue);
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, "American marten");
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel].DefaultValue);
-            ImageRow martenFile = fileDatabase.Files[0];
-            martenFile[TestConstant.DefaultDatabaseColumn.Choice0] = "choice b";
-            martenFile[TestConstant.DefaultDatabaseColumn.Counter0] = 3;
-            martenFile[TestConstant.DefaultDatabaseColumn.Counter0Markers] = counter0MarkerPositions;
-            martenFile[TestConstant.DefaultDatabaseColumn.FlagNotVisible] = true;
-            martenFile[TestConstant.DefaultDatabaseColumn.Note3] = "American marten";
-            martenFile[TestConstant.DefaultDatabaseColumn.NoteNotVisible] = "adult";
-            Assert.IsTrue(martenFile.HasChanges);
-            Assert.IsTrue(fileDatabase.TrySyncFileToDatabase(martenFile));
-            Assert.IsFalse(martenFile.HasChanges);
+                FileExpectations bobcatExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightBobcat)
+                {
+                    ID = 2
+                };
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, "choice b");
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice3].DefaultValue);
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, 1);
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, TestConstant.DefaultMarkerPositions);
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, TestConstant.DefaultMarkerPositions);
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, TestConstant.DefaultMarkerPositions);
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, TestConstant.DefaultMarkerPositions);
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, true);
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Note0].DefaultValue);
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, "bobcat");
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
+                bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel].DefaultValue);
+                bobcatImage[TestConstant.DefaultDatabaseColumn.Choice0] = "choice b";
+                bobcatImage[TestConstant.DefaultDatabaseColumn.Counter0] = 1;
+                bobcatImage[TestConstant.DefaultDatabaseColumn.FlagNotVisible] = true;
+                bobcatImage[TestConstant.DefaultDatabaseColumn.Note3] = "bobcat";
+                bobcatImage[TestConstant.DefaultDatabaseColumn.NoteNotVisible] = "adult";
+                Assert.IsTrue(fileDatabase.TrySyncFileToDatabase(bobcatImage));
 
-            // assemble expectations
-            List<FileExpectations> fileExpectations = new List<FileExpectations>()
+                byte[] counter0MarkerPositions = this.HexStringToByteArray("7d31fc3ebeaa103f72a80b3f1db70f3fbb2c153f9ae80b3f");
+                FileExpectations martenExpectation = new FileExpectations(TestConstant.FileExpectation.InfraredMarten)
+                {
+                    ID = 1
+                };
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, "choice b");
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice3].DefaultValue);
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, 3);
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, counter0MarkerPositions);
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, TestConstant.DefaultMarkerPositions);
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, TestConstant.DefaultMarkerPositions);
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, TestConstant.DefaultMarkerPositions);
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, true);
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Note0].DefaultValue);
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, "American marten");
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
+                martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel].DefaultValue);
+                ImageRow martenFile = fileDatabase.Files[0];
+                martenFile[TestConstant.DefaultDatabaseColumn.Choice0] = "choice b";
+                martenFile[TestConstant.DefaultDatabaseColumn.Counter0] = 3;
+                martenFile[TestConstant.DefaultDatabaseColumn.Counter0Markers] = counter0MarkerPositions;
+                martenFile[TestConstant.DefaultDatabaseColumn.FlagNotVisible] = true;
+                martenFile[TestConstant.DefaultDatabaseColumn.Note3] = "American marten";
+                martenFile[TestConstant.DefaultDatabaseColumn.NoteNotVisible] = "adult";
+                Assert.IsTrue(martenFile.HasChanges);
+                Assert.IsTrue(fileDatabase.TrySyncFileToDatabase(martenFile));
+                Assert.IsFalse(martenFile.HasChanges);
+
+                // assemble expectations
+                List<FileExpectations> fileExpectations = new List<FileExpectations>()
             {
                 martenExpectation,
                 bobcatExpectation
             };
 
-            // files in subfolder
-            if (excludeSubfolderFiles == false)
-            {
-                FileExpectations martenPairExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightMartenPair)
+                // files in subfolder
+                if (excludeSubfolderFiles == false)
                 {
-                    ID = 3
-                };
-                ImageRow martenPairImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightMartenPair, out MetadataReadResult martenPairMetadataRead);
-                Assert.IsTrue(martenPairMetadataRead.HasFlag(MetadataReadResult.DateTime));
+                    FileExpectations martenPairExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightMartenPair)
+                    {
+                        ID = 3
+                    };
+                    ImageRow martenPairImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightMartenPair, out MetadataReadResults martenPairMetadataRead);
+                    Assert.IsTrue(martenPairMetadataRead.HasFlag(MetadataReadResults.DateTime));
 
-                FileExpectations coyoteExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightCoyote)
-                {
-                    ID = 4
-                };
-                ImageRow coyoteImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightCoyote, out MetadataReadResult coyoteMetadataRead);
-                Assert.IsTrue(coyoteMetadataRead.HasFlag(MetadataReadResult.DateTime));
+                    FileExpectations coyoteExpectation = new FileExpectations(TestConstant.FileExpectation.DaylightCoyote)
+                    {
+                        ID = 4
+                    };
+                    ImageRow coyoteImage = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.DaylightCoyote, out MetadataReadResults coyoteMetadataRead);
+                    Assert.IsTrue(coyoteMetadataRead.HasFlag(MetadataReadResults.DateTime));
 
-                using (AddFilesTransactionSequence addFiles = fileDatabase.CreateAddFilesTransaction())
-                {
-                    addFiles.AddToSequence(new List<FileLoad>() { new FileLoad(martenPairImage), new FileLoad(coyoteImage) }, 0, 2);
-                    addFiles.Commit();
+                    using (AddFilesTransactionSequence addFiles = fileDatabase.CreateAddFilesTransaction())
+                    {
+                        addFiles.AddToSequence(new List<FileLoad>() { new FileLoad(martenPairImage), new FileLoad(coyoteImage) }, 0, 2);
+                        addFiles.Commit();
+                    }
+                    fileDatabase.SelectFiles(FileSelection.All);
+                    Assert.IsTrue(String.Equals(fileDatabase.Files[2].FileName, martenPairImage.FileName, StringComparison.Ordinal));
+                    martenPairImage = fileDatabase.Files[2];
+                    Assert.IsTrue(String.Equals(fileDatabase.Files[3].FileName, coyoteImage.FileName, StringComparison.Ordinal));
+                    coyoteImage = fileDatabase.Files[3];
+
+                    fileExpectations.Add(martenPairExpectation);
+                    fileExpectations.Add(coyoteExpectation);
+
+                    Assert.IsTrue(fileEnumerator.MoveNext());
+                    Assert.IsTrue(fileEnumerator.MoveNext());
+                    Assert.IsTrue(fileEnumerator.Current.ID == coyoteExpectation.ID);
+                    coyoteImage = fileEnumerator.Current;
+                    coyoteImage[TestConstant.DefaultDatabaseColumn.Note3] = "coyote";
+                    coyoteImage[TestConstant.DefaultDatabaseColumn.NoteNotVisible] = "adult";
+                    coyoteImage[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel] = String.Empty;
+                    coyoteImage[TestConstant.DefaultDatabaseColumn.Note0] = "escaped field, because a comma is present";
+                    Assert.IsTrue(fileDatabase.TrySyncFileToDatabase(coyoteImage));
+                    Assert.IsFalse(coyoteImage.HasChanges);
+
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice0].DefaultValue);
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice3].DefaultValue);
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter0].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, TestConstant.DefaultMarkerPositions);
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, TestConstant.DefaultMarkerPositions);
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, TestConstant.DefaultMarkerPositions);
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, TestConstant.DefaultMarkerPositions);
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagNotVisible].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, "coyote");
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty);
+                    coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, "escaped field, because a comma is present");
+
+                    Assert.IsTrue(fileDatabase.Files[2].ID == martenPairExpectation.ID);
+                    martenPairImage[TestConstant.DefaultDatabaseColumn.Note3] = "American marten";
+                    martenPairImage[TestConstant.DefaultDatabaseColumn.NoteNotVisible] = "adult";
+                    martenPairImage[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel] = String.Empty;
+                    martenPairImage[TestConstant.DefaultDatabaseColumn.Note0] = "escaped field due to presence of \",\"";
+                    Assert.IsTrue(fileDatabase.TrySyncFileToDatabase(martenPairImage));
+
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice0].DefaultValue);
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice3].DefaultValue);
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter0].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, TestConstant.DefaultMarkerPositions);
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, TestConstant.DefaultMarkerPositions);
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, TestConstant.DefaultMarkerPositions);
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, TestConstant.DefaultMarkerPositions);
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagNotVisible].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, "American marten");
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty);
+                    martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, "escaped field due to presence of \",\"");
                 }
+
+                // reload the file table so direct database updates are visible
                 fileDatabase.SelectFiles(FileSelection.All);
-                Assert.IsTrue(String.Equals(fileDatabase.Files[2].FileName, martenPairImage.FileName, StringComparison.Ordinal));
-                martenPairImage = fileDatabase.Files[2];
-                Assert.IsTrue(String.Equals(fileDatabase.Files[3].FileName, coyoteImage.FileName, StringComparison.Ordinal));
-                coyoteImage = fileDatabase.Files[3];
 
-                fileExpectations.Add(martenPairExpectation);
-                fileExpectations.Add(coyoteExpectation);
-
-                Assert.IsTrue(fileEnumerator.MoveNext());
-                Assert.IsTrue(fileEnumerator.MoveNext());
-                Assert.IsTrue(fileEnumerator.Current.ID == coyoteExpectation.ID);
-                coyoteImage = fileEnumerator.Current;
-                coyoteImage[TestConstant.DefaultDatabaseColumn.Note3] = "coyote";
-                coyoteImage[TestConstant.DefaultDatabaseColumn.NoteNotVisible] = "adult";
-                coyoteImage[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel] = String.Empty;
-                coyoteImage[TestConstant.DefaultDatabaseColumn.Note0] = "escaped field, because a comma is present";
-                Assert.IsTrue(fileDatabase.TrySyncFileToDatabase(coyoteImage));
-                Assert.IsFalse(coyoteImage.HasChanges);
-
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice0].DefaultValue);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice3].DefaultValue);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter0].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, TestConstant.DefaultMarkerPositions);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, TestConstant.DefaultMarkerPositions);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, TestConstant.DefaultMarkerPositions);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, TestConstant.DefaultMarkerPositions);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagNotVisible].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, "coyote");
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty);
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, "escaped field, because a comma is present");
-
-                Assert.IsTrue(fileDatabase.Files[2].ID == martenPairExpectation.ID);
-                martenPairImage[TestConstant.DefaultDatabaseColumn.Note3] = "American marten";
-                martenPairImage[TestConstant.DefaultDatabaseColumn.NoteNotVisible] = "adult";
-                martenPairImage[TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel] = String.Empty;
-                martenPairImage[TestConstant.DefaultDatabaseColumn.Note0] = "escaped field due to presence of \",\"";
-                Assert.IsTrue(fileDatabase.TrySyncFileToDatabase(martenPairImage));
-
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice0, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice0].DefaultValue);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Choice3, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Choice3].DefaultValue);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter0].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, TestConstant.DefaultMarkerPositions);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, TestConstant.DefaultMarkerPositions);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, TestConstant.DefaultMarkerPositions);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, TestConstant.DefaultMarkerPositions);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagNotVisible].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel, String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagWithCustomDataLabel].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal) ? false : true);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note3, "American marten");
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteNotVisible, "adult");
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.NoteWithCustomDataLabel, String.Empty);
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Note0, "escaped field due to presence of \",\"");
+                return fileExpectations;
             }
-
-            // reload the file table so direct database updates are visible
-            fileDatabase.SelectFiles(FileSelection.All);
-
-            return fileExpectations;
         }
 
         protected string GetUniqueFilePathForTest(string baseFileName)
         {
-            string uniqueTestIdentifier = String.Format("{0}.{1}", this.GetType().FullName, this.TestContext.TestName);
-            string uniqueFileName = String.Format("{0}.{1}{2}", Path.GetFileNameWithoutExtension(baseFileName), uniqueTestIdentifier, Path.GetExtension(baseFileName));
+            string uniqueTestIdentifier = String.Format(CultureInfo.InvariantCulture, "{0}.{1}", this.GetType().FullName, this.TestContext.TestName);
+            string uniqueFileName = String.Format(CultureInfo.InvariantCulture, "{0}.{1}{2}", Path.GetFileNameWithoutExtension(baseFileName), uniqueTestIdentifier, Path.GetExtension(baseFileName));
 
             if (String.IsNullOrWhiteSpace(this.TestClassSubdirectory))
             {

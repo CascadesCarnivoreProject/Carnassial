@@ -3,6 +3,7 @@ using Microsoft.Win32.SafeHandles;
 using System;
 using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using ClrBuffer = System.Buffer;
@@ -11,11 +12,11 @@ namespace Carnassial.Interop
 {
     public class UnbufferedSequentialReader : SequentialReader, IDisposable
     {
-        private static ConcurrentDictionary<string, int> SectorSizeByPathRoot;
+        private static readonly ConcurrentDictionary<string, int> SectorSizeByPathRoot;
 
         private int bufferPosition;
         private bool disposed;
-        private SafeFileHandle file;
+        private readonly SafeFileHandle file;
         private int filePosition;
         private readonly Lazy<long> length;
         private readonly Lazy<string> pathRoot;
@@ -65,7 +66,7 @@ namespace Carnassial.Interop
             int bytesRead = this.Read(this.Buffer, existingBufferLength, bytesToRead);
             if (bytesRead != bytesToRead)
             {
-                throw new IOException(String.Format("Only {0} instead of {1} bytes were read.", bytesRead, bytesToRead));
+                throw new IOException(String.Format(CultureInfo.CurrentCulture, "Only {0} instead of {1} bytes were read.", bytesRead, bytesToRead));
             }
             this.filePosition += bytesRead;
         }
@@ -157,7 +158,7 @@ namespace Carnassial.Interop
             fixed (byte* bufferPin = &buffer[offset])
             {
                 int bytesRead = 0;
-                int result = NativeMethods.ReadFile(file, bufferPin, bytesToRead, ref bytesRead, null);
+                int result = NativeMethods.ReadFile(this.file, bufferPin, bytesToRead, ref bytesRead, null);
                 if (result == 0)
                 {
                     throw new Win32Exception(Marshal.GetLastWin32Error());
@@ -170,7 +171,7 @@ namespace Carnassial.Interop
         {
             if (bytes < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(bytes) + " must be zero or greater to read stream sequentially.");
+                throw new ArgumentOutOfRangeException(nameof(bytes), nameof(bytes) + " must be zero or greater to read stream sequentially.");
             }
 
             int newPosition = this.bufferPosition + (int)bytes;

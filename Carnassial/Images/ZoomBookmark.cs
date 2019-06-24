@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 
@@ -38,7 +39,7 @@ namespace Carnassial.Images
 
         public override string ToString()
         {
-            return String.Format("{0},{1},{2},{3}", this.Scale.X, this.Scale.Y, this.Translation.X, this.Translation.Y);
+            return String.Format(CultureInfo.InvariantCulture, "{0},{1},{2},{3}", this.Scale.X, this.Scale.Y, this.Translation.X, this.Translation.Y);
         }
     }
 }

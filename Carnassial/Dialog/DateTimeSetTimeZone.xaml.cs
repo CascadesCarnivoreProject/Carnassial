@@ -9,10 +9,9 @@ namespace Carnassial.Dialog
 {
     public partial class DateTimeSetTimeZone : WindowWithSystemMenu
     {
+        private bool displayingPreview;
         private readonly FileDatabase fileDatabase;
         private readonly ImageCache imageCache;
-
-        private bool displayingPreview;
 
         public DateTimeSetTimeZone(FileDatabase fileDatabase, ImageCache imageCache, Window owner)
         {
@@ -110,7 +109,7 @@ namespace Carnassial.Dialog
             CommonUserInterface.SetDefaultDialogPosition(this);
             CommonUserInterface.TryFitWindowInWorkingArea(this);
 
-            await this.FileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.imageCache);
+            await this.FileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.imageCache).ConfigureAwait(true);
         }
     }
 }

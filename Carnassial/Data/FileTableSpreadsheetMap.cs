@@ -1,6 +1,7 @@
 ﻿using Carnassial.Database;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace Carnassial.Data
 {
@@ -76,7 +77,7 @@ namespace Carnassial.Data
                             }
                             else
                             {
-                                throw new NotSupportedException(String.Format("Unhandled data type {0} for column {1}.", userColumn.DataType, userColumn.Control.DataLabel));
+                                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled data type {0} for column {1}.", userColumn.DataType, userColumn.Control.DataLabel));
                             }
                             break;
                         case ControlType.FixedChoice:
@@ -89,7 +90,7 @@ namespace Carnassial.Data
                             this.UserNoteAndChoiceSpreadsheetIndices.Add(spreadsheetIndex);
                             break;
                         default:
-                            throw new NotSupportedException(String.Format("Unhandled control type {0} for column {1}.", userColumn.Control.ControlType, userColumn.Control.DataLabel));
+                            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled control type {0} for column {1}.", userColumn.Control.ControlType, userColumn.Control.DataLabel));
                     }
                 }
             }

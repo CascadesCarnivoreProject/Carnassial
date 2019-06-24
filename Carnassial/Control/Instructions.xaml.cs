@@ -18,7 +18,7 @@ namespace Carnassial.Control
                 Hyperlink tutorialLink = (Hyperlink)LogicalTreeHelper.FindLogicalNode(this.ScrollViewer.Document, Constant.DialogControlName.InstructionsTutorialLink);
                 tutorialLink.NavigateUri = CarnassialConfigurationSettings.GetTutorialBrowserAddress();
                 tutorialLink.ToolTip = tutorialLink.NavigateUri.AbsoluteUri;
-                
+
                 this.ScrollViewer.Document.Tag = true;
             }
         }

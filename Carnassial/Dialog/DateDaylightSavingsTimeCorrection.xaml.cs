@@ -75,7 +75,7 @@ namespace Carnassial.Dialog
             CommonUserInterface.SetDefaultDialogPosition(this);
             CommonUserInterface.TryFitWindowInWorkingArea(this);
 
-            await this.FileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.imageCache);
+            await this.FileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.imageCache).ConfigureAwait(true);
         }
     }
 }

@@ -53,7 +53,7 @@ namespace Carnassial.Control
         }
 
         // ask the user to confirm propagation to all selected files
-        private bool? ConfirmCopyCurrentValueToAll(string value, int filesAffected, bool checkForZero)
+        private bool? ConfirmCopyCurrentValueToAll(string value, int filesAffected)
         {
             MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.DataEntryHandlerConfirmCopyAll, App.Current.MainWindow,
                                                             value,
@@ -98,7 +98,7 @@ namespace Carnassial.Control
                             menuItem.IsEnabled = this.IsCopyFromLastNonEmptyValuePossible(control);
                             break;
                         default:
-                            throw new NotSupportedException(String.Format("Unhandled context menu item type {0}.", menuItemType));
+                            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled context menu item type {0}.", menuItemType));
                     }
                 }
             }
@@ -288,7 +288,7 @@ namespace Carnassial.Control
         }
 
         /// <summary>
-        /// Add data event handler callbacks for (possibly invisible) controls
+        /// Add data event handler callbacks for (possibly invisible) controls.
         /// </summary>
         public void SetDataEntryCallbacks(List<DataEntryControl> dataEntryControls)
         {
@@ -421,10 +421,9 @@ namespace Carnassial.Control
         /// <summary>Copy the current value of this control to all files.</summary>
         private bool TryCopyToAll(DataEntryControl control)
         {
-            bool checkForZero = control.Type == ControlType.Counter;
             int filesAffected = this.FileDatabase.CurrentlySelectedFileCount;
             string displayValueForConfirm = this.ImageCache.Current.GetDisplayString(control);
-            if (this.ConfirmCopyCurrentValueToAll(displayValueForConfirm, filesAffected, checkForZero) != true)
+            if (this.ConfirmCopyCurrentValueToAll(displayValueForConfirm, filesAffected) != true)
             {
                 return false;
             }

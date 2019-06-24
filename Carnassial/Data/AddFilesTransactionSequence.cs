@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace Carnassial.Data
 {
@@ -44,7 +45,7 @@ namespace Carnassial.Data
                         case ControlType.DateTime:
                         case ControlType.UtcOffset:
                         default:
-                            throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.ControlType));
+                            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled control type {0}.", control.ControlType));
                     }
                     userControlDefaultValues.Add(defaultValue);
                 }
@@ -64,7 +65,8 @@ namespace Carnassial.Data
                 dataLabelsConcatenated = ", " + String.Join(", ", userControlDataLabels);
                 defaultValuesConcatenated = ", " + String.Join(", ", userControlDefaultValues);
             }
-            string fileInsertText = String.Format("INSERT INTO {0} ({1}, {2}, {3}, {4}, {5}, {6}{7}) VALUES (@DateTime, {8}, @FileName, @Classification, @RelativePath, @UtcOffset{9})",
+            string fileInsertText = String.Format(CultureInfo.InvariantCulture,
+                                                  "INSERT INTO {0} ({1}, {2}, {3}, {4}, {5}, {6}{7}) VALUES (@DateTime, {8}, @FileName, @Classification, @RelativePath, @UtcOffset{9})",
                                                   Constant.DatabaseTable.Files,
                                                   Constant.FileColumn.DateTime,
                                                   Constant.FileColumn.DeleteFlag,
@@ -95,7 +97,7 @@ namespace Carnassial.Data
             Debug.Assert(files != null, nameof(files) + " is null.");
             Debug.Assert(offset >= 0, nameof(offset) + " is less than zero.");
             Debug.Assert(length >= 0, nameof(length) + " is less than zero.");
-            Debug.Assert((offset + length) <= files.Count, String.Format("Offset {0} plus length {1} exceeds length of files ({2}.", offset, length, files.Count));
+            Debug.Assert((offset + length) <= files.Count, String.Format(CultureInfo.CurrentCulture, "Offset {0} plus length {1} exceeds length of files ({2}.", offset, length, files.Count));
 
             // insert performance of early Carnassial 2.2.0.3 development (still using 2.2.0.2 schema)
             //                                   column defaults   specified defaults

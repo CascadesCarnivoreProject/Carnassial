@@ -1,6 +1,7 @@
 ﻿using Carnassial.Data;
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -16,9 +17,9 @@ namespace Carnassial.Images
         private double lensAngle;
         private readonly Canvas lensCanvas;
 
-        private readonly Ellipse magnifierLens;
         // current angle of the entire magnifying glass
         private double magnifyingGlassAngle;
+        private readonly Ellipse magnifierLens;
 
         private readonly RotateTransform rotation;
 
@@ -44,7 +45,7 @@ namespace Carnassial.Images
             LinearGradientBrush linearGradientBrush = new LinearGradientBrush()
             {
                 StartPoint = new Point(0, 0),
-                EndPoint = new Point(0, 1),
+                EndPoint = new Point(0, 1)
             };
             Color gray67percent = (Color)ColorConverter.ConvertFromString("#aaaaaa");
             linearGradientBrush.GradientStops.Add(new GradientStop(gray67percent, 0.0));
@@ -148,7 +149,7 @@ namespace Carnassial.Images
         public void RedrawIfVisible(Canvas canvasToMagnify, Image displayImage, Point mouseImagePosition)
         {
             // not visible or nothing to draw
-            if ((this.IsEnabled == false) || 
+            if ((this.IsEnabled == false) ||
                 (this.IsVisible == false) ||
                 (this.Visibility != Visibility.Visible))
             {
@@ -217,7 +218,7 @@ namespace Carnassial.Images
             // If the angle has changed, animate the magnifying glass and its contained image to the new angle
             if (this.magnifyingGlassAngle != newMagnifyingGlassAngle)
             {
-                Debug.Assert((newMagnifyingGlassAngle == -90.0) || (newMagnifyingGlassAngle == 0.0) || (newMagnifyingGlassAngle == 90.0) || (newMagnifyingGlassAngle == 180.0), String.Format("Unexpected magnifying glass angle {0}.", newMagnifyingGlassAngle));
+                Debug.Assert((newMagnifyingGlassAngle == -90.0) || (newMagnifyingGlassAngle == 0.0) || (newMagnifyingGlassAngle == 90.0) || (newMagnifyingGlassAngle == 180.0), String.Format(CultureInfo.InvariantCulture, "Unexpected magnifying glass angle {0}.", newMagnifyingGlassAngle));
 
                 // RotateTransform rotates between the start and stop angle specified in the DoubleAnimation passed to it.  The greater the rotation, the
                 // more intrusive it is, so 270 degree rotations are converted to 90 degree rotations in the opposite direction.

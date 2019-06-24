@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 
 namespace Carnassial.Util
@@ -61,7 +60,7 @@ namespace Carnassial.Util
                 return true;
             }
 
-            mostRecent = default(TElement);
+            mostRecent = default;
             return false;
         }
 
@@ -73,7 +72,7 @@ namespace Carnassial.Util
                 return true;
             }
 
-            leastRecent = default(TElement);
+            leastRecent = default;
             return false;
         }
 

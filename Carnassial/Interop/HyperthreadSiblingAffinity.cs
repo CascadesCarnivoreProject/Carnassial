@@ -34,8 +34,9 @@ namespace Carnassial.Interop
 
                 Thread.BeginThreadAffinity();
                 this.unmanagedThread = NativeMethods.GetCurrentThread();
+
                 UInt64 affinityMask = (UInt64)1 << (2 * taskID); // first hyperthread sibling
-                       affinityMask |= affinityMask << 1;        // second hyperthread sibling
+                affinityMask |= affinityMask << 1;        // second hyperthread sibling
                 this.originalAffinity = NativeMethods.SetThreadAffinityMask(this.unmanagedThread, affinityMask);
             }
         }

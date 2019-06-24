@@ -1,10 +1,10 @@
 ﻿using Carnassial.Data;
 using Carnassial.Util;
 using System;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace Carnassial.Control
 {
@@ -15,8 +15,8 @@ namespace Carnassial.Control
     {
         private bool labelControlIsChecked;
 
-        public DataEntryCounter(ControlRow control, DataEntryControls styleProvider) :
-            base(control, styleProvider, ControlContentStyle.NoteCounterTextBox, ControlLabelStyle.CounterButton)
+        public DataEntryCounter(ControlRow control, DataEntryControls styleProvider)
+            : base(control, styleProvider, ControlContentStyle.NoteCounterTextBox, ControlLabelStyle.CounterButton)
         {
             this.ContentControl.PreviewTextInput += this.ContentControl_PreviewTextInput;
 
@@ -69,7 +69,7 @@ namespace Carnassial.Control
             }
             else
             {
-                throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format("Unsupported value type {0}.", valueAsObject.GetType()));
+                throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format(CultureInfo.CurrentCulture, "Unsupported value type {0}.", valueAsObject.GetType()));
             }
 
             this.ContentControl.Text = valueAsString;

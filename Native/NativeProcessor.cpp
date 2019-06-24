@@ -11,8 +11,10 @@ namespace Carnassial
 
 		// code adapted from Microsoft's __cpuidex() documentation
 		NativeProcessor::ProcessorProperties::ProcessorProperties() :
-			function1_Ecx{ 0 },
-			function7_Ebx{ 0 }
+			error { ERROR_SUCCESS },
+			function1_Ecx { 0 },
+			function7_Ebx { 0 },
+			physicalCores { 0 }
 		{
 			// calling __cpuid with 0x0 as the function_id argument gets the number of the highest valid function ID
 			__int32 cpuidBuffer[4];
@@ -61,7 +63,6 @@ namespace Carnassial
 			}
 			informationFields = length / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
 
-			this->physicalCores = 0;
 			for (__int32 fieldIndex = 0; fieldIndex < informationFields; ++fieldIndex)
 			{
 				SYSTEM_LOGICAL_PROCESSOR_INFORMATION field = processorInformation[fieldIndex];

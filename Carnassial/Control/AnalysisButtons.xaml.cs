@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -141,7 +142,7 @@ namespace Carnassial.Control
                     pasteAnalysisButton = this.PasteAnalysis9;
                     break;
                 default:
-                    throw new NotSupportedException(String.Format("Unhandled analysis slot {0}.", analysisSlot));
+                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled analysis slot {0}.", analysisSlot));
             }
 
             int analysisNumber = analysisSlot + 1;

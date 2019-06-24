@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using MetadataDirectory = MetadataExtractor.Directory;
 
 namespace Carnassial.Dialog
 {
@@ -27,10 +26,10 @@ namespace Carnassial.Dialog
         private bool clearIfNoMetadata;
         private string dataFieldLabel;
         private bool dataFieldSelected;
-        private Dictionary<string, string> dataLabelByLabel;
+        private readonly Dictionary<string, string> dataLabelByLabel;
         private TimeSpan desiredStatusInterval;
-        private FileDatabase fileDatabase;
-        private string filePath;
+        private readonly FileDatabase fileDatabase;
+        private readonly string filePath;
         private Tag metadataField;
         private bool metadataFieldSelected;
 
@@ -108,7 +107,7 @@ namespace Carnassial.Dialog
 
             string dataLabel = this.dataLabelByLabel[this.dataFieldLabel];
             MetadataIOComputeTransactionManager readMetadata = new MetadataIOComputeTransactionManager(this.ReportStatus, feedbackRows, this.desiredStatusInterval);
-            await readMetadata.ReadFieldAsync(this.fileDatabase, dataLabel, this.metadataField, this.clearIfNoMetadata);
+            await readMetadata.ReadFieldAsync(this.fileDatabase, dataLabel, this.metadataField, this.clearIfNoMetadata).ConfigureAwait(true);
 
             this.CancelDone.Content = "Done";
             this.CancelDone.IsEnabled = true;

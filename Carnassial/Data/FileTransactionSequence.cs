@@ -10,20 +10,18 @@ namespace Carnassial.Data
     public class FileTransactionSequence : TransactionSequence
     {
         private bool disposed;
-        private readonly FileTable fileTable;
         private SQLiteCommand insertOrUpdateFiles;
-        private List<string> userColumnNames;
+        private readonly List<string> userColumnNames;
 
         protected FileTransactionSequence(StringBuilder command, SQLiteDatabase database, FileTable fileTable)
             : base(database)
         {
             this.disposed = false;
-            this.fileTable = fileTable;
             this.Transaction = database.Connection.BeginTransaction();
             this.userColumnNames = new List<string>();
 
             this.insertOrUpdateFiles = new SQLiteCommand(command.ToString(), this.Database.Connection, this.Transaction);
-            
+
             // must be kept in sequence with parameter sets in AddFiles()
             foreach (string standardColumn in Constant.Control.StandardControls)
             {

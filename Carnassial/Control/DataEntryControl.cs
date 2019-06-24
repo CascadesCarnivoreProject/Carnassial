@@ -11,7 +11,7 @@ namespace Carnassial.Control
 {
     public abstract class DataEntryControl
     {
-        /// <summary>Gets or sets a value indicating whether the control's content is user editable</summary>
+        /// <summary>Gets or sets a value indicating whether the control's content is user editable.</summary>
         public abstract bool ContentReadOnly { get; set; }
 
         /// <summary>Gets or sets a value indicating whether the control's content is copyable.</summary>
@@ -64,7 +64,8 @@ namespace Carnassial.Control
             });
             this.Container.ColumnDefinitions.Add(new ColumnDefinition()
             {
-                MaxWidth = control.MaxWidth, Width = new GridLength(1.0, GridUnitType.Star)
+                MaxWidth = control.MaxWidth,
+                Width = new GridLength(1.0, GridUnitType.Star)
             });
             this.Container.RowDefinitions.Add(new RowDefinition()
             {
@@ -156,7 +157,7 @@ namespace Carnassial.Control
             set { this.ContentControl.DataContext = value; }
         }
 
-        /// <summary>Gets the control label's value</summary>
+        /// <summary>Get or sets the control label's value.</summary>
         public override string Label
         {
             get { return (string)this.LabelControl.Content; }
@@ -171,13 +172,13 @@ namespace Carnassial.Control
             set { this.LabelControl.ToolTip = value; }
         }
 
-        protected DataEntryControl(ControlRow control, DataEntryControls styleProvider, ControlContentStyle contentStyleName, ControlLabelStyle labelStyleName) :
-            this(control, styleProvider, contentStyleName, labelStyleName, false)
+        protected DataEntryControl(ControlRow control, DataEntryControls styleProvider, ControlContentStyle contentStyleName, ControlLabelStyle labelStyleName)
+            : this(control, styleProvider, contentStyleName, labelStyleName, false)
         {
         }
 
-        protected DataEntryControl(ControlRow control, DataEntryControls styleProvider, ControlContentStyle contentStyleName, ControlLabelStyle labelStyleName, bool readOnly) :
-            base(control, styleProvider)
+        protected DataEntryControl(ControlRow control, DataEntryControls styleProvider, ControlContentStyle contentStyleName, ControlLabelStyle labelStyleName, bool readOnly)
+            : base(control, styleProvider)
         {
             this.ContentControl = new TContent()
             {

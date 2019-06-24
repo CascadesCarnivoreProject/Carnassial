@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -174,7 +175,7 @@ namespace Carnassial.Control
                 }
                 else
                 {
-                    Debug.Fail(String.Format("Unhandled control type {0}.", control.ControlType));
+                    Debug.Fail(String.Format(CultureInfo.CurrentCulture, "Unhandled control type {0}.", control.ControlType));
                     continue;
                 }
             }

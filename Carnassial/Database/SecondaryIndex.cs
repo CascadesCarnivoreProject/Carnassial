@@ -1,6 +1,7 @@
 ﻿using Carnassial.Data;
 using System;
 using System.Data.SQLite;
+using System.Globalization;
 
 namespace Carnassial.Database
 {
@@ -19,7 +20,7 @@ namespace Carnassial.Database
 
         public void Create(SQLiteConnection connection, SQLiteTransaction transaction)
         {
-            string createIndex = String.Format("CREATE INDEX {0} ON {1} ({2})", SQLiteDatabase.QuoteIdentifier(this.Name), this.Table, SQLiteDatabase.QuoteIdentifier(this.Column));
+            string createIndex = String.Format(CultureInfo.InvariantCulture, "CREATE INDEX {0} ON {1} ({2})", SQLiteDatabase.QuoteIdentifier(this.Name), this.Table, SQLiteDatabase.QuoteIdentifier(this.Column));
             using (SQLiteCommand command = new SQLiteCommand(createIndex, connection, transaction))
             {
                 command.ExecuteNonQuery();
@@ -34,7 +35,7 @@ namespace Carnassial.Database
 
         public void Drop(SQLiteConnection connection, SQLiteTransaction transaction)
         {
-            string dropIndex = String.Format("DROP INDEX {0}", SQLiteDatabase.QuoteIdentifier(this.Name));
+            string dropIndex = String.Format(CultureInfo.InvariantCulture, "DROP INDEX {0}", SQLiteDatabase.QuoteIdentifier(this.Name));
             using (SQLiteCommand command = new SQLiteCommand(dropIndex, connection, transaction))
             {
                 command.ExecuteNonQuery();

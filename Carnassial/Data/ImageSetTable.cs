@@ -1,6 +1,7 @@
 ﻿using Carnassial.Database;
 using System;
 using System.Data.SQLite;
+using System.Globalization;
 
 namespace Carnassial.Data
 {
@@ -73,7 +74,7 @@ namespace Carnassial.Data
                         timeZoneIndex = column;
                         break;
                     default:
-                        throw new NotSupportedException(String.Format("Unhandled column '{0}' in {1} table schema.", columnName, reader.GetTableName(0)));
+                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column '{0}' in {1} table schema.", columnName, reader.GetTableName(0)));
                 }
             }
 

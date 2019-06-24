@@ -15,7 +15,7 @@ namespace Carnassial.Command
         public override async Task ExecuteAsync(CarnassialWindow carnassial)
         {
             this.ToggleOrdering(carnassial);
-            await carnassial.SelectFilesAndShowFileAsync();
+            await carnassial.SelectFilesAndShowFileAsync().ConfigureAwait(true);
             this.IsExecuted = true;
         }
 
@@ -34,7 +34,7 @@ namespace Carnassial.Command
         public override async Task UndoAsync(CarnassialWindow carnassial)
         {
             this.ToggleOrdering(carnassial);
-            await carnassial.SelectFilesAndShowFileAsync(this.originalFileID, carnassial.DataHandler.FileDatabase.ImageSet.FileSelection);
+            await carnassial.SelectFilesAndShowFileAsync(this.originalFileID, carnassial.DataHandler.FileDatabase.ImageSet.FileSelection).ConfigureAwait(true);
             this.IsExecuted = false;
         }
     }

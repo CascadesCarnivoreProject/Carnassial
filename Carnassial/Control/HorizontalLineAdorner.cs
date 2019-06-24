@@ -10,8 +10,8 @@ namespace Carnassial.Control
         private readonly DataEntryControls dataEntryControls;
         private Point position;
 
-        public HorizontalLineAdorner(DataEntryControls dataEntryControls) :
-            base(dataEntryControls.ControlsView)
+        public HorizontalLineAdorner(DataEntryControls dataEntryControls)
+            : base(dataEntryControls.ControlsView)
         {
             this.adornerLayer = AdornerLayer.GetAdornerLayer(this.AdornedElement);
             this.dataEntryControls = dataEntryControls;

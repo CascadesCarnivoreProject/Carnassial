@@ -6,8 +6,8 @@ namespace Carnassial.Dialog
 {
     public partial class AdvancedImageSetOptions : WindowWithSystemMenu
     {
-        private TimeZoneInfo currentImageSetTimeZone;
-        private TemplateDatabase database;
+        private readonly TimeZoneInfo currentImageSetTimeZone;
+        private readonly TemplateDatabase database;
 
         public AdvancedImageSetOptions(TemplateDatabase database, Window owner)
         {

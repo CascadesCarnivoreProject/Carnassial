@@ -1,18 +1,17 @@
-﻿using Carnassial.Interop;
-using Carnassial.Util;
+﻿using Carnassial.Util;
 using System;
 using System.Diagnostics;
 
 namespace Carnassial.Data
 {
-    public abstract class DataImportExportStatus<TProgress> : ExceptionPropagatingProgress<TProgress> where TProgress : class
+    public abstract class DataImportExportProgress<TProgress> : ExceptionPropagatingProgress<TProgress> where TProgress : class
     {
         protected double CurrentPosition { get; set; }
         protected double EndPosition { get; set; }
         protected bool IsRead { get; set; }
         protected bool IsTransactionCommit { get; set; }
 
-        protected DataImportExportStatus(Action<TProgress> onProgressUpdate, TimeSpan progressUpdateInterval)
+        protected DataImportExportProgress(Action<TProgress> onProgressUpdate, TimeSpan progressUpdateInterval)
             : base(onProgressUpdate, progressUpdateInterval)
         {
             this.CurrentPosition = 0.0;

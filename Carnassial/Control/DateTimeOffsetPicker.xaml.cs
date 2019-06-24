@@ -30,8 +30,8 @@ namespace Carnassial.Control
 
         private int currentPartIndex;
         private int monthPartIndex;
-        private List<IndexedDateTimePart> parts;
-        private TextBoxUpDownAdorner upDownButtons;
+        private readonly List<IndexedDateTimePart> parts;
+        private readonly TextBoxUpDownAdorner upDownButtons;
 
         public DateTimeOffsetPicker()
         {
@@ -58,7 +58,7 @@ namespace Carnassial.Control
 
         public string Format
         {
-            get { return Convert.ToString(this.GetValue(DateTimeOffsetPicker.FormatProperty)); }
+            get { return (string)this.GetValue(DateTimeOffsetPicker.FormatProperty); }
             set { this.SetValue(DateTimeOffsetPicker.FormatProperty, value); }
         }
 
@@ -151,7 +151,7 @@ namespace Carnassial.Control
 
         private void DateTimeDisplay_LostFocus(object sender, RoutedEventArgs e)
         {
-            this.DateTimeDisplay.Text = this.Value.ToString(this.Format);
+            this.DateTimeDisplay.Text = this.Value.ToString(this.Format, CultureInfo.CurrentCulture);
         }
 
         private void DateTimeDisplay_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -179,8 +179,7 @@ namespace Carnassial.Control
                 case Key.Down:
                 case Key.Right:
                 case Key.Left:
-                    DateTimeOffset currentValue;
-                    if (this.TryParseDateTimeOffset(out currentValue) == false)
+                    if (this.TryParseDateTimeOffset(out DateTimeOffset _) == false)
                     {
                         // action can't be be performed as the value isn't currently well formed
                         return;
@@ -325,7 +324,7 @@ namespace Carnassial.Control
                     newValue = newValue.AddYears(increment);
                     break;
                 default:
-                    throw new NotSupportedException(String.Format("Unhandled increment {0}.", partFormat));
+                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled increment {0}.", partFormat));
             }
 
             if (newValue < this.Minimum)
@@ -381,7 +380,7 @@ namespace Carnassial.Control
                         // skip delimiters and UTC indicator
                         continue;
                     default:
-                        throw new NotSupportedException(String.Format("Unsupported format character '{0}'.", formatCharacter));
+                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unsupported format character '{0}'.", formatCharacter));
                 }
 
                 if (formatCharacter != previousFormatCharacter)

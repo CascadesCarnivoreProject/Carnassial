@@ -11,14 +11,16 @@ namespace Carnassial.Control
         private static readonly Pen Outline = new Pen(new SolidColorBrush(Color.FromArgb(64, 255, 255, 255)), 5);
         private static readonly Brush Fill = Brushes.Black;
 
+        private double bottom;
         private bool textBoxHasSelection;
+        private double top;
         private readonly StreamGeometry triangle;
-        private double x, top, bottom;
+        private double x;
 
         public event Action<TextBox, int> Button_Clicked;
 
-        public TextBoxUpDownAdorner(TextBox adornedTextBox) :
-            base(adornedTextBox)
+        public TextBoxUpDownAdorner(TextBox adornedTextBox)
+            : base(adornedTextBox)
         {
             this.triangle = new StreamGeometry()
             {
@@ -37,7 +39,7 @@ namespace Carnassial.Control
             {
                 if (this.Button_Clicked != null)
                 {
-                    bool up = e.GetPosition(this.AdornedElement).Y < (top + bottom) / 2;
+                    bool up = e.GetPosition(this.AdornedElement).Y < (this.top + this.bottom) / 2;
                     this.Button_Clicked((TextBox)this.AdornedElement, up ? 1 : -1);
                 }
             };

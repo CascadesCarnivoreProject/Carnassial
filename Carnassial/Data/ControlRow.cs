@@ -87,7 +87,7 @@ namespace Carnassial.Data
                     this.visible = false;
                     break;
                 default:
-                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", controlType));
+                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled control type {0}.", controlType));
             }
         }
 
@@ -355,7 +355,7 @@ namespace Carnassial.Data
                 case ControlType.UtcOffset:
                     return typeof(double);
                 default:
-                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", this.ControlType));
+                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled control type {0}.", this.ControlType));
             }
         }
 
@@ -370,7 +370,7 @@ namespace Carnassial.Data
                     // CustomSelection.SetDateTimesAndOffset() to change this placeholder to the offset of the current file
                     return Constant.ControlDefault.DateTimeValue.UtcDateTime;
                 case ControlType.Flag:
-                    Debug.Assert(String.IsNullOrWhiteSpace(this.DefaultValue) == false, String.Format("Default value for flag {0} unexpectedly null or whitespace.", this.DataLabel));
+                    Debug.Assert(String.IsNullOrWhiteSpace(this.DefaultValue) == false, String.Format(CultureInfo.InvariantCulture, "Default value for flag {0} unexpectedly null or whitespace.", this.DataLabel));
                     if (String.Equals(this.DefaultValue, Constant.Sql.FalseString, StringComparison.Ordinal))
                     {
                         return false;
@@ -397,7 +397,7 @@ namespace Carnassial.Data
                     // CustomSelection.SetDateTimesAndOffset() to change this placeholder to the offset of the current file
                     return DateTimeHandler.ToDatabaseUtcOffset(Constant.ControlDefault.DateTimeValue.Offset);
                 default:
-                    throw new NotSupportedException(String.Format("Unhandled control type {0}.", this.ControlType));
+                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled control type {0}.", this.ControlType));
             }
         }
 

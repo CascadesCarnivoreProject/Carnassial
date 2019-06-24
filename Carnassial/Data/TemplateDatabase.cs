@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using ColumnDefinition = Carnassial.Database.ColumnDefinition;
@@ -10,7 +11,7 @@ using ColumnDefinition = Carnassial.Database.ColumnDefinition;
 namespace Carnassial.Data
 {
     /// <summary>
-    /// Carnassial template database
+    /// Carnassial template database.
     /// </summary>
     public class TemplateDatabase : SQLiteDatabase
     {
@@ -85,7 +86,7 @@ namespace Carnassial.Data
         {
             if (controlToRemove.IsUserControl() == false)
             {
-                throw new NotSupportedException(String.Format("Standard control {0} cannot be removed.", controlToRemove.DataLabel));
+                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Standard control {0} cannot be removed.", controlToRemove.DataLabel));
             }
 
             // capture state
@@ -191,18 +192,18 @@ namespace Carnassial.Data
             // argument validation
             if (orderColumnName != Constant.ControlColumn.ControlOrder && orderColumnName != Constant.ControlColumn.SpreadsheetOrder)
             {
-                throw new ArgumentOutOfRangeException(nameof(orderColumnName), String.Format("'{0}' is not a control order column.  Only '{1}' and '{2}' are order columns.", orderColumnName, Constant.ControlColumn.ControlOrder, Constant.ControlColumn.SpreadsheetOrder));
+                throw new ArgumentOutOfRangeException(nameof(orderColumnName), String.Format(CultureInfo.CurrentCulture, "'{0}' is not a control order column.  Only '{1}' and '{2}' are order columns.", orderColumnName, Constant.ControlColumn.ControlOrder, Constant.ControlColumn.SpreadsheetOrder));
             }
 
             if (newOrderByDataLabel.Count != this.Controls.RowCount)
             {
-                throw new NotSupportedException(String.Format("Partial order updates are not supported.  New ordering for {0} controls was passed but {1} controls are present for '{2}'.", newOrderByDataLabel.Count, this.Controls.RowCount, orderColumnName));
+                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Partial order updates are not supported.  New ordering for {0} controls was passed but {1} controls are present for '{2}'.", newOrderByDataLabel.Count, this.Controls.RowCount, orderColumnName));
             }
 
             List<int> uniqueOrderValues = newOrderByDataLabel.Values.Distinct().ToList();
             if (uniqueOrderValues.Count != newOrderByDataLabel.Count)
             {
-                throw new ArgumentException(String.Format("Each control must have a unique value for its order.  {0} duplicate values were passed for '{1}'.", newOrderByDataLabel.Count - uniqueOrderValues.Count, orderColumnName), nameof(newOrderByDataLabel));
+                throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, "Each control must have a unique value for its order.  {0} duplicate values were passed for '{1}'.", newOrderByDataLabel.Count - uniqueOrderValues.Count, orderColumnName), nameof(newOrderByDataLabel));
             }
 
             uniqueOrderValues.Sort();
@@ -211,7 +212,7 @@ namespace Carnassial.Data
                 int expectedOrder = control + 1;
                 if (uniqueOrderValues[control] != expectedOrder)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(newOrderByDataLabel), String.Format("Control order must be a ones based count.  An order of {0} was passed instead of the expected order {1} for '{2}'.", uniqueOrderValues[0], expectedOrder, orderColumnName), nameof(newOrderByDataLabel));
+                    throw new ArgumentOutOfRangeException(nameof(newOrderByDataLabel), String.Format(CultureInfo.CurrentCulture, "Control order must be a ones based count.  An order of {0} was passed instead of the expected order {1} for '{2}'.", uniqueOrderValues[0], expectedOrder, orderColumnName));
                 }
             }
 
@@ -229,7 +230,7 @@ namespace Carnassial.Data
                         control.SpreadsheetOrder = newOrder;
                         break;
                     default:
-                        throw new NotSupportedException(String.Format("Unhandled column '{0}'.", orderColumnName));
+                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column '{0}'.", orderColumnName));
                 }
             }
 
@@ -281,7 +282,7 @@ namespace Carnassial.Data
                     Version otherVersion = other.GetUserVersion();
                     if (otherVersion != Constant.Release.V2_2_0_3)
                     {
-                        throw new ArgumentOutOfRangeException(nameof(other), String.Format("Unexpected database version {0}.", otherVersion));
+                        throw new ArgumentOutOfRangeException(nameof(other), String.Format(CultureInfo.CurrentCulture, "Unexpected database version {0}.", otherVersion));
                     }
 
                     // if an existing template database was passed, clone its contents into this database

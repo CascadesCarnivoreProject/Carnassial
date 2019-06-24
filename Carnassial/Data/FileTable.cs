@@ -4,7 +4,7 @@ using Carnassial.Util;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
-using System.Linq;
+using System.Globalization;
 
 namespace Carnassial.Data
 {
@@ -62,7 +62,7 @@ namespace Carnassial.Data
             }
             else
             {
-                throw new NotSupportedException(String.Format("Unhandled extension for file '{0}'.", fileName));
+                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled extension for file '{0}'.", fileName));
             }
 
             this.Rows.Add(file);
@@ -75,7 +75,7 @@ namespace Carnassial.Data
             {
                 yield return new ColumnDefinition(control.DataLabel, Constant.SQLiteAffinity.Integer)
                 {
-                    DefaultValue = ((int)default(FileClassification)).ToString(),
+                    DefaultValue = ((int)default(FileClassification)).ToString(CultureInfo.InvariantCulture),
                     NotNull = true
                 };
                 yield break;
@@ -265,7 +265,7 @@ namespace Carnassial.Data
                                 userNoteAndChoiceSqlIndices[dataIndex] = columnIndex;
                                 break;
                             default:
-                                throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataIndex));
+                                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", userColumn.DataIndex));
                         }
                         userColumn.DataIndex = dataIndex;
                         break;
@@ -291,7 +291,7 @@ namespace Carnassial.Data
                 string fileName = reader.GetString(fileNameIndex);
                 string relativePath = reader.GetString(relativePathIndex);
                 ImageRow file = this.CreateAndAppendFile(fileName, relativePath);
-                
+
                 // read file values
                 // Carnassial versions prior to 2.2.0.3 had a bug where UTC offsets where written as TimeSpans rather than doubles
                 // which, combined with column type real, produces an odd situation where IDataRecord.GetValue() returns a correct
@@ -340,7 +340,7 @@ namespace Carnassial.Data
                             file.UserNotesAndChoices[userColumn.DataIndex] = reader.GetString(sqlIndex);
                             break;
                         default:
-                            throw new NotSupportedException(String.Format("Unhandled column data type {0}.", userColumn.DataIndex));
+                            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", userColumn.DataIndex));
                     }
                 }
                 file.AcceptChanges();
@@ -377,7 +377,7 @@ namespace Carnassial.Data
                         case ControlType.DateTime:
                         case ControlType.UtcOffset:
                         default:
-                            throw new NotSupportedException(String.Format("Unhandled control type {0}.", control.ControlType));
+                            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled control type {0}.", control.ControlType));
                     }
                 }
             }

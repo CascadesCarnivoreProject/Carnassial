@@ -13,21 +13,21 @@ namespace Carnassial.Control
 {
     public partial class FileDisplayWithMarkers : UserControl
     {
-        private ZoomBookmark bookmark;
+        private readonly ZoomBookmark bookmark;
 
         // the canvas to magnify contains both an image and markers so the magnifying glass view matches the display image
-        private Canvas magnifierCanvas;
+        private readonly Canvas magnifierCanvas;
 
         // the image displayed in the magnifying glass
         // Unlike the display image, this image is rendered at 1:1 and the scaled or translated in the magnifier's view of it.
-        private Image imageToMagnify;
+        private readonly Image imageToMagnify;
 
         // render transforms for the display image and markers
         // RedrawMagnifyingGlassIfVisible() must be kept in sync with these.  See comments there.
-        private ScaleTransform displayImageScale;
-        private TranslateTransform displayImageTranslation;
+        private readonly ScaleTransform displayImageScale;
+        private readonly TranslateTransform displayImageTranslation;
 
-        private MagnifyingGlass magnifyingGlass;
+        private readonly MagnifyingGlass magnifyingGlass;
 
         private List<Marker> markers;
 
@@ -40,7 +40,7 @@ namespace Carnassial.Control
         public event EventHandler<MarkerCreatedOrDeletedEventArgs> MarkerCreatedOrDeleted;
 
         /// <summary>
-        /// Gets or sets the maximum zoom of the display image
+        /// Gets or sets the maximum zoom of the display image.
         /// </summary>
         public double ZoomMaximum { get; set; }
 
@@ -90,10 +90,12 @@ namespace Carnassial.Control
             this.SizeChanged += this.MarkableCanvas_SizeChanged;
         }
 
+#pragma warning disable CA2227 // Collection properties should be read only
         /// <summary>
-        /// Gets or sets the markers on the image
+        /// Gets or sets the markers on the image.
         /// </summary>
         public List<Marker> Markers
+#pragma warning restore CA2227 // Collection properties should be read only
         {
             get
             {
@@ -141,7 +143,7 @@ namespace Carnassial.Control
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the magnifying glass is generally visible or hidden, and returns its state
+        /// Gets or sets a value indicating whether the magnifying glass is generally visible or hidden, and returns its state.
         /// </summary>
         public bool MagnifyingGlassEnabled
         {
@@ -168,16 +170,11 @@ namespace Carnassial.Control
 
         private Canvas AddMarker(Marker marker, Size canvasRenderSize, bool imageToDisplayMarkers)
         {
-            Canvas markerCanvas = new Canvas();
-            if (marker.Tooltip.Trim() == String.Empty)
+            Canvas markerCanvas = new Canvas()
             {
-                markerCanvas.ToolTip = null;
-            }
-            else
-            {
-                markerCanvas.ToolTip = marker.Tooltip;
-            }
-            markerCanvas.Tag = marker;
+                ToolTip = marker.Tooltip,
+                Tag = marker
+            };
 
             // create a marker
             Ellipse mark = new Ellipse()

@@ -41,7 +41,7 @@ namespace Carnassial.Util
                 return Byte.Parse((string)value, CultureInfo.InvariantCulture);
             }
 
-            throw new NotSupportedException(String.Format("Registry key {0}\\{1} has unhandled type {2}.", registryKey.Name, subKeyPath, value.GetType().FullName));
+            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Registry key {0}\\{1} has unhandled type {2}.", registryKey.Name, subKeyPath, value.GetType().FullName));
         }
 
         public static DateTime ReadDateTime(this RegistryKey registryKey, string subKeyPath, DateTime defaultValue)
@@ -83,7 +83,7 @@ namespace Carnassial.Util
                     return LogicalOperator.Or;
                 }
 
-                throw new ArgumentOutOfRangeException(nameof(valueAsString), String.Format("Unknown enum value '{0}'.", valueAsString));
+                throw new ArgumentOutOfRangeException(nameof(valueAsString), String.Format(CultureInfo.CurrentCulture, "Unknown enum value '{0}'.", valueAsString));
             }
 
             return defaultValue;
@@ -107,7 +107,7 @@ namespace Carnassial.Util
                 return Int32.Parse((string)value, NumberStyles.AllowLeadingSign, Constant.InvariantCulture);
             }
 
-            throw new NotSupportedException(String.Format("Registry key {0}\\{1} has unhandled type {2}.", registryKey.Name, subKeyPath, value.GetType().FullName));
+            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Registry key {0}\\{1} has unhandled type {2}.", registryKey.Name, subKeyPath, value.GetType().FullName));
         }
 
         public static Rect ReadRect(this RegistryKey registryKey, string subKeyPath, Rect defaultValue)
@@ -149,7 +149,7 @@ namespace Carnassial.Util
 
         public static void Write(this RegistryKey registryKey, string subKeyPath, bool value)
         {
-            registryKey.Write(subKeyPath, value.ToString());
+            registryKey.Write(subKeyPath, value.ToString(CultureInfo.InvariantCulture));
         }
 
         public static void Write(this RegistryKey registryKey, string subKeyPath, byte value)

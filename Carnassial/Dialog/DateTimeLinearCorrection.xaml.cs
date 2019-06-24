@@ -3,6 +3,7 @@ using Carnassial.Data;
 using Carnassial.Util;
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Windows;
 
 namespace Carnassial.Dialog
@@ -13,16 +14,15 @@ namespace Carnassial.Dialog
     /// </summary>
     public partial class DateTimeLinearCorrection : WindowWithSystemMenu
     {
+        private bool displayingPreview;
         private readonly DateTimeOffset earliestFileDateTimeUncorrected;
         private readonly ImageRow earliestFile;
         private readonly FileDatabase fileDatabase;
         private readonly DateTimeOffset latestFileDateTimeUncorrected;
         private readonly ImageRow latestFile;
 
-        private bool displayingPreview;
-
         public bool Abort { get; private set; }
-        
+
         public DateTimeLinearCorrection(FileDatabase fileDatabase, Window owner)
         {
             this.InitializeComponent();
@@ -124,11 +124,11 @@ namespace Carnassial.Dialog
             }
 
             double imagePositionInInterval = (double)(imageDateTime - this.ClockLastCorrect.Value).Ticks / (double)intervalFromCorrectToMeasured.Ticks;
-            Debug.Assert((-0.0000001 < imagePositionInInterval) && (imagePositionInInterval < 1.0000001), String.Format("Interval position {0} is not between 0.0 and 1.0.", imagePositionInInterval));
+            Debug.Assert((-0.0000001 < imagePositionInInterval) && (imagePositionInInterval < 1.0000001), String.Format(CultureInfo.InvariantCulture, "Interval position {0} is not between 0.0 and 1.0.", imagePositionInInterval));
 
             TimeSpan adjustment = TimeSpan.FromTicks((long)(imagePositionInInterval * this.ClockDrift.Value.Ticks + 0.5));
             // check the duration of the adjustment as slow clocks have negative adjustments
-            Debug.Assert((TimeSpan.Zero <= adjustment.Duration()) && (adjustment.Duration() <= this.ClockDrift.Value.Duration()), String.Format("Expected adjustment {0} to be within [{1} {2}].", adjustment, TimeSpan.Zero, this.ClockDrift.Value));
+            Debug.Assert((TimeSpan.Zero <= adjustment.Duration()) && (adjustment.Duration() <= this.ClockDrift.Value.Duration()), String.Format(CultureInfo.InvariantCulture, "Expected adjustment {0} to be within [{1} {2}].", adjustment, TimeSpan.Zero, this.ClockDrift.Value));
             return adjustment;
         }
 
@@ -140,7 +140,6 @@ namespace Carnassial.Dialog
         private void PreviewDateTimeChanges()
         {
             TimeSpan intervalFromCorrectToMeasured = this.GetInterval();
-            TimeZoneInfo imageSetTimeZone = this.fileDatabase.ImageSet.GetTimeZoneInfo();
             foreach (ImageRow file in this.fileDatabase.Files)
             {
                 string newDateTime = String.Empty;
@@ -220,8 +219,8 @@ namespace Carnassial.Dialog
             CommonUserInterface.SetDefaultDialogPosition(this);
             CommonUserInterface.TryFitWindowInWorkingArea(this);
 
-            await this.EarliestFileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.earliestFile);
-            await this.LatestFileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.latestFile);
+            await this.EarliestFileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.earliestFile).ConfigureAwait(true);
+            await this.LatestFileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.latestFile).ConfigureAwait(true);
             this.ClockDrift.TimeSpanDisplay.Focus();
         }
     }

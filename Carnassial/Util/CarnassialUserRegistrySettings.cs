@@ -20,8 +20,8 @@ namespace Carnassial.Util
         public bool SuppressImportPrompt { get; set; }
         public Throttles Throttles { get; private set; }
 
-        public CarnassialUserRegistrySettings() :
-            this(Constant.Registry.RootKey)
+        public CarnassialUserRegistrySettings()
+            : this(Constant.Registry.RootKey)
         {
         }
 

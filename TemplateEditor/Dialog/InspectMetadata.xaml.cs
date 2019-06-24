@@ -1,6 +1,7 @@
 ﻿using Carnassial.Images;
 using Carnassial.Util;
 using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -15,7 +16,7 @@ namespace Carnassial.Editor.Dialog
     {
         private string filePath;
 
-        public InspectMetadata(string folderPath, Window owner)
+        public InspectMetadata(Window owner)
         {
             this.InitializeComponent();
             this.Message.SetVisibility();
@@ -30,7 +31,7 @@ namespace Carnassial.Editor.Dialog
 
         private void OpenFile_Click(object sender, RoutedEventArgs e)
         {
-            string filter = String.Format("Images and videos (*{0};*{1};*{2})|*{0};*{1};*{2}", Constant.File.JpgFileExtension, Constant.File.AviFileExtension, Constant.File.Mp4FileExtension);
+            string filter = String.Format(CultureInfo.CurrentCulture, "Images and videos (*{0};*{1};*{2})|*{0};*{1};*{2}", Constant.File.JpgFileExtension, Constant.File.AviFileExtension, Constant.File.Mp4FileExtension);
             if (CommonUserInterface.TryGetFileFromUser("Select a typical file to inspect", Constant.File.CurrentDirectory, filter, out this.filePath))
             {
                 this.ImageName.Content = Path.GetFileName(this.filePath);

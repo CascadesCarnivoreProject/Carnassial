@@ -3,6 +3,7 @@ using Carnassial.Native;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 
 namespace Carnassial.Images
@@ -32,7 +33,7 @@ namespace Carnassial.Images
 
         public bool HasAtLeastOneFile
         {
-            get { return (this.First.File != null) || (this.Second.File != null);  }
+            get { return (this.First.File != null) || (this.Second.File != null); }
         }
 
         public bool HasSecondFile
@@ -60,7 +61,7 @@ namespace Carnassial.Images
                     if (this.First.Jpeg.Metadata != null)
                     {
                         firstProperties = this.First.Jpeg.GetThumbnailProperties(ref preallocatedImage);
-                        this.First.MetadataReadResult |= MetadataReadResult.Thumbnail;
+                        this.First.MetadataReadResult |= MetadataReadResults.Thumbnail;
                     }
                     if ((firstProperties == null) || (firstProperties.HasColorationAndLuminosity == false))
                     {
@@ -69,7 +70,7 @@ namespace Carnassial.Images
                     if (firstProperties.HasColorationAndLuminosity)
                     {
                         this.First.File.Classification = firstProperties.EvaluateNewClassification(darkLuminosityThreshold);
-                        this.First.MetadataReadResult |= MetadataReadResult.Classification;
+                        this.First.MetadataReadResult |= MetadataReadResults.Classification;
                     }
                 }
                 else
@@ -95,11 +96,11 @@ namespace Carnassial.Images
                         if (this.Second.Jpeg.Metadata != null)
                         {
                             ImageProperties thumbnailProperties = this.Second.Jpeg.GetThumbnailProperties(ref preallocatedImage);
-                            this.Second.MetadataReadResult |= MetadataReadResult.Thumbnail;
+                            this.Second.MetadataReadResult |= MetadataReadResults.Thumbnail;
                             if (thumbnailProperties.HasColorationAndLuminosity)
                             {
                                 this.Second.File.Classification = thumbnailProperties.EvaluateNewClassification(darkLuminosityThreshold);
-                                this.Second.MetadataReadResult |= MetadataReadResult.Classification;
+                                this.Second.MetadataReadResult |= MetadataReadResults.Classification;
                             }
                         }
                     }
@@ -135,11 +136,11 @@ namespace Carnassial.Images
                     if (this.First.Jpeg.Metadata != null)
                     {
                         ImageProperties thumbnailProperties = this.First.Jpeg.GetThumbnailProperties(ref preallocatedThumbnail);
-                        this.First.MetadataReadResult |= MetadataReadResult.Thumbnail;
+                        this.First.MetadataReadResult |= MetadataReadResults.Thumbnail;
                         if (thumbnailProperties.HasColorationAndLuminosity)
                         {
                             this.First.File.Classification = thumbnailProperties.EvaluateNewClassification(darkLuminosityThreshold);
-                            this.First.MetadataReadResult |= MetadataReadResult.Classification;
+                            this.First.MetadataReadResult |= MetadataReadResults.Classification;
                         }
                     }
                 }
@@ -170,11 +171,11 @@ namespace Carnassial.Images
                         if (this.Second.Jpeg.Metadata != null)
                         {
                             ImageProperties thumbnailProperties = this.Second.Jpeg.GetThumbnailProperties(ref preallocatedThumbnail);
-                            this.Second.MetadataReadResult |= MetadataReadResult.Thumbnail;
+                            this.Second.MetadataReadResult |= MetadataReadResults.Thumbnail;
                             if (thumbnailProperties.HasColorationAndLuminosity)
                             {
                                 this.Second.File.Classification = thumbnailProperties.EvaluateNewClassification(darkLuminosityThreshold);
-                                this.Second.MetadataReadResult |= MetadataReadResult.Classification;
+                                this.Second.MetadataReadResult |= MetadataReadResults.Classification;
                             }
                         }
                     }
@@ -349,7 +350,7 @@ namespace Carnassial.Images
                     Debug.Assert(this.First.File.Classification == FileClassification.Corrupt, "First jpeg null but file not marked corrupt.");
                 }
             }
-            if (this.First.MetadataReadResult.HasFlag(MetadataReadResult.DateTime) == false)
+            if (this.First.MetadataReadResult.HasFlag(MetadataReadResults.DateTime) == false)
             {
                 this.First.File.SetDateTimeOffsetFromFileInfo(this.First.File.GetFileInfo(imageSetFolderPath));
             }
@@ -361,7 +362,7 @@ namespace Carnassial.Images
                     if (this.Second.File.IsPreviousJpegName(this.First.FileName))
                     {
                         this.Second.File.DateTimeOffset = this.First.File.DateTimeOffset + Constant.Images.DefaultHybridVideoLag;
-                        this.Second.MetadataReadResult = MetadataReadResult.DateTimeInferredFromPrevious;
+                        this.Second.MetadataReadResult = MetadataReadResults.DateTimeInferredFromPrevious;
                     }
                     else
                     {
@@ -381,7 +382,7 @@ namespace Carnassial.Images
                     {
                         Debug.Assert(this.Second.File.Classification == FileClassification.Corrupt, "Second jpeg null but file not marked corrupt.");
                     }
-                    if (this.Second.MetadataReadResult.HasFlag(MetadataReadResult.DateTime) == false)
+                    if (this.Second.MetadataReadResult.HasFlag(MetadataReadResults.DateTime) == false)
                     {
                         this.Second.File.SetDateTimeOffsetFromFileInfo(this.Second.File.GetFileInfo(imageSetFolderPath));
                     }
@@ -400,12 +401,12 @@ namespace Carnassial.Images
             Dictionary<string, ImageRow> filesByName = filesByRelativePathAndName[this.RelativePath];
 
             this.First.File = filesByName[this.First.FileName];
-            Debug.Assert(String.Equals(this.RelativePath, this.First.File.RelativePath, StringComparison.OrdinalIgnoreCase), String.Format("Relative path of atom '{0}' doesn't match relative path of first file '{1}'.", this.RelativePath, this.First.File.RelativePath));
+            Debug.Assert(String.Equals(this.RelativePath, this.First.File.RelativePath, StringComparison.OrdinalIgnoreCase), String.Format(CultureInfo.InvariantCulture, "Relative path of atom '{0}' doesn't match relative path of first file '{1}'.", this.RelativePath, this.First.File.RelativePath));
 
             if (this.Second.FileName != null)
             {
                 this.Second.File = filesByName[this.Second.FileName];
-                Debug.Assert(String.Equals(this.RelativePath, this.Second.File.RelativePath, StringComparison.OrdinalIgnoreCase), String.Format("Relative path of atom '{0}' doesn't match relative path of first file '{1}'.", this.RelativePath, this.Second.File.RelativePath));
+                Debug.Assert(String.Equals(this.RelativePath, this.Second.File.RelativePath, StringComparison.OrdinalIgnoreCase), String.Format(CultureInfo.InvariantCulture, "Relative path of atom '{0}' doesn't match relative path of first file '{1}'.", this.RelativePath, this.Second.File.RelativePath));
             }
         }
     }

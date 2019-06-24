@@ -1,5 +1,6 @@
 ﻿using Carnassial.Data;
 using System;
+using System.Globalization;
 
 namespace Carnassial.Images
 {
@@ -7,9 +8,9 @@ namespace Carnassial.Images
     {
         public double Coloration { get; private set; }
         public double Luminosity { get; private set; }
-        public MetadataReadResult MetadataResult { get; set; }
+        public MetadataReadResults MetadataResult { get; set; }
 
-        public ImageProperties(MetadataReadResult metadataResult)
+        public ImageProperties(MetadataReadResults metadataResult)
         {
             this.MetadataResult = metadataResult;
             this.Coloration = -1.0;
@@ -18,7 +19,7 @@ namespace Carnassial.Images
 
         public ImageProperties(double luminosity, double coloration)
         {
-            this.MetadataResult = MetadataReadResult.None;
+            this.MetadataResult = MetadataReadResults.None;
             this.Coloration = coloration;
             this.Luminosity = luminosity;
         }
@@ -34,9 +35,9 @@ namespace Carnassial.Images
             {
                 switch (this.MetadataResult)
                 {
-                    case MetadataReadResult.Failed:
+                    case MetadataReadResults.Failed:
                         return FileClassification.Corrupt;
-                    case MetadataReadResult.None:
+                    case MetadataReadResults.None:
                         return FileClassification.NoLongerAvailable;
                     default:
                         throw new NotSupportedException("Unhandled metadata result " + this.MetadataResult.ToString());
@@ -71,7 +72,7 @@ namespace Carnassial.Images
             {
                 return "File is in color and therefore not dark.";
             }
-            return String.Format("Normalized brightness is {0:P1}.", this.Luminosity);
+            return String.Format(CultureInfo.CurrentCulture, "Normalized brightness is {0:P1}.", this.Luminosity);
         }
     }
 }
