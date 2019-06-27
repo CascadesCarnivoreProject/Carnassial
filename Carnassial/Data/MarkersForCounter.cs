@@ -70,7 +70,7 @@ namespace Carnassial.Data
 
             if (packedFloats.Length % (2 * sizeof(float)) != 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(packedFloats), "Position array does not contain an exact number of paired floats.");
+                throw new ArgumentOutOfRangeException(nameof(packedFloats), App.FindResource<string>(Constant.ResourceKey.MarkersForCounterFloatsUnpaired));
             }
 
             for (int index = 0; index < packedFloats.Length; index += 2 * sizeof(float))
@@ -106,7 +106,7 @@ namespace Carnassial.Data
             }
             if (packedFloats.Length % (2 * sizeof(float)) != 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(packedFloats), "Position array does not contain an exact number of paired floats.");
+                throw new ArgumentOutOfRangeException(nameof(packedFloats), App.FindResource<string>(Constant.ResourceKey.MarkersForCounterFloatsUnpaired));
             }
 
             float x = BitConverter.ToSingle(packedFloats, 0);

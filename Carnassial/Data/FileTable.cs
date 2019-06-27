@@ -195,7 +195,7 @@ namespace Carnassial.Data
         {
             if (reader.FieldCount < 1)
             {
-                throw new SQLiteException(SQLiteErrorCode.Schema, "Table has no columns.");
+                throw new SQLiteException(SQLiteErrorCode.Schema, App.FindResource<string>(Constant.ResourceKey.FileTableNoColumns));
             }
 
             // locate columns in schema

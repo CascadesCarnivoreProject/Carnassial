@@ -12,18 +12,43 @@ using System.Windows;
 
 namespace Carnassial.UnitTests
 {
+    [TestClass]
     public class CarnassialTest
     {
         private static readonly object CultureLock;
-
         private static bool CultureChanged;
         private static CultureInfo CurrentCulture;
         private static CultureInfo CurrentUICulture;
         private static CultureInfo DefaultThreadCurrentCulture;
         private static CultureInfo DefaultThreadCurrentUICulture;
 
+        protected static App App { get; private set; }
+
         static CarnassialTest()
         {
+            // Carnassial and the editor need an application instance to be created to load resources from
+            // WPF allows only one Application per app domain, so make instance persistent so it can be reused across multiple Carnassial
+            // and editor window lifetimes.  This works because Carnassial and the editor use very similar styling, allowing the editor 
+            // to consume Carnassial styles with negligible effect on test coverage.
+            CarnassialTest.App = new App()
+            {
+                ShutdownMode = ShutdownMode.OnExplicitShutdown
+            };
+
+            Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/CarnassialWindowStyle.xaml", UriKind.Relative)));
+            Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/Properties/SharedResources.xaml", UriKind.Relative)));
+            Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/Properties/Resources.xaml", UriKind.Relative)));
+
+            ResourceDictionary editorResourceDictionary = (ResourceDictionary)Application.LoadComponent(new Uri("/CarnassialTemplateEditor;component/EditorWindowStyle.xaml", UriKind.Relative));
+            Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/CarnassialTemplateEditor;component/Properties/Resources.xaml", UriKind.Relative)));
+            foreach (object key in editorResourceDictionary.Keys)
+            {
+                if (Application.Current.Resources.Contains(key) == false)
+                {
+                    Application.Current.Resources.Add(key, editorResourceDictionary[key]);
+                }
+            }
+
             CarnassialTest.CultureLock = new object();
             CarnassialTest.CultureChanged = false;
         }
@@ -53,53 +78,10 @@ namespace Carnassial.UnitTests
         /// </summary>
         protected string WorkingDirectory { get; private set; }
 
-        protected static bool TryRevertToDefaultCultures()
+        [AssemblyCleanup]
+        public static void AssemblyCleanup()
         {
-            lock (CarnassialTest.CultureLock)
-            {
-                if (CarnassialTest.CultureChanged == false)
-                {
-                    return false;
-                }
-
-                CultureInfo.CurrentCulture = UserInterfaceTests.CurrentCulture;
-                CultureInfo.CurrentUICulture = UserInterfaceTests.CurrentUICulture;
-                CultureInfo.DefaultThreadCurrentCulture = UserInterfaceTests.DefaultThreadCurrentCulture;
-                CultureInfo.DefaultThreadCurrentUICulture = UserInterfaceTests.DefaultThreadCurrentUICulture;
-                CarnassialTest.CultureChanged = false;
-                return true;
-            }
-        }
-
-        protected static bool TryChangeToTestCultures()
-        {
-            lock (CarnassialTest.CultureLock)
-            {
-                if (CarnassialTest.CultureChanged)
-                {
-                    return false;
-                }
-
-                CarnassialTest.CurrentCulture = CultureInfo.CurrentCulture;
-                CarnassialTest.CurrentUICulture = CultureInfo.CurrentUICulture;
-                CarnassialTest.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentCulture;
-                CarnassialTest.DefaultThreadCurrentUICulture = CultureInfo.DefaultThreadCurrentUICulture;
-
-                // change to a culture other than the developer's to provide sanity coverage
-                string cultureName = TestConstant.Globalization.DefaultUITestCultureNames[(int)DateTime.UtcNow.DayOfWeek];
-                if (CultureInfo.CurrentCulture.Name.StartsWith(cultureName, StringComparison.Ordinal))
-                {
-                    cultureName = TestConstant.Globalization.AlternateUITestCultureName;
-                }
-
-                CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(cultureName);
-                CultureInfo.CurrentUICulture = CultureInfo.CurrentCulture;
-                CultureInfo.DefaultThreadCurrentCulture = CultureInfo.CurrentCulture;
-                CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CurrentCulture;
-
-                CarnassialTest.CultureChanged = true;
-                return true;
-            }
+            CarnassialTest.App.Shutdown();
         }
 
         /// <summary>
@@ -450,6 +432,59 @@ namespace Carnassial.UnitTests
                 return Path.Combine(this.WorkingDirectory, uniqueFileName);
             }
             return Path.Combine(this.WorkingDirectory, this.TestClassSubdirectory, uniqueFileName);
+        }
+
+        protected static bool TryChangeToTestCulture()
+        {
+            lock (CarnassialTest.CultureLock)
+            {
+                if (CarnassialTest.CultureChanged)
+                {
+                    return false;
+                }
+
+                #if DEBUG
+                LocalizedApplication.UseCurrentCulture = true;
+                #endif
+
+                CarnassialTest.CurrentCulture = CultureInfo.CurrentCulture;
+                CarnassialTest.CurrentUICulture = CultureInfo.CurrentUICulture;
+                CarnassialTest.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentCulture;
+                CarnassialTest.DefaultThreadCurrentUICulture = CultureInfo.DefaultThreadCurrentUICulture;
+
+                // change to a culture other than the developer's to provide sanity coverage
+                string cultureName = TestConstant.Globalization.DefaultUITestCultureNames[(int)DateTime.UtcNow.DayOfWeek];
+                if (CultureInfo.CurrentCulture.Name.StartsWith(cultureName, StringComparison.Ordinal))
+                {
+                    cultureName = TestConstant.Globalization.AlternateUITestCultureName;
+                }
+
+                CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(cultureName);
+                CultureInfo.CurrentUICulture = CultureInfo.CurrentCulture;
+                CultureInfo.DefaultThreadCurrentCulture = CultureInfo.CurrentCulture;
+                CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CurrentCulture;
+
+                CarnassialTest.CultureChanged = true;
+                return true;
+            }
+        }
+
+        protected static bool TryRevertToDefaultCultures()
+        {
+            lock (CarnassialTest.CultureLock)
+            {
+                if (CarnassialTest.CultureChanged == false)
+                {
+                    return false;
+                }
+
+                CultureInfo.CurrentCulture = UserInterfaceTests.CurrentCulture;
+                CultureInfo.CurrentUICulture = UserInterfaceTests.CurrentUICulture;
+                CultureInfo.DefaultThreadCurrentCulture = UserInterfaceTests.DefaultThreadCurrentCulture;
+                CultureInfo.DefaultThreadCurrentUICulture = UserInterfaceTests.DefaultThreadCurrentUICulture;
+                CarnassialTest.CultureChanged = false;
+                return true;
+            }
         }
     }
 }

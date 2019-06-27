@@ -176,7 +176,7 @@ namespace Carnassial.Dialog
                 int currentIndex = this.carnassial.DataHandler.ImageCache.CurrentRow;
                 if (currentIndex == fileIndex)
                 {
-                    this.MessageBar.Text = "Only one matching file found.  Search is complete.";
+                    this.MessageBar.Text = App.FindResource<string>(Constant.ResourceKey.FindReplaceOneMatchingFile);
                 }
                 else
                 {
@@ -186,7 +186,7 @@ namespace Carnassial.Dialog
             }
             else
             {
-                this.MessageBar.Text = "No matching file found.";
+                this.MessageBar.Text = App.FindResource<string>(Constant.ResourceKey.FindReplaceNoMatchingFile);
             }
         }
 
@@ -236,7 +236,7 @@ namespace Carnassial.Dialog
                 int currentIndex = this.carnassial.DataHandler.ImageCache.CurrentRow;
                 if (currentIndex == fileIndex)
                 {
-                    this.MessageBar.Text = "Only one matching file found.  Search is complete.";
+                    this.MessageBar.Text = App.FindResource<string>(Constant.ResourceKey.FindReplaceOneMatchingFile);
                 }
                 else
                 {
@@ -247,7 +247,7 @@ namespace Carnassial.Dialog
             }
             else
             {
-                this.MessageBar.Text = "No matching file found.";
+                this.MessageBar.Text = App.FindResource<string>(Constant.ResourceKey.FindReplaceNoMatchingFile);
                 return false;
             }
         }

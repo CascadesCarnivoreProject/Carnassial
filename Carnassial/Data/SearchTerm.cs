@@ -180,7 +180,7 @@ namespace Carnassial.Data
                 DateTime dateTime = (DateTime)value;
                 if (dateTime.Kind != DateTimeKind.Utc)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(value), "DateTime not UTC.");
+                    throw new ArgumentOutOfRangeException(nameof(value), App.FindResource<string>(Constant.ResourceKey.SearchTermDateTimeNotUtc));
                 }
                 return dateTime;
             }
@@ -216,7 +216,7 @@ namespace Carnassial.Data
                 {
                     return true;
                 }
-                throw new ArgumentOutOfRangeException(nameof(value), "Valid integer values for boolean database columns are 0 and 1.");
+                throw new ArgumentOutOfRangeException(nameof(value), App.FindResource<string>(Constant.ResourceKey.SearchTermInvalidBoolean));
             }
             if (this.databaseColumnType == typeof(DateTime))
             {

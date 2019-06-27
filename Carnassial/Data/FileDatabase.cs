@@ -64,7 +64,7 @@ namespace Carnassial.Data
             }
             if (endIndex < startIndex)
             {
-                throw new ArgumentOutOfRangeException(nameof(endIndex), "End must be greater than or equal to start index.");
+                throw new ArgumentOutOfRangeException(nameof(endIndex), App.FormatResource(Constant.ResourceKey.FileDatabaseEndBeforeStart, nameof(endIndex), nameof(startIndex)));
             }
             if (this.CurrentlySelectedFileCount == 0)
             {
@@ -221,7 +221,7 @@ namespace Carnassial.Data
             }
             if (endRow < startRow)
             {
-                throw new ArgumentOutOfRangeException(nameof(endRow), "endRow must be greater than or equal to startRow.");
+                throw new ArgumentOutOfRangeException(nameof(endRow), App.FormatResource(Constant.ResourceKey.FileDatabaseEndBeforeStart, nameof(endRow), nameof(startRow)));
             }
             if (this.CurrentlySelectedFileCount == 0)
             {
@@ -768,7 +768,7 @@ namespace Carnassial.Data
         {
             if (this.ImageSet.FileSelection != FileSelection.All)
             {
-                throw new NotSupportedException("Database doesn't have all files selected.  Checking for files already added to the image set would fail.");
+                throw new NotSupportedException(App.FindResource<string>(Constant.ResourceKey.FileDatabaseSelectionNotAll));
             }
 
             string relativePathFromThisToOther = NativeMethods.GetRelativePathFromDirectoryToDirectory(Path.GetDirectoryName(this.FilePath), Path.GetDirectoryName(otherDatabasePath));

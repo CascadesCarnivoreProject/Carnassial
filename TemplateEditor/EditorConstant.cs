@@ -46,6 +46,7 @@
             public const string EditorWindowDataLabelEmpty = "EditorWindow.DataLabel.Empty";
             public const string EditorWindowDataLabelNotUnique = "EditorWindow.DataLabel.NotUnique";
             public const string EditorWindowException = "EditorWindow.Exception";
+            public const string EditorWindowTemplateFileFilter = "EditorWindowTemplate.FileFilter";
             public const string EditorWindowTemplateFileOpenExisting = "EditorWindow.TemplateFile.OpenExisting";
             public const string EditorWindowTemplateFileOpenExistingFilter = "EditorWindow.TemplateFile.OpenExistingFilter";
             public const string EditorWindowTemplateFileSaveNew = "EditorWindow.TemplateFile.SaveNew";

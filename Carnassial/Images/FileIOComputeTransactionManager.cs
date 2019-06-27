@@ -315,15 +315,15 @@ namespace Carnassial.Images
         {
             if (this.ComputeTaskBody == null)
             {
-                throw new InvalidOperationException(nameof(this.ComputeTaskBody) + " is null.");
+                throw new InvalidOperationException(App.FormatResource(Constant.ResourceKey.FileIOComputeTransactionManagerNullTask, nameof(this.ComputeTaskBody)));
             }
             if (this.IOTaskBody == null)
             {
-                throw new InvalidOperationException(nameof(this.IOTaskBody) + " is null.");
+                throw new InvalidOperationException(App.FormatResource(Constant.ResourceKey.FileIOComputeTransactionManagerNullTask, nameof(this.IOTaskBody)));
             }
             if (this.isCompleted)
             {
-                throw new InvalidOperationException("Transaction is completed.  " + nameof(this.RunTasksAsync) + " may only be called once.");
+                throw new InvalidOperationException(App.FormatResource(Constant.ResourceKey.FileIOComputeTransactionManagerCantRerun, nameof(this.RunTasksAsync)));
             }
             if (this.disposed)
             {

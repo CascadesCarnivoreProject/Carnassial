@@ -24,8 +24,6 @@ namespace Carnassial.UnitTests
     [TestClass]
     public class UserInterfaceTests : CarnassialTest
     {
-        private static App App;
-
         public UserInterfaceTests()
         {
             this.EnsureTestClassSubdirectory();
@@ -34,40 +32,13 @@ namespace Carnassial.UnitTests
         [ClassCleanup]
         public static void ClassCleanup()
         {
-            UserInterfaceTests.App.Shutdown();
             CarnassialTest.TryRevertToDefaultCultures();
         }
         
         [ClassInitialize]
         public static void ClassInitialize(TestContext testContext)
         {
-            #if DEBUG
-            LocalizedApplication.UseCurrentCulture = true;
-            #endif
-            CarnassialTest.TryChangeToTestCultures();
-
-            // Carnassial and the editor need an application instance to be created to load resources from
-            // WPF allows only one Application per app domain, so make instance persistent so it can be reused across multiple Carnassial
-            // and editor window lifetimes.  This works because Carnassial and the editor use very similar styling, allowing the editor 
-            // to consume Carnassial styles with negligible effect on test coverage.
-            UserInterfaceTests.App = new App()
-            {
-                ShutdownMode = ShutdownMode.OnExplicitShutdown
-            };
-
-            Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/CarnassialWindowStyle.xaml", UriKind.Relative)));
-            Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/Properties/SharedResources.xaml", UriKind.Relative)));
-            Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/Properties/Resources.xaml", UriKind.Relative)));
-
-            ResourceDictionary editorResourceDictionary = (ResourceDictionary)Application.LoadComponent(new Uri("/CarnassialTemplateEditor;component/EditorWindowStyle.xaml", UriKind.Relative));
-            Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/CarnassialTemplateEditor;component/Properties/Resources.xaml", UriKind.Relative)));
-            foreach (object key in editorResourceDictionary.Keys)
-            {
-                if (Application.Current.Resources.Contains(key) == false)
-                {
-                    Application.Current.Resources.Add(key, editorResourceDictionary[key]);
-                }
-            }
+            CarnassialTest.TryChangeToTestCulture();
         }
 
         [TestMethod]
@@ -102,7 +73,7 @@ namespace Carnassial.UnitTests
             // and resume test execution.  If something jams up on the dialog handler thread Visual Studio may still consider the test running when also attached 
             // as a debugger even if the test thread has completed.
             // See remarks in CreateReuseControlsAndPropagate() regarding lock.
-            lock (UserInterfaceTests.App)
+            lock (CarnassialTest.App)
             {
                 using (CarnassialWindow carnassial = new CarnassialWindow())
                 {
@@ -473,7 +444,7 @@ namespace Carnassial.UnitTests
             // CreateReuseControlsAndPropagate() needs an app instance in order for DataEntryControls controls to load resources
             // but Carnassial() requires only one .ddb be present in the UI tests subdirectory; lock to exclude concurrent execution
             // of the relative parts of these two tests
-            lock (UserInterfaceTests.App)
+            lock (CarnassialTest.App)
             {
                 foreach (DatabaseExpectations databaseExpectation in databaseExpectations)
                 {

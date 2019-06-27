@@ -569,7 +569,7 @@ namespace Carnassial.Editor
                 saveFileDialog.CreatePrompt = false;
                 saveFileDialog.DefaultExt = Constant.File.TemplateFileExtension;
                 saveFileDialog.FileName = Path.GetFileNameWithoutExtension(Constant.File.DefaultTemplateDatabaseFileName);
-                saveFileDialog.Filter = Constant.File.TemplateFileFilter;
+                saveFileDialog.Filter = App.FindResource<string>(EditorConstant.ResourceKey.EditorWindowTemplateFileFilter);
                 saveFileDialog.OverwritePrompt = true;
                 saveFileDialog.Title = App.FindResource<string>(EditorConstant.ResourceKey.EditorWindowTemplateFileSaveNew);
 

@@ -430,7 +430,7 @@ namespace Carnassial.Data
         {
             if (String.Equals(this.DataLabel, other.DataLabel, StringComparison.Ordinal) == false)
             {
-                throw new ArgumentOutOfRangeException(nameof(other), "Can't synchronize controls with different data labels.");
+                throw new ArgumentOutOfRangeException(nameof(other), App.FindResource<string>(Constant.ResourceKey.ControlRowSynchronizeDataLabelMismatch));
             }
 
             bool synchronizationMadeChanges = false;

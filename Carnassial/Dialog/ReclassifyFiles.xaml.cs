@@ -86,13 +86,13 @@ namespace Carnassial.Dialog
 
             if (newClassificationToDisplay == FileClassification.Video)
             {
-                this.ClassificationInformation.Text = "File is a video and not subject to image classification.";
+                this.ClassificationInformation.Text = App.FindResource<string>(Constant.ResourceKey.ReclassifyFilesVideo);
             }
             else if ((newClassificationToDisplay == FileClassification.Corrupt) ||
                 (newClassificationToDisplay == FileClassification.NoLongerAvailable) ||
                 (imageProperties == null))
             {
-                this.ClassificationInformation.Text = "File could not be loaded.  Classification skipped.";
+                this.ClassificationInformation.Text = App.FindResource<string>(Constant.ResourceKey.ReclassifyFilesUnloadable);
             }
             else
             {

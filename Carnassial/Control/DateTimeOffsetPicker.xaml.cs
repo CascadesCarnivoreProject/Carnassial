@@ -100,7 +100,7 @@ namespace Carnassial.Control
             DateTimeOffset maximumDateTime = (DateTimeOffset)value;
             if (maximumDateTime < dateTimeOffsetPicker.Minimum)
             {
-                throw new ArgumentException("MaximimumDateTime cannot be before MinimumDateTime.", nameof(value));
+                throw new ArgumentException(App.FindResource<string>(Constant.ResourceKey.DateTimeOffsetPickerCoerceMaximum), nameof(value));
             }
 
             if (maximumDateTime < dateTimeOffsetPicker.Value)
@@ -117,7 +117,7 @@ namespace Carnassial.Control
             DateTimeOffset minimumDateTime = (DateTimeOffset)value;
             if (minimumDateTime > dateTimeOffsetPicker.Maximum)
             {
-                throw new ArgumentException("MinimumDateTime cannot be after the MaximumDateTime.", nameof(value));
+                throw new ArgumentException(App.FindResource<string>(Constant.ResourceKey.DateTimeOffsetPickerCoerceMinimum), nameof(value));
             }
 
             if (minimumDateTime > dateTimeOffsetPicker.Value)

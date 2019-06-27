@@ -918,7 +918,7 @@ namespace Carnassial
 
             using (SaveFileDialog saveFileDialog = new SaveFileDialog())
             {
-                saveFileDialog.Title = "Make a copy of the currently displayed file";
+                saveFileDialog.Title = App.FindResource<string>(Constant.ResourceKey.CarnassialWindowCopyFile);
                 saveFileDialog.Filter = String.Format(CultureInfo.CurrentCulture, "*{0}|*{0}", Path.GetExtension(this.DataHandler.ImageCache.Current.FileName));
                 saveFileDialog.FileName = sourceFileName;
                 saveFileDialog.OverwritePrompt = true;
@@ -1010,7 +1010,7 @@ namespace Carnassial
                 return;
             }
             string spreadsheetFileExtension = exportXlsx ? Constant.File.ExcelFileExtension : Constant.File.CsvFileExtension;
-            string spreadsheetFileFilter = exportXlsx ? Constant.Excel.Filter : Constant.File.CsvFilter;
+            string spreadsheetFileFilter = exportXlsx ? App.FindResource<string>(Constant.ResourceKey.ExcelFileFilter) : App.FindResource<string>(Constant.ResourceKey.CsvFileFilter);
 
             using (SaveFileDialog saveFileDialog = new SaveFileDialog())
             {
@@ -1023,7 +1023,7 @@ namespace Carnassial
                 saveFileDialog.InitialDirectory = this.FolderPath;
                 saveFileDialog.Filter = spreadsheetFileFilter;
                 saveFileDialog.OverwritePrompt = true;
-                saveFileDialog.Title = "Save current selection to a spreadsheet file";
+                saveFileDialog.Title = App.FindResource<string>(Constant.ResourceKey.CarnassialWindowExportSpreadsheet);
 
                 if (saveFileDialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
                 {

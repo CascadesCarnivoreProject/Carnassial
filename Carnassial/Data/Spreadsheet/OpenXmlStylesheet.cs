@@ -53,7 +53,7 @@ namespace Carnassial.Data.Spreadsheet
             {
                 if (this.stylesheet.Fonts.Count < 2)
                 {
-                    throw new NotSupportedException("Creation of default cell formats requires at least two fonts.");
+                    throw new NotSupportedException(App.FindResource<string>(Constant.ResourceKey.OpenXmlStylesheetInsufficientFonts));
                 }
                 this.stylesheet.CellFormats = this.CreateDefaultCellFormats();
                 this.HasChanges = true;

@@ -227,6 +227,8 @@ Width</system:String>
         </dialog:Message.Hint>
     </dialog:Message>
 
+    <system:String x:Key="EditorWindowTemplate.FileFilter">Carnassial template files (*.tdb)|*.tdb</system:String>
+    
     <dialog:Message x:Key="EditorWindow.TemplateLoad.Failed" WindowTitle="Template file couldn't be loaded" 
                     Image="Error" Title="The template editor could not load the template file." Buttons="OK">
         <dialog:Message.Problem>

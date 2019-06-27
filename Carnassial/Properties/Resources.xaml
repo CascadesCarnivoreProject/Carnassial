@@ -272,6 +272,8 @@
         </dialog:Message.Hint>
     </dialog:Message>
 
+    <system:String x:Key="CarnassialWindow.CopyFile">Make a copy of the currently displayed file.</system:String>
+    
     <dialog:Message x:Key="CarnassialWindow.CopyFile.Failed" WindowTitle="File not found" 
                     Image="Error" Title="Unable to copy file." Buttons="OK">
         <dialog:Message.Problem>
@@ -319,6 +321,7 @@
         </dialog:Message.Reason>
     </dialog:Message>
 
+    <system:String x:Key="CarnassialWindow.ExportSpreadsheet">Save current selection to a spreadsheet file</system:String>
     <dialog:Message x:Key="CarnassialWindow.ExportSpreadsheet.Failed" WindowTitle="Can't write the spreadsheet file" 
                     Image="Error" Title="Can't write the spreadsheet file." Buttons="OK">
         <dialog:Message.Problem>
@@ -434,7 +437,7 @@
         </dialog:Message.Result>
     </dialog:Message>
 
-    <dialog:Message x:Key="CarnassialWindow.NoDeleteableFiles" WindowTitle="No files are marked for deletion" 
+    <dialog:Message x:Key="CarnassialWindow.NoDeletableFiles" WindowTitle="No files are marked for deletion" 
                     Image="Information" Title="No files are marked for deletion." Buttons="OK">
         <dialog:Message.Problem>
             <Run>You are trying to delete files marked for deletion but no files have their delete box checked.</Run>
@@ -524,6 +527,10 @@
     <system:String x:Key="ChooseFileDatabase.Message.Solution">Choose the Carnassial file you want to use.</system:String>
     <system:String x:Key="ChooseFileDatabase.Message.Result">Carnassial will read data from and save data to the chosen file.</system:String>
     <system:String x:Key="ChooseFileDatabase.SelectDatabase">Select a database file:</system:String>
+
+    <system:String x:Key="ControlRow.Synchronize.DataLabelMismatch">Can't synchronize controls with different data labels.</system:String>
+    
+    <system:String x:Key="Csv.FileFilter">CSV UTF-8 (comma delimited) (*.csv)|*.csv</system:String>
 
     <system:String x:Key="CustomSelection.Title">Create a custom selection</system:String>
     <system:String x:Key="CustomSelection.Message.Title">Create a custom selection.</system:String>
@@ -651,6 +658,9 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="DateTimeLinearCorrection.Earliest">Earliest:</system:String>
     <system:String x:Key="DateTimeLinearCorrection.Latest">Latest:</system:String>
 
+    <system:String x:Key="DateTimeOffsetPicker.CoerceMaximum">MaximimumDateTime cannot be before MinimumDateTime.</system:String>
+    <system:String x:Key="DateTimeOffsetPicker.CoerceMinimum">MinimumDateTime cannot be after the MaximumDateTime.</system:String>
+
     <system:String x:Key="DateTimeRereadFromFiles.Title">Date/time - Reread dates and times from files</system:String>
     <system:String x:Key="DateTimeRereadFromFiles.Message.Title">Reread dates and times from images and non-AVI videos.</system:String>
     <system:String x:Key="DateTimeRereadFromFiles.Message.Problem">You've changed the selected files' dates or times and now want to go back to their original dates and times.</system:String>
@@ -661,6 +671,17 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="DateTimeRereadFromFiles.File">File</system:String>
     <system:String x:Key="DateTimeRereadFromFiles.Result">Result</system:String>
     <system:String x:Key="DateTimeRereadFromFiles.Start">_Start</system:String>
+
+    <system:String x:Key="DateTimeRereadResult.FileDateTime" xml:space="preserve">Read file date/time: </system:String>
+    <system:String x:Key="DateTimeRereadResult.PreviousMetadataDateTime" xml:space="preserve">Read previous metadata date/time: </system:String>
+    <system:String x:Key="DateTimeRereadResult.MetadataDateTime" xml:space="preserve">Read metadata date/time:</system:String>
+    <system:String x:Key="DateTimeRereadResult.NoChange" xml:space="preserve">no change.</system:String>
+    <system:String x:Key="DateTimeRereadResult.SameDate" xml:space="preserve">same date, </system:String>
+    <system:String x:Key="DateTimeRereadResult.DifferentDate" xml:space="preserve">different date, </system:String>
+    <system:String x:Key="DateTimeRereadResult.SameTime" xml:space="preserve">same time, </system:String>
+    <system:String x:Key="DateTimeRereadResult.DifferentTime" xml:space="preserve">different time, </system:String>
+    <system:String x:Key="DateTimeRereadResult.SameUtcOffset" xml:space="preserve">same UTC offset.</system:String>
+    <system:String x:Key="DateTimeRereadResult.DifferentUtcOffset" xml:space="preserve">different UTC offset.</system:String>
 
     <system:String x:Key="DateTimeSetTimeZone.Title">Date/time - Set the time zone of all files selected</system:String>
     <system:String x:Key="DateTimeSetTimeZone.Message.Title">Set the time zone of all files selected.</system:String>
@@ -736,6 +757,8 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="EditLog.Message.What">Record any notes about this image set that you may want to refer to in the future. Your notes will be saved and viewable at any time through this software, but it will not be saved in the spreadsheet csv file. Typical uses are to log activities, list to-do items, leave messages for others, etc.</system:String>
     <system:String x:Key="EditLog.Save">_Save</system:String>
 
+    <system:String x:Key="Excel.FileFilter">Excel workbook (*.xlsx)|*.xlsx</system:String>
+
     <system:String x:Key="FileCountsByClassification.Title">Summary of file classifications</system:String>
     <system:String x:Key="FileCountsByClassification.Message.Title">Summary of files by their classification.</system:String>
     <system:String x:Key="FileCountsByClassification.Message.Hint">If you check don't show this message again this dialog can be turned back on via the Options menu.</system:String>
@@ -756,7 +779,13 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="FileDatabase.Import.ColumnLayoutMismatch">- Column '{0}' has index {1} and type {2} in this image set but index {3} and type {4} in the image set to import.</system:String>
     <system:String x:Key="FileDatabase.Import.OtherColumnNotInThis">- The control '{0}' is present in the image set to import but not in this image set."</system:String>
     <system:String x:Key="FileDatabase.Import.ThisColumnNotInOther">- The control '{0}' is present in this image set but not in the image set to import."</system:String>
-    
+    <system:String x:Key="FileDatabase.EndBeforeStart">{0} must be greater than or equal to {1}.</system:String>
+    <system:String x:Key="FileDatabase.SelectionNotAll">Database doesn't have all files selected.  Checking for files already added to the image set would fail.</system:String>
+
+    <system:String x:Key="FileFindReplace.NoControlsVisible">No controls are visible.</system:String>
+    <system:String x:Key="FileIOComputeTransactionManager.CantRerun">Transaction is completed.  {0} may only be called once.</system:String>
+    <system:String x:Key="FileIOComputeTransactionManager.NullTask">{0} is null.</system:String>
+
     <system:String x:Key="FileSelection.All">(all files)</system:String>
     <system:String x:Key="FileSelection.Color">color images</system:String>
     <system:String x:Key="FileSelection.Corrupt">corrupted files</system:String>
@@ -766,6 +795,8 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="FileSelection.MarkedForDeletion">marked for deletion</system:String>
     <system:String x:Key="FileSelection.NoLongerAvailable">no longer available</system:String>
     <system:String x:Key="FileSelection.Video">videos</system:String>
+
+    <system:String x:Key="FileTable.NoColumns">Table has no columns.</system:String>
     
     <system:String x:Key="FindReplace.Title">Find and replace</system:String>
     <system:String x:Key="FindReplace.Find">Fin_d</system:String>
@@ -778,6 +809,8 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="FindReplace.Replace.Current">_Replace</system:String>
     <system:String x:Key="FindReplace.Replace.All">Replace _all</system:String>
     <system:String x:Key="FindReplace.Close">_Close</system:String>
+    <system:String x:Key="FindReplace.OneMatchingFile">Only one matching file found.  Search is complete.</system:String>
+    <system:String x:Key="FindReplace.NoMatchingFile">No matching file found.</system:String>
 
     <dialog:Message x:Key="GithubReleaseClient.GetNewVersion" WindowTitle="Update available" 
                     Image="Question" Title="Get new version?" Buttons="YesNo">
@@ -801,6 +834,8 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="GoToFile.Title">Go to file</system:String>
     <system:String x:Key="GoToFile.FileNumberRange">File number (1 - {0}):</system:String>
 
+    <system:String x:Key="HyperthreadSiblingAffinity.TaskID">Task ID must be positive and fit within a 64 bit processor affinity mask.</system:String>
+    
     <system:String x:Key="ImageRow.Import.InvalidChoice">Choice '{0}' is not a valid option for the column {1}.</system:String>
     <system:String x:Key="ImageRow.Import.InvalidClassification">Value '{0}' is not a valid file classification.</system:String>
     <system:String x:Key="ImageRow.Import.InvalidCount">'{0}' is not an integer count for the column {1}.</system:String>
@@ -809,6 +844,10 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="ImageRow.Import.InvalidFlag">'{0}' is not a valid value for the flag column {1}.  Flags must be either true or false, case insensitive.</system:String>
     <system:String x:Key="ImageRow.Import.InvalidMarkerPosition">Marker position sequence '{0}' is not valid for the column {1}.</system:String>
     <system:String x:Key="ImageRow.Import.InvalidUtcOffset">Value '{0}' is not a valid UTC offset.  Neither the file's date time nor UTC offset will be updated.</system:String>
+    <system:String x:Key="ImageRow.IDImmutable">ID is immutable.</system:String>
+    <system:String x:Key="ImageRow.SetDateTimeThroughDateTimeOffset">DateTime must be set through DateTimeOffset.</system:String>
+    <system:String x:Key="ImageRowSet.SetFileNameThroughFileName">FileName must be set through FileName.</system:String>
+    <system:String x:Key="ImageRow.SetUtcOffsetThroughDateTimeOffset">UtcOffset must be set through DateTimeOffset.</system:String>
     
     <FlowDocument x:Key="Instructions" FontSize="12" FontFamily="Verdana" x:Shared="False" TextAlignment="Left">
         <Paragraph FontSize="20" FontWeight="Bold" Margin="0,0,0,0">What you need</Paragraph>
@@ -927,7 +966,12 @@ More complex queries can be created by right clicking on a label and duplicating
         </Paragraph>
     </FlowDocument>
 
+    <system:String x:Key="JpegImage.MetadataRequired">Call {0}() before calling {1}().</system:String>
+    <system:String x:Key="MarkersForCounter.FloatsUnpaired">Position array does not contain an exact number of paired floats.</system:String>
     <system:String x:Key="Message.DontShowAgain">_Don't show this message again.</system:String>
+    <system:String x:Key="NativeMethods.PathNullOrEmpty">Path to file is null or empty.</system:String>
+    <system:String x:Key="NativeMethods.PathPrefixRequired">Paths must have a common prefix.</system:String>
+    <system:String x:Key="OpenXmlStylesheet.InsufficientFonts">Creation of default cell formats requires at least two fonts.</system:String>
 
     <system:String x:Key="PopulateFieldWithMetadata.Title">Populate a data field with metadata</system:String>
     <system:String x:Key="PopulateFieldWithMetadata.Message.Title">Images often embed metadata, some of which may be useful to capture as data.</system:String>
@@ -969,6 +1013,8 @@ At any time, you can reset thresholds to their initial values or to the Carnassi
     <system:String x:Key="ReclassifyFiles.Reset.Defaults">to Carnassial defaults</system:String>
     <system:String x:Key="ReclassifyFiles.Reset.Defaults.ToolTip">Reset thresholds to the default values Carnassial ships with.</system:String>
     <system:String x:Key="ReclassifyFiles.Apply">_Apply to selected files</system:String>
+    <system:String x:Key="ReclassifyFiles.Unloadable">File could not be loaded.  Classification skipped.</system:String>
+    <system:String x:Key="ReclassifyFiles.Video">File is a video and not subject to image classification.</system:String>
 
     <system:String x:Key="RenameFileDatabaseFile.Title">Rename the database file</system:String>
     <system:String x:Key="RenameFileDatabaseFile.Message.Title">Rename the database file.</system:String>
@@ -977,6 +1023,9 @@ At any time, you can reset thresholds to their initial values or to the Carnassi
     <system:String x:Key="RenameFileDatabaseFile.Message.Result">The file will be renamed, and Carnassial will subsequently save data to the renamed file.</system:String>
     <system:String x:Key="RenameFileDatabaseFile.Rename">Rename</system:String>
 
+    <system:String x:Key="SearchTerm.DateTimeNotUtc">DateTime not UTC.</system:String>
+    <system:String x:Key="SearchTerm.InvalidBoolean">Valid integer values for boolean database columns are 0 and 1.</system:String>
+    
     <Thickness x:Key="SearchTermList.CellMargin">4,1,4,1</Thickness>
     <system:String x:Key="SearchTermList.Use">Use</system:String>
     <system:String x:Key="SearchTermList.Label">Label</system:String>
@@ -984,9 +1033,24 @@ At any time, you can reset thresholds to their initial values or to the Carnassi
     <system:String x:Key="SearchTermList.Value">Value</system:String>
     <system:String x:Key="SearchTermList.Query">Database Query</system:String>
 
+    <system:String x:Key="SharedStringIndex.DuplicateOrMissing">Shared string table contains duplicate or missing entries.</system:String>
+    <system:String x:Key="SharedStringIndex.NoSharedString">Could not locate value of shared string.</system:String>
+    
     <system:String x:Key="Spreadsheet.Import.ColumnNotInImageSet">- The column '{0}' is present in the spreadsheet file but not in the image set.</system:String>
     <system:String x:Key="Spreadsheet.Import.ColumnNotInSpreadsheet">- The column '{0}' is present in the image set but not in the spreadsheet file.</system:String>
     <system:String x:Key="Spreadsheet.Import.RequiredColumnNotInSpreadsheet">- The column '{0}' must be present in the spreadsheet file.</system:String>
+
+    <system:String x:Key="SpreadsheetReaderWriter.FileSelectionNotAll">Database doesn't have all files selected.  Checking for files already added to the image set would fail.</system:String>
+    <system:String x:Key="SpreadsheetReaderWriter.NoCellValue">Could not locate cell value.</system:String>
+    <system:String x:Key="SpreadsheetReaderWriter.NoDimensionReference">Could not locate worksheet dimension reference.</system:String>
+    <system:String x:Key="SpreadsheetReaderWriter.NoSharedString">Could not locate cell value.</system:String>
+    <system:String x:Key="SpreadsheetReaderWriter.NoStringTableCount">Could not locate count of entries in shared string table.</system:String>
+    <system:String x:Key="SpreadsheetReaderWriter.NoWorksheetDimension">Could not locate worksheet dimension element.</system:String>
+
+    <system:String x:Key="SqliteDatabase.BuildInvalid">Build must be between 0 and 255, inclusive.</system:String>
+    <system:String x:Key="SqliteDatabase.RevsionInvalid">Revision must be between 0 and 255, inclusive.</system:String>
+    <system:String x:Key="SqliteDatabase.MajorVersionInvalid">Major version must be between 0 and 127, inclusive.</system:String>
+    <system:String x:Key="SqliteDatabase.MinorVersionInvalid">Minor version must be between 0 and 255, inclusive.</system:String>
 
     <system:String x:Key="TemplateSynchronization.Title">Sorry, this template isn't compatible with this database file</system:String>
     <system:String x:Key="TemplateSynchronization.Message.Title">Template and database files are incompatible.</system:String>
@@ -996,4 +1060,12 @@ At any time, you can reset thresholds to their initial values or to the Carnassi
     <system:String x:Key="TemplateSynchronization.Details">Details:</system:String>
     <system:String x:Key="TemplateSynchronization.UseOriginalTemplate">_Open image set using the original template</system:String>
     <system:String x:Key="TemplateSynchronization.ExitProgram">E_xit Carnassial</system:String>
+
+    <system:String x:Key="TimeSpanPicker.CoerceMaximum">MaximimumTimeSpan cannot be before MinimumTimeSpan.</system:String>
+    <system:String x:Key="TimeSpanPicker.CoerceMinimum">MinimumTimeSpan cannot be greater than MaximumTimeSpan.</system:String>
+
+    <system:String x:Key="UnbufferedSequentialReader.LittleEndian">Little endian byte ordering is not available.</system:String>
+    <system:String x:Key="UnbufferedSequentialReader.ExtendBuffer">Call {0}() before calling {1}().</system:String>
+    <system:String x:Key="UnbufferedSequentialReader.BytesRequired">{0} must be zero or greater to read stream sequentially.</system:String>
+    <system:String x:Key="UnbufferedSequentialReader.EndOfFile">Unable to skip past of end of file buffer.</system:String>
 </ResourceDictionary>

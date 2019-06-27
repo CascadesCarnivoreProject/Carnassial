@@ -17,49 +17,49 @@ namespace Carnassial.Dialog
         {
             if (fileLoad.MetadataReadResult == MetadataReadResults.None)
             {
-                this.Message = "Read file date/time: ";
+                this.Message = App.FindResource<string>(Constant.ResourceKey.DateTimeRereadResultFileDateTime);
             }
             else if (fileLoad.MetadataReadResult == MetadataReadResults.DateTimeInferredFromPrevious)
             {
-                this.Message = "Read previous metadata date/time: ";
+                this.Message = App.FindResource<string>(Constant.ResourceKey.DateTimeRereadResultPreviousMetadataDateTime);
             }
             else
             {
-                this.Message = "Read metadata date/time: ";
+                this.Message = App.FindResource<string>(Constant.ResourceKey.DateTimeRereadResultMetadataDateTime);
             }
 
             DateTimeOffset reloadedDateTimeOffset = fileLoad.File.DateTimeOffset;
             if (reloadedDateTimeOffset == originalDateTime)
             {
-                this.Message += "no change.";
+                this.Message += App.FindResource<string>(Constant.ResourceKey.DateTimeRereadResultNoChange);
             }
             else
             {
                 if (reloadedDateTimeOffset.Date == originalDateTime.Date)
                 {
-                    this.Message += "same date, ";
+                    this.Message += App.FindResource<string>(Constant.ResourceKey.DateTimeRereadResultSameDate);
                 }
                 else
                 {
-                    this.Message += "different date, ";
+                    this.Message += App.FindResource<string>(Constant.ResourceKey.DateTimeRereadResultDifferentDate);
                 }
 
                 if (reloadedDateTimeOffset.TimeOfDay == originalDateTime.TimeOfDay)
                 {
-                    this.Message += "same time, ";
+                    this.Message += App.FindResource<string>(Constant.ResourceKey.DateTimeRereadResultSameTime);
                 }
                 else
                 {
-                    this.Message += "different time, ";
+                    this.Message += App.FindResource<string>(Constant.ResourceKey.DateTimeRereadResultDifferentTime);
                 }
 
                 if (reloadedDateTimeOffset.Offset == originalDateTime.Offset)
                 {
-                    this.Message += "same UTC offset.";
+                    this.Message += App.FindResource<string>(Constant.ResourceKey.DateTimeRereadResultSameUtcOffset);
                 }
                 else
                 {
-                    this.Message += "different UTC offset.";
+                    this.Message += App.FindResource<string>(Constant.ResourceKey.DateTimeRereadResultDifferentUtcOffset);
                 }
             }
         }

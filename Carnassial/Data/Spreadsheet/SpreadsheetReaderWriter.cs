@@ -554,7 +554,7 @@ namespace Carnassial.Data.Spreadsheet
                                 bool isSharedString = String.Equals(rowReader.GetAttribute(Constant.OpenXml.Attribute.CellType), Constant.OpenXml.CellType.SharedString, StringComparison.Ordinal);
                                 if (rowReader.ReadToDescendant(Constant.OpenXml.Element.CellValue, Constant.OpenXml.Namespace) == false)
                                 {
-                                    throw new XmlException("Could not locate cell value.");
+                                    throw new XmlException(App.FindResource<string>(Constant.ResourceKey.SpreadsheetReaderWriterNoCellValue));
                                 }
                                 string value = rowReader.ReadElementContentAsString();
 
@@ -599,7 +599,7 @@ namespace Carnassial.Data.Spreadsheet
         {
             if (fileDatabase.ImageSet.FileSelection != FileSelection.All)
             {
-                throw new ArgumentOutOfRangeException(nameof(fileDatabase), "Database doesn't have all files selected.  Checking for files already added to the image set would fail.");
+                throw new ArgumentOutOfRangeException(nameof(fileDatabase), App.FindResource<string>(Constant.ResourceKey.SpreadsheetReaderWriterFileSelectionNotAll));
             }
 
             string relativePathFromDatabaseToSpreadsheet = NativeMethods.GetRelativePathFromDirectoryToDirectory(Path.GetDirectoryName(fileDatabase.FilePath), Path.GetDirectoryName(spreadsheetFilePath));
@@ -849,12 +849,12 @@ namespace Carnassial.Data.Spreadsheet
                                 reader.MoveToContent();
                                 if (reader.ReadToDescendant(Constant.OpenXml.Element.Dimension, Constant.OpenXml.Namespace) == false)
                                 {
-                                    throw new XmlException("Could not locate worksheet dimension element.");
+                                    throw new XmlException(App.FindResource<string>(Constant.ResourceKey.SpreadsheetReaderWriterNoWorksheetDimension));
                                 }
                                 string dimension = reader.GetAttribute(Constant.OpenXml.Attribute.Reference);
                                 if (dimension == null)
                                 {
-                                    throw new XmlException("Could not locate worksheet dimension reference.");
+                                    throw new XmlException(App.FindResource<string>(Constant.ResourceKey.SpreadsheetReaderWriterNoDimensionReference));
                                 }
                                 string[] range = dimension.Split(':');
                                 if ((range == null) || (range.Length != 2))

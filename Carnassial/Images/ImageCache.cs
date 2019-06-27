@@ -19,7 +19,7 @@ namespace Carnassial.Images
         private TimeSpan differenceTime;
         private bool disposed;
         private readonly MostRecentlyUsedList<long> mostRecentlyUsedIDs;
-        private readonly ConcurrentDictionary<long, Task> prefetechesByID;
+        private readonly ConcurrentDictionary<long, Task> prefetchesByID;
         private readonly ConcurrentDictionary<long, CachedImage> unalteredImagesByID;
 
         public ImageDifference CurrentDifferenceState { get; private set; }
@@ -37,7 +37,7 @@ namespace Carnassial.Images
             this.differenceTime = TimeSpan.Zero;
             this.disposed = false;
             this.mostRecentlyUsedIDs = new MostRecentlyUsedList<long>(Constant.Images.ImageCacheSize);
-            this.prefetechesByID = new ConcurrentDictionary<long, Task>();
+            this.prefetchesByID = new ConcurrentDictionary<long, Task>();
             this.unalteredImagesByID = new ConcurrentDictionary<long, CachedImage>();
         }
 
@@ -219,7 +219,7 @@ namespace Carnassial.Images
             // locate the requested image
             if (this.unalteredImagesByID.TryGetValue(file.ID, out CachedImage image) == false)
             {
-                if (this.prefetechesByID.TryGetValue(file.ID, out Task prefetch))
+                if (this.prefetchesByID.TryGetValue(file.ID, out Task prefetch))
                 {
                     // image retrieval's already in progress, so wait for it to complete
                     await prefetch.ConfigureAwait(true);
@@ -268,7 +268,7 @@ namespace Carnassial.Images
             }
 
             ImageRow nextFile = this.FileDatabase.Files[fileIndex];
-            if (nextFile.IsVideo || this.unalteredImagesByID.ContainsKey(nextFile.ID) || this.prefetechesByID.ContainsKey(nextFile.ID))
+            if (nextFile.IsVideo || this.unalteredImagesByID.ContainsKey(nextFile.ID) || this.prefetchesByID.ContainsKey(nextFile.ID))
             {
                 return false;
             }
@@ -277,9 +277,9 @@ namespace Carnassial.Images
             {
                 CachedImage nextImage = await nextFile.TryLoadImageAsync((string)this.FileDatabase.FolderPath).ConfigureAwait(true);
                 this.CacheImage(nextFile.ID, nextImage);
-                this.prefetechesByID.TryRemove(nextFile.ID, out Task _);
+                this.prefetchesByID.TryRemove(nextFile.ID, out Task _);
             }));
-            this.prefetechesByID.AddOrUpdate(nextFile.ID, prefetch, (long id, Task newPrefetch) => { return newPrefetch; });
+            this.prefetchesByID.AddOrUpdate(nextFile.ID, prefetch, (long id, Task newPrefetch) => { return newPrefetch; });
             return true;
         }
 

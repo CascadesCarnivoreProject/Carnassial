@@ -80,7 +80,7 @@ namespace Carnassial.Control
             TimeSpan maximumTimeSpan = (TimeSpan)value;
             if (maximumTimeSpan < timeSpanPicker.Minimum)
             {
-                throw new ArgumentException("MaximimumTimeSpan cannot be before MinimumTimeSpan.", nameof(value));
+                throw new ArgumentException(App.FindResource<string>(Constant.ResourceKey.TimeSpanPickerCoerceMaximum), nameof(value));
             }
 
             if (maximumTimeSpan < timeSpanPicker.Value)
@@ -97,7 +97,7 @@ namespace Carnassial.Control
             TimeSpan minimumTimeSpan = (TimeSpan)value;
             if (minimumTimeSpan > timeSpanPicker.Maximum)
             {
-                throw new ArgumentException("MinimumTimeSpan cannot be greater than MaximumTimeSpan.", nameof(value));
+                throw new ArgumentException(App.FindResource<string>(Constant.ResourceKey.TimeSpanPickerCoerceMinimum), nameof(value));
             }
 
             if (minimumTimeSpan > timeSpanPicker.Value)

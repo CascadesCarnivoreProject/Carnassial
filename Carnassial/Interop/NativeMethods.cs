@@ -81,7 +81,7 @@ namespace Carnassial.Interop
                                                  toPath,
                                                  toType) == 0)
             {
-                throw new ArgumentException("Paths must have a common prefix");
+                throw new ArgumentException(App.FindResource<string>(Constant.ResourceKey.NativeMethodsPathPrefixRequired));
             }
 
             string relativePath = relativePathBuilder.ToString();
@@ -122,7 +122,7 @@ namespace Carnassial.Interop
         {
             if (String.IsNullOrEmpty(filePath))
             {
-                throw new ArgumentOutOfRangeException(nameof(filePath), "Path to file is null or empty.");
+                throw new ArgumentOutOfRangeException(nameof(filePath), App.FindResource<string>(Constant.ResourceKey.NativeMethodsPathNullOrEmpty));
             }
 
             // per docs, SHFileOperation() won't move files to recycle bin unless presented a full path

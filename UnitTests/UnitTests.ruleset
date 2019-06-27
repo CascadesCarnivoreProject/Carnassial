@@ -90,6 +90,8 @@
     <Rule Id="SA1615" Action="None" />
     <Rule Id="SA1611" Action="None" />
     <Rule Id="SA0001" Action="None" />
+    <Rule Id="SA1204" Action="None" />
+    <Rule Id="SA1214" Action="None" />
   </Rules>
   <Rules AnalyzerId="Microsoft.CodeQuality.Analyzers" RuleNamespace="Microsoft.CodeQuality.Analyzers">
     <Rule Id="CA1062" Action="None" />

@@ -53,6 +53,11 @@ namespace Carnassial.Interop
             get { return this.bufferPosition; }
         }
 
+        public override int Available()
+        {
+            throw new NotImplementedException();
+        }
+
         public void ExtendBuffer(int bytesToRead)
         {
             byte[] existingBuffer = this.Buffer;
@@ -96,7 +101,7 @@ namespace Carnassial.Interop
         {
             if (this.Buffer == null)
             {
-                throw new NotSupportedException("Call " + nameof(this.ExtendBuffer) + "() before calling " + nameof(this.GetByte) + "().");
+                throw new NotSupportedException(App.FormatResource(Constant.ResourceKey.UnbufferedSequentialReaderExtendBuffer, nameof(this.ExtendBuffer), nameof(this.GetByte)));
             }
             if (this.bufferPosition >= this.Buffer.Length)
             {
@@ -119,7 +124,7 @@ namespace Carnassial.Interop
         {
             if (this.Buffer == null)
             {
-                throw new NotSupportedException("Call " + nameof(this.ExtendBuffer) + "() before calling " + nameof(this.GetBytes) + "().");
+                throw new NotSupportedException(App.FormatResource(Constant.ResourceKey.UnbufferedSequentialReaderExtendBuffer, nameof(this.ExtendBuffer), nameof(this.GetBytes)));
             }
 
             int endPosition = this.bufferPosition + count;
@@ -171,13 +176,13 @@ namespace Carnassial.Interop
         {
             if (bytes < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(bytes), nameof(bytes) + " must be zero or greater to read stream sequentially.");
+                throw new ArgumentOutOfRangeException(nameof(bytes), App.FormatResource(Constant.ResourceKey.UnbufferedSequentialReaderBytesRequired, nameof(bytes)));
             }
 
             int newPosition = this.bufferPosition + (int)bytes;
             if (newPosition > this.Buffer.Length)
             {
-                throw new EndOfStreamException("Unable to skip past of end of file buffer.");
+                throw new EndOfStreamException(App.FindResource<string>(Constant.ResourceKey.UnbufferedSequentialReaderEndOfFile));
             }
             this.bufferPosition = newPosition;
         }
@@ -200,7 +205,7 @@ namespace Carnassial.Interop
             {
                 return this;
             }
-            throw new NotSupportedException("Little endian byte ordering is not available.");
+            throw new NotSupportedException(App.FindResource<string>(Constant.ResourceKey.UnbufferedSequentialReaderLittleEndian));
         }
     }
 }

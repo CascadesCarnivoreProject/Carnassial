@@ -756,19 +756,19 @@ namespace Carnassial.Database
         {
             if ((version.Major < 0) || (version.Major > 127))
             {
-                throw new ArgumentOutOfRangeException(nameof(version), "Major version must be between 0 and 127, inclusive.");
+                throw new ArgumentOutOfRangeException(nameof(version), App.FindResource<string>(Constant.ResourceKey.SqliteDatabaseMajorVersionInvalid));
             }
             if ((version.Minor < 0) || (version.Minor > 255))
             {
-                throw new ArgumentOutOfRangeException(nameof(version), "Minor version must be between 0 and 255, inclusive.");
+                throw new ArgumentOutOfRangeException(nameof(version), App.FindResource<string>(Constant.ResourceKey.SqliteDatabaseMinorVersionInvalid));
             }
             if ((version.Build < 0) || (version.Build > 255))
             {
-                throw new ArgumentOutOfRangeException(nameof(version), "Build must be between 0 and 255, inclusive.");
+                throw new ArgumentOutOfRangeException(nameof(version), App.FindResource<string>(Constant.ResourceKey.SqliteDatabaseBuildInvalid));
             }
             if ((version.Revision < 0) || (version.Revision > 255))
             {
-                throw new ArgumentOutOfRangeException(nameof(version), "Revision must be between 0 and 255, inclusive.");
+                throw new ArgumentOutOfRangeException(nameof(version), App.FindResource<string>(Constant.ResourceKey.SqliteDatabaseRevisionInvalid));
             }
 
             int versionAsInt = (version.Major << 24) | (version.Minor << 16) | (version.Build << 8) | version.Revision;

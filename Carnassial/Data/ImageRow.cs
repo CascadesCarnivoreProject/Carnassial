@@ -159,13 +159,13 @@ namespace Carnassial.Data
                 switch (propertyName)
                 {
                     case Constant.FileColumn.DateTime:
-                        throw new NotSupportedException("Access DateTime through DateTimeOffset.");
+                        throw new NotSupportedException(App.FindResource<string>(Constant.ResourceKey.ImageRowSetDateTimeThroughDateTimeOffset));
                     case nameof(this.DateTimeOffset):
                         return this.DateTimeOffset;
                     case Constant.FileColumn.DeleteFlag:
                         return this.DeleteFlag;
                     case Constant.FileColumn.File:
-                        throw new NotSupportedException("Access FileName through FileName.");
+                        throw new NotSupportedException(App.FindResource<string>(Constant.ResourceKey.ImageRowSetFileNameThroughFileName));
                     case nameof(ImageRow.FileName):
                         return this.FileName;
                     case Constant.DatabaseColumn.ID:
@@ -175,7 +175,7 @@ namespace Carnassial.Data
                     case Constant.FileColumn.RelativePath:
                         return this.RelativePath;
                     case Constant.FileColumn.UtcOffset:
-                        throw new NotSupportedException("Access UtcOffset through DateTimeOffset.");
+                        throw new NotSupportedException(App.FindResource<string>(Constant.ResourceKey.ImageRowSetUtcOffsetThroughDateTimeOffset));
                     default:
                         FileTableColumn userColumn = this.table.UserColumnsByName[propertyName];
                         switch (userColumn.DataType)
@@ -200,7 +200,7 @@ namespace Carnassial.Data
                     // standard controls
                     // Property change notification is sent from the properties called.
                     case Constant.FileColumn.DateTime:
-                        throw new NotSupportedException("DateTime must be set through DateTimeOffset.");
+                        throw new NotSupportedException(App.FindResource<string>(Constant.ResourceKey.ImageRowSetDateTimeThroughDateTimeOffset));
                     case nameof(this.DateTimeOffset):
                         this.DateTimeOffset = (DateTimeOffset)value;
                         break;
@@ -208,12 +208,12 @@ namespace Carnassial.Data
                         this.DeleteFlag = (bool)value;
                         break;
                     case Constant.FileColumn.File:
-                        throw new NotSupportedException("FileName must be set through FileName.");
+                        throw new NotSupportedException(App.FindResource<string>(Constant.ResourceKey.ImageRowSetFileNameThroughFileName));
                     case nameof(this.FileName):
                         this.FileName = (string)value;
                         break;
                     case Constant.DatabaseColumn.ID:
-                        throw new NotSupportedException("ID is immutable.");
+                        throw new NotSupportedException(App.FindResource<string>(Constant.ResourceKey.ImageRowIDImmutable));
                     case Constant.FileColumn.Classification:
                         this.Classification = (FileClassification)value;
                         break;
@@ -221,7 +221,7 @@ namespace Carnassial.Data
                         this.RelativePath = (string)value;
                         break;
                     case Constant.FileColumn.UtcOffset:
-                        throw new NotSupportedException("UtcOffset must be set through DateTimeOffset.");
+                        throw new NotSupportedException(App.FindResource<string>(Constant.ResourceKey.ImageRowSetUtcOffsetThroughDateTimeOffset));
                     // user defined controls
                     default:
                         FileTableColumn userColumn = this.table.UserColumnsByName[propertyName];
@@ -934,7 +934,10 @@ namespace Carnassial.Data
             {
                 if (stream.Length < Constant.Images.SmallestValidJpegSizeInBytes)
                 {
-                    return null;
+                    return new CachedImage()
+                    {
+                        ImageNotDecodable = true
+                    };
                 }
 
                 byte[] buffer = new byte[stream.Length];

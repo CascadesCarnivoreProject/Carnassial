@@ -125,7 +125,7 @@ namespace Carnassial.Images
         {
             if (this.Metadata == null)
             {
-                throw new NotSupportedException("Call " + nameof(this.TryGetMetadata) + "() before calling " + nameof(this.TryGetInfoBarHeight) + "().");
+                throw new NotSupportedException(App.FormatResource(Constant.ResourceKey.JpegImageMetadataRequired, nameof(this.TryGetMetadata), nameof(this.TryGetInfoBarHeight)));
             }
 
             infoBarHeight = 0;
@@ -170,7 +170,7 @@ namespace Carnassial.Images
         {
             if (this.Metadata == null)
             {
-                throw new NotSupportedException("Call " + nameof(this.TryGetMetadata) + "() before calling " + nameof(this.TryGetThumbnail) + "().");
+                throw new NotSupportedException(App.FormatResource(Constant.ResourceKey.JpegImageMetadataRequired, nameof(this.TryGetMetadata), nameof(this.TryGetThumbnail) + "()."));
             }
 
             ExifThumbnailDirectory thumbnailDirectory = this.Metadata.OfType<ExifThumbnailDirectory>().FirstOrDefault();

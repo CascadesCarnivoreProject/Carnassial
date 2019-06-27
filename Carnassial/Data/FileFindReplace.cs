@@ -32,7 +32,7 @@ namespace Carnassial.Data
             List<ControlRow> visibleControls = fileDatabase.Controls.Where(control => control.Visible).ToList();
             if (visibleControls.Count < 1)
             {
-                throw new ArgumentOutOfRangeException(nameof(fileDatabase), "No controls are visible.");
+                throw new ArgumentOutOfRangeException(nameof(fileDatabase), App.FindResource<string>(Constant.ResourceKey.FileFindReplaceNoControlsVisible));
             }
 
             foreach (ControlRow control in visibleControls)

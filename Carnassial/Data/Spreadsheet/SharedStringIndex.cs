@@ -48,7 +48,7 @@ namespace Carnassial.Data.Spreadsheet
 
                     if (sharedStringCount != uniqueSharedStringCount)
                     {
-                        throw new NotSupportedException("Shared string table contains duplicate or missing entries.");
+                        throw new NotSupportedException(App.FindResource<string>(Constant.ResourceKey.SharedStringIndexDuplicateOrMissing));
                     }
 
                     status.BeginExcelLoad(sharedStringCount);
@@ -63,7 +63,7 @@ namespace Carnassial.Data.Spreadsheet
                         {
                             if (reader.ReadToDescendant(Constant.OpenXml.Element.SharedStringText, Constant.OpenXml.Namespace) == false)
                             {
-                                throw new XmlException("Could not locate value of shared string.");
+                                throw new XmlException(App.FindResource<string>(Constant.ResourceKey.SharedStringIndexNoSharedString));
                             }
                             string value = reader.ReadElementContentAsString();
                             this.sharedStrings.Add(value, this.sharedStrings.Count);
@@ -123,7 +123,7 @@ namespace Carnassial.Data.Spreadsheet
                     string sharedStringCountAsString = reader.GetAttribute(Constant.OpenXml.Attribute.CountAttribute);
                     if (sharedStringCountAsString == null)
                     {
-                        throw new XmlException("Could not locate count of entries in shared string table.");
+                        throw new XmlException(App.FindResource<string>(Constant.ResourceKey.SpreadsheetReaderWriterNoStringTableCount));
                     }
                     int sharedStringCount = Int32.Parse(sharedStringCountAsString, NumberStyles.None, Constant.InvariantCulture);
                     status.BeginExcelLoad(sharedStringCount);
@@ -138,7 +138,7 @@ namespace Carnassial.Data.Spreadsheet
                         {
                             if (reader.ReadToDescendant(Constant.OpenXml.Element.SharedStringText, Constant.OpenXml.Namespace) == false)
                             {
-                                throw new XmlException("Could not locate value of shared string.");
+                                throw new XmlException(App.FindResource<string>(Constant.ResourceKey.SharedStringIndexNoSharedString));
                             }
                             sharedStrings.Add(reader.ReadElementContentAsString());
                             reader.ReadEndElement();

@@ -29,7 +29,7 @@ namespace Carnassial.Interop
             {
                 if ((taskID < 0) || (taskID > 31))
                 {
-                    throw new ArgumentOutOfRangeException(nameof(taskID), "Task ID must be positive and fit within a 64 bit processor affinity mask.");
+                    throw new ArgumentOutOfRangeException(nameof(taskID), App.FindResource<string>(Constant.ResourceKey.HyperthreadSiblingAffinityTaskID));
                 }
 
                 Thread.BeginThreadAffinity();

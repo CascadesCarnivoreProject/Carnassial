@@ -1,8 +1,13 @@
 ﻿using Carnassial.Command;
+using Carnassial.Dialog;
 using Carnassial.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Windows;
+using System.Windows.Documents;
 
 namespace Carnassial.UnitTests
 {
@@ -18,7 +23,7 @@ namespace Carnassial.UnitTests
         [ClassInitialize]
         public static void ClassInitialize(TestContext testContext)
         {
-            CarnassialTest.TryChangeToTestCultures();
+            CarnassialTest.TryChangeToTestCulture();
         }
 
         /// <summary>
@@ -122,6 +127,62 @@ namespace Carnassial.UnitTests
 
             Assert.IsTrue(mruList.TryGetLeastRecent(out int leastRecent));
             Assert.IsTrue(leastRecent == 4);
+        }
+
+        [TestMethod]
+        public void ResourceKeys()
+        {
+            foreach (FieldInfo field in typeof(Constant.ResourceKey).GetFields(BindingFlags.Public | BindingFlags.Static))
+            {
+                string resourceKey = (string)field.GetValue(null);
+                if (String.Equals(resourceKey, Constant.ResourceKey.ApplicationWindowException, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowClockDriftFailed, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowCopyFileFailed, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowDatabaseLoadFailed, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowDaylightSavingsFailed, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowFileMoveIncomplete, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowExportSpreadsheetFailed, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowImageMetadataFailed, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowImport, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowImportFailed, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowImportIncomplete, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowNoAmbiguousDates, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowNoDeletableFiles, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowNoMetadataAvailable, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowSelectFolder, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowTemplateLoadFailed, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.DataEntryHandlerConfirmCopyAll, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.DataEntryHandlerConfirmCopyForward, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.DataEntryHandlerConfirmPropagateToHere, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.DataEntryHandlerNothingToCopyForward, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.DataEntryHandlerNothingToPropagate, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.DeleteFilesMessageCurrentFileAndData, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.DeleteFilesMessageCurrentFileOnly, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.DeleteFilesMessageFilesAndData, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.DeleteFilesMessageFilesOnly, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.GithubReleaseClientGetNewVersion, StringComparison.OrdinalIgnoreCase) ||
+                    String.Equals(resourceKey, Constant.ResourceKey.GithubReleaseClientNoUpdates, StringComparison.OrdinalIgnoreCase))
+                {
+                    Message message = App.FindResource<Message>(resourceKey);
+                    Assert.IsTrue(message != null);
+                }
+                else if (String.Equals(resourceKey, Constant.ResourceKey.AboutTermsOfUse, StringComparison.OrdinalIgnoreCase))
+                {
+                    Span span = App.FindResource<Span>(resourceKey);
+                    Assert.IsTrue(span != null);
+                }
+                else if (String.Equals(resourceKey, Constant.ResourceKey.SearchTermListCellMargin, StringComparison.OrdinalIgnoreCase))
+                {
+                    Thickness thickness = App.FindResource<Thickness>(resourceKey);
+                    Assert.IsTrue(thickness != null);
+                }
+                else
+                {
+                    // strings
+                    string resource = App.FindResource<string>(resourceKey);
+                    Assert.IsTrue(String.IsNullOrWhiteSpace(resource) == false);
+                }
+            }
         }
 
         /// <summary>
