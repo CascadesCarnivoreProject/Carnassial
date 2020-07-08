@@ -1974,10 +1974,20 @@ namespace Carnassial
 
         public async Task ShowFileAsync(int fileIndex)
         {
-            await this.ShowFileAsync(fileIndex, true).ConfigureAwait(true);
+            await this.ShowFileAsync(fileIndex, Constant.DefaultPrefetchStride, true).ConfigureAwait(true);
         }
 
         public async Task ShowFileAsync(int fileIndex, bool generateUndoRedoCommands)
+        {
+            await this.ShowFileAsync(fileIndex, Constant.DefaultPrefetchStride, generateUndoRedoCommands).ConfigureAwait(true);
+        }
+
+        public async Task ShowFileAsync(int fileIndex, int prefetchStride)
+        {
+            await this.ShowFileAsync(fileIndex, prefetchStride, true).ConfigureAwait(true);
+        }
+
+        public async Task ShowFileAsync(int fileIndex, int prefetchStride, bool generateUndoRedoCommands)
         {
             // if there is no file to show, then show an image indicating no image set or an empty image set
             if ((this.IsFileDatabaseAvailable() == false) || (this.DataHandler.FileDatabase.CurrentlySelectedFileCount < 1))
@@ -2022,7 +2032,6 @@ namespace Carnassial
             // This should be the only place where code in CarnassialWindow moves the file enumerator
             // - database synchronization logic above depends on this
             // - image caching logic below depends on this
-            int prefetchStride = 1;
             if (this.State.FileNavigatorSliderDragging)
             {
                 prefetchStride = 0;
@@ -2125,7 +2134,7 @@ namespace Carnassial
 
             // show the new file
             this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(false);
-            await this.ShowFileAsync(newFileIndex).ConfigureAwait(true);
+            await this.ShowFileAsync(newFileIndex, prefetchStride).ConfigureAwait(true);
             this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(true);
         }
 
@@ -2874,24 +2883,30 @@ namespace Carnassial
                     }
                     break;
                 case Key.Space:
-                    // if the current file's a video allow the user to hit the space bar to start or stop playing the video
-                    // This is desirable as the play or pause button doesn't necessarily have focus and it saves the user having to click the button with
-                    // the mouse.
-                    if (Keyboard.Modifiers == ModifierKeys.Control)
+                    if (Keyboard.Modifiers == ModifierKeys.None)
                     {
-                        // since the check before this switch stops any current play, only respond to this key if it's a request to
+                        // since the check near the start of Window_KeyDown() stops any current play, only respond to this key if it's a request to
                         // start a play
-                        // Without this check, MenuViewPlayFiles_Click() would be called twice if the user uses ctrl+enter to stop a
+                        // Without this check, MenuViewPlayFiles_Click() would be called twice if the user uses ctrl+space to stop a
                         // file play, resulting in the keystroke causing file play to continue.
                         if (wasPlayingFiles == false)
                         {
                             this.MenuViewPlayFiles_Click(this, null);
+                            currentKey.Handled = true;
+                            return;
                         }
                     }
-                    else if (this.FileDisplay.TryPlayOrPauseVideo() == false)
+                    else if (Keyboard.Modifiers == ModifierKeys.Control)
                     {
-                        currentKey.Handled = true;
-                        return;
+                        // if the current file's a video allow the user to hit ctrl+space to start or stop playing the video
+                        // This is desirable as the play or pause button doesn't necessarily have focus and it saves the user having to click the button with
+                        // the mouse. If needed, video play and file play can be integrated but, for the moment, it seems most useful to distinguish between
+                        // the two in the keyboard shortcuts.
+                        if (this.FileDisplay.TryPlayOrPauseVideo() == false)
+                        {
+                            currentKey.Handled = true;
+                            return;
+                        }
                     }
                     break;
                 case Key.U:

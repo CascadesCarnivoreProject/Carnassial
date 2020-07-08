@@ -18,6 +18,7 @@ namespace Carnassial
         public const string ApplicationName = "Carnassial";
         public const string Debug = "DEBUG";
         public const int DefaultControlGridWidth = 300; // keep in sync with DefaultControlGridWidth in CarnassialWindowStyle.xaml
+        public const int DefaultPrefetchStride = 1;
         public const int LargeNumberOfFilesToDelete = 100;
         public const string MainWindowBaseTitle = "Carnassial: Simplifying Remote Camera Data";
         public const int MaximumUndoableCommands = 100;

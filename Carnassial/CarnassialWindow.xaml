@@ -242,8 +242,8 @@
                         </MenuItem>
                     </MenuItem>
                     <Separator />
-                    <MenuItem Name="MenuViewPlayFiles" Header="{StaticResource CarnassialWindow.MenuView.PlayFiles}" Click="MenuViewPlayFiles_Click" InputGestureText="Ctrl+Space" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuView.PlayFilesToolTip}" />
-                    <MenuItem Name="MenuViewPlayVideo" Header="{StaticResource CarnassialWindow.MenuView.PlayVideo}" InputGestureText="Space" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuView.PlayVideoToolTip}">
+                    <MenuItem Name="MenuViewPlayFiles" Header="{StaticResource CarnassialWindow.MenuView.PlayFiles}" Click="MenuViewPlayFiles_Click" InputGestureText="Space" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuView.PlayFilesToolTip}" />
+                    <MenuItem Name="MenuViewPlayVideo" Header="{StaticResource CarnassialWindow.MenuView.PlayVideo}" InputGestureText="Ctrl+Space" Style="{StaticResource ApplicationMenuItem}" ToolTip="{StaticResource CarnassialWindow.MenuView.PlayVideoToolTip}">
                         <MenuItem.Icon>
                             <Image Source="Resources/Menu/PlayVideo_16x.png" />
                         </MenuItem.Icon>
