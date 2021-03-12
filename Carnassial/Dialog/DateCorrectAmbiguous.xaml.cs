@@ -70,7 +70,7 @@ namespace Carnassial.Dialog
                 this.ambiguousDatesList.Add(new AmbiguousDate(start, end, count, false));
                 start = this.SearchForNextAmbiguousDateInSelectedFiles(end + 1);
             }
-            return (this.ambiguousDatesList.Count > 0) ? true : false;
+            return (this.ambiguousDatesList.Count > 0);
         }
 
         // Starting from the index, navigate successive file rows until an ambiguous date is found
@@ -240,15 +240,11 @@ namespace Carnassial.Dialog
         // Actually update the dates as needed
         private void ApplyDateTimeChanges()
         {
-            foreach (AmbiguousDate ambDate in this.ambiguousDatesList)
+            foreach (AmbiguousDate ambiguousDate in this.ambiguousDatesList)
             {
-                ImageRow imageProperties;
-                imageProperties = this.database.Files[ambDate.StartRange];
-                string newDate = String.Empty;
-
-                if (ambDate.Swapped)
+                if (ambiguousDate.Swapped)
                 {
-                    this.database.ExchangeDayAndMonthInFileDates(ambDate.StartRange, ambDate.EndRange);
+                    this.database.ExchangeDayAndMonthInFileDates(ambiguousDate.StartRange, ambiguousDate.EndRange);
                 }
             }
         }

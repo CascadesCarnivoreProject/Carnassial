@@ -69,12 +69,12 @@ namespace Carnassial.Dialog
 
         private void CancelDoneButton_Click(object sender, RoutedEventArgs e)
         {
-            this.DialogResult = ((string)this.CancelDone.Content == "Cancel") ? false : true;
+            this.DialogResult = (string)this.CancelDone.Content != "Cancel";
         }
 
         private void ClearIfNoMetadata_Checked(object sender, RoutedEventArgs e)
         {
-            this.clearIfNoMetadata = (this.ClearIfNoMetadata.IsChecked == true) ? true : false;
+            this.clearIfNoMetadata = this.ClearIfNoMetadata.IsChecked == true;
         }
 
         private void NoteFieldsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)

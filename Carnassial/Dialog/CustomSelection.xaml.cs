@@ -57,7 +57,7 @@ namespace Carnassial.Dialog
         private void UpdateFileCount()
         {
             int count = this.fileDatabase.GetFileCount(FileSelection.Custom);
-            this.OkButton.IsEnabled = count > 0 ? true : false;
+            this.OkButton.IsEnabled = count > 0;
             this.QueryMatches.Text = count > 0 ? count.ToString(CultureInfo.CurrentCulture) : "0";
         }
 

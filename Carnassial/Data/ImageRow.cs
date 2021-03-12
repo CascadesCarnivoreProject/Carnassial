@@ -322,7 +322,6 @@ namespace Carnassial.Data
             }
         }
 
-        [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1126:PrefixCallsCorrectly", Justification = "StyleCop bug.")]
         public static string GetDataBindingPath(ControlRow control)
         {
             string dataLabel = control.DataLabel;

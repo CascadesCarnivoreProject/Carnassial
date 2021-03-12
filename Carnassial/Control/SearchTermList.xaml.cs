@@ -13,7 +13,6 @@ namespace Carnassial.Control
         private readonly Dictionary<string, ControlRow> controlsByLabel;
         private FileDatabase fileDatabase;
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1009:DeclareEventHandlersCorrectly")]
         public event Action QueryChanged;
 
         public SearchTermList()

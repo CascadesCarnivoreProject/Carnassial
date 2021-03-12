@@ -1,4 +1,4 @@
-#include "StdafxClr.h"
+#include "PchClr.h"
 #include <stdexcept>
 #include "MemoryImage.h"
 #include "NativeProcessor.h"

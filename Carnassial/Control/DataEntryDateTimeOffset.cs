@@ -33,19 +33,19 @@ namespace Carnassial.Control
         public override void SetValue(object valueAsObject)
         {
             DateTimeOffset value;
-            if (valueAsObject is string)
+            if (valueAsObject is string valueAsString)
             {
-                if (DateTimeHandler.TryParseDateTimeOffset((string)valueAsObject, out value) == false)
+                if (DateTimeHandler.TryParseDateTimeOffset(valueAsString, out value) == false)
                 {
-                    if (DateTimeHandler.TryParseDisplayDateTime((string)valueAsObject, out value) == false)
+                    if (DateTimeHandler.TryParseDisplayDateTime(valueAsString, out value) == false)
                     {
                         throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format(CultureInfo.CurrentCulture, "Unsupported date time format {0}.", valueAsObject));
                     }
                 }
             }
-            else if (valueAsObject is DateTimeOffset)
+            else if (valueAsObject is DateTimeOffset dateTimeOffset)
             {
-                value = (DateTimeOffset)valueAsObject;
+                value = dateTimeOffset;
             }
             else
             {

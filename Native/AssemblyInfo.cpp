@@ -1,4 +1,4 @@
-#include "StdafxClr.h"
+#include "PchClr.h"
 
 using namespace System;
 using namespace System::Reflection;

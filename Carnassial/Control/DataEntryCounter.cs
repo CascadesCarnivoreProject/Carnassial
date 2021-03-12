@@ -41,7 +41,7 @@ namespace Carnassial.Control
 
         public bool IsSelected
         {
-            get { return this.LabelControl.IsChecked.HasValue ? (bool)this.LabelControl.IsChecked : false; }
+            get { return this.LabelControl.IsChecked.HasValue && (bool)this.LabelControl.IsChecked; }
         }
 
         /// <summary>Ensures only numbers are entered for counters.</summary>

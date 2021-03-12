@@ -67,9 +67,9 @@ namespace Carnassial.Data
 
         public override bool Equals(object obj)
         {
-            if (obj is CustomSelection)
+            if (obj is CustomSelection customSelection)
             {
-                return this.Equals((CustomSelection)obj);
+                return this.Equals(customSelection);
             }
             return false;
         }

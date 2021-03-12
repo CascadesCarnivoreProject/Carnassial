@@ -1,4 +1,4 @@
-#include "Stdafx.h"
+#include "Pch.h"
 #include <algorithm>
 #include <immintrin.h>
 #include "NativeImage.h"

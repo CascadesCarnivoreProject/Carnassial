@@ -456,7 +456,6 @@ namespace Carnassial
             public const string RootKey = @"Software\Cascades Carnivore Project\Carnassial\2.0";
         }
 
-        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1310:FieldNamesMustNotContainUnderscore", Justification = "Readability")]
         public static class Release
         {
             public static readonly Version V2_2_0_3 = new Version(2, 2, 0, 3);
@@ -725,7 +724,6 @@ namespace Carnassial
             public static readonly ReadOnlyCollection<string> Localizations = new List<string>() { "ar", "es", "hi", "ms", "ru", "zh-Hans" }.AsReadOnly();
         }
 
-        [SuppressMessage("StyleCop.CSharp.NamingRules", "SA1310:FieldNamesMustNotContainUnderscore", Justification = "Win32 naming.")]
         public static class Win32Messages
         {
             public const int WM_MOUSEHWHEEL = 0x20e;

@@ -170,9 +170,9 @@ namespace Carnassial.Data
 
         protected object ConvertDatabaseValue(object value)
         {
-            if (value is string)
+            if (value is string valueAsString)
             {
-                return this.ConvertWellKnownValue((string)value);
+                return this.ConvertWellKnownValue(valueAsString);
             }
 
             if (this.databaseColumnType == typeof(DateTime))
@@ -248,9 +248,9 @@ namespace Carnassial.Data
 
         public override bool Equals(object obj)
         {
-            if (obj is SearchTerm)
+            if (obj is SearchTerm searchTerm)
             {
-                return this.Equals((SearchTerm)obj);
+                return this.Equals(searchTerm);
             }
             return false;
         }

@@ -53,9 +53,9 @@ namespace Carnassial.Database
                     // If so, nulls need also to be matched as NULL and empty are considered interchangeable.
                     string quotedColumn = SQLiteDatabase.QuoteIdentifier(clause.Column);
                     bool valueIsNullOrEmpty = clause.Value == null;
-                    if (clause.Value is string)
+                    if (clause.Value is string valueAsString)
                     {
-                        valueIsNullOrEmpty = String.IsNullOrEmpty((string)clause.Value);
+                        valueIsNullOrEmpty = String.IsNullOrEmpty(valueAsString);
                     }
                     if (valueIsNullOrEmpty && (clause.Operator == Constant.SearchTermOperator.Equal))
                     {

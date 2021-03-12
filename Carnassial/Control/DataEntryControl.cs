@@ -142,7 +142,6 @@ namespace Carnassial.Control
     // A generic control comprises a stack panel containing 
     // - a control containing at least a descriptive label 
     // - another control for displaying / entering data at a given width
-    [SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1402:FileMayOnlyContainASingleClass", Justification = "StyleCop limitation.")]
     public abstract class DataEntryControl<TContent, TLabel> : DataEntryControl
         where TContent : WpfControl, new()
         where TLabel : ContentControl, new()

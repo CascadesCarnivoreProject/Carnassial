@@ -40,11 +40,11 @@ namespace Carnassial.Dialog
             foreach (ImageRow file in this.fileDatabase.Files)
             {
                 string newDateTime = String.Empty;
-                string status = "Skipped: invalid date/time";
                 DateTimeOffset currentFileDateTime = file.DateTimeOffset;
                 TimeSpan utcOffset = newTimeZone.GetUtcOffset(currentFileDateTime);
                 DateTimeOffset previewFileDateTime = currentFileDateTime.SetOffset(utcOffset);
 
+                string status;
                 // Pretty print the adjustment time
                 if (currentFileDateTime != previewFileDateTime)
                 {

@@ -1,4 +1,4 @@
-#include "StdafxClr.h"
+#include "PchClr.h"
 #include <CodeAnalysis/sourceannotations.h>
 #include <Windows.h>
 #include "Processor.h"

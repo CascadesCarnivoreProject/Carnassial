@@ -50,7 +50,6 @@ namespace Carnassial.Control
             return this.Autocompletions.IndexOf(this.Text);
         }
 
-        [SuppressMessage("StyleCop.CSharp.ReadabilityRules", "SA1126:PrefixCallsCorrectly", Justification = "StyleCop bug.")]
         private void OnPreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (this.SuppressAutocompletion)

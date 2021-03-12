@@ -143,11 +143,11 @@ namespace Carnassial.Dialog
             foreach (ImageRow file in this.fileDatabase.Files)
             {
                 string newDateTime = String.Empty;
-                string status = "Skipped: invalid date/time";
                 string difference = String.Empty;
                 DateTimeOffset imageDateTime = file.DateTimeOffset;
 
                 TimeSpan adjustment = this.GetAdjustment(intervalFromCorrectToMeasured, imageDateTime);
+                string status;
                 if (adjustment.Duration() >= Constant.Time.DateTimeDatabaseResolution)
                 {
                     difference = DateTimeHandler.ToDisplayTimeSpanString(adjustment);

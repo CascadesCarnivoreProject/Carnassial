@@ -218,7 +218,7 @@ namespace Carnassial.Control
             }
 
             int filesAffected = this.FileDatabase.CurrentlySelectedFileCount - this.ImageCache.CurrentRow - 1;
-            return (filesAffected > 0) ? true : false;
+            return filesAffected > 0;
         }
 
         // return true if there is a non-empty value available
@@ -450,13 +450,13 @@ namespace Carnassial.Control
                 // for complex controls which dynamic generate child controls, such as date time pickers, the tag of the focused element can't be set
                 // so try to locate a parent of the focused element with a tag indicating the control
                 FrameworkElement parent = null;
-                if (focusedFrameworkElement.Parent != null && focusedFrameworkElement.Parent is FrameworkElement)
+                if (focusedFrameworkElement.Parent != null && focusedFrameworkElement.Parent is FrameworkElement parentElement)
                 {
-                    parent = (FrameworkElement)focusedFrameworkElement.Parent;
+                    parent = parentElement;
                 }
-                else if (focusedFrameworkElement.TemplatedParent != null && focusedFrameworkElement.TemplatedParent is FrameworkElement)
+                else if (focusedFrameworkElement.TemplatedParent != null && focusedFrameworkElement.TemplatedParent is FrameworkElement frameworkElement)
                 {
-                    parent = (FrameworkElement)focusedFrameworkElement.TemplatedParent;
+                    parent = frameworkElement;
                 }
 
                 if (parent != null)

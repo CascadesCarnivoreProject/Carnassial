@@ -431,7 +431,7 @@ namespace Carnassial.Data
 
         public bool IsFileRowInRange(int fileIndex)
         {
-            return (fileIndex >= 0) && (fileIndex < this.CurrentlySelectedFileCount) ? true : false;
+            return (fileIndex >= 0) && (fileIndex < this.CurrentlySelectedFileCount);
         }
 
         public List<string> MoveSelectedFilesToFolder(string destinationFolderPath)

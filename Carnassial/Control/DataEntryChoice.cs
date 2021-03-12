@@ -55,9 +55,9 @@ namespace Carnassial.Control
             List<string> choices = new List<string>();
             foreach (object item in this.ContentControl.Items)
             {
-                if (item is string)
+                if (item is string wellKnownString)
                 {
-                    choices.Add((string)item);
+                    choices.Add(wellKnownString);
                 }
             }
             return choices;

@@ -31,14 +31,14 @@ namespace Carnassial.Util
             }
 
             // smallest size for integer registry values is a DWORD, so bytes are written as such and need to be read as such
-            if (value is Int32)
+            if (value is Int32 valueAsInt32)
             {
-                return (byte)((Int32)value);
+                return (byte)valueAsInt32;
             }
 
-            if (value is string)
+            if (value is string valueAsString)
             {
-                return Byte.Parse((string)value, CultureInfo.InvariantCulture);
+                return Byte.Parse(valueAsString, CultureInfo.InvariantCulture);
             }
 
             throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Registry key {0}\\{1} has unhandled type {2}.", registryKey.Name, subKeyPath, value.GetType().FullName));
@@ -102,9 +102,9 @@ namespace Carnassial.Util
                 return (int)value;
             }
 
-            if (value is string)
+            if (value is string valueAsString)
             {
-                return Int32.Parse((string)value, NumberStyles.AllowLeadingSign, Constant.InvariantCulture);
+                return Int32.Parse(valueAsString, NumberStyles.AllowLeadingSign, Constant.InvariantCulture);
             }
 
             throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Registry key {0}\\{1} has unhandled type {2}.", registryKey.Name, subKeyPath, value.GetType().FullName));

@@ -90,12 +90,10 @@ namespace Carnassial.Control
             this.SizeChanged += this.MarkableCanvas_SizeChanged;
         }
 
-#pragma warning disable CA2227 // Collection properties should be read only
         /// <summary>
         /// Gets or sets the markers on the image.
         /// </summary>
         public List<Marker> Markers
-#pragma warning restore CA2227 // Collection properties should be read only
         {
             get
             {
