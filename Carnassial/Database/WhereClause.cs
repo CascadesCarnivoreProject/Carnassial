@@ -7,9 +7,9 @@ namespace Carnassial.Database
         public string Column { get; private set; }
         public string Operator { get; set; }
         public string ParameterName { get; private set; }
-        public object Value { get; private set; }
+        public object? Value { get; private set; }
 
-        public WhereClause(string column, string op, object value)
+        public WhereClause(string column, string op, object? value)
         {
             if (String.IsNullOrEmpty(column))
             {

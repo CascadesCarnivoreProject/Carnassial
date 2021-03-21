@@ -17,7 +17,7 @@ namespace Carnassial.Data
         {
             get
             {
-                if (this.autocompletionsByDataLabel.TryGetValue(dataLabel, out List<string> autocompletions))
+                if (this.autocompletionsByDataLabel.TryGetValue(dataLabel, out List<string>? autocompletions))
                 {
                     return autocompletions;
                 }

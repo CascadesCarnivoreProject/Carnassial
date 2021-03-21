@@ -1,4 +1,5 @@
 ﻿using Carnassial.Data;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Carnassial.Command
@@ -17,11 +18,13 @@ namespace Carnassial.Command
 
         public override bool CanExecute(CarnassialWindow carnassial)
         {
+            Debug.Assert(carnassial.IsFileDatabaseAvailable());
             return (this.IsExecuted == false) && carnassial.DataHandler.FileDatabase.IsFileRowInRange(this.newFileIndex);
         }
 
         public override bool CanUndo(CarnassialWindow carnassial)
         {
+            Debug.Assert(carnassial.IsFileDatabaseAvailable());
             return this.IsExecuted && carnassial.DataHandler.FileDatabase.IsFileRowInRange(this.previousFileIndex);
         }
 

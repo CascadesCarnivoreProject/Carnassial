@@ -14,8 +14,6 @@ namespace Carnassial.Editor.Dialog
     // Note: Lots of commonalities between this dialog and PopulateFieldWithMetadata, but its not clear if it's worth the effort of factoring the two.
     public partial class InspectMetadata : WindowWithSystemMenu
     {
-        private string filePath;
-
         public InspectMetadata(Window owner)
         {
             this.InitializeComponent();
@@ -32,12 +30,12 @@ namespace Carnassial.Editor.Dialog
         private void OpenFile_Click(object sender, RoutedEventArgs e)
         {
             string filter = String.Format(CultureInfo.CurrentCulture, "Images and videos (*{0};*{1};*{2})|*{0};*{1};*{2}", Constant.File.JpgFileExtension, Constant.File.AviFileExtension, Constant.File.Mp4FileExtension);
-            if (CommonUserInterface.TryGetFileFromUser("Select a typical file to inspect", Constant.File.CurrentDirectory, filter, out this.filePath))
+            if (CommonUserInterface.TryGetFileFromUser("Select a typical file to inspect", Constant.File.CurrentDirectory, filter, out string? selectedFilePath))
             {
-                this.ImageName.Content = Path.GetFileName(this.filePath);
-                if (JpegImage.IsJpeg(this.filePath))
+                this.ImageName.Content = Path.GetFileName(selectedFilePath);
+                if (JpegImage.IsJpeg(selectedFilePath))
                 {
-                    this.DataGrid.ItemsSource = JpegImage.LoadMetadata(this.filePath).SelectMany(directory => directory.Tags);
+                    this.DataGrid.ItemsSource = JpegImage.LoadMetadata(selectedFilePath).SelectMany(directory => directory.Tags);
                     this.DataGrid.SortByFirstTwoColumnsAscending();
                 }
                 else

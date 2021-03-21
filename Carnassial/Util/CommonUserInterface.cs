@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.IO;
 using System.Windows;
@@ -57,7 +58,7 @@ namespace Carnassial.Util
                 window.Top = 0;
             }
 
-            Rectangle windowPosition = new Rectangle((int)window.Left, (int)window.Top, (int)window.Width, (int)window.Height);
+            Rectangle windowPosition = new((int)window.Left, (int)window.Top, (int)window.Width, (int)window.Height);
             Rectangle workingArea = Screen.GetWorkingArea(windowPosition);
             bool windowFitsInWorkingArea = true;
 
@@ -100,9 +101,9 @@ namespace Carnassial.Util
             return windowFitsInWorkingArea;
         }
 
-        public static bool TryGetFileFromUser(string title, string defaultFilePath, string filter, out string selectedFilePath)
+        public static bool TryGetFileFromUser(string title, string? defaultFilePath, string filter, [NotNullWhen(true)] out string? selectedFilePath)
         {
-            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            using (OpenFileDialog openFileDialog = new())
             {
                 openFileDialog.AutoUpgradeEnabled = true;
                 openFileDialog.CheckFileExists = true;

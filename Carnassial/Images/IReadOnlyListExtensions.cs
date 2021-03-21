@@ -7,7 +7,7 @@ namespace Carnassial.Images
 {
     public static class IReadOnlyListExtensions
     {
-        public static bool TryGetMetadataValue(this IReadOnlyList<MetadataDirectory> metadata, Tag metadataField, out string metadataValue)
+        public static bool TryGetMetadataValue(this IReadOnlyList<MetadataDirectory> metadata, Tag metadataField, out string? metadataValue)
         {
             foreach (MetadataDirectory directory in metadata)
             {

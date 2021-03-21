@@ -21,6 +21,24 @@ namespace Carnassial.UnitTests
         public bool Visible { get; set; }
         public string WellKnownValues { get; set; }
 
+        public ControlExpectations()
+        {
+            this.AnalysisLabel = false;
+            this.ControlOrder = -1;
+            this.Copyable = false;
+            this.DataLabel = String.Empty;
+            this.DefaultValue = String.Empty;
+            this.ID = -1;
+            this.Index = false;
+            this.Label = String.Empty;
+            this.MaxWidth = -1;
+            this.SpreadsheetOrder = -1;
+            this.Tooltip = String.Empty;
+            this.Type = (ControlType)(-1);
+            this.Visible = false;
+            this.WellKnownValues = String.Empty;
+        }
+
         public static ControlExpectations CreateCounter(string dataLabel, long id)
         {
             return ControlExpectations.CreateCounter(dataLabel, id, id, id);

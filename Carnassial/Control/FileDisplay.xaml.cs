@@ -46,11 +46,6 @@ namespace Carnassial.Control
 
         public void Display(CachedImage image)
         {
-            if (image == null)
-            {
-                throw new ArgumentNullException(nameof(image));
-            }
-
             if (image.ImageNotDecodable)
             {
                 this.Display(Constant.Images.FileCorruptMessage);
@@ -69,7 +64,7 @@ namespace Carnassial.Control
 
         public async Task DisplayAsync(string folderPath, ImageCache imageCache)
         {
-            CachedImage image = imageCache.GetCurrentImage();
+            CachedImage? image = imageCache.GetCurrentImage();
             if (image != null)
             {
                 this.Display(image);
@@ -80,8 +75,9 @@ namespace Carnassial.Control
             }
         }
 
-        public async Task DisplayAsync(string folderPath, ImageRow file)
+        public async Task DisplayAsync(string folderPath, ImageRow? file)
         {
+            Debug.Assert(file != null);
             if (file.IsVideo)
             {
                 this.Display(file.GetFileInfo(folderPath));
@@ -103,10 +99,8 @@ namespace Carnassial.Control
                     expectedDisplayWidth = (int)(4.0 / 3.0 * this.ActualHeight);
                 }
 
-                using (CachedImage image = await file.TryLoadImageAsync(folderPath, expectedDisplayWidth).ConfigureAwait(true))
-                {
-                    this.Display(image);
-                }
+                using CachedImage image = await file.TryLoadImageAsync(folderPath, expectedDisplayWidth).ConfigureAwait(true);
+                this.Display(image);
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using Carnassial.Data;
+using System.Diagnostics;
 
 namespace Carnassial.Command
 {
@@ -16,6 +17,7 @@ namespace Carnassial.Command
 
         public override void Execute(CarnassialWindow carnassial)
         {
+            Debug.Assert(carnassial.IsFileDatabaseAvailable());
             carnassial.DataHandler.FileDatabase.CustomSelection = this.newSelection;
             this.IsExecuted = true;
         }
@@ -32,6 +34,7 @@ namespace Carnassial.Command
 
         public override void Undo(CarnassialWindow carnassial)
         {
+            Debug.Assert(carnassial.IsFileDatabaseAvailable());
             carnassial.DataHandler.FileDatabase.CustomSelection = this.previousSelection;
             this.IsExecuted = false;
         }

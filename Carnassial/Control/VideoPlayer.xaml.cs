@@ -48,7 +48,7 @@ namespace Carnassial.Control
             this.Video.Play();
         }
 
-        private void PlayOrPause_Click(object sender, RoutedEventArgs e)
+        private void PlayOrPause_Click(object sender, RoutedEventArgs? e)
         {
             if (this.PlayOrPause.IsChecked == true)
             {
@@ -92,7 +92,7 @@ namespace Carnassial.Control
             this.isProgrammaticUpdate = false;
         }
 
-        private void Timer_Tick(object sender, EventArgs e)
+        private void Timer_Tick(object? sender, EventArgs e)
         {
             if (this.Video.Source != null)
             {

@@ -5,7 +5,7 @@ namespace Carnassial.Dialog
 {
     public class DateTimeRereadResult : MetadataFieldResult
     {
-        public static new readonly DateTimeRereadResult Default = new DateTimeRereadResult();
+        public static new readonly DateTimeRereadResult Default = new();
 
         private DateTimeRereadResult()
             : base(null, null)
@@ -15,6 +15,11 @@ namespace Carnassial.Dialog
         public DateTimeRereadResult(FileLoad fileLoad, DateTimeOffset originalDateTime)
             : base(fileLoad.FileName)
         {
+            if (fileLoad.File == null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(fileLoad));
+            }
+
             if (fileLoad.MetadataReadResult == MetadataReadResults.None)
             {
                 this.Message = App.FindResource<string>(Constant.ResourceKey.DateTimeRereadResultFileDateTime);

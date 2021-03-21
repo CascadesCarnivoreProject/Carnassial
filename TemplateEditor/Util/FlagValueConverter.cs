@@ -8,7 +8,7 @@ namespace Carnassial.Editor.Util
 {
     internal class FlagValueConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value == null)
             {
@@ -19,32 +19,29 @@ namespace Carnassial.Editor.Util
             if (values.Count == 1)
             {
                 // default value case
-                return this.Convert((string)value);
+                return FlagValueConverter.Convert((string)value);
             }
 
             // well known values
-            List<string> displayWellKnownValues = new List<string>(values.Count);
+            List<string> displayWellKnownValues = new(values.Count);
             foreach (string wellKnownValue in values)
             {
-                displayWellKnownValues.Add(this.Convert(wellKnownValue));
+                displayWellKnownValues.Add(FlagValueConverter.Convert(wellKnownValue));
             }
             return displayWellKnownValues;
         }
 
-        private string Convert(string value)
+        private static string Convert(string value)
         {
-            switch (value)
+            return value switch
             {
-                case Constant.Sql.FalseString:
-                    return EditorConstant.Resources.DisplayFalseString;
-                case Constant.Sql.TrueString:
-                    return EditorConstant.Resources.DisplayTrueString;
-                default:
-                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled value '{0}'.", value));
-            }
+                Constant.Sql.FalseString => EditorConstant.Resources.DisplayFalseString,
+                Constant.Sql.TrueString => EditorConstant.Resources.DisplayTrueString,
+                _ => throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled value '{0}'.", value)),
+            };
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object? ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value == null)
             {
@@ -52,29 +49,26 @@ namespace Carnassial.Editor.Util
             }
             if (value is string valueAsString)
             {
-                return this.ConvertBack(valueAsString);
+                return FlagValueConverter.ConvertBack(valueAsString);
             }
 
             List<string> displayWellKnownValues = (List<string>)value;
-            List<string> wellKnownValues = new List<string>(displayWellKnownValues.Count);
+            List<string> wellKnownValues = new(displayWellKnownValues.Count);
             foreach (string displayWellKnownValue in displayWellKnownValues)
             {
-                wellKnownValues.Add(this.ConvertBack(displayWellKnownValue));
+                wellKnownValues.Add(FlagValueConverter.ConvertBack(displayWellKnownValue));
             }
             return WellKnownValueConverter.ConvertBack(wellKnownValues);
         }
 
-        private string ConvertBack(string value)
+        private static string ConvertBack(string value)
         {
-            switch (value)
+            return value switch
             {
-                case EditorConstant.Resources.DisplayFalseString:
-                    return Constant.Sql.FalseString;
-                case EditorConstant.Resources.DisplayTrueString:
-                    return Constant.Sql.TrueString;
-                default:
-                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled value '{0}'.", value));
-            }
+                EditorConstant.Resources.DisplayFalseString => Constant.Sql.FalseString,
+                EditorConstant.Resources.DisplayTrueString => Constant.Sql.TrueString,
+                _ => throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled value '{0}'.", value)),
+            };
         }
     }
 }

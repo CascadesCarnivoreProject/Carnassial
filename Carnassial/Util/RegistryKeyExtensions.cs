@@ -2,10 +2,12 @@
 using Microsoft.Win32;
 using System;
 using System.Globalization;
+using System.Runtime.Versioning;
 using System.Windows;
 
 namespace Carnassial.Util
 {
+    [SupportedOSPlatform(Constant.Platform.Windows)]
     public static class RegistryKeyExtensions
     {
         public static bool ReadBoolean(this RegistryKey registryKey, string subKeyPath, bool defaultValue)
@@ -24,7 +26,7 @@ namespace Carnassial.Util
 
         public static byte ReadByte(this RegistryKey registryKey, string subKeyPath, byte defaultValue)
         {
-            object value = registryKey.GetValue(subKeyPath);
+            object? value = registryKey.GetValue(subKeyPath);
             if (value == null)
             {
                 return defaultValue;
@@ -91,7 +93,7 @@ namespace Carnassial.Util
 
         public static int ReadInteger(this RegistryKey registryKey, string subKeyPath, int defaultValue)
         {
-            object value = registryKey.GetValue(subKeyPath);
+            object? value = registryKey.GetValue(subKeyPath);
             if (value == null)
             {
                 return defaultValue;
@@ -110,6 +112,7 @@ namespace Carnassial.Util
             throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Registry key {0}\\{1} has unhandled type {2}.", registryKey.Name, subKeyPath, value.GetType().FullName));
         }
 
+        [SupportedOSPlatform("windows")]
         public static Rect ReadRect(this RegistryKey registryKey, string subKeyPath, Rect defaultValue)
         {
             string rectAsString = registryKey.ReadString(subKeyPath);
@@ -123,20 +126,29 @@ namespace Carnassial.Util
         // read a REG_SZ key's value from the registry
         public static string ReadString(this RegistryKey registryKey, string subKeyPath)
         {
-            return (string)registryKey.GetValue(subKeyPath);
+            string? value = (string?)registryKey.GetValue(subKeyPath);
+            if (value == null)
+            {
+                throw new NotSupportedException("Registry key '" + registryKey.Name + "\\" + subKeyPath + " has a null value.");
+            }
+            return value;
         }
 
         // read a series of REG_SZ keys' values from the registry
         public static MostRecentlyUsedList<string> ReadMostRecentlyUsedList(this RegistryKey registryKey, string subKeyPath)
         {
-            RegistryKey subKey = registryKey.OpenSubKey(subKeyPath);
-            MostRecentlyUsedList<string> values = new MostRecentlyUsedList<string>(Constant.NumberOfMostRecentDatabasesToTrack);
+            RegistryKey? subKey = registryKey.OpenSubKey(subKeyPath);
+            if (subKey == null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(subKeyPath));
+            }
+            MostRecentlyUsedList<string> values = new(Constant.NumberOfMostRecentDatabasesToTrack);
 
             if (subKey != null)
             {
                 for (int index = subKey.ValueCount - 1; index >= 0; --index)
                 {
-                    string listItem = (string)subKey.GetValue(index.ToString(Constant.InvariantCulture));
+                    string? listItem = (string?)subKey.GetValue(index.ToString(Constant.InvariantCulture));
                     if (listItem != null)
                     {
                         values.SetMostRecent(listItem);
@@ -172,7 +184,7 @@ namespace Carnassial.Util
             if (values != null)
             {
                 // create the key whose values represent elements of the list
-                RegistryKey subKey = registryKey.OpenSubKey(subKeyPath, true);
+                RegistryKey? subKey = registryKey.OpenSubKey(subKeyPath, true);
                 if (subKey == null)
                 {
                     subKey = registryKey.CreateSubKey(subKeyPath);

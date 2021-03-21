@@ -1,5 +1,6 @@
 ﻿using Carnassial.Data;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Windows.Controls;
 using WpfControl = System.Windows.Controls.Control;
 
@@ -50,7 +51,7 @@ namespace Carnassial.Editor.Util
             return false;
         }
 
-        public static bool TryGetControl<TControl>(this DataGridCell cell, out TControl control) where TControl : WpfControl
+        public static bool TryGetControl<TControl>(this DataGridCell cell, [NotNullWhen(true)] out TControl? control) where TControl : WpfControl
         {
             control = cell.Content as TControl;
             return control != null;

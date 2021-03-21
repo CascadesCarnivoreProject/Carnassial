@@ -51,7 +51,7 @@ namespace Carnassial.Data.Spreadsheet
             // find or insert a cell style which references the bold font
             if (this.stylesheet.CellFormats == null)
             {
-                if (this.stylesheet.Fonts.Count < 2)
+                if ((this.stylesheet.Fonts == null) || (this.stylesheet.Fonts.Count! < 2))
                 {
                     throw new NotSupportedException(App.FindResource<string>(Constant.ResourceKey.OpenXmlStylesheetInsufficientFonts));
                 }
@@ -61,7 +61,7 @@ namespace Carnassial.Data.Spreadsheet
             int formatIndex = 0;
             foreach (CellFormat format in this.stylesheet.CellFormats.Elements<CellFormat>())
             {
-                if (format.FontId == boldFontIndex)
+                if (format.FontId! == boldFontIndex)
                 {
                     this.BoldFontStyleID = formatIndex;
                     break;
@@ -77,7 +77,7 @@ namespace Carnassial.Data.Spreadsheet
 
         private CellFormats CreateDefaultCellFormats()
         {
-            CellFormats cellFormats = new CellFormats()
+            CellFormats cellFormats = new()
             {
                 Count = UInt32Value.FromUInt32(2)
             };
@@ -102,7 +102,7 @@ namespace Carnassial.Data.Spreadsheet
 
         private Fonts CreateDefaultFonts()
         {
-            Fonts fonts = new Fonts()
+            Fonts fonts = new()
             {
                 Count = UInt32Value.FromUInt32(2)
             };
@@ -134,7 +134,7 @@ namespace Carnassial.Data.Spreadsheet
 
         private Stylesheet CreateDefaultStylesheet()
         {
-            Stylesheet stylesheet = new Stylesheet()
+            Stylesheet stylesheet = new()
             {
                 Borders = new Borders()
                 {

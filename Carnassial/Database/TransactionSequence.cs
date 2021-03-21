@@ -11,7 +11,7 @@ namespace Carnassial.Database
         protected SQLiteDatabase Database { get; private set; }
         protected bool IsInsert { get; set; }
         protected int RowsInCurrentTransaction { get; set; }
-        protected SQLiteTransaction Transaction { get; set; }
+        protected SQLiteTransaction? Transaction { get; set; }
 
         public int RowsCommitted { get; private set; }
 
@@ -23,9 +23,10 @@ namespace Carnassial.Database
             this.ownsTransaction = true;
             this.RowsCommitted = 0;
             this.RowsInCurrentTransaction = 0;
+            this.Transaction = null;
         }
 
-        protected TransactionSequence(SQLiteDatabase database, SQLiteTransaction transaction)
+        protected TransactionSequence(SQLiteDatabase database, SQLiteTransaction? transaction)
             : this(database)
         {
             if (transaction == null)
@@ -41,6 +42,11 @@ namespace Carnassial.Database
 
         public void Commit()
         {
+            if (this.Transaction == null)
+            {
+                throw new InvalidOperationException("Set " + nameof(this.Transaction) + " before calling " + nameof(this.Commit) + "().");
+            }
+
             this.Transaction.Commit();
             if (this.IsInsert)
             {
@@ -60,7 +66,7 @@ namespace Carnassial.Database
             this.Transaction = this.Database.Connection.BeginTransaction();
 
             SQLiteCommand previousCommand = command;
-            SQLiteCommand newCommand = new SQLiteCommand(previousCommand.CommandText, this.Database.Connection, this.Transaction);
+            SQLiteCommand newCommand = new(previousCommand.CommandText, this.Database.Connection, this.Transaction);
             foreach (SQLiteParameter parameter in previousCommand.Parameters)
             {
                 newCommand.Parameters.Add(parameter);
@@ -84,7 +90,7 @@ namespace Carnassial.Database
 
             if (disposing)
             {
-                if (this.ownsTransaction)
+                if (this.ownsTransaction && (this.Transaction != null))
                 {
                     this.Transaction.Dispose();
                 }

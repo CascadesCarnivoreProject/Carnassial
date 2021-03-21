@@ -38,7 +38,7 @@ namespace Carnassial.Control
         {
             if ((e.Key == Key.Return) || (e.Key == Key.Enter))
             {
-                ComboBox comboBox = sender as ComboBox;
+                ComboBox comboBox = (ComboBox)sender;
                 for (int i = 0; i < comboBox.Items.Count; i++)
                 {
                     ComboBoxItem comboBoxItem = (ComboBoxItem)comboBox.ItemContainerGenerator.ContainerFromIndex(i);
@@ -52,7 +52,7 @@ namespace Carnassial.Control
 
         public override List<string> GetWellKnownValues()
         {
-            List<string> choices = new List<string>();
+            List<string> choices = new();
             foreach (object item in this.ContentControl.Items)
             {
                 if (item is string wellKnownString)
@@ -108,10 +108,10 @@ namespace Carnassial.Control
 
         public override void SetValue(object valueAsObject)
         {
-            string valueAsString;
+            string? valueAsString;
             if ((valueAsObject is string) || (valueAsObject == null))
             {
-                valueAsString = (string)valueAsObject;
+                valueAsString = (string?)valueAsObject;
             }
             else if (valueAsObject is FileSelection)
             {

@@ -16,7 +16,7 @@ namespace Carnassial.Editor.Util
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            string valueAsString = value as string;
+            string? valueAsString = value as string;
             if (String.IsNullOrEmpty(valueAsString))
             {
                 return value;

@@ -19,9 +19,9 @@ namespace Carnassial.Data
         {
             this.disposed = false;
 
-            List<string> userControlDataLabels = new List<string>();
-            List<string> userControlDefaultValues = new List<string>();
-            string deleteFlagDefaultValue = null;
+            List<string> userControlDataLabels = new();
+            List<string> userControlDefaultValues = new();
+            string? deleteFlagDefaultValue = null;
             foreach (ControlRow control in controls)
             {
                 if (control.IsUserControl())
@@ -58,8 +58,8 @@ namespace Carnassial.Data
                 this.IsInsert = true;
             }
 
-            string dataLabelsConcatenated = null;
-            string defaultValuesConcatenated = null;
+            string? dataLabelsConcatenated = null;
+            string? defaultValuesConcatenated = null;
             if (userControlDataLabels.Count > 0)
             {
                 dataLabelsConcatenated = ", " + String.Join(", ", userControlDataLabels);
@@ -111,7 +111,7 @@ namespace Carnassial.Data
             int stopIndex = offset + length;
             for (int fileIndex = offset; fileIndex < stopIndex; ++fileIndex)
             {
-                ImageRow file = files[fileIndex].File;
+                ImageRow? file = files[fileIndex].File;
                 if (file == null)
                 {
                     continue;

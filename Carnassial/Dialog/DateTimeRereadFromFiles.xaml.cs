@@ -1,13 +1,14 @@
 ﻿using Carnassial.Data;
 using Carnassial.Util;
 using System;
+using System.Diagnostics;
 using System.Windows;
 
 namespace Carnassial.Dialog
 {
     public partial class DateTimeRereadFromFiles : WindowWithSystemMenu
     {
-        private TimeSpan desiredStatusInterval;
+        private readonly TimeSpan desiredStatusInterval;
         private readonly FileDatabase fileDatabase;
 
         public DateTimeRereadFromFiles(FileDatabase fileDatabase, TimeSpan desiredStatusInterval, Window owner)
@@ -31,6 +32,8 @@ namespace Carnassial.Dialog
 
         private void ReportStatus(ObservableStatus<DateTimeRereadResult> status)
         {
+            Debug.Assert(status.FeedbackRows != null);
+
             status.FeedbackRows.SendElementsCreatedEvents(status.CurrentFileIndex);
             int currentIndex = Math.Max(status.CurrentFileIndex - 1, 0);
             this.FeedbackGrid.ScrollIntoView(this.FeedbackGrid.Items[currentIndex]);
@@ -45,10 +48,10 @@ namespace Carnassial.Dialog
             this.StartDoneButton.Click += this.DoneButton_Click;
             this.StartDoneButton.IsEnabled = false;
 
-            ObservableArray<DateTimeRereadResult> feedbackRows = new ObservableArray<DateTimeRereadResult>(this.fileDatabase.Files.RowCount, DateTimeRereadResult.Default);
+            ObservableArray<DateTimeRereadResult> feedbackRows = new(this.fileDatabase.Files.RowCount, DateTimeRereadResult.Default);
             this.FeedbackGrid.ItemsSource = feedbackRows;
 
-            using (DateTimeRereadIOComputeTransactionManager rereadDateTimes = new DateTimeRereadIOComputeTransactionManager(this.ReportStatus, feedbackRows, this.desiredStatusInterval))
+            using (DateTimeRereadIOComputeTransactionManager rereadDateTimes = new(this.ReportStatus, feedbackRows, this.desiredStatusInterval))
             {
                 await rereadDateTimes.RereadDateTimesAsync(this.fileDatabase).ConfigureAwait(true);
             }

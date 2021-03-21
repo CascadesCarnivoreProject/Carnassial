@@ -41,11 +41,11 @@ namespace Carnassial.Images
             get { return this.Second.File != null; }
         }
 
-        public ImageProperties Classify(double darkLuminosityThreshold, ref MemoryImage preallocatedImage)
+        public ImageProperties? Classify(double darkLuminosityThreshold, ref MemoryImage? preallocatedImage)
         {
             Debug.Assert(this.First.File != null, "First file unexpectedly null.");
 
-            ImageProperties firstProperties = null;
+            ImageProperties? firstProperties = null;
             if (this.First.File.IsVideo)
             {
                 this.First.File.Classification = FileClassification.Video;
@@ -81,7 +81,7 @@ namespace Carnassial.Images
 
             if (this.HasSecondFile)
             {
-                if (this.Second.File.IsVideo)
+                if (this.Second.File!.IsVideo)
                 {
                     this.Second.File.Classification = FileClassification.Video;
                 }
@@ -114,7 +114,7 @@ namespace Carnassial.Images
             return firstProperties;
         }
 
-        public void ClassifyFromThumbnails(double darkLuminosityThreshold, bool skipClassification, ref MemoryImage preallocatedThumbnail)
+        public void ClassifyFromThumbnails(double darkLuminosityThreshold, bool skipClassification, ref MemoryImage? preallocatedThumbnail)
         {
             Debug.Assert(this.First.File != null, "First file unexpectedly null.");
             if (this.First.File.IsVideo)
@@ -152,7 +152,7 @@ namespace Carnassial.Images
 
             if (this.HasSecondFile)
             {
-                if (this.Second.File.IsVideo)
+                if (this.Second.File!.IsVideo)
                 {
                     this.Second.File.Classification = FileClassification.Video;
                 }
@@ -189,15 +189,15 @@ namespace Carnassial.Images
 
         public bool CreateAndAppendFiles(Dictionary<string, HashSet<string>> fileNamesByRelativePath, FileTable files)
         {
-            bool databaseHasFilesInFolder = fileNamesByRelativePath.TryGetValue(this.RelativePath, out HashSet<string> filesInFolder);
-            if ((databaseHasFilesInFolder == false) || (filesInFolder.Contains(this.First.FileName) == false))
+            bool databaseHasFilesInFolder = fileNamesByRelativePath.TryGetValue(this.RelativePath, out HashSet<string>? filesInFolder);
+            if ((databaseHasFilesInFolder == false) || (filesInFolder!.Contains(this.First.FileName) == false))
             {
                 this.First.File = files.CreateAndAppendFile(this.First.FileName, this.RelativePath);
             }
 
             if (this.Second.FileName != null)
             {
-                if ((databaseHasFilesInFolder == false) || (filesInFolder.Contains(this.Second.FileName) == false))
+                if ((databaseHasFilesInFolder == false) || (filesInFolder!.Contains(this.Second.FileName) == false))
                 {
                     this.Second.File = files.CreateAndAppendFile(this.Second.FileName, this.RelativePath);
                 }
@@ -215,7 +215,7 @@ namespace Carnassial.Images
         {
             if (this.First.File != null)
             {
-                string firstFilePath = null;
+                string? firstFilePath = null;
                 if (checkFilesExist)
                 {
                     FileInfo firstFileInfo = this.First.File.GetFileInfo(imageSetFolderPath);
@@ -255,10 +255,10 @@ namespace Carnassial.Images
 
             if (this.HasSecondFile)
             {
-                string secondFilePath = null;
+                string? secondFilePath = null;
                 if (checkFilesExist)
                 {
-                    FileInfo secondFileInfo = this.Second.File.GetFileInfo(imageSetFolderPath);
+                    FileInfo secondFileInfo = this.Second.File!.GetFileInfo(imageSetFolderPath);
                     if (secondFileInfo.Exists)
                     {
                         secondFilePath = secondFileInfo.FullName;
@@ -266,12 +266,12 @@ namespace Carnassial.Images
                 }
                 else
                 {
-                    secondFilePath = this.First.File.GetFilePath(imageSetFolderPath);
+                    secondFilePath = this.Second.File!.GetFilePath(imageSetFolderPath);
                 }
 
                 if (secondFilePath != null)
                 {
-                    if (this.Second.File.IsVideo)
+                    if (this.Second.File!.IsVideo)
                     {
                         this.Second.File.Classification = FileClassification.Video;
                     }
@@ -289,7 +289,7 @@ namespace Carnassial.Images
                 }
                 else
                 {
-                    this.Second.File.Classification = FileClassification.NoLongerAvailable;
+                    this.Second.File!.Classification = FileClassification.NoLongerAvailable;
                 }
             }
         }
@@ -357,7 +357,7 @@ namespace Carnassial.Images
 
             if (this.HasSecondFile)
             {
-                if (this.Second.File.IsVideo)
+                if (this.Second.File!.IsVideo)
                 {
                     if (this.Second.File.IsPreviousJpegName(this.First.FileName))
                     {

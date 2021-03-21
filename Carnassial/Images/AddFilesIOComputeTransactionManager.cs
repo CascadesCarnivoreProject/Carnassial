@@ -65,11 +65,11 @@ namespace Carnassial.Images
                 return this.AddFilesCompute(fileDatabase, state, computeTaskNumber);
             };
 
-            using (ReaderWriterLockSlim fileCreateAndAppendLock = new ReaderWriterLockSlim())
+            using (ReaderWriterLockSlim fileCreateAndAppendLock = new())
             {
                 this.IOTaskBody = (int ioTaskNumber) =>
                 {
-                    for (FileLoadAtom loadAtom = this.GetNextIOAtom(ioTaskNumber); loadAtom != null; loadAtom = this.GetNextIOAtom(ioTaskNumber))
+                    for (FileLoadAtom? loadAtom = this.GetNextIOAtom(ioTaskNumber); loadAtom != null; loadAtom = this.GetNextIOAtom(ioTaskNumber))
                     {
                         // CreateAndAppendFiles() ultimately calls List.Add(), which is not thread safe for more than one IO task
                         // Considerig core counts in target hardware, assume at least two IO tasks will be running.
@@ -98,8 +98,8 @@ namespace Carnassial.Images
         {
             int atoms = 0;
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
-            MemoryImage preallocatedThumbnail = null;
-            for (FileLoadAtom loadAtom = this.GetNextComputeAtom(computeTaskNumber); loadAtom != null; loadAtom = this.GetNextComputeAtom(computeTaskNumber))
+            MemoryImage? preallocatedThumbnail = null;
+            for (FileLoadAtom? loadAtom = this.GetNextComputeAtom(computeTaskNumber); loadAtom != null; loadAtom = this.GetNextComputeAtom(computeTaskNumber))
             {
                 // try to read file metadata
                 // For files containing metadata (including hybrid video pairs) wait for metadata to be loaded from disk 
@@ -189,10 +189,10 @@ namespace Carnassial.Images
             // - improves user experience as progress images displayed during loading are likely in order
             // - allows AddFilesAggregator to flow files to the database in order
             // - may improve disk read speed performance
-            List<string> extensions = new List<string>() { Constant.File.AviFileExtension, Constant.File.Mp4FileExtension, Constant.File.JpgFileExtension };
+            List<string> extensions = new() { Constant.File.AviFileExtension, Constant.File.Mp4FileExtension, Constant.File.JpgFileExtension };
             foreach (string folderPath in this.FolderPaths)
             {
-                DirectoryInfo folder = new DirectoryInfo(folderPath);
+                DirectoryInfo folder = new(folderPath);
                 IEnumerable<FileInfo> matchingFiles = folder.EnumerateFiles().Where(file => extensions.Contains(file.Extension, StringComparer.OrdinalIgnoreCase));
                 List<string> filesToLoadfromFolder = matchingFiles.Select(file => file.Name).OrderBy(fileName => fileName, StringComparer.OrdinalIgnoreCase).ToList();
                 string relativeFolderPath = NativeMethods.GetRelativePathFromDirectoryToDirectory(imageSetFolderPath, folderPath);

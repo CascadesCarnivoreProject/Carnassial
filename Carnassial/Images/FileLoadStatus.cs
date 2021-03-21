@@ -1,5 +1,7 @@
 ﻿using Carnassial.Data;
 using System;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Threading;
 
@@ -8,9 +10,9 @@ namespace Carnassial.Images
     internal class FileLoadStatus : FileIOComputeTransactionStatus, IDisposable
     {
         private bool disposed;
-        private CachedImage image;
+        private CachedImage? image;
 
-        public ImageRow CurrentFile { get; set; }
+        public ImageRow? CurrentFile { get; set; }
         public int ImageRenderWidth { get; private set; }
         public UInt64 MostRecentImageUpdate { get; set; }
         public int TotalFiles { get; set; }
@@ -51,6 +53,7 @@ namespace Carnassial.Images
             {
                 return String.Format(CultureInfo.CurrentCulture, "File {0} of {1}...", this.CurrentFileIndex, this.TotalFiles);
             }
+            Debug.Assert(this.CurrentFile != null);
             return String.Format(CultureInfo.CurrentCulture, "Loading file {0} of {1} ({2})...", this.CurrentFileIndex, this.TotalFiles, this.CurrentFile.FileName);
         }
 
@@ -70,14 +73,14 @@ namespace Carnassial.Images
             // To avoid, both functions use Interlocked.Exchange() and, in this function, the released image is diposed after
             // this.image is set to the new image so that callers can't obtain an image which in the process of or is scheduled
             // for disposal.
-            CachedImage oldImage = Interlocked.Exchange(ref this.image, imageToDisplay);
+            CachedImage? oldImage = Interlocked.Exchange(ref this.image, imageToDisplay);
             if (oldImage != null)
             {
                 oldImage.Dispose();
             }
         }
 
-        public bool TryDetachImage(out CachedImage image)
+        public bool TryDetachImage([NotNullWhen(true)] out CachedImage? image)
         {
             if (this.image == null)
             {
@@ -86,7 +89,7 @@ namespace Carnassial.Images
             }
 
             // see remarks in SetImage()
-            image = Interlocked.Exchange(ref this.image, null);
+            image = Interlocked.Exchange<CachedImage?>(ref this.image, null);
             return image != null;
         }
     }

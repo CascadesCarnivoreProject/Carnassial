@@ -32,7 +32,7 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void MostRecentlyUsedList()
         {
-            MostRecentlyUsedList<int> mruList = new MostRecentlyUsedList<int>(5);
+            MostRecentlyUsedList<int> mruList = new(5);
 
             mruList.SetMostRecent(0);
             Assert.IsFalse(mruList.IsFull());
@@ -134,7 +134,9 @@ namespace Carnassial.UnitTests
         {
             foreach (FieldInfo field in typeof(Constant.ResourceKey).GetFields(BindingFlags.Public | BindingFlags.Static))
             {
-                string resourceKey = (string)field.GetValue(null);
+                string? resourceKey = (string?)field.GetValue(null);
+                Assert.IsTrue(resourceKey != null);
+
                 if (String.Equals(resourceKey, Constant.ResourceKey.ApplicationWindowException, StringComparison.OrdinalIgnoreCase) ||
                     String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowClockDriftFailed, StringComparison.OrdinalIgnoreCase) ||
                     String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowCopyFileFailed, StringComparison.OrdinalIgnoreCase) ||
@@ -174,7 +176,7 @@ namespace Carnassial.UnitTests
                 else if (String.Equals(resourceKey, Constant.ResourceKey.SearchTermListCellMargin, StringComparison.OrdinalIgnoreCase))
                 {
                     Thickness thickness = App.FindResource<Thickness>(resourceKey);
-                    Assert.IsTrue(thickness != null);
+                    Assert.IsTrue((thickness.Top > 0.0) && (thickness.Right > 0.0) && (thickness.Bottom > 0.0) && (thickness.Left > 0.0));
                 }
                 else
                 {
@@ -192,10 +194,10 @@ namespace Carnassial.UnitTests
         public void UndoRedoChain()
         {
             // zero states
-            UndoRedoChain<int> undoRedoChain = new UndoRedoChain<int>();
+            UndoRedoChain<int> undoRedoChain = new();
             Assert.IsFalse(undoRedoChain.CanRedo);
             Assert.IsFalse(undoRedoChain.CanUndo);
-            Assert.IsFalse(undoRedoChain.TryMoveToNextRedo(out UndoableCommand<int> state));
+            Assert.IsFalse(undoRedoChain.TryMoveToNextRedo(out UndoableCommand<int>? state));
             Assert.IsFalse(undoRedoChain.TryMoveToNextUndo(out state));
 
             // basic lifecycle with two different states
@@ -245,7 +247,7 @@ namespace Carnassial.UnitTests
             Assert.IsFalse(undoRedoChain.TryMoveToNextUndo(out state));
 
             // one state
-            TestCommand firstState = new TestCommand(3);
+            TestCommand firstState = new(3);
             undoRedoChain.AddCommand(firstState);
             Assert.IsFalse(undoRedoChain.CanRedo);
             Assert.IsTrue(undoRedoChain.CanUndo);

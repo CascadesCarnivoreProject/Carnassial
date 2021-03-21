@@ -18,6 +18,11 @@ namespace Carnassial.Dialog
 
         public DateDaylightSavingsTimeCorrection(FileDatabase fileDatabase, ImageCache imageCache, Window owner)
         {
+            if (imageCache.Current == null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(imageCache));
+            }
+
             this.InitializeComponent();
             this.currentFileIndex = imageCache.CurrentRow;
             this.fileDatabase = fileDatabase;
@@ -41,7 +46,7 @@ namespace Carnassial.Dialog
         {
             int startRow = this.currentFileIndex;
             int endRow = this.currentFileIndex;
-            if ((bool)this.PropagateForward.IsChecked)
+            if (this.PropagateForward.IsChecked ?? false)
             {
                 endRow = this.fileDatabase.CurrentlySelectedFileCount - 1;
             }
@@ -51,8 +56,8 @@ namespace Carnassial.Dialog
             }
 
             // update the database
-            int hours = (bool)this.AddHour.IsChecked ? 1 : -1;
-            TimeSpan daylightSavingsAdjustment = new TimeSpan(hours, 0, 0);
+            int hours = (this.AddHour.IsChecked ?? false) ? 1 : -1;
+            TimeSpan daylightSavingsAdjustment = new(hours, 0, 0);
             this.fileDatabase.AdjustFileTimes(daylightSavingsAdjustment, startRow, endRow); // For all rows...
             this.DialogResult = true;
         }
@@ -62,10 +67,10 @@ namespace Carnassial.Dialog
             this.DialogResult = true;
         }
 
-        private void HourButton_Checked(object sender, RoutedEventArgs e)
+        private void HourButton_Checked(object sender, RoutedEventArgs? e)
         {
-            int hours = ((bool)this.AddHour.IsChecked) ? 1 : -1;
-            TimeSpan daylightSavingsAdjustment = new TimeSpan(hours, 0, 0);
+            int hours = (this.AddHour.IsChecked ?? false) ? 1 : -1;
+            TimeSpan daylightSavingsAdjustment = new(hours, 0, 0);
             DateTime dateTime = this.orignalDateTimeOffset.DateTime.Add(daylightSavingsAdjustment);
             this.NewDate.Content = DateTimeHandler.ToDisplayDateTimeString(dateTime);
         }

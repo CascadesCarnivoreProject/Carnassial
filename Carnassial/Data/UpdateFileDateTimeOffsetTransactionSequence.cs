@@ -38,8 +38,8 @@ namespace Carnassial.Data
             int stopIndex = offset + length;
             for (int fileIndex = offset; fileIndex < stopIndex; ++fileIndex)
             {
-                ImageRow file = files[fileIndex].File;
-                if (file.HasChanges == false)
+                ImageRow? file = files[fileIndex].File;
+                if ((file == null) || (file.HasChanges == false))
                 {
                     continue;
                 }

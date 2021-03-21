@@ -15,10 +15,10 @@ namespace Carnassial.UnitTests
         public double Coloration { get; set; }
         public DateTimeOffset DateTime { get; set; }
         public bool DeleteFlag { get; set; }
-        public string FileName { get; set; }
+        public string? FileName { get; set; }
         public long ID { get; set; }
         public double Luminosity { get; set; }
-        public string RelativePath { get; set; }
+        public string? RelativePath { get; set; }
         public bool SkipDateTimeVerification { get; set; }
         public bool SkipMarkerByteVerification { get; set; }
         public bool SkipUserControlVerification { get; set; }
@@ -115,16 +115,16 @@ namespace Carnassial.UnitTests
                 foreach (KeyValuePair<string, object> userControlExpectation in this.UserControlsByDataLabel)
                 {
                     string dataLabel = userControlExpectation.Key;
-                    object actualValue = file[dataLabel];
+                    object? actualValue = file[dataLabel];
                     object expectedValue = userControlExpectation.Value;
                     if (expectedValue is bool expectedBool)
                     {
-                        Assert.IsTrue((bool)actualValue == expectedBool, "{0}: Expected {1} to be '{2}' but found '{3}'.", this.FileName, userControlExpectation.Key, expectedBool, actualValue);
+                        Assert.IsTrue((actualValue != null) && ((bool)actualValue == expectedBool), "{0}: Expected {1} to be '{2}' but found '{3}'.", this.FileName, userControlExpectation.Key, expectedBool, actualValue);
                     }
                     else if (expectedValue is byte[] expectedBytes)
                     {
-                        byte[] actualBytes = (byte[])actualValue;
-                        Assert.IsTrue(actualBytes.Length == expectedBytes.Length);
+                        byte[]? actualBytes = (byte[]?)actualValue;
+                        Assert.IsTrue((actualBytes  != null) && (actualBytes.Length == expectedBytes.Length));
                         if (this.SkipMarkerByteVerification == false)
                         {
                             for (int byteIndex = 0; byteIndex < expectedBytes.Length; ++byteIndex)
@@ -135,13 +135,13 @@ namespace Carnassial.UnitTests
                     }
                     else if (expectedValue is int expectedInt)
                     {
-                        Assert.IsTrue((int)actualValue == expectedInt, "{0}: Expected {1} to be '{2}' but found '{3}'.", this.FileName, userControlExpectation.Key, expectedInt, actualValue);
+                        Assert.IsTrue((actualValue != null) && ((int)actualValue == expectedInt), "{0}: Expected {1} to be '{2}' but found '{3}'.", this.FileName, userControlExpectation.Key, expectedInt, actualValue);
                         MarkersForCounter markersForCounter = file.GetMarkersForCounter(dataLabel);
                         this.Verify(dataLabel, markersForCounter);
                     }
                     else
                     {
-                        Assert.IsTrue(String.Equals((string)actualValue, (string)expectedValue, StringComparison.Ordinal), "{0}: Expected {1} to be '{2}' but found '{3}'.", this.FileName, userControlExpectation.Key, expectedValue, actualValue);
+                        Assert.IsTrue(String.Equals((string?)actualValue, (string)expectedValue, StringComparison.Ordinal), "{0}: Expected {1} to be '{2}' but found '{3}'.", this.FileName, userControlExpectation.Key, expectedValue, actualValue);
                     }
                 }
             }
@@ -153,12 +153,12 @@ namespace Carnassial.UnitTests
             int expectedCount = (int)this.UserControlsByDataLabel[dataLabel];
             Assert.IsTrue(markersForCounter.Count == expectedCount);
 
-            string spreadsheetPositions = markersForCounter.MarkerPositionsToSpreadsheetString();
+            string? spreadsheetPositions = markersForCounter.MarkerPositionsToSpreadsheetString();
             string[] spreadsheetTokens = spreadsheetPositions == null ? Array.Empty<string>() : spreadsheetPositions.Split(Constant.Excel.MarkerPositionSeparator);
 
             string markerColummn = FileTable.GetMarkerPositionColumnName(dataLabel);
             byte[] expectedPositions = (byte[])this.UserControlsByDataLabel[markerColummn];
-            MarkersForCounter expectedMarkersForCounter = new MarkersForCounter(dataLabel, expectedCount);
+            MarkersForCounter expectedMarkersForCounter = new(dataLabel, expectedCount);
             expectedMarkersForCounter.MarkerPositionsFromFloatArray(expectedPositions);
 
             Assert.IsTrue(expectedMarkersForCounter.Markers.Count == spreadsheetTokens.Length);

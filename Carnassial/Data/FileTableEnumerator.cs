@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Carnassial.Data
 {
-    public class FileTableEnumerator : IEnumerator<ImageRow>
+    public class FileTableEnumerator : IEnumerator<ImageRow?>
     {
         protected FileDatabase FileDatabase { get; private set; }
 
         // the current file, null if its not been set or if the database is empty
-        public ImageRow Current { get; private set; }
+        public ImageRow? Current { get; private set; }
         public int CurrentRow { get; private set; }
 
         public FileTableEnumerator(FileDatabase fileDatabase)
@@ -26,6 +27,7 @@ namespace Carnassial.Data
             this.TryMoveToFile(startingPosition);
         }
 
+        [MemberNotNullWhen(true, nameof(FileTableEnumerator.Current))]
         public bool IsFileAvailable
         {
             get { return this.Current != null; }
@@ -42,7 +44,7 @@ namespace Carnassial.Data
             // nothing to do but required by IEnumerator<T>
         }
 
-        object IEnumerator.Current
+        object? IEnumerator.Current
         {
             get { return this.Current; }
         }
@@ -68,6 +70,7 @@ namespace Carnassial.Data
             this.CurrentRow = Constant.Database.InvalidRow;
         }
 
+        [MemberNotNullWhen(true, nameof(FileTableEnumerator.Current))]
         public virtual bool TryMoveToFile(int fileRowIndex)
         {
             if (this.FileDatabase.IsFileRowInRange(fileRowIndex))

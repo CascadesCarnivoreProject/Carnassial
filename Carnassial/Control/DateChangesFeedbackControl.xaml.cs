@@ -26,9 +26,9 @@ namespace Carnassial.Control
 
         // Add a row to the tuple, which in turn will update the grid. 
         // Also ensures the latest added row is in view.
-        public void AddFeedbackRow(string fileName, string status, string oldDateTime, string newDateTime, string difference)
+        public void AddFeedbackRow(string fileName, string status, string oldDateTime, string newDateTime, string? difference)
         {
-            FeedbackRowTuple row = new FeedbackRowTuple(fileName, status, oldDateTime, newDateTime, difference);
+            FeedbackRowTuple row = new(fileName, status, oldDateTime, newDateTime, difference);
             this.feedbackRows.Add((FeedbackRowTuple)row);
         }
 
@@ -53,9 +53,9 @@ namespace Carnassial.Control
             public string Status { get; set; }
             public string OldDateTime { get; set; }
             public string NewDateTime { get; set; }
-            public string Difference { get; set; }
+            public string? Difference { get; set; }
 
-            public FeedbackRowTuple(string fileName, string status, string oldDateTime, string newDateTime, string difference)
+            public FeedbackRowTuple(string fileName, string status, string oldDateTime, string newDateTime, string? difference)
             {
                 this.FileName = fileName;
                 this.Status = status;

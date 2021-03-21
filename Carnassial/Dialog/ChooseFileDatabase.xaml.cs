@@ -1,6 +1,7 @@
 ﻿using Carnassial.Util;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -59,7 +60,10 @@ namespace Carnassial.Dialog
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {
-            this.SelectedFile = this.FileDatabases.SelectedItem.ToString(); // The selected file
+            string? selectedFile = this.FileDatabases.SelectedItem.ToString();
+            Debug.Assert(String.IsNullOrWhiteSpace(selectedFile) == false);
+
+            this.SelectedFile = selectedFile; // The selected file
             this.DialogResult = true;
         }
 

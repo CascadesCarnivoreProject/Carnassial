@@ -52,11 +52,11 @@ namespace Carnassial.Util
             this.list.AddFirst(mostRecent);
         }
 
-        public bool TryGetMostRecent(out TElement mostRecent)
+        public bool TryGetMostRecent(out TElement? mostRecent)
         {
             if (this.list.Count > 0)
             {
-                mostRecent = this.list.First.Value;
+                mostRecent = this.list.First!.Value;
                 return true;
             }
 
@@ -64,11 +64,11 @@ namespace Carnassial.Util
             return false;
         }
 
-        public bool TryGetLeastRecent(out TElement leastRecent)
+        public bool TryGetLeastRecent(out TElement? leastRecent)
         {
             if (this.list.Count > 0)
             {
-                leastRecent = this.list.Last.Value;
+                leastRecent = this.list.Last!.Value;
                 return true;
             }
 

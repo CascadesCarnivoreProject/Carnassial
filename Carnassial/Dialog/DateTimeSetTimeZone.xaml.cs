@@ -15,6 +15,11 @@ namespace Carnassial.Dialog
 
         public DateTimeSetTimeZone(FileDatabase fileDatabase, ImageCache imageCache, Window owner)
         {
+            if (imageCache.Current == null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(imageCache));
+            }
+
             this.InitializeComponent();
             this.displayingPreview = false;
             this.fileDatabase = fileDatabase;

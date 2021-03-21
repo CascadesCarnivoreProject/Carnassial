@@ -33,6 +33,11 @@ namespace Carnassial.Dialog
 
         public FindReplace(CarnassialWindow carnassial)
         {
+            if ((carnassial.DataHandler == null) || (carnassial.DataHandler.FindReplace.FindTerm1 == null))
+            {
+                throw new ArgumentOutOfRangeException(nameof(carnassial));
+            }
+
             this.InitializeComponent();
             this.carnassial = carnassial;
             this.Owner = carnassial;
@@ -73,10 +78,54 @@ namespace Carnassial.Dialog
             this.DialogResult = false;
         }
 
-        private SearchTerm EnsureAndBindSearchTerm(SearchTerm existingTerm, int row, Grid changingGrid, ComboBox changedLabel, ComboBox changingOperator, Grid synchronizingGrid, ComboBox synchronizingLabel, ComboBox synchronizingOperator)
+        private void FindTerm1Label_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            SearchTerm searchTerm = null;
-            List<string> operators = null;
+            if (String.Equals((string)this.FindTerm1Label.SelectedItem, (string)this.ReplaceTerm1Label.SelectedItem, StringComparison.Ordinal) == false)
+            {
+                SearchTerm? term1 = this.MaybeBindSearchTerm(this.carnassial.DataHandler!.FindReplace.FindTerm1, FindReplace.Term1Row, this.FindGrid, this.FindTerm1Label, this.FindTerm1Operator, this.ReplaceGrid, this.ReplaceTerm1Label, this.ReplaceTerm1Operator);
+                this.carnassial.DataHandler.FindReplace.FindTerm1 = term1;
+            }
+        }
+
+        private void FindTerm2Label_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (String.Equals((string)this.FindTerm2Label.SelectedItem, (string)this.ReplaceTerm2Label.SelectedItem, StringComparison.Ordinal) == false)
+            {
+                SearchTerm? term2 = this.MaybeBindSearchTerm(this.carnassial.DataHandler!.FindReplace.FindTerm2, FindReplace.Term2Row, this.FindGrid, this.FindTerm2Label, this.FindTerm2Operator, this.ReplaceGrid, this.ReplaceTerm2Label, this.ReplaceTerm2Operator);
+                this.carnassial.DataHandler.FindReplace.FindTerm2 = term2;
+            }
+        }
+
+        private async void FindNext_Click(object sender, RoutedEventArgs e)
+        {
+            if (this.carnassial.DataHandler!.TryFindNext(out int fileIndex))
+            {
+                int currentIndex = this.carnassial.DataHandler.ImageCache.CurrentRow;
+                if (currentIndex == fileIndex)
+                {
+                    this.MessageBar.Text = App.FindResource<string>(Constant.ResourceKey.FindReplaceOneMatchingFile);
+                }
+                else
+                {
+                    await this.carnassial.ShowFileAsync(fileIndex).ConfigureAwait(true);
+                    this.MessageBar.Text = null;
+                }
+            }
+            else
+            {
+                this.MessageBar.Text = App.FindResource<string>(Constant.ResourceKey.FindReplaceNoMatchingFile);
+            }
+        }
+
+        private async void FindPrevious_Click(object sender, RoutedEventArgs e)
+        {
+            await this.TryFindNext().ConfigureAwait(true);
+        }
+
+        private SearchTerm? MaybeBindSearchTerm(SearchTerm? existingTerm, int row, Grid changingGrid, ComboBox changedLabel, ComboBox changingOperator, Grid synchronizingGrid, ComboBox synchronizingLabel, ComboBox synchronizingOperator)
+        {
+            SearchTerm? searchTerm = null;
+            List<string>? operators = null;
             if (String.Equals((string)changedLabel.SelectedItem, Constant.UserInterface.NoFindValue, StringComparison.Ordinal) == false)
             {
                 if ((existingTerm != null) && String.Equals((string)changedLabel.SelectedItem, existingTerm.Label, StringComparison.Ordinal))
@@ -85,7 +134,7 @@ namespace Carnassial.Dialog
                 }
                 else
                 {
-                    ControlRow selectedControl = this.carnassial.DataHandler.FileDatabase.Controls.Single(control => String.Equals((string)changedLabel.SelectedItem, control.Label, StringComparison.Ordinal));
+                    ControlRow selectedControl = this.carnassial.DataHandler!.FileDatabase.Controls.Single(control => String.Equals((string)changedLabel.SelectedItem, control.Label, StringComparison.Ordinal));
                     searchTerm = selectedControl.CreateSearchTerm();
                     searchTerm.UseForSearching = true;
                 }
@@ -108,7 +157,7 @@ namespace Carnassial.Dialog
             // update values
             if (searchTerm != null)
             {
-                WpfControl changingValue = searchTerm.CreateValueControl(this.carnassial.DataHandler.FileDatabase.AutocompletionCache);
+                WpfControl changingValue = searchTerm.CreateValueControl(this.carnassial.DataHandler!.FileDatabase.AutocompletionCache);
                 changingValue.TabIndex = changingOperator.TabIndex + 1;
                 changingGrid.ReplaceOrAddChild(row, FindReplace.ValueColumn, changingValue);
 
@@ -118,7 +167,7 @@ namespace Carnassial.Dialog
 
                 if (row == FindReplace.Term1Row)
                 {
-                    SearchTerm replaceTerm = this.carnassial.DataHandler.FindReplace.ReplaceTerm;
+                    SearchTerm? replaceTerm = this.carnassial.DataHandler!.FindReplace.ReplaceTerm;
                     if ((replaceTerm == null) || (String.Equals((string)changedLabel.SelectedItem, replaceTerm.Label, StringComparison.Ordinal) == false))
                     {
                         replaceTerm = searchTerm.Clone();
@@ -151,53 +200,11 @@ namespace Carnassial.Dialog
             return searchTerm;
         }
 
-        private void FindTerm1Label_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (String.Equals((string)this.FindTerm1Label.SelectedItem, (string)this.ReplaceTerm1Label.SelectedItem, StringComparison.Ordinal) == false)
-            {
-                SearchTerm term1 = this.EnsureAndBindSearchTerm(this.carnassial.DataHandler.FindReplace.FindTerm1, FindReplace.Term1Row, this.FindGrid, this.FindTerm1Label, this.FindTerm1Operator, this.ReplaceGrid, this.ReplaceTerm1Label, this.ReplaceTerm1Operator);
-                this.carnassial.DataHandler.FindReplace.FindTerm1 = term1;
-            }
-        }
-
-        private void FindTerm2Label_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (String.Equals((string)this.FindTerm2Label.SelectedItem, (string)this.ReplaceTerm2Label.SelectedItem, StringComparison.Ordinal) == false)
-            {
-                SearchTerm term2 = this.EnsureAndBindSearchTerm(this.carnassial.DataHandler.FindReplace.FindTerm2, FindReplace.Term2Row, this.FindGrid, this.FindTerm2Label, this.FindTerm2Operator, this.ReplaceGrid, this.ReplaceTerm2Label, this.ReplaceTerm2Operator);
-                this.carnassial.DataHandler.FindReplace.FindTerm2 = term2;
-            }
-        }
-
-        private async void FindNext_Click(object sender, RoutedEventArgs e)
-        {
-            if (this.carnassial.DataHandler.TryFindNext(out int fileIndex))
-            {
-                int currentIndex = this.carnassial.DataHandler.ImageCache.CurrentRow;
-                if (currentIndex == fileIndex)
-                {
-                    this.MessageBar.Text = App.FindResource<string>(Constant.ResourceKey.FindReplaceOneMatchingFile);
-                }
-                else
-                {
-                    await this.carnassial.ShowFileAsync(fileIndex).ConfigureAwait(true);
-                    this.MessageBar.Text = null;
-                }
-            }
-            else
-            {
-                this.MessageBar.Text = App.FindResource<string>(Constant.ResourceKey.FindReplaceNoMatchingFile);
-            }
-        }
-
-        private async void FindPrevious_Click(object sender, RoutedEventArgs e)
-        {
-            await this.TryFindNext().ConfigureAwait(true);
-        }
-
         private async void Replace_Click(object sender, RoutedEventArgs e)
         {
-            ImageRow currentFile = this.carnassial.DataHandler.ImageCache.Current;
+            ImageRow? currentFile = this.carnassial.DataHandler!.ImageCache.Current;
+            Debug.Assert(currentFile != null);
+
             if (this.carnassial.DataHandler.FindReplace.Matches(currentFile))
             {
                 Debug.Assert(this.carnassial.DataHandler.FindReplace.ReplaceTerm != null, "A replacement database value must be available.");
@@ -209,14 +216,15 @@ namespace Carnassial.Dialog
 
         private void ReplaceAll_Click(object sender, RoutedEventArgs e)
         {
-            this.carnassial.DataHandler.ReplaceAll();
+            this.carnassial.DataHandler!.ReplaceAll();
         }
 
         private void ReplaceTerm1Label_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (String.Equals((string)this.ReplaceTerm1Label.SelectedItem, (string)this.FindTerm1Label.SelectedItem, StringComparison.Ordinal) == false)
             {
-                SearchTerm term1 = this.EnsureAndBindSearchTerm(this.carnassial.DataHandler.FindReplace.FindTerm1, FindReplace.Term1Row, this.ReplaceGrid, this.ReplaceTerm1Label, this.ReplaceTerm1Operator, this.FindGrid, this.FindTerm1Label, this.FindTerm1Operator);
+                SearchTerm? term1 = this.MaybeBindSearchTerm(this.carnassial.DataHandler!.FindReplace.FindTerm1, FindReplace.Term1Row, this.ReplaceGrid, this.ReplaceTerm1Label, this.ReplaceTerm1Operator, this.FindGrid, this.FindTerm1Label, this.FindTerm1Operator);
+                this.carnassial.DataHandler.FindReplace.FindTerm1 = term1;
             }
         }
 
@@ -224,14 +232,14 @@ namespace Carnassial.Dialog
         {
             if (String.Equals((string)this.ReplaceTerm2Label.SelectedItem, (string)this.FindTerm2Label.SelectedItem, StringComparison.Ordinal) == false)
             {
-                SearchTerm term2 = this.EnsureAndBindSearchTerm(this.carnassial.DataHandler.FindReplace.FindTerm2, FindReplace.Term2Row, this.ReplaceGrid, this.ReplaceTerm2Label, this.ReplaceTerm2Operator, this.FindGrid, this.FindTerm2Label, this.FindTerm2Operator);
+                SearchTerm? term2 = this.MaybeBindSearchTerm(this.carnassial.DataHandler!.FindReplace.FindTerm2, FindReplace.Term2Row, this.ReplaceGrid, this.ReplaceTerm2Label, this.ReplaceTerm2Operator, this.FindGrid, this.FindTerm2Label, this.FindTerm2Operator);
                 this.carnassial.DataHandler.FindReplace.FindTerm2 = term2;
             }
         }
 
         private async Task<bool> TryFindNext()
         {
-            if (this.carnassial.DataHandler.TryFindPrevious(out int fileIndex))
+            if (this.carnassial.DataHandler!.TryFindPrevious(out int fileIndex))
             {
                 int currentIndex = this.carnassial.DataHandler.ImageCache.CurrentRow;
                 if (currentIndex == fileIndex)

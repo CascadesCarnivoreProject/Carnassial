@@ -4,6 +4,7 @@ using Carnassial.Util;
 using MetadataExtractor;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Windows;
@@ -27,10 +28,10 @@ namespace Carnassial.Dialog
         private string dataFieldLabel;
         private bool dataFieldSelected;
         private readonly Dictionary<string, string> dataLabelByLabel;
-        private TimeSpan desiredStatusInterval;
+        private readonly TimeSpan desiredStatusInterval;
         private readonly FileDatabase fileDatabase;
         private readonly string filePath;
-        private Tag metadataField;
+        private Tag? metadataField;
         private bool metadataFieldSelected;
 
         public PopulateFieldWithMetadata(FileDatabase fileDatabase, string filePath, TimeSpan desiredStatusInterval, Window owner)
@@ -81,8 +82,8 @@ namespace Carnassial.Dialog
         {
             if (this.DataFields.SelectedItem != null)
             {
-                this.DataField.Content = this.DataFields.SelectedItem as string;
-                this.dataFieldLabel = this.DataFields.SelectedItem as string;
+                this.DataField.Content = this.DataFields.SelectedItem;
+                this.dataFieldLabel = (string)this.DataFields.SelectedItem;
                 this.dataFieldSelected = true;
             }
 
@@ -92,8 +93,10 @@ namespace Carnassial.Dialog
         // populate the database with the metadata for the selected field
         private async void PopulateButton_Click(object sender, RoutedEventArgs e)
         {
+            Debug.Assert(this.metadataField != null);
+
             // key/value pairs that will be bound to the datagrid feedback so they appear during background worker progress updates
-            ObservableArray<MetadataFieldResult> feedbackRows = new ObservableArray<MetadataFieldResult>(this.fileDatabase.Files.RowCount, MetadataFieldResult.Default);
+            ObservableArray<MetadataFieldResult> feedbackRows = new(this.fileDatabase.Files.RowCount, MetadataFieldResult.Default);
             this.FeedbackGrid.ItemsSource = feedbackRows;
 
             // switch UI to feedback datagrid
@@ -106,7 +109,7 @@ namespace Carnassial.Dialog
             this.PanelHeader.Visibility = Visibility.Collapsed;
 
             string dataLabel = this.dataLabelByLabel[this.dataFieldLabel];
-            MetadataIOComputeTransactionManager readMetadata = new MetadataIOComputeTransactionManager(this.ReportStatus, feedbackRows, this.desiredStatusInterval);
+            MetadataIOComputeTransactionManager readMetadata = new(this.ReportStatus, feedbackRows, this.desiredStatusInterval);
             await readMetadata.ReadFieldAsync(this.fileDatabase, dataLabel, this.metadataField, this.clearIfNoMetadata).ConfigureAwait(true);
 
             this.CancelDone.Content = "Done";
@@ -115,6 +118,8 @@ namespace Carnassial.Dialog
 
         private void ReportStatus(ObservableStatus<MetadataFieldResult> status)
         {
+            Debug.Assert(status.FeedbackRows != null);
+
             status.FeedbackRows.SendElementsCreatedEvents(status.CurrentFileIndex);
             int currentIndex = Math.Max(status.CurrentFileIndex - 1, 0);
             this.FeedbackGrid.ScrollIntoView(this.FeedbackGrid.Items[currentIndex]);

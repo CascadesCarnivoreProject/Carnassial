@@ -22,14 +22,14 @@ namespace Carnassial.Control
 
         public override GeneralTransform GetDesiredTransform(GeneralTransform transform)
         {
-            GeneralTransformGroup result = new GeneralTransformGroup();
+            GeneralTransformGroup result = new();
             result.Children.Add(new TranslateTransform(this.position.X, this.position.Y));
             return result;
         }
 
         public void UpdatePosition(DragEventArgs dragEvent)
         {
-            if (this.dataEntryControls.TryFindDataEntryControl(dragEvent.GetPosition(this.AdornedElement), out DataEntryControl control))
+            if (this.dataEntryControls.TryFindDataEntryControl(dragEvent.GetPosition(this.AdornedElement), out DataEntryControl? control))
             {
                 Point controlPosition = control.Container.TranslatePoint(new Point(0.0, 0.0), this.AdornedElement);
                 this.position.Y = controlPosition.Y + control.Container.ActualHeight;

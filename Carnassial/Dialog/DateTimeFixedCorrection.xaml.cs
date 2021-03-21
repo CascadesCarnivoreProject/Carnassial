@@ -30,7 +30,7 @@ namespace Carnassial.Dialog
             this.Owner = owner;
 
             // get the file's name and display it
-            ImageRow fileToDisplay = imageCache.Current;
+            ImageRow? fileToDisplay = imageCache.Current;
             Debug.Assert(fileToDisplay != null, "Current file unexpectedly null.");
             this.FileName.Content = fileToDisplay.FileName;
             this.FileName.ToolTip = this.FileName.Content;

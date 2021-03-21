@@ -3,6 +3,7 @@ using Carnassial.Images;
 using Carnassial.Native;
 using Carnassial.Util;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
@@ -16,8 +17,8 @@ namespace Carnassial.Dialog
         private readonly FileDatabase fileDatabase;
         private readonly FileTableEnumerator fileEnumerator;
         private bool isProgramaticNavigatiorSliderUpdate;
-        private ImageRow previousFile;
-        private ReclassifyIOComputeTransaction reclassification;
+        private ImageRow? previousFile;
+        private ReclassifyIOComputeTransaction? reclassification;
         private readonly CarnassialUserRegistrySettings userSettings;
 
         public ReclassifyFiles(FileDatabase database, ImageCache imageCache, CarnassialUserRegistrySettings state, Window owner)
@@ -40,7 +41,8 @@ namespace Carnassial.Dialog
         /// </summary>
         private void ClassifyCurrentFile()
         {
-            ImageProperties imageProperties = null;
+            Debug.Assert(this.fileEnumerator.Current != null);
+            ImageProperties? imageProperties = null;
 
             FileClassification newClassification;
             FileInfo fileInfo = this.fileEnumerator.Current.GetFileInfo(this.fileDatabase.FolderPath);
@@ -52,22 +54,20 @@ namespace Carnassial.Dialog
                 }
                 else
                 {
-                    using (JpegImage jpeg = new JpegImage(fileInfo.FullName))
+                    using JpegImage jpeg = new(fileInfo.FullName);
+                    if (jpeg.TryGetMetadata())
                     {
-                        if (jpeg.TryGetMetadata())
+                        MemoryImage? preallocatedImage = null;
+                        imageProperties = jpeg.GetThumbnailProperties(ref preallocatedImage);
+                        if (imageProperties.MetadataResult.HasFlag(MetadataReadResults.Thumbnail) == false)
                         {
-                            MemoryImage preallocatedImage = null;
-                            imageProperties = jpeg.GetThumbnailProperties(ref preallocatedImage);
-                            if (imageProperties.MetadataResult.HasFlag(MetadataReadResults.Thumbnail) == false)
-                            {
-                                imageProperties = jpeg.GetProperties(Constant.Images.NoThumbnailClassificationRequestedWidthInPixels, ref preallocatedImage);
-                            }
-                            newClassification = imageProperties.EvaluateNewClassification(0.01 * this.DarkLuminosityThresholdPercent.Value);
+                            imageProperties = jpeg.GetProperties(Constant.Images.NoThumbnailClassificationRequestedWidthInPixels, ref preallocatedImage);
                         }
-                        else
-                        {
-                            newClassification = FileClassification.Corrupt;
-                        }
+                        newClassification = imageProperties.EvaluateNewClassification(0.01 * this.DarkLuminosityThresholdPercent.Value);
+                    }
+                    else
+                    {
+                        newClassification = FileClassification.Corrupt;
                     }
                 }
             }
@@ -79,7 +79,7 @@ namespace Carnassial.Dialog
             this.DisplayClassification(this.fileEnumerator.Current, imageProperties, newClassification);
         }
 
-        private void DisplayClassification(ImageRow file, ImageProperties imageProperties, FileClassification newClassificationToDisplay)
+        private void DisplayClassification(ImageRow file, ImageProperties? imageProperties, FileClassification newClassificationToDisplay)
         {
             this.OriginalClassification.Content = file.Classification;
             this.NewClassification.Content = newClassificationToDisplay;
@@ -109,6 +109,8 @@ namespace Carnassial.Dialog
             }
 
             await this.FileDisplay.DisplayAsync(this.fileDatabase.FolderPath, this.fileEnumerator.Current).ConfigureAwait(true);
+
+            Debug.Assert(this.fileEnumerator.Current != null); 
             this.FileName.Content = this.fileEnumerator.Current.FileName;
             this.FileName.ToolTip = this.FileName.Content;
 
@@ -182,7 +184,7 @@ namespace Carnassial.Dialog
             this.DialogResult = false;
         }
 
-        private async void FileNavigatorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private async void FileNavigatorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double>? e)
         {
             if (this.isProgramaticNavigatiorSliderUpdate)
             {
@@ -254,7 +256,7 @@ namespace Carnassial.Dialog
                 this.FileName.ToolTip = this.FileName.Content;
                 this.DisplayClassification(status.File, status.ImageProperties, status.File.Classification);
             }
-            if (status.TryDetachImage(out CachedImage image))
+            if (status.TryDetachImage(out CachedImage? image))
             {
                 this.FileDisplay.Display(image);
             }

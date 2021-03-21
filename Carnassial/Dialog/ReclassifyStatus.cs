@@ -1,6 +1,7 @@
 ﻿using Carnassial.Data;
 using Carnassial.Images;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace Carnassial.Dialog
@@ -8,10 +9,10 @@ namespace Carnassial.Dialog
     public class ReclassifyStatus : FileIOComputeTransactionStatus, IDisposable
     {
         private bool disposed;
-        private CachedImage image;
+        private CachedImage? image;
 
-        public ImageRow File { get; set; }
-        public ImageProperties ImageProperties { get; set; }
+        public ImageRow? File { get; set; }
+        public ImageProperties? ImageProperties { get; set; }
         public UInt64 MostRecentImageUpdate { get; set; }
 
         public ReclassifyStatus()
@@ -45,14 +46,14 @@ namespace Carnassial.Dialog
         public void SetImage(CachedImage imageToDisplay)
         {
             // see remarks for FileLoadStatus.SetImage()
-            CachedImage oldImage = Interlocked.Exchange(ref this.image, imageToDisplay);
+            CachedImage? oldImage = Interlocked.Exchange(ref this.image, imageToDisplay);
             if (oldImage != null)
             {
                 oldImage.Dispose();
             }
         }
 
-        public bool TryDetachImage(out CachedImage image)
+        public bool TryDetachImage([NotNullWhen(true)] out CachedImage? image)
         {
             if (this.image == null)
             {
@@ -61,7 +62,7 @@ namespace Carnassial.Dialog
             }
 
             // see remarks in FileLoadStatus.TryDetachImage()
-            image = Interlocked.Exchange(ref this.image, null);
+            image = Interlocked.Exchange<CachedImage?>(ref this.image, null);
             return image != null;
         }
     }

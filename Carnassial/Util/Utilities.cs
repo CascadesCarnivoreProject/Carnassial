@@ -18,14 +18,14 @@ namespace Carnassial.Util
             return (hash << 5) + hash ^ obj2.GetHashCode();
         }
 
-        public static int CombineHashCodes(params object[] objects)
+        public static int CombineHashCodes(params object?[] objects)
         {
-            Debug.Assert(objects[0] != null, "obj0 unexpectedly null.");
+            Debug.Assert(objects[0] != null, "objects[0] unexpectedly null.");
 
-            int hash = objects[0].GetHashCode();
+            int hash = objects[0]!.GetHashCode();
             for (int index = 1; index < objects.Length; ++index)
             {
-                object obj = objects[index];
+                object? obj = objects[index];
                 int objectHash = 0;
                 if (obj != null)
                 {

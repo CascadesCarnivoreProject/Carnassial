@@ -11,7 +11,7 @@ namespace Carnassial.Data
         private bool disposed;
         private readonly SQLiteCommand insertOrUpdateControls;
 
-        protected ControlTransactionSequence(StringBuilder command, SQLiteDatabase database, SQLiteTransaction transaction)
+        protected ControlTransactionSequence(StringBuilder command, SQLiteDatabase database, SQLiteTransaction? transaction)
             : base(database, transaction)
         {
             this.disposed = false;
@@ -77,17 +77,17 @@ namespace Carnassial.Data
             return ControlTransactionSequence.CreateInsert(database, null);
         }
 
-        public static ControlTransactionSequence CreateInsert(SQLiteDatabase database, SQLiteTransaction transaction)
+        public static ControlTransactionSequence CreateInsert(SQLiteDatabase database, SQLiteTransaction? transaction)
         {
-            List<string> columns = new List<string>(Constant.ControlColumn.Columns.Count);
-            List<string> parameterNames = new List<string>(Constant.ControlColumn.Columns.Count);
+            List<string> columns = new(Constant.ControlColumn.Columns.Count);
+            List<string> parameterNames = new(Constant.ControlColumn.Columns.Count);
             foreach (string column in Constant.ControlColumn.Columns)
             {
                 columns.Add(column);
                 parameterNames.Add("@" + column);
             }
 
-            StringBuilder insertCommand = new StringBuilder("INSERT INTO " + Constant.DatabaseTable.Controls + " (" + String.Join(", ", columns) + ") VALUES (" + String.Join(", ", parameterNames) + ")");
+            StringBuilder insertCommand = new("INSERT INTO " + Constant.DatabaseTable.Controls + " (" + String.Join(", ", columns) + ") VALUES (" + String.Join(", ", parameterNames) + ")");
             return new ControlTransactionSequence(insertCommand, database, transaction);
         }
 
@@ -96,10 +96,10 @@ namespace Carnassial.Data
             return ControlTransactionSequence.CreateUpdate(database, null);
         }
 
-        public static ControlTransactionSequence CreateUpdate(SQLiteDatabase database, SQLiteTransaction transaction)
+        public static ControlTransactionSequence CreateUpdate(SQLiteDatabase database, SQLiteTransaction? transaction)
         {
-            StringBuilder updateCommand = new StringBuilder("UPDATE " + Constant.DatabaseTable.Controls + " SET ");
-            List<string> parameters = new List<string>(Constant.ControlColumn.Columns.Count);
+            StringBuilder updateCommand = new("UPDATE " + Constant.DatabaseTable.Controls + " SET ");
+            List<string> parameters = new(Constant.ControlColumn.Columns.Count);
             foreach (string column in Constant.ControlColumn.Columns)
             {
                 parameters.Add(column + "=@" + column);

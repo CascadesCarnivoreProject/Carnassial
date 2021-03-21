@@ -5,6 +5,8 @@ using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.Jpeg;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq;
 using MetadataDirectory = MetadataExtractor.Directory;
@@ -19,7 +21,7 @@ namespace Carnassial.Images
         private bool disposed;
         private readonly UnbufferedSequentialReader reader;
 
-        public IReadOnlyList<MetadataDirectory> Metadata { get; private set; }
+        public IReadOnlyList<MetadataDirectory>? Metadata { get; private set; }
 
         static JpegImage()
         {
@@ -60,7 +62,7 @@ namespace Carnassial.Images
             this.disposed = true;
         }
 
-        public ImageProperties GetThumbnailProperties(ref MemoryImage preallocatedThumbnail)
+        public ImageProperties GetThumbnailProperties(ref MemoryImage? preallocatedThumbnail)
         {
             // determine image quality
             // Folder loading becomes jpeg decoding bound at larger decoding sizes.  Using a thumbnail is acceptable 
@@ -74,12 +76,16 @@ namespace Carnassial.Images
 
             this.TryGetInfoBarHeight(out int infoBarHeight);
             int imageHeight = 0;
-            JpegDirectory jpeg = this.Metadata.OfType<JpegDirectory>().FirstOrDefault();
-            if ((jpeg != null) && jpeg.ContainsTag(JpegDirectory.TagImageHeight))
+            if (this.Metadata != null)
             {
-                imageHeight = jpeg.GetImageHeight();
+                JpegDirectory? jpeg = this.Metadata.OfType<JpegDirectory>().FirstOrDefault();
+                if ((jpeg != null) && jpeg.ContainsTag(JpegDirectory.TagImageHeight))
+                {
+                    imageHeight = jpeg.GetImageHeight();
+                }
             }
 
+            Debug.Assert(preallocatedThumbnail != null);
             double thumbnailScale = (double)preallocatedThumbnail.PixelHeight / (double)imageHeight;
             infoBarHeight = (int)Math.Round(thumbnailScale * infoBarHeight);
             double luminosity = preallocatedThumbnail.GetLuminosityAndColoration(infoBarHeight, out double coloration);
@@ -89,8 +95,10 @@ namespace Carnassial.Images
             };
         }
 
-        public ImageProperties GetProperties(Nullable<int> requestedWidth, ref MemoryImage preallocatedImage)
+        public ImageProperties GetProperties(int? requestedWidth, ref MemoryImage? preallocatedImage)
         {
+            Debug.Assert(this.reader.Buffer != null, "Reader's buffer is unexpected null. " + nameof(this.reader.ExtendBuffer) + "() should have been called on the reader..");
+
             this.reader.ExtendBuffer((int)this.reader.Length - this.reader.Buffer.Length);
             if ((preallocatedImage == null) || (preallocatedImage.TryDecode(this.reader.Buffer, 0, this.reader.Buffer.Length, requestedWidth) == false))
             {
@@ -99,10 +107,13 @@ namespace Carnassial.Images
 
             this.TryGetInfoBarHeight(out int infoBarHeight);
             int imageHeight = 0;
-            JpegDirectory jpeg = this.Metadata.OfType<JpegDirectory>().FirstOrDefault();
-            if ((jpeg != null) && jpeg.ContainsTag(JpegDirectory.TagImageHeight))
+            if (this.Metadata != null)
             {
-                imageHeight = jpeg.GetImageHeight();
+                JpegDirectory? jpeg = this.Metadata.OfType<JpegDirectory>().FirstOrDefault();
+                if ((jpeg != null) && jpeg.ContainsTag(JpegDirectory.TagImageHeight))
+                {
+                    imageHeight = jpeg.GetImageHeight();
+                }
             }
 
             double decodingScale = (double)preallocatedImage.PixelHeight / (double)imageHeight;
@@ -129,13 +140,13 @@ namespace Carnassial.Images
             }
 
             infoBarHeight = 0;
-            ExifIfd0Directory exifIfd0 = this.Metadata.OfType<ExifIfd0Directory>().FirstOrDefault();
+            ExifIfd0Directory? exifIfd0 = this.Metadata.OfType<ExifIfd0Directory>().FirstOrDefault();
             if ((exifIfd0 == null) || (exifIfd0.ContainsTag(ExifSubIfdDirectory.TagMake) == false))
             {
                 return false;
             }
 
-            string make = exifIfd0.GetString(ExifSubIfdDirectory.TagMake);
+            string? make = exifIfd0.GetString(ExifSubIfdDirectory.TagMake);
             if (String.Equals(make, Constant.Manufacturer.Bushnell, StringComparison.OrdinalIgnoreCase))
             {
                 infoBarHeight = Constant.Manufacturer.BushnellInfoBarHeight;
@@ -147,6 +158,7 @@ namespace Carnassial.Images
             return infoBarHeight != 0;
         }
 
+        [MemberNotNullWhen(true, nameof(JpegImage.Metadata))]
         public bool TryGetMetadata()
         {
             try
@@ -166,19 +178,23 @@ namespace Carnassial.Images
             return this.Metadata != null;
         }
 
-        public MetadataReadResults TryGetThumbnail(ref MemoryImage preallocatedThumbnail)
+        protected MetadataReadResults TryGetThumbnail(ref MemoryImage? preallocatedThumbnail)
         {
             if (this.Metadata == null)
             {
                 throw new NotSupportedException(App.FormatResource(Constant.ResourceKey.JpegImageMetadataRequired, nameof(this.TryGetMetadata), nameof(this.TryGetThumbnail) + "()."));
             }
 
-            ExifThumbnailDirectory thumbnailDirectory = this.Metadata.OfType<ExifThumbnailDirectory>().FirstOrDefault();
+            ExifThumbnailDirectory? thumbnailDirectory = this.Metadata.OfType<ExifThumbnailDirectory>().FirstOrDefault();
             if ((thumbnailDirectory == null) ||
                 (thumbnailDirectory.ContainsTag(ExifThumbnailDirectory.TagCompression) == false) ||
                 (thumbnailDirectory.ContainsTag(ExifThumbnailDirectory.TagThumbnailOffset) == false) ||
-                (thumbnailDirectory.ContainsTag(ExifThumbnailDirectory.TagThumbnailLength) == false) ||
-                (thumbnailDirectory.GetDescription(ExifThumbnailDirectory.TagCompression).StartsWith(Constant.Exif.JpegCompression, StringComparison.OrdinalIgnoreCase) == false))
+                (thumbnailDirectory.ContainsTag(ExifThumbnailDirectory.TagThumbnailLength) == false))
+            {
+                return MetadataReadResults.None;
+            }
+            string? compression = thumbnailDirectory.GetDescription(ExifThumbnailDirectory.TagCompression);
+            if ((compression == null) || (compression.StartsWith(Constant.Exif.JpegCompression, StringComparison.OrdinalIgnoreCase) == false))
             {
                 return MetadataReadResults.None;
             }
@@ -189,6 +205,7 @@ namespace Carnassial.Images
             {
                 throw new ImageProcessingException(String.Format(CultureInfo.CurrentCulture, "Jpeg thumbnail sizeof {0} bytes is below smallest expected size {1}.", thumbnailLength, Constant.Images.SmallestValidJpegSizeInBytes));
             }
+            Debug.Assert(this.reader.Buffer != null, "Reader's buffer is unexpected null. " + nameof(this.reader.ExtendBuffer) + "() should have been called on the reader..");
             if ((thumbnailOffset + thumbnailLength + Constant.Exif.MaxMetadataExtractorIssue35Offset) > this.reader.Buffer.Length)
             {
                 throw new ImageProcessingException(String.Format(CultureInfo.CurrentCulture, "End position of thumbnail (byte {0}) may exceed file buffer length of '{1}'.", thumbnailOffset + thumbnailLength, this.reader.Buffer.Length));

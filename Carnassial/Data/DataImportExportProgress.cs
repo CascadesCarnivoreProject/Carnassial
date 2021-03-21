@@ -72,7 +72,9 @@ namespace Carnassial.Data
             this.CurrentPosition = (double)currentPosition;
             Debug.Assert(this.CurrentPosition <= this.EndPosition, "Current position past end position.");
 
-            this.QueueProgressUpdate(this as TProgress);
+            TProgress? progress = this as TProgress;
+            Debug.Assert(progress != null, "Instantiating class must be of type TProgress.");
+            this.QueueProgressUpdate(progress);
         }
     }
 }

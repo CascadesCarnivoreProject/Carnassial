@@ -22,10 +22,10 @@ namespace Carnassial.Dialog
             this.ComputeTaskBody = (int computeTaskNumber) =>
             {
                 int atoms = 0;
-                MemoryImage preallocatedImage = null;
-                for (FileLoadAtom loadAtom = this.GetNextComputeAtom(computeTaskNumber); loadAtom != null; loadAtom = this.GetNextComputeAtom(computeTaskNumber))
+                MemoryImage? preallocatedImage = null;
+                for (FileLoadAtom? loadAtom = this.GetNextComputeAtom(computeTaskNumber); loadAtom != null; loadAtom = this.GetNextComputeAtom(computeTaskNumber))
                 {
-                    ImageProperties firstProperties = loadAtom.Classify(darkLuminosityThreshold, ref preallocatedImage);
+                    ImageProperties? firstProperties = loadAtom.Classify(darkLuminosityThreshold, ref preallocatedImage);
 
                     bool addFilesToTransaction = false;
                     bool updateStatus = false;
@@ -73,15 +73,15 @@ namespace Carnassial.Dialog
             };
             this.IOTaskBody = (int ioTaskNumber) =>
             {
-                for (FileLoadAtom loadAtom = this.GetNextIOAtom(ioTaskNumber); loadAtom != null; loadAtom = this.GetNextIOAtom(ioTaskNumber))
+                for (FileLoadAtom? loadAtom = this.GetNextIOAtom(ioTaskNumber); loadAtom != null; loadAtom = this.GetNextIOAtom(ioTaskNumber))
                 {
                     // attach ImageRows for files in load atom
                     loadAtom.SetFiles(filesByRelativePathAndName);
                     Debug.Assert(loadAtom.HasAtLeastOneFile, "Load atom unexpectedly empty.");
-                    Debug.Assert(loadAtom.First.File.HasChanges == false, "First file in load atom unexpectedly has changes.");
+                    Debug.Assert((loadAtom.First.File == null) || (loadAtom.First.File.HasChanges == false), "First file in load atom unexpectedly has changes.");
                     if (loadAtom.HasSecondFile)
                     {
-                        Debug.Assert(loadAtom.Second.File.HasChanges == false, "Second file in load atom unexpectedly has changes.");
+                        Debug.Assert(loadAtom.Second.File!.HasChanges == false, "Second file in load atom unexpectedly has changes.");
                     }
 
                     // try to load images for files in load item

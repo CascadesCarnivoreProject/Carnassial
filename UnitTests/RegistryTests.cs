@@ -16,7 +16,7 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void CarnassialProductionKeysRead()
         {
-            CarnassialState state = new CarnassialState();
+            CarnassialState state = new();
             state.ReadFromRegistry();
         }
 
@@ -24,7 +24,7 @@ namespace Carnassial.UnitTests
         public void CarnassialTestKeysCreateReuseUpdate()
         {
             string testRootKey = Constant.Registry.RootKey + "CarnassialUnitTest";
-            using (RegistryKey testKey = Registry.CurrentUser.OpenSubKey(testRootKey))
+            using (RegistryKey? testKey = Registry.CurrentUser.OpenSubKey(testRootKey))
             {
                 if (testKey != null)
                 {
@@ -32,15 +32,15 @@ namespace Carnassial.UnitTests
                 }
             }
 
-            CarnassialUserRegistrySettings userSettings = new CarnassialUserRegistrySettings(testRootKey);
-            this.VerifyDefaultState(userSettings);
+            CarnassialUserRegistrySettings userSettings = new(testRootKey);
+            RegistryTests.VerifyDefaultState(userSettings);
 
             // write
             userSettings.WriteToRegistry();
 
             // loopback
             userSettings.ReadFromRegistry();
-            this.VerifyDefaultState(userSettings);
+            RegistryTests.VerifyDefaultState(userSettings);
 
             // overwrite
             userSettings.WriteToRegistry();
@@ -76,7 +76,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(userSettings.DarkLuminosityThreshold == modifiedDarkPixelRatioThreshold);
             Assert.IsNotNull(userSettings.MostRecentImageSets);
             Assert.IsTrue(userSettings.MostRecentImageSets.Count == 1);
-            Assert.IsTrue(userSettings.MostRecentImageSets.TryGetMostRecent(out string mostRecentDatabasePath));
+            Assert.IsTrue(userSettings.MostRecentImageSets.TryGetMostRecent(out string? mostRecentDatabasePath));
             Assert.IsTrue(mostRecentDatabasePath == databasePath);
             Assert.IsTrue(userSettings.OrderFilesByDateTime);
             Assert.IsTrue(userSettings.SkipFileClassification);
@@ -95,14 +95,14 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public void EditorProductionKeysRead()
         {
-            EditorUserRegistrySettings editorRegistry = new EditorUserRegistrySettings();
+            EditorUserRegistrySettings editorRegistry = new();
         }
 
         [TestMethod]
         public void EditorTestKeysCreateReuseUpdate()
         {
             string testRootKey = Constant.Registry.RootKey + "EditorUnitTest";
-            using (RegistryKey testKey = Registry.CurrentUser.OpenSubKey(testRootKey))
+            using (RegistryKey? testKey = Registry.CurrentUser.OpenSubKey(testRootKey))
             {
                 if (testKey != null)
                 {
@@ -110,7 +110,7 @@ namespace Carnassial.UnitTests
                 }
             }
 
-            EditorUserRegistrySettings editorRegistry = new EditorUserRegistrySettings(testRootKey);
+            EditorUserRegistrySettings editorRegistry = new(testRootKey);
             Assert.IsNotNull(editorRegistry.MostRecentTemplates);
             Assert.IsTrue(editorRegistry.MostRecentTemplates.Count == 0);
 
@@ -134,13 +134,13 @@ namespace Carnassial.UnitTests
 
             Assert.IsNotNull(editorRegistry.MostRecentTemplates);
             Assert.IsTrue(editorRegistry.MostRecentTemplates.Count == 1);
-            Assert.IsTrue(editorRegistry.MostRecentTemplates.TryGetMostRecent(out string mostRecentTemplatePath));
+            Assert.IsTrue(editorRegistry.MostRecentTemplates.TryGetMostRecent(out string? mostRecentTemplatePath));
             Assert.IsTrue(mostRecentTemplatePath == templatePath);
 
             Registry.CurrentUser.DeleteSubKeyTree(testRootKey);
         }
 
-        private void VerifyDefaultState(CarnassialUserRegistrySettings userSettings)
+        private static void VerifyDefaultState(CarnassialUserRegistrySettings userSettings)
         {
             Assert.IsFalse(userSettings.AudioFeedback);
             Assert.IsTrue(userSettings.CarnassialWindowPosition.X == 0 && userSettings.CarnassialWindowPosition.Y == 0);
@@ -148,7 +148,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(userSettings.DarkLuminosityThreshold == Constant.Images.DarkLuminosityThresholdDefault);
             Assert.IsNotNull(userSettings.MostRecentImageSets);
             Assert.IsTrue(userSettings.MostRecentImageSets.Count == 0);
-            Assert.IsFalse(userSettings.MostRecentImageSets.TryGetMostRecent(out string mostRecentDatabasePath));
+            Assert.IsFalse(userSettings.MostRecentImageSets.TryGetMostRecent(out string? mostRecentDatabasePath));
             Assert.IsNull(mostRecentDatabasePath);
             Assert.IsFalse(userSettings.OrderFilesByDateTime);
             Assert.IsFalse(userSettings.SkipFileClassification);

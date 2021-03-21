@@ -23,11 +23,11 @@ namespace Carnassial.Command
         private void ApplyValueToCurrentFile(CarnassialWindow carnassial, object value)
         {
             Debug.Assert(carnassial.IsFileAvailable(), "Attempt to edit file when no file is current.  Is a menu unexpectedly enabled?");
-            Debug.Assert(this.FileID == carnassial.DataHandler.ImageCache.Current.ID, "Attempt to apply edit to a different file.");
+            Debug.Assert(this.FileID == carnassial.DataHandler.ImageCache.Current!.ID, "Attempt to apply edit to a different file.");
 
             DataEntryControl control = carnassial.DataEntryControls.ControlsByDataLabel[this.DataLabel];
             carnassial.DataHandler.IsProgrammaticUpdate = true;
-            this.ApplyValueToFile(carnassial.DataHandler.ImageCache.Current, this.PropertyName, value, control, carnassial.State.CurrentFileSnapshot);
+            FileSingleFieldChange.ApplyValueToFile(carnassial.DataHandler.ImageCache.Current, this.PropertyName, value, control, carnassial.State.CurrentFileSnapshot);
             carnassial.DataHandler.IsProgrammaticUpdate = false;
         }
 

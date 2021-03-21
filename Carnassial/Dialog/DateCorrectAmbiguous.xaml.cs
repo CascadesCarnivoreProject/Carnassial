@@ -252,7 +252,7 @@ namespace Carnassial.Dialog
         private void DateBox_Checked(object sender, RoutedEventArgs e)
         {
             // determine if date should be swapped
-            RadioButton selected = sender as RadioButton;
+            RadioButton selected = (RadioButton)sender;
             this.ambiguousDatesList[this.ambiguousDatesListIndex].Swapped = selected == this.SwappedDate;
         }
 
@@ -279,7 +279,7 @@ namespace Carnassial.Dialog
         // If the user clicks the next button, try to show the next ambiguous date.
         private async void NextPreviousButton_Click(object senderAsObject, RoutedEventArgs e)
         {
-            Button sender = senderAsObject as Button;
+            Button sender = (Button)senderAsObject;
             bool result = await this.MoveToAmbiguousDateAsync(sender == this.NextDate).ConfigureAwait(true);
             await this.UpdateDisplayAsync(result).ConfigureAwait(true);
         }

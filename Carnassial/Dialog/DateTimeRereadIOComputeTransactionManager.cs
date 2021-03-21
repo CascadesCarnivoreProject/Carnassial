@@ -17,13 +17,20 @@ namespace Carnassial.Dialog
 
         public async Task RereadDateTimesAsync(FileDatabase fileDatabase)
         {
+            Debug.Assert(this.Status.FeedbackRows != null);
+
             Dictionary<string, Dictionary<string, ImageRow>> filesByRelativePathAndName = fileDatabase.Files.GetFilesByRelativePathAndName();
             this.ComputeTaskBody = (int computeTaskNumber) =>
             {
                 int atoms = 0;
                 TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
-                for (FileLoadAtom loadAtom = this.GetNextComputeAtom(computeTaskNumber); loadAtom != null; loadAtom = this.GetNextComputeAtom(computeTaskNumber))
+                for (FileLoadAtom? loadAtom = this.GetNextComputeAtom(computeTaskNumber); loadAtom != null; loadAtom = this.GetNextComputeAtom(computeTaskNumber))
                 {
+                    if (loadAtom.First.File == null)
+                    {
+                        throw new NotSupportedException("Load atom's first file '" + loadAtom.First.FileName + " has not been opened.");
+                    }
+
                     DateTimeOffset originalDateTimeFirst = loadAtom.First.File.DateTimeOffset;
                     DateTimeOffset originalDateTimeSecond = loadAtom.Second.File == null ? Constant.ControlDefault.DateTimeValue : loadAtom.Second.File.DateTimeOffset;
                     loadAtom.ReadDateTimeOffsets(fileDatabase.FolderPath, imageSetTimeZone);
@@ -67,14 +74,14 @@ namespace Carnassial.Dialog
             };
             this.IOTaskBody = (int ioTaskNumber) =>
             {
-                for (FileLoadAtom loadAtom = this.GetNextIOAtom(ioTaskNumber); loadAtom != null; loadAtom = this.GetNextIOAtom(ioTaskNumber))
+                for (FileLoadAtom? loadAtom = this.GetNextIOAtom(ioTaskNumber); loadAtom != null; loadAtom = this.GetNextIOAtom(ioTaskNumber))
                 {
                     loadAtom.SetFiles(filesByRelativePathAndName);
                     Debug.Assert(loadAtom.HasAtLeastOneFile, "Load atom unexpectedly empty.");
-                    Debug.Assert(loadAtom.First.File.HasChanges == false, "First file in load atom unexpectedly has changes.");
+                    Debug.Assert((loadAtom.First.File == null) || (loadAtom.First.File.HasChanges == false), "First file in load atom unexpectedly has changes.");
                     if (loadAtom.HasSecondFile)
                     {
-                        Debug.Assert(loadAtom.Second.File.HasChanges == false, "Second file in load atom unexpectedly has changes.");
+                        Debug.Assert(loadAtom.Second.File!.HasChanges == false, "Second file in load atom unexpectedly has changes.");
                     }
 
                     loadAtom.CreateJpegs(fileDatabase.FolderPath);

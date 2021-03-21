@@ -9,7 +9,7 @@ namespace Carnassial.Data
     {
         public FileTableColumn[] UserCounters { get; private set; }
         public FileTableColumn[] UserFlags { get; private set; }
-        public List<string>[] UserNoteAndChoiceValues { get; private set; }
+        public List<string>?[] UserNoteAndChoiceValues { get; private set; }
         public FileTableColumn[] UserNotesAndChoices { get; private set; }
 
         public FileTableColumnMap(FileTable fileTable)
