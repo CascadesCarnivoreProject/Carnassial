@@ -20,15 +20,6 @@
             public const string WellKnownValues = "Well Known\nValues";
         }
 
-        public static class Registry
-        {
-            public static class EditorKey
-            {
-                // key containing the list of most recent template databases opened by the editor
-                public const string MostRecentlyUsedTemplates = "MostRecentlyUsedTemplates";
-            }
-        }
-
         public static class Resources
         {
             public const string DefaultValueChoiceComboBox = "DefaultValueChoiceComboBox";

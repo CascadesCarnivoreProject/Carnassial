@@ -31,7 +31,7 @@ namespace Carnassial.UnitTests
         [ClassInitialize]
         public static void ClassInitialize(TestContext testContext)
         {
-            CarnassialTest.TryChangeToTestCulture();
+            //CarnassialTest.TryChangeToTestCulture();
         }
 
         [TestMethod]
@@ -707,10 +707,7 @@ namespace Carnassial.UnitTests
         {
             // add files to database
             using FileDatabase fileDatabase = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, TestConstant.File.DefaultNewFileDatabaseFileName);
-            CarnassialState state = new()
-            {
-                SkipFileClassification = false
-            };
+            CarnassialState state = new();
             TimeSpan desiredStatusUpdateInterval = state.Throttles.GetDesiredProgressUpdateInterval();
             string folderToLoad = Path.Combine(this.WorkingDirectory, TestConstant.File.HybridVideoDirectoryName);
             FileInfo[] imagesAndVideos = new DirectoryInfo(folderToLoad).GetFiles();
@@ -723,7 +720,7 @@ namespace Carnassial.UnitTests
                 folderLoad.FindFilesToLoad(fileDatabase.FolderPath);
                 Assert.IsTrue(folderLoad.FilesToLoad == imagesAndVideos.Length);
 
-                int filesLoaded = await folderLoad.AddFilesAsync(fileDatabase, state, Constant.Images.MinimumRenderWidth).ConfigureAwait(false);
+                int filesLoaded = await folderLoad.AddFilesAsync(fileDatabase, Constant.Images.MinimumRenderWidthInPixels).ConfigureAwait(false);
                 Assert.IsTrue(filesLoaded == imagesAndVideos.Length);
                 Assert.IsTrue(fileDatabase.Files.RowCount == imagesAndVideos.Length);
                 fileDatabase.SelectFiles(FileSelection.All);
@@ -754,7 +751,7 @@ namespace Carnassial.UnitTests
 
                 if (expectedIsVideo == false)
                 {
-                    using CachedImage image = await file.TryLoadImageAsync(fileDatabase.FolderPath, Constant.Images.MinimumRenderWidth).ConfigureAwait(true);
+                    using CachedImage image = await file.TryLoadImageAsync(fileDatabase.FolderPath, Constant.Images.MinimumRenderWidthInPixels).ConfigureAwait(true);
                     Assert.IsTrue(image.Image != null);
 
                     stopwatch.Restart();
@@ -818,7 +815,7 @@ namespace Carnassial.UnitTests
             {
                 folderLoad.FolderPaths.Add(folderToLoad);
                 folderLoad.FindFilesToLoad(fileDatabase.FolderPath);
-                int filesLoaded = await folderLoad.AddFilesAsync(fileDatabase, state, Constant.Images.MinimumRenderWidth).ConfigureAwait(false);
+                int filesLoaded = await folderLoad.AddFilesAsync(fileDatabase, Constant.Images.MinimumRenderWidthInPixels).ConfigureAwait(false);
                 Assert.IsTrue(filesLoaded == 0);
             }
             fileDatabase.SelectFiles(FileSelection.All);
@@ -850,7 +847,7 @@ namespace Carnassial.UnitTests
             // reclassify
             using (ReclassifyIOComputeTransaction reclassify = new(this.UpdateReclassifyProgress, desiredStatusUpdateInterval))
             {
-                await reclassify.ReclassifyFilesAsync(fileDatabase, state.DarkLuminosityThreshold, Constant.Images.MinimumRenderWidth).ConfigureAwait(false);
+                await reclassify.ReclassifyFilesAsync(fileDatabase, CarnassialSettings.Default.DarkLuminosityThreshold, Constant.Images.MinimumRenderWidthInPixels).ConfigureAwait(false);
             }
             fileDatabase.SelectFiles(FileSelection.All);
             filesByRelativePathAndName = fileDatabase.Files.GetFilesByRelativePathAndName();
@@ -1034,7 +1031,7 @@ namespace Carnassial.UnitTests
 
             // move file back
             Assert.IsTrue(file.TryMoveFileToFolder(fileDatabase.FolderPath, fileDatabase.FolderPath));
-            fileExpectation.RelativePath = null;
+            fileExpectation.RelativePath = Constant.ControlDefault.RelativePath;
             fileExpectation.Verify(file, imageSetTimeZone);
         }
 

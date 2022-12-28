@@ -114,14 +114,15 @@ namespace Carnassial.Images
             return firstProperties;
         }
 
-        public void ClassifyFromThumbnails(double darkLuminosityThreshold, bool skipClassification, ref MemoryImage? preallocatedThumbnail)
+        public void ClassifyFromThumbnails(ref MemoryImage? preallocatedThumbnail)
         {
             Debug.Assert(this.First.File != null, "First file unexpectedly null.");
+            bool skipFileClassification = CarnassialSettings.Default.SkipFileClassification;
             if (this.First.File.IsVideo)
             {
                 this.First.File.Classification = FileClassification.Video;
             }
-            else if (skipClassification)
+            else if (skipFileClassification)
             {
                 this.First.File.Classification = FileClassification.Color;
             }
@@ -139,7 +140,7 @@ namespace Carnassial.Images
                         this.First.MetadataReadResult |= MetadataReadResults.Thumbnail;
                         if (thumbnailProperties.HasColorationAndLuminosity)
                         {
-                            this.First.File.Classification = thumbnailProperties.EvaluateNewClassification(darkLuminosityThreshold);
+                            this.First.File.Classification = thumbnailProperties.EvaluateNewClassification(CarnassialSettings.Default.DarkLuminosityThreshold);
                             this.First.MetadataReadResult |= MetadataReadResults.Classification;
                         }
                     }
@@ -156,7 +157,7 @@ namespace Carnassial.Images
                 {
                     this.Second.File.Classification = FileClassification.Video;
                 }
-                else if (skipClassification)
+                else if (skipFileClassification)
                 {
                     this.Second.File.Classification = FileClassification.Color;
                 }
@@ -174,7 +175,7 @@ namespace Carnassial.Images
                             this.Second.MetadataReadResult |= MetadataReadResults.Thumbnail;
                             if (thumbnailProperties.HasColorationAndLuminosity)
                             {
-                                this.Second.File.Classification = thumbnailProperties.EvaluateNewClassification(darkLuminosityThreshold);
+                                this.Second.File.Classification = thumbnailProperties.EvaluateNewClassification(CarnassialSettings.Default.DarkLuminosityThreshold);
                                 this.Second.MetadataReadResult |= MetadataReadResults.Classification;
                             }
                         }
@@ -190,6 +191,7 @@ namespace Carnassial.Images
         public bool CreateAndAppendFiles(Dictionary<string, HashSet<string>> fileNamesByRelativePath, FileTable files)
         {
             bool databaseHasFilesInFolder = fileNamesByRelativePath.TryGetValue(this.RelativePath, out HashSet<string>? filesInFolder);
+            Debug.Assert(this.First.FileName != null);
             if ((databaseHasFilesInFolder == false) || (filesInFolder!.Contains(this.First.FileName) == false))
             {
                 this.First.File = files.CreateAndAppendFile(this.First.FileName, this.RelativePath);
@@ -309,14 +311,8 @@ namespace Carnassial.Images
 
             if (disposing)
             {
-                if (this.First != null)
-                {
-                    this.First.Dispose();
-                }
-                if (this.Second != null)
-                {
-                    this.Second.Dispose();
-                }
+                this.First?.Dispose();
+                this.Second?.Dispose();
             }
             this.disposed = true;
         }
@@ -359,7 +355,7 @@ namespace Carnassial.Images
             {
                 if (this.Second.File!.IsVideo)
                 {
-                    if (this.Second.File.IsPreviousJpegName(this.First.FileName))
+                    if (this.Second.File.IsPreviousJpegName(this.First.FileName!))
                     {
                         this.Second.File.DateTimeOffset = this.First.File.DateTimeOffset + Constant.Images.DefaultHybridVideoLag;
                         this.Second.MetadataReadResult = MetadataReadResults.DateTimeInferredFromPrevious;
@@ -398,6 +394,7 @@ namespace Carnassial.Images
         // runtime cost of adapting FileLoads to a populated file table over the cost of developing and maintaining the alternative.
         public void SetFiles(Dictionary<string, Dictionary<string, ImageRow>> filesByRelativePathAndName)
         {
+            Debug.Assert(this.First.FileName != null);
             Dictionary<string, ImageRow> filesByName = filesByRelativePathAndName[this.RelativePath];
 
             this.First.File = filesByName[this.First.FileName];

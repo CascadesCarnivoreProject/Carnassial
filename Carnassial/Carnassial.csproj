@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net5.0-windows</TargetFramework>
+    <TargetFramework>net6.0-windows10.0.19041.0</TargetFramework>
     <OutputType>WinExe</OutputType>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <UseWindowsForms>true</UseWindowsForms>
@@ -22,16 +22,16 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <OutputPath>C:\Users\todd\Documents\wildlife bio\Carnassial\x86\Debug\</OutputPath>
+    <OutputPath>$(SolutionDir)\x86\Debug\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutputPath>C:\Users\todd\Documents\wildlife bio\Carnassial\x64\Debug\</OutputPath>
+    <OutputPath>$(SolutionDir)\x64\Debug\</OutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutputPath>C:\Users\todd\Documents\wildlife bio\Carnassial\x64\Release\</OutputPath>
+    <OutputPath>$(SolutionDir)\x64\Release\</OutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
@@ -40,133 +40,71 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Carnassial.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\StatusCriticalError_64x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\StatusInformation_64x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\StatusWarning_64x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\StatusHelp_64x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\Exit_16x.png" />
-    <Resource Include="Resources\Menu\OpenFolder_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\Forward_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\Backward_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\ZoomIn_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\ZoomOut_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\ZoomToFit_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\AddItem_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\ExportFile_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\ImportFile_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\CopyDynamicValue_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\ShowHideDeletedItem_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\TimePicker_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\Bookmark_002_16xMD.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\DarkTheme_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\ContractArrow_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\ExpandArrow_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\PlayVideo_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\Copy_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\Paste_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\MoveToSubmodule_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\Undo_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\CloseSolution_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\Calendar_24x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\Restart_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\GoToFirstRow_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\GoToLastRow_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\Redo_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\StatusCriticalError_16x.png" />
+    <Resource Include="Resources\StatusCriticalError_64x.png" />
+    <Resource Include="Resources\StatusInformation_64x.png" />
+    <Resource Include="Resources\StatusWarning_64x.png" />
+    <Resource Include="Resources\StatusHelp_64x.png" />
+    <Resource Include="Resources\Menu\AddItem_16x.png" />
+    <Resource Include="Resources\Menu\Backward_16x.png" />
+    <Resource Include="Resources\Menu\Bookmark_002_16xMD.png" />
+    <Resource Include="Resources\Menu\CloseSolution_16x.png" />
+    <Resource Include="Resources\Menu\ContractArrow_16x.png" />
+    <Resource Include="Resources\Menu\Copy_16x.png" />
+    <Resource Include="Resources\Menu\CopyDynamicValue_16x.png" />
+    <Resource Include="Resources\Menu\DarkTheme_16x.png" />
+    <Resource Include="Resources\Menu\Exit_16x.png" />
+    <Resource Include="Resources\Menu\ExpandArrow_16x.png" />
+    <Resource Include="Resources\Menu\ExportFile_16x.png" />
+    <Resource Include="Resources\Menu\FindNext_16x.png" />
+    <Resource Include="Resources\Menu\FindPrevious_16x.png" />
+    <Resource Include="Resources\Menu\Forward_16x.png" />
+    <Resource Include="Resources\Menu\GoToFirstRow_16x.png" />
+    <Resource Include="Resources\Menu\GoToLastRow_16x.png" />
+    <Resource Include="Resources\Menu\ImportFile_16x.png" />
+    <Resource Include="Resources\Menu\MoveToSubmodule_16x.png" />
+    <Resource Include="Resources\Menu\OpenFolder_16x.png" />
+    <Resource Include="Resources\Menu\Paste_16x.png" />
+    <Resource Include="Resources\Menu\PlayVideo_16x.png" />
+    <Resource Include="Resources\Menu\Redo_16x.png" />
+    <Resource Include="Resources\Menu\ReplaceInFiles_16x.png" />
+    <Resource Include="Resources\Menu\Restart_16x.png" />
+    <Resource Include="Resources\Menu\ShowHideDeletedItem_16x.png" />
+    <Resource Include="Resources\Menu\TimePicker_16x.png" />
+    <Resource Include="Resources\Menu\Undo_16x.png" />
+    <Resource Include="Resources\Menu\ZoomIn_16x.png" />
+    <Resource Include="Resources\Menu\ZoomOut_16x.png" />
+    <Resource Include="Resources\Menu\ZoomToFit_16x.png" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Native\Native.vcxproj" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Resources\Menu\FindNext_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\FindPrevious_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Resource Include="Resources\Menu\ReplaceInFiles_16x.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="DocumentFormat.OpenXml" Version="2.16.0" />
-    <PackageReference Include="MetadataExtractor" Version="2.7.2" />
-    <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.4" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="2.20.0" />
+    <PackageReference Include="MetadataExtractor" Version="2.8.0" />
+    <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.5" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.116" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
     <PackageReference Include="System.IO.FileSystem.Primitives" Version="4.3.0" />
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="7.0.3" />
   </ItemGroup>
   <ItemGroup>
     <Page Remove="Dialog\FileCounts.xaml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="appsettings.json" />
+    <Compile Update="CarnassialSettings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CarnassialSettings.settings</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
+    <None Update="CarnassialSettings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>CarnassialSettings.Designer.cs</LastGenOutput>
+    </None>
     <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

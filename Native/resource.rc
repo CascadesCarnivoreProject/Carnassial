@@ -99,12 +99,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Cascades Carnivore Project"
             VALUE "FileDescription", "Carnassial C++/CLI and C++ components"
-            VALUE "FileVersion", "2.2.4.0"
+            VALUE "FileVersion", "2.2.5.0"
             VALUE "InternalName", "Carnassial.Native.dll"
-            VALUE "LegalCopyright", "Copyright (C) 2019 Cascades Carnivore Project"
+            VALUE "LegalCopyright", "Copyright (C) 2016-2023 Cascades Carnivore Project"
             VALUE "OriginalFilename", "Carnassial.Native.dll"
             VALUE "ProductName", "Carnassial"
-            VALUE "ProductVersion", "2.2.4.0"
+            VALUE "ProductVersion", "2.2.5.0"
         END
     END
     BLOCK "VarFileInfo"

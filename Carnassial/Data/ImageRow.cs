@@ -601,7 +601,7 @@ namespace Carnassial.Data
             string previousFileNameWithoutExtension;
             if (fileNameWithoutExtension.EndsWith("0001", StringComparison.Ordinal))
             {
-                previousFileNameWithoutExtension = fileNameWithoutExtension.Substring(0, 4) + "0999";
+                previousFileNameWithoutExtension = String.Concat(fileNameWithoutExtension.AsSpan(0, 4), "0999");
             }
             else
             {
@@ -885,7 +885,7 @@ namespace Carnassial.Data
             return await this.TryLoadImageAsync(imageSetFolderPath, null).ConfigureAwait(true);
         }
 
-        public async virtual Task<CachedImage> TryLoadImageAsync(string imageSetFolderPath, int? expectedDisplayWidth)
+        public async virtual Task<CachedImage> TryLoadImageAsync(string imageSetFolderPath, int? expectedDisplayWidthInPixels)
         {
             // 8MP average performance (n ~= 200), milliseconds
             // scale factor  1.0  1/2   1/4    1/8
@@ -912,7 +912,7 @@ namespace Carnassial.Data
 
             byte[] buffer = new byte[stream.Length];
             await stream.ReadAsync(buffer.AsMemory(0, buffer.Length)).ConfigureAwait(true);
-            MemoryImage image = new(buffer, expectedDisplayWidth);
+            MemoryImage image = new(buffer, expectedDisplayWidthInPixels);
             // stopwatch.Stop();
             // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
             return new CachedImage(image);
@@ -954,7 +954,7 @@ namespace Carnassial.Data
             string? relativePath = NativeMethods.GetRelativePathFromDirectoryToDirectory(imageSetFolderPath, destinationFolderPath);
             if (String.IsNullOrEmpty(relativePath))
             {
-                relativePath = ".";
+                relativePath = Constant.ControlDefault.RelativePath;
             }
             this.RelativePath = relativePath;
             return true;

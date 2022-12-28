@@ -11,10 +11,7 @@ namespace Carnassial.Interop
             {
                 foreach (T? item in enumerable)
                 {
-                    if (item != null)
-                    {
-                        item.Dispose();
-                    }
+                    item?.Dispose();
                 }
             }
         }

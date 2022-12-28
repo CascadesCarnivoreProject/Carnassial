@@ -58,7 +58,7 @@ namespace Carnassial.Editor.Dialog
         private void CheckForUpdate_Click(object sender, RoutedEventArgs e)
         {
             GithubReleaseClient updater = new(Constant.ApplicationName, this.latestReleaseAddress);
-            if (updater.TryGetAndParseRelease(true, out Version _))
+            if (updater.TryGetAndParseRelease(true, out Version? _))
             {
                 this.MostRecentCheckForUpdate = DateTime.UtcNow;
             }

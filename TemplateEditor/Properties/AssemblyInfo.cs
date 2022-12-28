@@ -2,18 +2,19 @@
 using System.Resources;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Windows;
 
 [assembly: AssemblyTitle("Carnassial Template Editor")]
 [assembly: AssemblyDescription("Editor for Carnassial template database (.tdb) files.")]
 [assembly: AssemblyCompany("Cascades Carnivore Project")]
 [assembly: AssemblyProduct("Carnassial Template Editor")]
-[assembly: AssemblyCopyright("Copyright © 2016-2022 Cascades Carnivore Project")]
+[assembly: AssemblyCopyright("Copyright © 2016-2023 Cascades Carnivore Project")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
-[assembly: AssemblyVersion("2.2.4.0")]
-[assembly: AssemblyFileVersion("2.2.4.0")]
+[assembly: AssemblyVersion("2.2.5.0")]
+[assembly: AssemblyFileVersion("2.2.5.0")]
 
 #if DEBUG
 [assembly: AssemblyConfiguration("Debug")]
@@ -30,3 +31,4 @@ using System.Windows;
 [assembly: ThemeInfo(ResourceDictionaryLocation.None, ResourceDictionaryLocation.SourceAssembly)]
 
 [assembly: NeutralResourcesLanguage("en", UltimateResourceFallbackLocation.MainAssembly)]
+[assembly: SupportedOSPlatform("windows")]

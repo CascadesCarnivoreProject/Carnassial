@@ -1,6 +1,7 @@
 ﻿using Carnassial.Control;
 using Carnassial.Util;
 using System.Windows;
+using static Carnassial.Constant;
 
 namespace Carnassial.Dialog
 {
@@ -20,21 +21,21 @@ namespace Carnassial.Dialog
             // throttles
             this.ImageRendersPerSecond.Minimum = Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondLowerBound;
             this.ImageRendersPerSecond.Maximum = Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound;
-            this.ImageRendersPerSecond.Value = this.carnassialState.Throttles.DesiredImageRendersPerSecond;
+            this.ImageRendersPerSecond.Value = CarnassialSettings.Default.DesiredImageRendersPerSecond;
             this.ImageRendersPerSecond.ValueChanged += this.ImageRendersPerSecond_ValueChanged;
-            this.ImageRendersPerSecond.ToolTip = this.carnassialState.Throttles.DesiredImageRendersPerSecond;
+            this.ImageRendersPerSecond.ToolTip = CarnassialSettings.Default.DesiredImageRendersPerSecond;
 
             this.ImageClassificationChangeSlowdown.Minimum = Constant.ThrottleValues.ImageClassificationSlowdownMinimum;
             this.ImageClassificationChangeSlowdown.Maximum = Constant.ThrottleValues.ImageClassificationSlowdownMaximum;
-            this.ImageClassificationChangeSlowdown.Value = this.carnassialState.Throttles.ImageClassificationChangeSlowdown;
+            this.ImageClassificationChangeSlowdown.Value = CarnassialSettings.Default.ImageClassificationChangeSlowdown;
             this.ImageClassificationChangeSlowdown.ValueChanged += this.ImageClassificationChangeSlowdown_ValueChanged;
-            this.ImageClassificationChangeSlowdown.ToolTip = this.carnassialState.Throttles.ImageClassificationChangeSlowdown;
+            this.ImageClassificationChangeSlowdown.ToolTip = CarnassialSettings.Default.ImageClassificationChangeSlowdown;
 
             this.VideoSlowdown.Minimum = Constant.ThrottleValues.VideoSlowdownMinimum;
             this.VideoSlowdown.Maximum = Constant.ThrottleValues.VideoSlowdownMaximum;
-            this.VideoSlowdown.Value = this.carnassialState.Throttles.VideoSlowdown;
+            this.VideoSlowdown.Value = CarnassialSettings.Default.VideoSlowdown;
             this.VideoSlowdown.ValueChanged += this.VideoSlowdown_ValueChanged;
-            this.VideoSlowdown.ToolTip = this.carnassialState.Throttles.VideoSlowdown;
+            this.VideoSlowdown.ToolTip = CarnassialSettings.Default.VideoSlowdown;
 
             // maixmum zoom
             this.MaxZoom.Value = this.fileDisplay.ZoomMaximum;
@@ -57,14 +58,14 @@ namespace Carnassial.Dialog
 
         private void ImageClassificationChangeSlowdown_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            this.carnassialState.Throttles.ImageClassificationChangeSlowdown = this.ImageClassificationChangeSlowdown.Value;
-            this.ImageClassificationChangeSlowdown.ToolTip = this.carnassialState.Throttles.ImageClassificationChangeSlowdown;
+            CarnassialSettings.Default.ImageClassificationChangeSlowdown = (float)this.ImageClassificationChangeSlowdown.Value;
+            this.ImageClassificationChangeSlowdown.ToolTip = CarnassialSettings.Default.ImageClassificationChangeSlowdown;
         }
 
         private void ImageRendersPerSecond_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            this.carnassialState.Throttles.SetDesiredImageRendersPerSecond(this.ImageRendersPerSecond.Value);
-            this.ImageRendersPerSecond.ToolTip = this.carnassialState.Throttles.DesiredImageRendersPerSecond;
+            this.carnassialState.Throttles.SetDesiredImageRendersPerSecond((float)this.ImageRendersPerSecond.Value);
+            this.ImageRendersPerSecond.ToolTip = CarnassialSettings.Default.DesiredImageRendersPerSecond;
         }
 
         private void MaxZoom_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -80,9 +81,10 @@ namespace Carnassial.Dialog
 
         private void ResetImageClassificationChangeSlowdown_Click(object sender, RoutedEventArgs e)
         {
-            this.carnassialState.Throttles.ImageClassificationChangeSlowdown = Constant.ThrottleValues.ImageClassificationSlowdownDefault;
-            this.ImageClassificationChangeSlowdown.Value = this.carnassialState.Throttles.ImageClassificationChangeSlowdown;
-            this.ImageClassificationChangeSlowdown.ToolTip = this.carnassialState.Throttles.ImageClassificationChangeSlowdown;
+            float imageClassificationChangeSlowdown = CarnassialSettings.Default.ImageClassificationChangeSlowdown;
+            CarnassialSettings.Default.ImageClassificationChangeSlowdown = imageClassificationChangeSlowdown;
+            this.ImageClassificationChangeSlowdown.Value = imageClassificationChangeSlowdown;
+            this.ImageClassificationChangeSlowdown.ToolTip = imageClassificationChangeSlowdown;
         }
 
         private void ResetImageDifferencingThreshold_Click(object sender, RoutedEventArgs e)
@@ -94,9 +96,10 @@ namespace Carnassial.Dialog
 
         private void ResetImageRendersPerSecond_Click(object sender, RoutedEventArgs e)
         {
-            this.carnassialState.Throttles.SetDesiredImageRendersPerSecond(Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault);
-            this.ImageRendersPerSecond.Value = this.carnassialState.Throttles.DesiredImageRendersPerSecond;
-            this.ImageRendersPerSecond.ToolTip = this.carnassialState.Throttles.DesiredImageRendersPerSecond;
+            float desiredMaximumImageRendersPerSecondDefault = Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault;
+            this.carnassialState.Throttles.SetDesiredImageRendersPerSecond(desiredMaximumImageRendersPerSecondDefault);
+            this.ImageRendersPerSecond.Value = desiredMaximumImageRendersPerSecondDefault;
+            this.ImageRendersPerSecond.ToolTip = desiredMaximumImageRendersPerSecondDefault;
         }
 
         private void ResetMaxZoom_Click(object sender, RoutedEventArgs e)
@@ -108,15 +111,16 @@ namespace Carnassial.Dialog
 
         private void ResetVideoSlowdown_Click(object sender, RoutedEventArgs e)
         {
-            this.carnassialState.Throttles.VideoSlowdown = Constant.ThrottleValues.VideoSlowdownDefault;
-            this.VideoSlowdown.Value = this.carnassialState.Throttles.VideoSlowdown;
-            this.VideoSlowdown.ToolTip = this.carnassialState.Throttles.VideoSlowdown;
+            float videoSlowdown = CarnassialSettings.Default.VideoSlowdown;
+            this.VideoSlowdown.Value = videoSlowdown;
+            this.VideoSlowdown.ToolTip = videoSlowdown;
         }
 
         private void VideoSlowdown_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            this.carnassialState.Throttles.VideoSlowdown = this.VideoSlowdown.Value;
-            this.VideoSlowdown.ToolTip = this.carnassialState.Throttles.VideoSlowdown;
+            float videoSlowdown = (float)this.VideoSlowdown.Value;
+            CarnassialSettings.Default.VideoSlowdown = videoSlowdown;
+            this.VideoSlowdown.ToolTip = videoSlowdown;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)

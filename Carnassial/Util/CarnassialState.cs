@@ -7,7 +7,7 @@ using System.Windows.Threading;
 
 namespace Carnassial.Util
 {
-    public class CarnassialState : CarnassialUserRegistrySettings
+    public class CarnassialState : CarnassialUserSettings
     {
         private int keyRepeatCount;
         private KeyEventArgs? mostRecentKey;

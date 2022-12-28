@@ -31,7 +31,7 @@ namespace Carnassial.Editor
     public partial class EditorWindow : ApplicationWindow, IDisposable
     {
         // state tracking
-        private readonly EditorUserRegistrySettings userSettings;
+        private readonly EditorUserSettings userSettings;
 
         private bool controlDataGridBeingUpdatedByCode;
         private bool controlDataGridCellEditForcedByCode;
@@ -43,7 +43,7 @@ namespace Carnassial.Editor
         [SupportedOSPlatform(Constant.Platform.Windows)]
         public EditorWindow()
         {
-            App.Current.DispatcherUnhandledException += this.OnUnhandledException;
+            //App.Current.DispatcherUnhandledException += this.OnUnhandledException; // TODO
             this.InitializeComponent();
             this.AddCounterButton.Tag = ControlType.Counter;
             this.AddFixedChoiceButton.Tag = ControlType.FixedChoice;
@@ -61,7 +61,7 @@ namespace Carnassial.Editor
             this.MenuOptionsShowAllColumns_Click(this.MenuOptionsShowAllColumns, null);
 
             // recall state from prior sessions
-            this.userSettings = new EditorUserRegistrySettings();
+            this.userSettings = new EditorUserSettings();
 
             // populate the most recent databases list
             this.MenuFileRecentTemplates_Refresh();
@@ -162,7 +162,7 @@ namespace Carnassial.Editor
         /// </summary>
         private void ControlDataGrid_LayoutUpdated(object sender, EventArgs e)
         {
-            Debug.Assert(this.templateDatabase != null);
+            Debug.Assert((this.templateDatabase != null) || (this.ControlDataGrid.Items.Count == 0));
             for (int rowIndex = 0; rowIndex < this.ControlDataGrid.Items.Count; rowIndex++)
             {
                 // for ItemContainerGenerator to work the DataGrid must have VirtualizingStackPanel.IsVirtualizing="False"
@@ -177,7 +177,7 @@ namespace Carnassial.Editor
 
                 // grid cells are editable by default
                 // disable cells which should not be editable
-                ControlRow control = this.templateDatabase.Controls[rowIndex];
+                ControlRow control = this.templateDatabase!.Controls[rowIndex];
                 DataGridCellsPresenter presenter = EditorWindow.GetVisualChild<DataGridCellsPresenter>(row);
                 for (int column = 0; column < this.ControlDataGrid.Columns.Count; column++)
                 {
@@ -436,6 +436,7 @@ namespace Carnassial.Editor
             if (disposing && (this.templateDatabase != null))
             {
                 this.templateDatabase.Dispose();
+                // App.Current.DispatcherUnhandledException -= this.OnUnhandledException; // TODO
             }
             this.disposed = true;
         }
@@ -510,10 +511,7 @@ namespace Carnassial.Editor
             {
                 Visual v = (Visual)VisualTreeHelper.GetChild(parent, i);
                 child = v as T;
-                if (child == null)
-                {
-                    child = EditorWindow.GetVisualChild<T>(v);
-                }
+                child ??= EditorWindow.GetVisualChild<T>(v);
                 if (child != null)
                 {
                     break;
@@ -572,7 +570,6 @@ namespace Carnassial.Editor
         private void MenuFileExit_Click(object sender, RoutedEventArgs e)
         {
             this.MenuFileCloseTemplate_Click(sender, e);
-            Application.Current.Shutdown();
         }
 
         /// <summary>
@@ -648,7 +645,7 @@ namespace Carnassial.Editor
             AboutEditor about = new(this);
             if ((about.ShowDialog() == true) && about.MostRecentCheckForUpdate.HasValue)
             {
-                this.userSettings.MostRecentCheckForUpdates = about.MostRecentCheckForUpdate.Value;
+                EditorSettings.Default.MostRecentCheckForUpdates = about.MostRecentCheckForUpdate.Value;
             }
         }
 
@@ -884,7 +881,7 @@ namespace Carnassial.Editor
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // check for updates
-            if (DateTime.UtcNow - this.userSettings.MostRecentCheckForUpdates > Constant.CheckForUpdateInterval)
+            if (DateTime.UtcNow - EditorSettings.Default.MostRecentCheckForUpdates > Constant.CheckForUpdateInterval)
             {
                 Uri latestVersionAddress = CarnassialConfigurationSettings.GetLatestReleaseApiAddress();
                 if (latestVersionAddress == null)
@@ -893,8 +890,8 @@ namespace Carnassial.Editor
                 }
 
                 GithubReleaseClient updater = new(EditorConstant.ApplicationName, latestVersionAddress);
-                updater.TryGetAndParseRelease(false, out Version _);
-                this.userSettings.MostRecentCheckForUpdates = DateTime.UtcNow;
+                updater.TryGetAndParseRelease(false, out Version? _);
+                EditorSettings.Default.MostRecentCheckForUpdates = DateTime.UtcNow;
             }
 
             // if a file was passed on the command line, try to open it
@@ -915,9 +912,12 @@ namespace Carnassial.Editor
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             this.MenuFileCloseTemplate_Click(this, null);
+            this.userSettings.SerializeToSettings();
 
-            // persist state to registry
-            this.userSettings.WriteToRegistry();
+            if (this.NonpersistentUserSettings == false)
+            {
+                EditorSettings.Default.Save();
+            }
         }
     }
 }

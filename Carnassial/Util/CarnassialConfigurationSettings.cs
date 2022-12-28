@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Configuration;
 using System.Globalization;
 
 namespace Carnassial.Util
@@ -8,7 +7,7 @@ namespace Carnassial.Util
     {
         public static Uri GetDevTeamEmailLink()
         {
-            UriBuilder mailto = new(Uri.UriSchemeMailto + ":" + ConfigurationManager.AppSettings[Constant.ApplicationSettings.DevTeamEmail])
+            UriBuilder mailto = new(Uri.UriSchemeMailto + ":" + CarnassialSettings.Default.DevTeamEmail)
             {
                 Query = String.Format(CultureInfo.InvariantCulture, "subject={0} {1}: feedback", Constant.ApplicationName, typeof(CarnassialConfigurationSettings).Assembly.GetName().Version)
             };
@@ -17,28 +16,28 @@ namespace Carnassial.Util
 
         public static Uri GetLatestReleaseApiAddress()
         {
-            return CarnassialConfigurationSettings.GetUriSetting(Constant.GitHub.ApiBaseAddress, Constant.ApplicationSettings.GithubOrganizationAndRepo, "releases", "latest");
+            return CarnassialConfigurationSettings.GetUriSetting(Constant.GitHub.ApiBaseAddress, "releases", "latest");
         }
 
         public static Uri GetIssuesBrowserAddress()
         {
-            return CarnassialConfigurationSettings.GetUriSetting(Constant.GitHub.BaseAddress, Constant.ApplicationSettings.GithubOrganizationAndRepo, "issues");
+            return CarnassialConfigurationSettings.GetUriSetting(Constant.GitHub.BaseAddress, "issues");
         }
 
         public static Uri GetReleasesBrowserAddress()
         {
-            return CarnassialConfigurationSettings.GetUriSetting(Constant.GitHub.BaseAddress, Constant.ApplicationSettings.GithubOrganizationAndRepo, "releases");
+            return CarnassialConfigurationSettings.GetUriSetting(Constant.GitHub.BaseAddress, "releases");
         }
 
         public static Uri GetTutorialBrowserAddress()
         {
-            return CarnassialConfigurationSettings.GetUriSetting(Constant.GitHub.BaseAddress, Constant.ApplicationSettings.GithubOrganizationAndRepo, "wiki", "Tutorial");
+            return CarnassialConfigurationSettings.GetUriSetting(Constant.GitHub.BaseAddress, "wiki", "Tutorial");
         }
 
-        private static Uri GetUriSetting(Uri baseAddress, string key, params string[] additionalPath)
+        private static Uri GetUriSetting(Uri baseAddress, params string[] additionalPath)
         {
             UriBuilder uriBuilder = new(baseAddress);
-            uriBuilder.Path += ConfigurationManager.AppSettings[key];
+            uriBuilder.Path += CarnassialSettings.Default.GithubOrganizationAndRepo;
             foreach (string token in additionalPath)
             {
                 uriBuilder.Path += "/" + token;

@@ -13,7 +13,7 @@ namespace Carnassial.Images
         private CachedImage? image;
 
         public ImageRow? CurrentFile { get; set; }
-        public int ImageRenderWidth { get; private set; }
+        public int ImageRenderWidthInPixels { get; private set; }
         public UInt64 MostRecentImageUpdate { get; set; }
         public int TotalFiles { get; set; }
 
@@ -62,9 +62,9 @@ namespace Carnassial.Images
             return 100.0 * this.CurrentFileIndex / (double)this.TotalFiles;
         }
 
-        public void MaybeUpdateImageRenderWidth(int possibleNewWidth)
+        public void MaybeUpdateImageRenderWidth(int possibleNewWidthInPixels)
         {
-            this.ImageRenderWidth = Math.Max(Constant.Images.MinimumRenderWidth, possibleNewWidth);
+            this.ImageRenderWidthInPixels = Math.Max(Constant.Images.MinimumRenderWidthInPixels, possibleNewWidthInPixels);
         }
 
         public void SetImage(CachedImage imageToDisplay)
@@ -74,10 +74,7 @@ namespace Carnassial.Images
             // this.image is set to the new image so that callers can't obtain an image which in the process of or is scheduled
             // for disposal.
             CachedImage? oldImage = Interlocked.Exchange(ref this.image, imageToDisplay);
-            if (oldImage != null)
-            {
-                oldImage.Dispose();
-            }
+            oldImage?.Dispose();
         }
 
         public bool TryDetachImage([NotNullWhen(true)] out CachedImage? image)

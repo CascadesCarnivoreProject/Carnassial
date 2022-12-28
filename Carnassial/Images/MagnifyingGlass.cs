@@ -59,13 +59,13 @@ namespace Carnassial.Images
             // handle isn't visible.
             Line handle = new()
             {
+                Stroke = linearGradientBrush,
                 StrokeThickness = 5,
                 X1 = 0.7 * Constant.ImageDisplay.MagnifyingGlassDiameter,
                 Y1 = 0.7 * Constant.ImageDisplay.MagnifyingGlassDiameter,
                 X2 = Constant.ImageDisplay.MagnifyingGlassDiameter,
                 Y2 = Constant.ImageDisplay.MagnifyingGlassDiameter
             };
-            handle.Stroke = linearGradientBrush;
             this.Children.Add(handle);
 
             // create the lens of the magnifying glass

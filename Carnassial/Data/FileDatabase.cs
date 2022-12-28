@@ -935,11 +935,9 @@ namespace Carnassial.Data
                 return false;
             }
 
-            using (FileTransactionSequence updateFile = this.CreateUpdateFileTransaction())
-            {
-                updateFile.AddFile(file);
-                updateFile.Commit();
-            }
+            using FileTransactionSequence updateFile = this.CreateUpdateFileTransaction();
+            updateFile.AddFile(file);
+            updateFile.Commit();
             return true;
         }
 
@@ -988,11 +986,9 @@ namespace Carnassial.Data
             // rename FileData table to Files
             #pragma warning disable CS0618 // Type or member is obsolete
             this.RenameTable(transaction, Constant.DatabaseTable.FileData, Constant.DatabaseTable.Files);
-            #pragma warning restore CS0618 // Type or member is obsolete
 
             // convert string ImageQuality column (2.2.0.2 schema) to integer Classification column (2.2.0.3 schema)
             SQLiteTableSchema currentFileSchema = this.GetTableSchema(Constant.DatabaseTable.Files);
-            #pragma warning disable CS0618 // Type or member is obsolete
             if (currentFileSchema.ColumnDefinitions.SingleOrDefault(column => String.Equals(column.Name, Constant.FileColumn.ImageQuality, StringComparison.Ordinal)) != null)
             {
                 this.RenameColumn(transaction, Constant.DatabaseTable.Files, Constant.FileColumn.ImageQuality, Constant.FileColumn.Classification, (ColumnDefinition newColumnDefinition) =>
@@ -1000,7 +996,6 @@ namespace Carnassial.Data
                     newColumnDefinition.DefaultValue = ((int)default(FileClassification)).ToString(Constant.InvariantCulture);
                     newColumnDefinition.NotNull = true;
                 });
-                #pragma warning restore CS0618 // Type or member is obsolete
                 this.ConvertNonFlagEnumStringColumnToInteger<FileClassification>(transaction, Constant.DatabaseTable.Files, Constant.FileColumn.Classification);
             }
 
@@ -1015,6 +1010,7 @@ namespace Carnassial.Data
             }
 
             this.SetUserVersion(transaction, Constant.Release.V2_2_0_3);
+            #pragma warning restore CS0618 // Type or member is obsolete
         }
     }
 }

@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using MessageBox = Carnassial.Dialog.MessageBox;
 
@@ -30,12 +31,12 @@ namespace Carnassial.Github
         {
             publiclyAvailableVersion = null;
 
-            using (WebClient webClient = new())
+            using (HttpClient httpClient = new())
             {
-                webClient.Headers.Add(HttpRequestHeader.UserAgent, "Carnassial-GithubReleaseClient");
+                httpClient.DefaultRequestHeaders.Add("User-Agent", "Carnassial-GithubReleaseClient");
                 try
                 {
-                    string releaseJson = webClient.DownloadString(this.latestReleaseAddress);
+                    string releaseJson = httpClient.GetStringAsync(this.latestReleaseAddress).GetAwaiter().GetResult();
                     if (String.IsNullOrWhiteSpace(releaseJson) || (releaseJson.IndexOf("\"message\": \"Not Found\"", StringComparison.Ordinal) != -1))
                     {
                         // no releases, so nothing to do
@@ -58,7 +59,7 @@ namespace Carnassial.Github
                 catch (WebException exception)
                 {
                     // 404 if no production releases (Github's latest endpoint doesn't return releases with prerelease = true)
-                    if ((exception.Response is HttpWebResponse == false) || (((HttpWebResponse)exception.Response).StatusCode != HttpStatusCode.NotFound))
+                    if ((exception.Response is HttpWebResponse response == false) || (response.StatusCode != HttpStatusCode.NotFound))
                     {
                         Debug.Fail(exception.ToString());
                     }

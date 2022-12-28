@@ -36,7 +36,7 @@ namespace Carnassial
 			}
 
 			// find number of physical cores
-			__int32 informationFields = 16;
+			__int32 informationFields = 24;
 			PSYSTEM_LOGICAL_PROCESSOR_INFORMATION processorInformation = new SYSTEM_LOGICAL_PROCESSOR_INFORMATION[informationFields];
 			DWORD length = informationFields * sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
 			bool success = GetLogicalProcessorInformation(processorInformation, &length);

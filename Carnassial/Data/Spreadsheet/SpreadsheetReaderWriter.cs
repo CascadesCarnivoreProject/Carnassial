@@ -159,17 +159,11 @@ namespace Carnassial.Data.Spreadsheet
                 }
 
                 SharedStringTablePart? sharedStringTable = workbook.SharedStringTablePart;
-                if (sharedStringTable == null)
-                {
-                    sharedStringTable = workbook.AddNewPart<SharedStringTablePart>();
-                }
+                sharedStringTable ??= workbook.AddNewPart<SharedStringTablePart>();
                 SharedStringIndex sharedStringIndex = new(sharedStringTable, this.status);
 
                 WorkbookStylesPart? styles = workbook.WorkbookStylesPart;
-                if (styles == null)
-                {
-                    styles = workbook.AddNewPart<WorkbookStylesPart>();
-                }
+                styles ??= workbook.AddNewPart<WorkbookStylesPart>();
                 OpenXmlStylesheet stylesheet = new(styles);
 
                 // if desired worksheet doesn't exist, add it to the workbook

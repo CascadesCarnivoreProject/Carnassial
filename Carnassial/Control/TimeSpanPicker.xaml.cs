@@ -217,11 +217,7 @@ namespace Carnassial.Control
             TimeSpanPicker timeSpanPicker = (TimeSpanPicker)obj;
             TimeSpan timeSpan = (TimeSpan)args.NewValue;
             timeSpanPicker.TimeSpanDisplay.Text = TimeSpanPicker.TimeSpanToString(timeSpan, timeSpanPicker.Format);
-
-            if (timeSpanPicker.ValueChanged != null)
-            {
-                timeSpanPicker.ValueChanged.Invoke(timeSpanPicker, timeSpanPicker.Value);
-            }
+            timeSpanPicker.ValueChanged?.Invoke(timeSpanPicker, timeSpanPicker.Value);
         }
 
         private void TimeSpanPicker_GotFocus(object sender, RoutedEventArgs e)

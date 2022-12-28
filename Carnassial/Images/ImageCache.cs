@@ -279,7 +279,7 @@ namespace Carnassial.Images
             {
                 CachedImage nextImage = await nextFile.TryLoadImageAsync((string)this.FileDatabase.FolderPath).ConfigureAwait(true);
                 this.CacheImage(nextFile.ID, nextImage);
-                this.prefetchesByID.TryRemove(nextFile.ID, out Task _);
+                this.prefetchesByID.TryRemove(nextFile.ID, out Task? _);
             }));
             this.prefetchesByID.AddOrUpdate(nextFile.ID, prefetch, (long id, Task newPrefetch) => { return newPrefetch; });
             return true;

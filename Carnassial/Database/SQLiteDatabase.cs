@@ -778,16 +778,14 @@ namespace Carnassial.Database
             this.BackupTask = Task.Run(() =>
             {
                 string backupFilePath = this.GetBackupFilePath();
-                using (SQLiteConnection connectionToBackup = SQLiteDatabase.OpenConnection(backupFilePath))
-                {
-                    this.databasePragmaChangesSinceLastBackup = 0;
-                    this.RowsDroppedSinceLastBackup = 0;
-                    this.RowsInsertedSinceLastBackup = 0;
-                    this.RowsUpdatedSinceLastBackup = 0;
-                    this.schemaChangesSinceLastBackup = 0;
+                using SQLiteConnection connectionToBackup = SQLiteDatabase.OpenConnection(backupFilePath);
+                this.databasePragmaChangesSinceLastBackup = 0;
+                this.RowsDroppedSinceLastBackup = 0;
+                this.RowsInsertedSinceLastBackup = 0;
+                this.RowsUpdatedSinceLastBackup = 0;
+                this.schemaChangesSinceLastBackup = 0;
 
-                    this.Connection.BackupDatabase(connectionToBackup, Constant.Sql.MainDatabase, Constant.Sql.MainDatabase, -1, null, Constant.Database.BackupRetryIntervalInMilliseconds);
-                }
+                this.Connection.BackupDatabase(connectionToBackup, Constant.Sql.MainDatabase, Constant.Sql.MainDatabase, -1, null, Constant.Database.BackupRetryIntervalInMilliseconds);
                 return true;
             });
             return await this.BackupTask.ConfigureAwait(false);

@@ -42,10 +42,7 @@ namespace Carnassial.Control
 
         private void ControlsView_DragOver(object sender, DragEventArgs dragEvent)
         {
-            if (this.dragAdorner == null)
-            {
-                this.dragAdorner = new HorizontalLineAdorner(this) { Margin = new Thickness(5.0, 0.0, 5.0, 0.0) };
-            }
+            this.dragAdorner ??= new HorizontalLineAdorner(this) { Margin = new Thickness(5.0, 0.0, 5.0, 0.0) };
             this.dragAdorner.UpdatePosition(dragEvent);
         }
 
@@ -197,10 +194,7 @@ namespace Carnassial.Control
                 this.ControlsView.Items.Add(control.Container);
             }
 
-            if (dataEntryPropagator != null)
-            {
-                dataEntryPropagator.SetDataEntryCallbacks(this.Controls);
-            }
+            dataEntryPropagator?.SetDataEntryCallbacks(this.Controls);
         }
 
         public void SetDataContext(ImageRow? file)

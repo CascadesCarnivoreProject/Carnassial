@@ -24,9 +24,10 @@ namespace Carnassial.Command
         {
             Debug.Assert(carnassial.IsFileDatabaseAvailable());
 
-            carnassial.State.OrderFilesByDateTime = !carnassial.State.OrderFilesByDateTime;
-            carnassial.DataHandler.FileDatabase.OrderFilesByDateTime = carnassial.State.OrderFilesByDateTime;
-            carnassial.MenuOptionsOrderFilesByDateTime.IsChecked = carnassial.State.OrderFilesByDateTime;
+            bool orderFilesByDateTime = !CarnassialSettings.Default.OrderFilesByDateTime;
+            CarnassialSettings.Default.OrderFilesByDateTime = orderFilesByDateTime;
+            carnassial.DataHandler.FileDatabase.OrderFilesByDateTime = orderFilesByDateTime;
+            carnassial.MenuOptionsOrderFilesByDateTime.IsChecked = orderFilesByDateTime;
         }
 
         public override string ToString()

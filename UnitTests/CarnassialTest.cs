@@ -1,5 +1,6 @@
 ﻿using Carnassial.Data;
 using Carnassial.Database;
+using Carnassial.Dialog;
 using Carnassial.Images;
 using Carnassial.Interop;
 using Carnassial.Native;
@@ -10,13 +11,15 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace Carnassial.UnitTests
 {
     [TestClass]
     public class CarnassialTest
     {
-        private static readonly object CultureLock;
+        private static readonly Dispatcher AppDispatcher;
+        private static bool AppStarted;
         private static bool CultureChanged;
         private static CultureInfo CurrentCulture;
         private static CultureInfo CurrentUICulture;
@@ -44,26 +47,31 @@ namespace Carnassial.UnitTests
             // WPF allows only one Application per app domain, so make instance persistent so it can be reused across multiple Carnassial
             // and editor window lifetimes.  This works because Carnassial and the editor use very similar styling, allowing the editor 
             // to consume Carnassial styles with negligible effect on test coverage.
-            CarnassialTest.App = new App()
+            CarnassialTest.AppDispatcher = Dispatcher.CurrentDispatcher;
+            CarnassialTest.AppDispatcher.Invoke(() =>
             {
-                ShutdownMode = ShutdownMode.OnExplicitShutdown
-            };
-
-            Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/CarnassialWindowStyle.xaml", UriKind.Relative)));
-            Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/Properties/SharedResources.xaml", UriKind.Relative)));
-            Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/Properties/Resources.xaml", UriKind.Relative)));
-
-            ResourceDictionary editorResourceDictionary = (ResourceDictionary)Application.LoadComponent(new Uri("/CarnassialTemplateEditor;component/EditorWindowStyle.xaml", UriKind.Relative));
-            Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/CarnassialTemplateEditor;component/Properties/Resources.xaml", UriKind.Relative)));
-            foreach (object key in editorResourceDictionary.Keys)
-            {
-                if (Application.Current.Resources.Contains(key) == false)
+                CarnassialTest.App = new()
                 {
-                    Application.Current.Resources.Add(key, editorResourceDictionary[key]);
-                }
-            }
+                    ShutdownMode = ShutdownMode.OnExplicitShutdown
+                };
+                CarnassialTest.App.Startup += CarnassialTest.OnAppStartup;
 
-            CarnassialTest.CultureLock = new object();
+                Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/CarnassialWindowStyle.xaml", UriKind.Relative)));
+                Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/Properties/SharedResources.xaml", UriKind.Relative)));
+                Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/Carnassial;component/Properties/Resources.xaml", UriKind.Relative)));
+
+                ResourceDictionary editorResourceDictionary = (ResourceDictionary)Application.LoadComponent(new Uri("/CarnassialTemplateEditor;component/EditorWindowStyle.xaml", UriKind.Relative));
+                Application.Current.Resources.MergedDictionaries.Add((ResourceDictionary)Application.LoadComponent(new Uri("/CarnassialTemplateEditor;component/Properties/Resources.xaml", UriKind.Relative)));
+                foreach (object key in editorResourceDictionary.Keys)
+                {
+                    if (Application.Current.Resources.Contains(key) == false)
+                    {
+                        Application.Current.Resources.Add(key, editorResourceDictionary[key]);
+                    }
+                }
+            });
+            Debug.Assert(CarnassialTest.App != null);
+
             CarnassialTest.CultureChanged = false;
             CarnassialTest.CurrentCulture = CultureInfo.CurrentCulture;
             CarnassialTest.CurrentUICulture = CultureInfo.CurrentUICulture;
@@ -86,7 +94,13 @@ namespace Carnassial.UnitTests
         [AssemblyCleanup]
         public static void AssemblyCleanup()
         {
-            CarnassialTest.App.Shutdown();
+            //Carnassial.Properties.Settings.Default.Save();
+            if (CarnassialTest.AppStarted)
+            {
+                // depending on which tests are run the WPF app may never be started, in which case calling shutdown
+                // blocks indefinitely
+                CarnassialTest.AppDispatcher.Invoke(() => CarnassialTest.App.Shutdown());
+            }
         }
 
         /// <summary>
@@ -139,7 +153,7 @@ namespace Carnassial.UnitTests
             {
                 loadAtom.CreateJpegs(fileDatabase.FolderPath);
                 MemoryImage? thumbnail = null;
-                loadAtom.ClassifyFromThumbnails(Constant.Images.DarkLuminosityThresholdDefault, false, ref thumbnail);
+                loadAtom.ClassifyFromThumbnails(ref thumbnail);
                 loadAtom.ReadDateTimeOffsets(fileDatabase.FolderPath, imageSetTimeZone);
                 metadataReadResult = loadAtom.First.MetadataReadResult;
             }
@@ -227,7 +241,7 @@ namespace Carnassial.UnitTests
             byte[] bytes = new byte[hex.Length / 2];
             for (int byteIndex = 0; byteIndex < bytes.Length; ++byteIndex)
             {
-                bytes[byteIndex] = byte.Parse(hex.Substring(2 * byteIndex, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                bytes[byteIndex] = byte.Parse(hex.AsSpan(2 * byteIndex, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
             }
             return bytes;
         }
@@ -270,13 +284,13 @@ namespace Carnassial.UnitTests
             bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
             bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
             bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, 1);
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, TestConstant.DefaultMarkerPositions);
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, Constant.ControlDefault.MarkerPositions);
             bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, TestConstant.DefaultMarkerPositions);
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, Constant.ControlDefault.MarkerPositions);
             bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, TestConstant.DefaultMarkerPositions);
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, Constant.ControlDefault.MarkerPositions);
             bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, TestConstant.DefaultMarkerPositions);
+            bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, Constant.ControlDefault.MarkerPositions);
             bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, !String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal));
             bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, !String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal));
             bobcatExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, true);
@@ -304,11 +318,11 @@ namespace Carnassial.UnitTests
             martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, 3);
             martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, counter0MarkerPositions);
             martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, TestConstant.DefaultMarkerPositions);
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, Constant.ControlDefault.MarkerPositions);
             martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, TestConstant.DefaultMarkerPositions);
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, Constant.ControlDefault.MarkerPositions);
             martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, TestConstant.DefaultMarkerPositions);
+            martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, Constant.ControlDefault.MarkerPositions);
             martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, !String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal));
             martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, !String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal));
             martenExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, true);
@@ -382,13 +396,13 @@ namespace Carnassial.UnitTests
                 coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
                 coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
                 coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter0].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, TestConstant.DefaultMarkerPositions);
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, Constant.ControlDefault.MarkerPositions);
                 coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, TestConstant.DefaultMarkerPositions);
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, Constant.ControlDefault.MarkerPositions);
                 coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, TestConstant.DefaultMarkerPositions);
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, Constant.ControlDefault.MarkerPositions);
                 coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, TestConstant.DefaultMarkerPositions);
+                coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, Constant.ControlDefault.MarkerPositions);
                 coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, !String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal));
                 coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, !String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal));
                 coyoteExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, !String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagNotVisible].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal));
@@ -410,13 +424,13 @@ namespace Carnassial.UnitTests
                 martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceNotVisible, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceNotVisible].DefaultValue);
                 martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel, fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.ChoiceWithCustomDataLabel].DefaultValue);
                 martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter0].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, TestConstant.DefaultMarkerPositions);
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter0Markers, Constant.ControlDefault.MarkerPositions);
                 martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Counter3].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, TestConstant.DefaultMarkerPositions);
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Counter3Markers, Constant.ControlDefault.MarkerPositions);
                 martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisible, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterNotVisible].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, TestConstant.DefaultMarkerPositions);
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterNotVisibleMarkers, Constant.ControlDefault.MarkerPositions);
                 martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel, Int32.Parse(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabel].DefaultValue, NumberStyles.None, Constant.InvariantCulture));
-                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, TestConstant.DefaultMarkerPositions);
+                martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.CounterWithCustomDataLabelMarkers, Constant.ControlDefault.MarkerPositions);
                 martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag0, !String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag0].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal));
                 martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.Flag3, !String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.Flag3].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal));
                 martenPairExpectation.UserControlsByDataLabel.Add(TestConstant.DefaultDatabaseColumn.FlagNotVisible, !String.Equals(fileDatabase.Controls[TestConstant.DefaultDatabaseColumn.FlagNotVisible].DefaultValue, Constant.ControlDefault.FlagValue, StringComparison.Ordinal));
@@ -445,44 +459,50 @@ namespace Carnassial.UnitTests
             return Path.Combine(this.WorkingDirectory, this.TestClassSubdirectory, uniqueFileName);
         }
 
+        private static void OnAppStartup(object sender, StartupEventArgs e)
+        {
+            CarnassialTest.AppStarted = true;
+        }
+
         protected static bool TryChangeToTestCulture()
         {
-            lock (CarnassialTest.CultureLock)
+            lock (CarnassialTest.App)
             {
                 if (CarnassialTest.CultureChanged)
                 {
                     return false;
                 }
 
-                #if DEBUG
-                LocalizedApplication.UseCurrentCulture = true;
-                #endif
+                return false;
+                //#if DEBUG
+                //LocalizedApplication.UseTestCulture = true;
+                //#endif
 
-                CarnassialTest.CurrentCulture = CultureInfo.CurrentCulture;
-                CarnassialTest.CurrentUICulture = CultureInfo.CurrentUICulture;
-                CarnassialTest.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentCulture;
-                CarnassialTest.DefaultThreadCurrentUICulture = CultureInfo.DefaultThreadCurrentUICulture;
+                //CarnassialTest.CurrentCulture = CultureInfo.CurrentCulture;
+                //CarnassialTest.CurrentUICulture = CultureInfo.CurrentUICulture;
+                //CarnassialTest.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentCulture;
+                //CarnassialTest.DefaultThreadCurrentUICulture = CultureInfo.DefaultThreadCurrentUICulture;
 
-                // change to a culture other than the developer's to provide sanity coverage
-                string cultureName = TestConstant.Globalization.DefaultUITestCultureNames[(int)DateTime.UtcNow.DayOfWeek];
-                if (CultureInfo.CurrentCulture.Name.StartsWith(cultureName, StringComparison.Ordinal))
-                {
-                    cultureName = TestConstant.Globalization.AlternateUITestCultureName;
-                }
+                //// change to a culture other than the developer's to provide sanity coverage
+                //string cultureName = TestConstant.Globalization.DefaultUITestCultureNames[(int)DateTime.UtcNow.DayOfWeek];
+                //if (CultureInfo.CurrentCulture.Name.StartsWith(cultureName, StringComparison.Ordinal))
+                //{
+                //    cultureName = TestConstant.Globalization.AlternateUITestCultureName;
+                //}
 
-                CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(cultureName);
-                CultureInfo.CurrentUICulture = CultureInfo.CurrentCulture;
-                CultureInfo.DefaultThreadCurrentCulture = CultureInfo.CurrentCulture;
-                CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CurrentCulture;
+                //CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(cultureName);
+                //CultureInfo.CurrentUICulture = CultureInfo.CurrentCulture;
+                //CultureInfo.DefaultThreadCurrentCulture = CultureInfo.CurrentCulture;
+                //CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CurrentCulture;
 
-                CarnassialTest.CultureChanged = true;
-                return true;
+                //CarnassialTest.CultureChanged = true;
+                //return true;
             }
         }
 
         protected static bool TryRevertToDefaultCultures()
         {
-            lock (CarnassialTest.CultureLock)
+            lock (CarnassialTest.App)
             {
                 if (CarnassialTest.CultureChanged == false)
                 {

@@ -26,6 +26,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using System.Windows.Threading;
 using MessageBox = Carnassial.Dialog.MessageBox;
 using SaveFileDialog = System.Windows.Forms.SaveFileDialog;
@@ -43,7 +44,7 @@ namespace Carnassial
         [SupportedOSPlatform(Constant.Platform.Windows)]
         public CarnassialWindow()
         {
-            App.Current.DispatcherUnhandledException += this.OnUnhandledException;
+            // Constant.ControlDefault.MarkerPositions += this.OnUnhandledException; // TODO: hangs unit tests
             this.InitializeComponent();
 
             this.speechSynthesizer = new Lazy<SpeechSynthesizer>(() => new SpeechSynthesizer());
@@ -51,13 +52,13 @@ namespace Carnassial
             this.Title = Constant.MainWindowBaseTitle;
 
             // recall user's state from prior sessions
-            this.ControlGrid.Width = this.State.ControlGridWidth;
+            this.ControlGrid.Width = CarnassialSettings.Default.ControlGridWidth;
             this.FileView.ColumnDefinitions[2].Width = new GridLength(this.ControlGrid.Width);
 
-            this.MenuOptionsAudioFeedback.IsChecked = this.State.AudioFeedback;
-            this.MenuOptionsEnableImportPrompt.IsChecked = !this.State.SuppressImportPrompt;
-            this.MenuOptionsOrderFilesByDateTime.IsChecked = this.State.OrderFilesByDateTime;
-            this.MenuOptionsSkipFileClassification.IsChecked = this.State.SkipFileClassification;
+            this.MenuOptionsAudioFeedback.IsChecked = CarnassialSettings.Default.AudioFeedback;
+            this.MenuOptionsEnableImportPrompt.IsChecked = !CarnassialSettings.Default.SuppressImportPrompt;
+            this.MenuOptionsOrderFilesByDateTime.IsChecked = CarnassialSettings.Default.OrderFilesByDateTime;
+            this.MenuOptionsSkipFileClassification.IsChecked = CarnassialSettings.Default.SkipFileClassification;
 
             this.State.BackupTimer.Tick += this.Backup_TimerTick;
             this.State.FileNavigatorSliderTimer.Tick += this.FileNavigatorSlider_TimerTick;
@@ -92,10 +93,11 @@ namespace Carnassial
             }
             this.MenuFileRecentImageSets_Refresh();
 
-            this.Top = this.State.CarnassialWindowPosition.Y;
-            this.Left = this.State.CarnassialWindowPosition.X;
-            this.Height = this.State.CarnassialWindowPosition.Height;
-            this.Width = this.State.CarnassialWindowPosition.Width;
+            Rect windowPosition = Rect.Parse(CarnassialSettings.Default.CarnassialWindowPosition);
+            this.Top = windowPosition.Y;
+            this.Left = windowPosition.X;
+            this.Height = windowPosition.Height;
+            this.Width = windowPosition.Width;
             CommonUserInterface.TryFitWindowInWorkingArea(this);
 
             this.FileDisplay.Display(Constant.Images.NoSelectableFileMessage);
@@ -229,14 +231,13 @@ namespace Carnassial
 
             if (disposing)
             {
-                if (this.DataHandler != null)
-                {
-                    this.DataHandler.Dispose();
-                }
+                this.DataHandler?.Dispose();
                 if (this.speechSynthesizer.IsValueCreated)
                 {
                     this.speechSynthesizer.Value.Dispose();
                 }
+
+                // App.Current.DispatcherUnhandledException -= this.OnUnhandledException; // TODO
             }
 
             this.disposed = true;
@@ -253,7 +254,6 @@ namespace Carnassial
             }
 
             // enable/disable menus and menu items as appropriate depending upon whether files are selected
-            Debug.Assert(this.DataHandler != null);
             // file menu
             this.MenuFileAddFilesToImageSet.IsEnabled = imageSetAvailable;
             this.MenuFileLoadImageSet.IsEnabled = !imageSetAvailable;
@@ -268,7 +268,7 @@ namespace Carnassial
             this.MenuEdit.IsEnabled = filesSelected;
             // view menu
             this.MenuView.IsEnabled = filesSelected;
-            this.MenuViewDisplayMagnifier.IsChecked = imageSetAvailable && this.DataHandler.FileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier);
+            this.MenuViewDisplayMagnifier.IsChecked = imageSetAvailable && this.DataHandler!.FileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier);
             // select menu
             this.MenuSelect.IsEnabled = filesSelected;
             // options menu
@@ -284,7 +284,14 @@ namespace Carnassial
             this.DataEntryControls.IsEnabled = filesSelected;
             this.FileNavigatorSlider.IsEnabled = filesSelected;
             this.FileDisplay.IsEnabled = filesSelected;
-            this.FileDisplay.MagnifyingGlassEnabled = filesSelected && this.DataHandler.FileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier);
+            if (this.DataHandler != null)
+            {
+                this.FileDisplay.MagnifyingGlassEnabled = filesSelected && this.DataHandler.FileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier);
+            }
+            else
+            {
+                this.FileDisplay.MagnifyingGlassEnabled = false;
+            }
 
             if (filesSelected == false)
             {
@@ -499,7 +506,7 @@ namespace Carnassial
 
         private void MaybeShowFileCountsDialog(bool onFileLoading)
         {
-            if (onFileLoading && this.State.SuppressFileCountOnImportDialog)
+            if (onFileLoading && CarnassialSettings.Default.SuppressFileCountOnImportDialog)
             {
                 return;
             }
@@ -516,15 +523,15 @@ namespace Carnassial
             bool? result = imageStats.ShowDialog();
             if (onFileLoading && (result == true) && imageStats.DontShowAgain.IsChecked.HasValue)
             {
-                this.State.SuppressFileCountOnImportDialog = imageStats.DontShowAgain.IsChecked.Value;
-                this.MenuOptionsEnableFileCountOnImportDialog.IsChecked = !this.State.SuppressFileCountOnImportDialog;
+                CarnassialSettings.Default.SuppressFileCountOnImportDialog = imageStats.DontShowAgain.IsChecked.Value;
+                this.MenuOptionsEnableFileCountOnImportDialog.IsChecked = !CarnassialSettings.Default.SuppressFileCountOnImportDialog;
             }
         }
 
         [SupportedOSPlatform(Constant.Platform.Windows)]
         private void MaybeSpeak(string text)
         {
-            if (this.State.AudioFeedback)
+            if (CarnassialSettings.Default.AudioFeedback)
             {
                 // cancel any speech in progress and say the given text
                 this.speechSynthesizer.Value.SpeakAsyncCancelAll();
@@ -820,7 +827,7 @@ namespace Carnassial
         private async void MenuEditReclassify_Click(object sender, RoutedEventArgs e)
         {
             Debug.Assert(this.DataHandler != null);
-            using ReclassifyFiles reclassify = new(this.DataHandler.FileDatabase, this.DataHandler.ImageCache, this.State, this);
+            using ReclassifyFiles reclassify = new(this.DataHandler.FileDatabase, this.DataHandler.ImageCache, this.State.Throttles, this);
             await this.ShowBulkFileEditDialogAsync(reclassify).ConfigureAwait(true);
         }
 
@@ -1115,7 +1122,7 @@ namespace Carnassial
 
         private async void MenuFileImport_Click(object sender, RoutedEventArgs e)
         {
-            if (this.State.SuppressImportPrompt == false)
+            if (CarnassialSettings.Default.SuppressImportPrompt == false)
             {
                 MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowImport, this,
                     Constant.Time.DateTimeDatabaseFormat,
@@ -1131,8 +1138,8 @@ namespace Carnassial
 
                 if (messageBox.DontShowAgain.IsChecked.HasValue)
                 {
-                    this.State.SuppressImportPrompt = messageBox.DontShowAgain.IsChecked.Value;
-                    this.MenuOptionsEnableImportPrompt.IsChecked = !this.State.SuppressImportPrompt;
+                    CarnassialSettings.Default.SuppressImportPrompt = messageBox.DontShowAgain.IsChecked.Value;
+                    this.MenuOptionsEnableImportPrompt.IsChecked = !CarnassialSettings.Default.SuppressImportPrompt;
                 }
             }
 
@@ -1288,7 +1295,6 @@ namespace Carnassial
         private void MenuFileExit_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
-            Application.Current.Shutdown();
         }
 
         /// <summary>Display a message describing the version, etc.</summary> 
@@ -1297,7 +1303,7 @@ namespace Carnassial
             About about = new(this);
             if ((about.ShowDialog() == true) && about.MostRecentCheckForUpdate.HasValue)
             {
-                this.State.MostRecentCheckForUpdates = about.MostRecentCheckForUpdate.Value;
+                CarnassialSettings.Default.MostRecentCheckForUpdates = about.MostRecentCheckForUpdate.Value;
             }
         }
 
@@ -1323,20 +1329,20 @@ namespace Carnassial
         /// <summary>Toggle audio feedback on and off.</summary>
         private void MenuOptionsAudioFeedback_Click(object sender, RoutedEventArgs e)
         {
-            this.State.AudioFeedback = !this.State.AudioFeedback;
-            this.MenuOptionsAudioFeedback.IsChecked = this.State.AudioFeedback;
+            CarnassialSettings.Default.AudioFeedback = !CarnassialSettings.Default.AudioFeedback;
+            this.MenuOptionsAudioFeedback.IsChecked = CarnassialSettings.Default.AudioFeedback;
         }
 
         private void MenuOptionsEnableFileCountOnImportDialog_Click(object sender, RoutedEventArgs e)
         {
-            this.State.SuppressFileCountOnImportDialog = !this.State.SuppressFileCountOnImportDialog;
-            this.MenuOptionsEnableFileCountOnImportDialog.IsChecked = !this.State.SuppressFileCountOnImportDialog;
+            CarnassialSettings.Default.SuppressFileCountOnImportDialog = !CarnassialSettings.Default.SuppressFileCountOnImportDialog;
+            this.MenuOptionsEnableFileCountOnImportDialog.IsChecked = !CarnassialSettings.Default.SuppressFileCountOnImportDialog;
         }
 
         private void MenuOptionsEnableImportPrompt_Click(object sender, RoutedEventArgs e)
         {
-            this.State.SuppressImportPrompt = !this.State.SuppressImportPrompt;
-            this.MenuOptionsEnableImportPrompt.IsChecked = !this.State.SuppressImportPrompt;
+            CarnassialSettings.Default.SuppressImportPrompt = !CarnassialSettings.Default.SuppressImportPrompt;
+            this.MenuOptionsEnableImportPrompt.IsChecked = !CarnassialSettings.Default.SuppressImportPrompt;
         }
 
         internal async void MenuOptionsOrderFilesByDateTime_Click(object sender, RoutedEventArgs e)
@@ -1354,8 +1360,8 @@ namespace Carnassial
 
         private void MenuOptionsSkipFileClassification_Click(object sender, RoutedEventArgs e)
         {
-            this.State.SkipFileClassification = !this.State.SkipFileClassification;
-            this.MenuOptionsSkipFileClassification.IsChecked = this.State.SkipFileClassification;
+            CarnassialSettings.Default.SkipFileClassification = !CarnassialSettings.Default.SkipFileClassification;
+            this.MenuOptionsSkipFileClassification.IsChecked = CarnassialSettings.Default.SkipFileClassification;
         }
 
         private async void MenuSelectCustom_Click(object sender, RoutedEventArgs e)
@@ -2274,77 +2280,75 @@ namespace Carnassial
         // out parameters can't be used in anonymous methods, so a separate pointer to backgroundWorker is required for return to the caller
         private async Task<bool> TryAddFilesAsync(IEnumerable<string> folderPaths)
         {
-            using (AddFilesIOComputeTransactionManager folderLoad = new(this.UpdateFolderLoadProgress, this.State.Throttles.GetDesiredProgressUpdateInterval()))
+            using AddFilesIOComputeTransactionManager folderLoad = new(this.UpdateFolderLoadProgress, this.State.Throttles.GetDesiredProgressUpdateInterval());
+            folderLoad.FolderPaths.AddRange(folderPaths);
+            folderLoad.FindFilesToLoad(this.FolderPath);
+            if (folderLoad.FilesToLoad == 0)
             {
-                folderLoad.FolderPaths.AddRange(folderPaths);
-                folderLoad.FindFilesToLoad(this.FolderPath);
-                if (folderLoad.FilesToLoad == 0)
+                // no images were found in folder; see if user wants to try again
+                MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowSelectFolder, this, this.FolderPath);
+                if (messageBox.ShowDialog() == false)
                 {
-                    // no images were found in folder; see if user wants to try again
-                    MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowSelectFolder, this, this.FolderPath);
-                    if (messageBox.ShowDialog() == false)
-                    {
-                        return false;
-                    }
-
-                    if (this.ShowFolderSelectionDialog(out IEnumerable<string>? folderPathFromDialog))
-                    {
-                        return await this.TryAddFilesAsync(folderPathFromDialog).ConfigureAwait(true);
-                    }
-
-                    // exit if user changed their mind about trying again
                     return false;
                 }
 
-                // update UI for import
-                this.ShowLongRunningOperationFeedback();
-                this.MenuOptions.IsEnabled = true;
-                folderLoad.QueueProgressUpdate();
-                if (this.State.SkipFileClassification)
+                if (this.ShowFolderSelectionDialog(out IEnumerable<string>? folderPathFromDialog))
                 {
-                    this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusImageSetLoadingFolders);
-                }
-                else
-                {
-                    this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusImageSetLoadingFoldersWithClassification);
+                    return await this.TryAddFilesAsync(folderPathFromDialog).ConfigureAwait(true);
                 }
 
-                // if it's not already being displayed, change to the files tab so the long running progress bar is visible
-                this.MenuViewShowFiles_Click(this, null);
-
-                // ensure all files are selected
-                // This prevents files which are in the database but not selected from being added a second time.
-                Stopwatch stopwatch = new();
-                stopwatch.Start();
-                Debug.Assert(this.DataHandler != null);
-                FileSelection originalSelection = this.DataHandler.FileDatabase.ImageSet.FileSelection;
-                if (originalSelection != FileSelection.All)
-                {
-                    this.DataHandler.SelectFiles(FileSelection.All);
-                }
-
-                // load all files found
-                // Note: the UI thread is free during loading.  So if loading's going slow the user can switch off dark checking 
-                // asynchronously in the middle of the load to speed it up.            
-                int filesAddedToDatabase = await folderLoad.AddFilesAsync(this.DataHandler.FileDatabase, this.State, (int)this.Width).ConfigureAwait(true);
-
-                // if needed, revert to original selection
-                if (originalSelection != this.DataHandler.FileDatabase.ImageSet.FileSelection)
-                {
-                    this.DataHandler.SelectFiles(originalSelection);
-                }
-
-                // shift UI to normal, non-loading state
-                // Stopwatch is stopped before OnFolderLoadingCompleteAsync() to exclude load and render time of the first image.
-                // Status message is updated after OnFolderLoadingCompleteAsync() because loading an image clears the status message.
-                this.HideLongRunningOperationFeedback();
-                stopwatch.Stop();
-                await this.OnFileDatabaseOpenedOrFilesAddedAsync(true).ConfigureAwait(true);
-                this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusImageSetLoadingFoldersComplete, filesAddedToDatabase, folderLoad.FilesToLoad, stopwatch.Elapsed.TotalSeconds, folderLoad.FilesToLoad / stopwatch.Elapsed.TotalSeconds, folderLoad.IODuration.TotalSeconds, folderLoad.ComputeDuration.TotalSeconds, folderLoad.DatabaseDuration.TotalSeconds);
-
-                // update the user as to what files are in the database
-                this.MaybeShowFileCountsDialog(true);
+                // exit if user changed their mind about trying again
+                return false;
             }
+
+            // update UI for import
+            this.ShowLongRunningOperationFeedback();
+            this.MenuOptions.IsEnabled = true;
+            folderLoad.QueueProgressUpdate();
+            if (CarnassialSettings.Default.SkipFileClassification)
+            {
+                this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusImageSetLoadingFolders);
+            }
+            else
+            {
+                this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusImageSetLoadingFoldersWithClassification);
+            }
+
+            // if it's not already being displayed, change to the files tab so the long running progress bar is visible
+            this.MenuViewShowFiles_Click(this, null);
+
+            // ensure all files are selected
+            // This prevents files which are in the database but not selected from being added a second time.
+            Stopwatch stopwatch = new();
+            stopwatch.Start();
+            Debug.Assert(this.DataHandler != null);
+            FileSelection originalSelection = this.DataHandler.FileDatabase.ImageSet.FileSelection;
+            if (originalSelection != FileSelection.All)
+            {
+                this.DataHandler.SelectFiles(FileSelection.All);
+            }
+
+            // load all files found
+            // Note: the UI thread is free during loading.  So if loading's going slow the user can switch off dark checking 
+            // asynchronously in the middle of the load to speed it up.            
+            int filesAddedToDatabase = await folderLoad.AddFilesAsync(this.DataHandler.FileDatabase, this.FileDisplay.GetWidthInPixels()).ConfigureAwait(true);
+
+            // if needed, revert to original selection
+            if (originalSelection != this.DataHandler.FileDatabase.ImageSet.FileSelection)
+            {
+                this.DataHandler.SelectFiles(originalSelection);
+            }
+
+            // shift UI to normal, non-loading state
+            // Stopwatch is stopped before OnFolderLoadingCompleteAsync() to exclude load and render time of the first image.
+            // Status message is updated after OnFolderLoadingCompleteAsync() because loading an image clears the status message.
+            this.HideLongRunningOperationFeedback();
+            stopwatch.Stop();
+            await this.OnFileDatabaseOpenedOrFilesAddedAsync(true).ConfigureAwait(true);
+            this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusImageSetLoadingFoldersComplete, filesAddedToDatabase, folderLoad.FilesToLoad, stopwatch.Elapsed.TotalSeconds, folderLoad.FilesToLoad / stopwatch.Elapsed.TotalSeconds, folderLoad.IODuration.TotalSeconds, folderLoad.ComputeDuration.TotalSeconds, folderLoad.DatabaseDuration.TotalSeconds);
+
+            // update the user as to what files are in the database
+            this.MaybeShowFileCountsDialog(true);
             return true;
         }
 
@@ -2446,7 +2450,7 @@ namespace Carnassial
             this.MenuViewShowFiles_Click(this, null);
 
             // open file database
-            bool fileDatabaseCreatedOrOpened = FileDatabase.TryCreateOrOpen(fileDatabaseFilePath, templateDatabase, this.State.OrderFilesByDateTime, this.State.CustomSelectionTermCombiningOperator, out FileDatabase fileDatabase);
+            bool fileDatabaseCreatedOrOpened = FileDatabase.TryCreateOrOpen(fileDatabaseFilePath, templateDatabase, CarnassialSettings.Default.OrderFilesByDateTime, this.State.CustomSelectionTermCombiningOperator, out FileDatabase fileDatabase);
             templateDatabase.Dispose();
             if (fileDatabaseCreatedOrOpened == false)
             {
@@ -2462,7 +2466,7 @@ namespace Carnassial
                     {
                         // user indicated not to update to the current template or cancelled out of the dialog
                         fileDatabase.Dispose();
-                        Application.Current.Shutdown();
+                        this.Close();
                         return false;
                     }
 
@@ -2474,10 +2478,7 @@ namespace Carnassial
                     // notify user the database couldn't be loaded
                     MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowDatabaseLoadFailed, this, fileDatabaseFileName);
                     messageBox.ShowDialog();
-                    if (fileDatabase != null)
-                    {
-                        fileDatabase.Dispose();
-                    }
+                    fileDatabase?.Dispose();
                     return false;
                 }
             }
@@ -2696,7 +2697,7 @@ namespace Carnassial
 
             if (progress.TryDetachImage(out CachedImage? image))
             {
-                progress.MaybeUpdateImageRenderWidth((int)this.Width);
+                progress.MaybeUpdateImageRenderWidth(this.FileDisplay.GetWidthInPixels());
                 this.FileDisplay.Display(image, null);
                 image.Dispose();
             }
@@ -2718,19 +2719,25 @@ namespace Carnassial
 
             HwndSource.FromHwnd(new WindowInteropHelper(this).Handle).RemoveHook(new HwndSourceHook(this.WndProc));
 
-            // persist user specific state to the registry
+            // persist user specific settings
             if (this.Top > -10 && this.Left > -10)
             {
-                this.State.CarnassialWindowPosition = new Rect(new Point(this.Left, this.Top), new Size(this.Width, this.Height));
+                Rect windowPosition = new(new Point(this.Left, this.Top), new Size(this.Width, this.Height));
+                CarnassialSettings.Default.CarnassialWindowPosition = windowPosition.ToString(CultureInfo.InvariantCulture);
             }
-            this.State.ControlGridWidth = (int)this.ControlGrid.Width;
-            this.State.WriteToRegistry();
+            CarnassialSettings.Default.ControlGridWidth = this.ControlGrid.Width;
+
+            if (this.NonpersistentUserSettings == false)
+            {
+                this.State.SerializeToSettings();
+                CarnassialSettings.Default.Save();
+            }
         }
 
         private async void Window_ContentRendered(object sender, EventArgs e)
         {
             // check for updates
-            if (DateTime.UtcNow - this.State.MostRecentCheckForUpdates > Constant.CheckForUpdateInterval)
+            if (DateTime.UtcNow - CarnassialSettings.Default.MostRecentCheckForUpdates > Constant.CheckForUpdateInterval)
             {
                 Uri latestVersionAddress = CarnassialConfigurationSettings.GetLatestReleaseApiAddress();
                 if (latestVersionAddress == null)
@@ -2739,8 +2746,8 @@ namespace Carnassial
                 }
 
                 GithubReleaseClient updater = new(Constant.ApplicationName, latestVersionAddress);
-                updater.TryGetAndParseRelease(false, out Version _);
-                this.State.MostRecentCheckForUpdates = DateTime.UtcNow;
+                updater.TryGetAndParseRelease(false, out Version? _);
+                CarnassialSettings.Default.MostRecentCheckForUpdates = DateTime.UtcNow;
             }
 
             // if a file was passed on the command line, try to open it
@@ -3120,9 +3127,9 @@ namespace Carnassial
                             Debug.Assert(this.DataHandler != null);
                             int increment = (int)(this.State.MouseHorizontalScrollDelta / Constant.Gestures.MouseHWheelStep);
                             int newFileIndex = this.DataHandler.ImageCache.CurrentRow + increment;
-                            #pragma warning disable CS4014
+                            #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                             this.ShowFileWithoutSliderCallbackAsync(newFileIndex, increment);
-                            #pragma warning restore CS4014
+                            #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
                             this.State.MostRecentRender = utcNow;
                             this.State.MouseHorizontalScrollDelta = 0;
                         }

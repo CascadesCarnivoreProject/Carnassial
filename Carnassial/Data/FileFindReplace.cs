@@ -70,10 +70,7 @@ namespace Carnassial.Data
                 }
                 this.sqlDataTypeByLabel.Add(control.Label, sqlDataType);
             }
-            if (defaultControl == null)
-            {
-                defaultControl = visibleControls[0];
-            }
+            defaultControl ??= visibleControls[0];
 
             SearchTerm findTerm1 = defaultControl.CreateSearchTerm();
             findTerm1.UseForSearching = true;

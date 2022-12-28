@@ -11,7 +11,7 @@ namespace Carnassial
     {
         #if DEBUG
         // hook to allow tests to set culture
-        internal static bool UseCurrentCulture { get; set; }
+        internal static bool UseTestCulture { get; set; }
         #endif
 
         private static readonly Dictionary<string, ResourceDictionary> ResourcesByCultureName;
@@ -19,7 +19,9 @@ namespace Carnassial
         static LocalizedApplication()
         {
             #if DEBUG
-            LocalizedApplication.UseCurrentCulture = false;
+            LocalizedApplication.UseTestCulture = false;
+            #else
+            LocalizedApplication.UseTestCulture = false;
             #endif
 
             LocalizedApplication.ResourcesByCultureName = new Dictionary<string, ResourceDictionary>();
@@ -33,7 +35,7 @@ namespace Carnassial
         public LocalizedApplication()
         {
             #if DEBUG
-            if (LocalizedApplication.UseCurrentCulture == false)
+            if (LocalizedApplication.UseTestCulture)
             {
                 string debugCultureName = CultureInfo.CurrentCulture.Name.StartsWith("es", StringComparison.Ordinal) ? "en-IN" : "es-CL";
                 CultureInfo testCulture = CultureInfo.GetCultureInfo(debugCultureName);

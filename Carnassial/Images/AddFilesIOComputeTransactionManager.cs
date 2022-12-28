@@ -1,7 +1,6 @@
 ﻿using Carnassial.Data;
 using Carnassial.Interop;
 using Carnassial.Native;
-using Carnassial.Util;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -29,10 +28,10 @@ namespace Carnassial.Images
             this.FolderPaths = new List<string>();
         }
 
-        public async Task<int> AddFilesAsync(FileDatabase fileDatabase, CarnassialState state, int initialImageRenderWidth)
+        public async Task<int> AddFilesAsync(FileDatabase fileDatabase, int initialImageRenderWidthInPixels)
         {
             Debug.Assert(fileDatabase.ImageSet.FileSelection == FileSelection.All, "Database doesn't have all files selected.  Checking for files already added to the image set would fail.");
-            this.Status.MaybeUpdateImageRenderWidth(initialImageRenderWidth);
+            this.Status.MaybeUpdateImageRenderWidth(initialImageRenderWidthInPixels);
             this.Status.MostRecentImageUpdate = NativeMethods.GetTickCount64();
 
             // load all files found
@@ -62,7 +61,7 @@ namespace Carnassial.Images
             Dictionary<string, HashSet<string>> filesAlreadyInFileTableByRelativePath = fileDatabase.Files.HashFileNamesByRelativePath();
             this.ComputeTaskBody = (int computeTaskNumber) =>
             {
-                return this.AddFilesCompute(fileDatabase, state, computeTaskNumber);
+                return this.AddFilesCompute(fileDatabase, computeTaskNumber);
             };
 
             using (ReaderWriterLockSlim fileCreateAndAppendLock = new())
@@ -94,7 +93,7 @@ namespace Carnassial.Images
             return this.TransactionFileCount;
         }
 
-        private int AddFilesCompute(FileDatabase fileDatabase, CarnassialState state, int computeTaskNumber)
+        private int AddFilesCompute(FileDatabase fileDatabase, int computeTaskNumber)
         {
             int atoms = 0;
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
@@ -111,7 +110,7 @@ namespace Carnassial.Images
                 if (loadAtom.HasAtLeastOneFile)
                 {
                     loadAtom.ReadDateTimeOffsets(fileDatabase.FolderPath, imageSetTimeZone);
-                    loadAtom.ClassifyFromThumbnails(state.DarkLuminosityThreshold, state.SkipFileClassification, ref preallocatedThumbnail);
+                    loadAtom.ClassifyFromThumbnails(ref preallocatedThumbnail);
                 }
 
                 // check if progress needs to be reported
@@ -150,7 +149,7 @@ namespace Carnassial.Images
                         ulong timeSinceLastImageUpdate = NativeMethods.GetTickCount64() - this.Status.MostRecentImageUpdate;
                         if (timeSinceLastImageUpdate > Constant.ThrottleValues.DesiredIntervalBetweenImageUpdates.TotalMilliseconds)
                         {
-                            CachedImage imageToDisplay = loadAtom.First.File.TryLoadImageAsync(fileDatabase.FolderPath, this.Status.ImageRenderWidth).GetAwaiter().GetResult();
+                            CachedImage imageToDisplay = loadAtom.First.File.TryLoadImageAsync(fileDatabase.FolderPath, this.Status.ImageRenderWidthInPixels).GetAwaiter().GetResult();
                             this.Status.SetImage(imageToDisplay);
                             this.Status.MostRecentImageUpdate = NativeMethods.GetTickCount64();
                         }

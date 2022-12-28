@@ -354,10 +354,7 @@ namespace Carnassial.Control
             // Another race exists as this.Markers can be set during the above rendering, initiating a second, concurrent marker render.  This is unavoidable
             // due to the need to expose a marker property but is mitigated by accepting new markers through this API and performing the set above as 
             // this.markers rather than this.Markers.
-            if (image.Image != null)
-            {
-                image.Image.SetSource(this.imageToMagnify);
-            }
+            image.Image?.SetSource(this.imageToMagnify);
 
             // change to new markers
             // Assign property so any existing markers are cleared.

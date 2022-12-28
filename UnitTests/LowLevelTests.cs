@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Windows;
 using System.Windows.Documents;
 
@@ -129,7 +130,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(leastRecent == 4);
         }
 
-        [TestMethod]
+        [TestMethodStaApartment]
         public void ResourceKeys()
         {
             foreach (FieldInfo field in typeof(Constant.ResourceKey).GetFields(BindingFlags.Public | BindingFlags.Static))
@@ -137,52 +138,51 @@ namespace Carnassial.UnitTests
                 string? resourceKey = (string?)field.GetValue(null);
                 Assert.IsTrue(resourceKey != null);
 
-                if (String.Equals(resourceKey, Constant.ResourceKey.ApplicationWindowException, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowClockDriftFailed, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowCopyFileFailed, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowDatabaseLoadFailed, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowDaylightSavingsFailed, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowFileMoveIncomplete, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowExportSpreadsheetFailed, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowImageMetadataFailed, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowImport, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowImportFailed, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowImportIncomplete, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowNoAmbiguousDates, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowNoDeletableFiles, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowNoMetadataAvailable, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowSelectFolder, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.CarnassialWindowTemplateLoadFailed, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.DataEntryHandlerConfirmCopyAll, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.DataEntryHandlerConfirmCopyForward, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.DataEntryHandlerConfirmPropagateToHere, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.DataEntryHandlerNothingToCopyForward, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.DataEntryHandlerNothingToPropagate, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.DeleteFilesMessageCurrentFileAndData, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.DeleteFilesMessageCurrentFileOnly, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.DeleteFilesMessageFilesAndData, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.DeleteFilesMessageFilesOnly, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.GithubReleaseClientGetNewVersion, StringComparison.OrdinalIgnoreCase) ||
-                    String.Equals(resourceKey, Constant.ResourceKey.GithubReleaseClientNoUpdates, StringComparison.OrdinalIgnoreCase))
+                switch (resourceKey)
                 {
-                    Message message = App.FindResource<Message>(resourceKey);
-                    Assert.IsTrue(message != null);
-                }
-                else if (String.Equals(resourceKey, Constant.ResourceKey.AboutTermsOfUse, StringComparison.OrdinalIgnoreCase))
-                {
-                    Span span = App.FindResource<Span>(resourceKey);
-                    Assert.IsTrue(span != null);
-                }
-                else if (String.Equals(resourceKey, Constant.ResourceKey.SearchTermListCellMargin, StringComparison.OrdinalIgnoreCase))
-                {
-                    Thickness thickness = App.FindResource<Thickness>(resourceKey);
-                    Assert.IsTrue((thickness.Top > 0.0) && (thickness.Right > 0.0) && (thickness.Bottom > 0.0) && (thickness.Left > 0.0));
-                }
-                else
-                {
-                    // strings
-                    string resource = App.FindResource<string>(resourceKey);
-                    Assert.IsTrue(String.IsNullOrWhiteSpace(resource) == false);
+                    case Constant.ResourceKey.ApplicationWindowException:
+                    case Constant.ResourceKey.CarnassialWindowClockDriftFailed:
+                    case Constant.ResourceKey.CarnassialWindowCopyFileFailed:
+                    case Constant.ResourceKey.CarnassialWindowDatabaseLoadFailed:
+                    case Constant.ResourceKey.CarnassialWindowDaylightSavingsFailed:
+                    case Constant.ResourceKey.CarnassialWindowFileMoveIncomplete:
+                    case Constant.ResourceKey.CarnassialWindowExportSpreadsheetFailed:
+                    case Constant.ResourceKey.CarnassialWindowImageMetadataFailed:
+                    case Constant.ResourceKey.CarnassialWindowImport:
+                    case Constant.ResourceKey.CarnassialWindowImportFailed:
+                    case Constant.ResourceKey.CarnassialWindowImportIncomplete:
+                    case Constant.ResourceKey.CarnassialWindowNoAmbiguousDates:
+                    case Constant.ResourceKey.CarnassialWindowNoDeletableFiles:
+                    case Constant.ResourceKey.CarnassialWindowNoMetadataAvailable:
+                    case Constant.ResourceKey.CarnassialWindowSelectFolder:
+                    case Constant.ResourceKey.CarnassialWindowTemplateLoadFailed:
+                    case Constant.ResourceKey.DataEntryHandlerConfirmCopyAll:
+                    case Constant.ResourceKey.DataEntryHandlerConfirmCopyForward:
+                    case Constant.ResourceKey.DataEntryHandlerConfirmPropagateToHere:
+                    case Constant.ResourceKey.DataEntryHandlerNothingToCopyForward:
+                    case Constant.ResourceKey.DataEntryHandlerNothingToPropagate:
+                    case Constant.ResourceKey.DeleteFilesMessageCurrentFileAndData:
+                    case Constant.ResourceKey.DeleteFilesMessageCurrentFileOnly:
+                    case Constant.ResourceKey.DeleteFilesMessageFilesAndData:
+                    case Constant.ResourceKey.DeleteFilesMessageFilesOnly:
+                    case Constant.ResourceKey.GithubReleaseClientGetNewVersion:
+                    case Constant.ResourceKey.GithubReleaseClientNoUpdates:
+                        Message message = App.FindResource<Message>(resourceKey);
+                        Assert.IsTrue(message != null);
+                        break;
+                    case Constant.ResourceKey.AboutTermsOfUse:
+                        Span span = App.FindResource<Span>(resourceKey);
+                        Assert.IsTrue(span != null);
+                        break;
+                    case Constant.ResourceKey.SearchTermListCellMargin:
+                        Thickness thickness = App.FindResource<Thickness>(resourceKey);
+                        Assert.IsTrue((thickness.Top > 0.0) && (thickness.Right > 0.0) && (thickness.Bottom > 0.0) && (thickness.Left > 0.0));
+                        break;
+                    default:
+                        // strings
+                        string resource = App.FindResource<string>(resourceKey);
+                        Assert.IsTrue(String.IsNullOrWhiteSpace(resource) == false);
+                        break;
                 }
             }
         }

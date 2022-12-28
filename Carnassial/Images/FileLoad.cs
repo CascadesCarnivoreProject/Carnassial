@@ -7,10 +7,10 @@ namespace Carnassial.Images
     {
         private bool disposed;
 
-        public static readonly FileLoad NoLoad = new(Constant.File.NoFileLoaded);
+        public static readonly FileLoad NoLoad = new((string?)null);
 
         public ImageRow? File { get; set; }
-        public string FileName { get; private set; }
+        public string? FileName { get; private set; }
         public JpegImage? Jpeg { get; set; }
         public MetadataReadResults MetadataReadResult { get; set; }
 
@@ -23,7 +23,7 @@ namespace Carnassial.Images
             this.MetadataReadResult = MetadataReadResults.None;
         }
 
-        public FileLoad(string fileName)
+        public FileLoad(string? fileName)
         {
             this.disposed = false;
             this.File = null;
@@ -47,10 +47,7 @@ namespace Carnassial.Images
 
             if (disposing)
             {
-                if (this.Jpeg != null)
-                {
-                    this.Jpeg.Dispose();
-                }
+                this.Jpeg?.Dispose();
             }
             this.disposed = true;
         }

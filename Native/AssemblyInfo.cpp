@@ -11,7 +11,7 @@ using namespace System::Security::Permissions;
 [assembly:AssemblyDescriptionAttribute(L"Carnassial C++/CLI and C++ components.")];
 [assembly:AssemblyCompanyAttribute(L"Cascades Carnivore Project")];
 [assembly:AssemblyProductAttribute(L"Carnassial")];
-[assembly:AssemblyCopyrightAttribute(L"Copyright © 2019 Cascades Carnivore Project")];
+[assembly:AssemblyCopyrightAttribute(L"Copyright © 2016-2023 Cascades Carnivore Project")];
 [assembly:AssemblyTrademarkAttribute(L"")];
 [assembly:AssemblyCultureAttribute(L"")];
 
@@ -21,8 +21,8 @@ using namespace System::Security::Permissions;
 [assembly:AssemblyConfigurationAttribute(L"Release")];
 #endif
 
-[assembly:AssemblyVersionAttribute("2.2.4.0")];
-[assembly:AssemblyFileVersionAttribute("2.2.4.0")];
+[assembly:AssemblyVersionAttribute("2.2.5.0")];
+[assembly:AssemblyFileVersionAttribute("2.2.5.0")];
 
 [assembly:ComVisible(false)];
 [assembly:Guid(L"768bba9c-aea6-47e3-b4ed-49177db0ef78")]

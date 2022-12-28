@@ -7,19 +7,14 @@ namespace Carnassial.Util
 {
     public class Throttles
     {
-        public double DesiredImageRendersPerSecond { get; private set; }
         public TimeSpan DesiredIntervalBetweenRenders { get; private set; }
         public DispatcherTimer FilePlayTimer { get; private set; }
-        public double ImageClassificationChangeSlowdown { get; set; }
         public int RepeatedKeyAcceptanceInterval { get; private set; }
-        public double VideoSlowdown { get; set; }
 
         public Throttles()
         {
             this.FilePlayTimer = new DispatcherTimer();
-            this.SetDesiredImageRendersPerSecond(Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault);
-            this.ImageClassificationChangeSlowdown = Constant.ThrottleValues.ImageClassificationSlowdownDefault;
-            this.VideoSlowdown = Constant.ThrottleValues.VideoSlowdownDefault;
+            this.SetDesiredImageRendersPerSecond(CarnassialSettings.Default.DesiredImageRendersPerSecond);
         }
 
         public TimeSpan GetDesiredProgressUpdateInterval()
@@ -31,7 +26,7 @@ namespace Carnassial.Util
             return Constant.ThrottleValues.DesiredIntervalBetweenStatusUpdates;
         }
 
-        public void SetDesiredImageRendersPerSecond(double rendersPerSecond)
+        public void SetDesiredImageRendersPerSecond(float rendersPerSecond)
         {
             if (rendersPerSecond < Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondLowerBound ||
                 rendersPerSecond > Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound)
@@ -39,7 +34,7 @@ namespace Carnassial.Util
                 throw new ArgumentOutOfRangeException(nameof(rendersPerSecond));
             }
 
-            this.DesiredImageRendersPerSecond = rendersPerSecond;
+            CarnassialSettings.Default.DesiredImageRendersPerSecond = rendersPerSecond;
             this.DesiredIntervalBetweenRenders = TimeSpan.FromSeconds(1.0 / rendersPerSecond);
             this.RepeatedKeyAcceptanceInterval = (int)(((double)SystemParameters.KeyboardSpeed + 0.5 * rendersPerSecond) / rendersPerSecond);
             this.FilePlayTimer.Interval = this.DesiredIntervalBetweenRenders;
@@ -49,11 +44,11 @@ namespace Carnassial.Util
         {
             if (currentFile.Classification == FileClassification.Video)
             {
-                this.FilePlayTimer.Interval = TimeSpan.FromTicks((long)(this.VideoSlowdown * this.DesiredIntervalBetweenRenders.Ticks));
+                this.FilePlayTimer.Interval = TimeSpan.FromTicks((long)(CarnassialSettings.Default.VideoSlowdown * this.DesiredIntervalBetweenRenders.Ticks));
             }
             else if ((previousFile != null) && (previousFile.Classification != currentFile.Classification))
             {
-                this.FilePlayTimer.Interval = TimeSpan.FromTicks((long)(this.ImageClassificationChangeSlowdown * this.DesiredIntervalBetweenRenders.Ticks));
+                this.FilePlayTimer.Interval = TimeSpan.FromTicks((long)(CarnassialSettings.Default.ImageClassificationChangeSlowdown * this.DesiredIntervalBetweenRenders.Ticks));
             }
             else
             {

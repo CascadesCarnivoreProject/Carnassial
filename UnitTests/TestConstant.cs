@@ -11,7 +11,6 @@ namespace Carnassial.UnitTests
         public const string CarnassialTemplateEditorAutomationID = "CarnassialTemplateEditor";
         public const double LuminosityAndColorationTolerance = 0.00000001;
         public const string DateTimeWithOffsetFormat = "yyyy-MM-ddTHH:mm:ss.fffK";
-        public const byte[] DefaultMarkerPositions = null;
         public const string EditorTemplateDatabaseFieldName = "templateDatabase";
         public const string FileCountsAutomationID = "FileCountsByClassification";
         public const string InitializeDataGridMethodName = "InitializeDataGrid";
@@ -177,6 +176,13 @@ namespace Carnassial.UnitTests
             public const string AlternateUITestCultureName = "ja";
 
             public static readonly string[] DefaultUITestCultureNames = new string[] { "zh-Hans", "en", "hi", "es", "ar", "ms", "ru" };
+        }
+
+        public static class ThrottleValues
+        {
+            public const float DesiredMaximumImageRendersPerSecondDefault = 5.0F;
+            public const float ImageClassificationSlowdownDefault = 2.4F;
+            public const float VideoSlowdownDefault = 5.0F;
         }
 
         public static class TimeZone

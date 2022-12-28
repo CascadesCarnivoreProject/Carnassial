@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.IO.Packaging;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -125,7 +126,7 @@ namespace Carnassial
             public const string FlagValue = "0";
             public const string FlagWellKnownValues = "0|1";
 
-            public const byte[] MarkerPositions = null;
+            public static readonly byte[] MarkerPositions = Array.Empty<byte>();
             public const string NoteTooltip = "Write a textual note";
 
             // standard controls
@@ -142,6 +143,7 @@ namespace Carnassial
             public const string DeleteFlagLabel = "Delete?";    // a flag data type for marking deletion
             public const string DeleteFlagTooltip = "Mark a file as one to be deleted. You can then confirm deletion through the Edit Menu";
 
+            public const string RelativePath = ".";
             public const string UtcOffsetTooltip = "Universal Time offset of the time zone for date and time taken";
 
             // UmAlQuraCalendar does not support dates before 1900-04-30T00:00:00 so default to a later date
@@ -222,7 +224,6 @@ namespace Carnassial
             public const string FileDatabaseFileExtension = ".ddb";
             public const string JpgFileExtension = ".jpg";
             public const string Mp4FileExtension = ".mp4";
-            public const string NoFileLoaded = "<no file loaded>";
             public const string ParentDirectory = "..";
             public const int RowsBetweenStatusReportChecks = 500;
             public const string TemplateFileExtension = ".tdb";
@@ -288,7 +289,7 @@ namespace Carnassial
             public const double GreyscaleColorationThreshold = 0.005;
             public const int ImageCacheSize = 9;
             public const int JpegInitialBufferSize = 2 * 4096;
-            public const int MinimumRenderWidth = 800;
+            public const int MinimumRenderWidthInPixels = 800;
             public const int NoThumbnailClassificationRequestedWidthInPixels = 200;
             public const int SmallestValidJpegSizeInBytes = 107; // with creative encoding; single pixel jpegs are usually somewhat larger
             public const int ThumbnailFallbackWidthInPixels = 200;
@@ -326,18 +327,23 @@ namespace Carnassial
                 return new Lazy<BitmapImage>(() =>
                 {
                     // if the requested image is available as an application resource, prefer that
-                    if (Application.Current != null && Application.Current.Resources.Contains(fileName))
-                    {
-                        return (BitmapImage)Application.Current.Resources[fileName];
-                    }
+                    // TODO: TryFindResource() throws on Status*x.png instead of returning null
+                    // It appears the images are correctly seen as resources but WPF has some issue with their deserialization,
+                    // causing the App's ResourceDictionary to decide packed images are not actually available as resources and
+                    // change from reporting them as present to reporting them as not present.
+                    //if (Application.Current != null)
+                    //{
+                    //    BitmapImage? resourceImage = (BitmapImage?)Application.Current.TryFindResource(fileName);
+                    //    if (resourceImage != null)
+                    //    {
+                    //        return resourceImage;
+                    //    }
+                    //}
 
                     // if it's not (editor, unit tests, resource not listed in App.xaml) fall back to loading from the resources assembly
-                    BitmapImage image = new();
-                    image.BeginInit();
-                    image.UriSource = new Uri("pack://application:,,/Resources/" + fileName);
-                    image.EndInit();
-                    image.Freeze();
-                    return image;
+                    BitmapImage packImage = new(new Uri("pack://application:,,,/" + typeof(Constant).Assembly.GetName().Name + ";component/Resources/" + fileName));
+                    packImage.Freeze();
+                    return packImage;
                 });
             }
         }
@@ -428,38 +434,6 @@ namespace Carnassial
         public static class Platform
         {
             public const string Windows = "windows";
-        }
-
-        public static class Registry
-        {
-            public static class CarnassialKey
-            {
-                public const string AudioFeedback = "AudioFeedback";
-                public const string CarnassialWindowPosition = "CarnassialWindowPosition";
-                public const string ControlGridWidth = "ControlGridWidth";
-
-                // most recently used operator for custom selections
-                public const string CustomSelectionTermCombiningOperator = "CustomSelectionTermCombiningOperator";
-
-                public const string DarkLuminosityThreshold = "DarkLuminosityThreshold";
-                public const string DesiredImageRendersPerSecond = "DesiredImageRendersPerSecond";
-                public const string ImageClassificationChangeSlowdown = "ImageClassificationChangeSlowdown";
-                public const string MostRecentCheckForUpdates = "MostRecentCheckForUpdates";
-
-                // key containing the list of most recently image sets opened by Carnassial
-                public const string MostRecentlyUsedImageSets = "MostRecentlyUsedImageSets";
-
-                public const string OrderFilesByDateTime = "OrderFilesByDateTime";
-                public const string SkipFileClassification = "SkipFileClassification";
-
-                // dialog opt outs
-                public const string SuppressFileCountOnImportDialog = "SuppressFileCountOnImportDialog";
-                public const string SuppressImportPrompt = "SuppressImportPrompt";
-
-                public const string VideoSlowdown = "VideoSlowdown";
-            }
-
-            public const string RootKey = @"Software\Cascades Carnivore Project\Carnassial\2.0";
         }
 
         public static class Release
@@ -651,18 +625,16 @@ namespace Carnassial
 
         public static class ThrottleValues
         {
-            public const double DesiredMaximumImageRendersPerSecondLowerBound = 1.0;
-            public const double DesiredMaximumImageRendersPerSecondDefault = 5.0;
-            public const double DesiredMaximumImageRendersPerSecondUpperBound = 12.0;
-            public const double ImageClassificationSlowdownDefault = 2.4;
-            public const double ImageClassificationSlowdownMaximum = 5.0;
-            public const double ImageClassificationSlowdownMinimum = 0.0;
+            public const float DesiredMaximumImageRendersPerSecondLowerBound = 1.0F;
+            public const float DesiredMaximumImageRendersPerSecondDefault = 5.0F; // keep synchronized with CarnassialSettings.settings
+            public const float DesiredMaximumImageRendersPerSecondUpperBound = 12.0F;
+            public const float ImageClassificationSlowdownMaximum = 5.0F;
+            public const float ImageClassificationSlowdownMinimum = 0.0F;
             public const int MaximumBlackFrameAttempts = 5;
             public const int MaximumRenderAttempts = 10;
             public const int SleepForImageRenderInterval = 100;
-            public const double VideoSlowdownDefault = 5.0;
-            public const double VideoSlowdownMaximum = 10.0;
-            public const double VideoSlowdownMinimum = 0.0;
+            public const float VideoSlowdownMaximum = 10.0F;
+            public const float VideoSlowdownMinimum = 0.0F;
 
             public static readonly TimeSpan DesiredIntervalBetweenImageUpdates = TimeSpan.FromSeconds(5.0);
             public static readonly TimeSpan DesiredIntervalBetweenStatusUpdates = TimeSpan.FromMilliseconds(500);

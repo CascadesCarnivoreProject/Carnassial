@@ -89,7 +89,7 @@ namespace Carnassial.Control
             }
             else
             {
-                this.Shortcut.Content = "_" + this.SearchTerm.Label.Substring(0, 1);
+                this.Shortcut.Content = "_" + this.SearchTerm.Label[..1];
             }
 
             this.UpdateDisplayQuery();

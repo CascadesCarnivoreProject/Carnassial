@@ -1,0 +1,54 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Carnassial" GeneratedClassName="CarnassialSettings">
+  <Profiles />
+  <Settings>
+    <Setting Name="DevTeamEmail" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">carnassialdev@gmail.com</Value>
+    </Setting>
+    <Setting Name="GithubOrganizationAndRepo" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">CascadesCarnivoreProject/Carnassial</Value>
+    </Setting>
+    <Setting Name="AudioFeedback" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="CarnassialWindowPosition" Type="System.String" Scope="User">
+      <Value Profile="(Default)">0,0,1350,900</Value>
+    </Setting>
+    <Setting Name="ControlGridWidth" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="CustomSelectionTermCombiningOperator" Type="System.String" Scope="User">
+      <Value Profile="(Default)">And</Value>
+    </Setting>
+    <Setting Name="DarkLuminosityThreshold" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="DesiredImageRendersPerSecond" Type="System.Single" Scope="User">
+      <Value Profile="(Default)">5</Value>
+    </Setting>
+    <Setting Name="ImageClassificationChangeSlowdown" Type="System.Single" Scope="User">
+      <Value Profile="(Default)">2.4</Value>
+    </Setting>
+    <Setting Name="MostRecentCheckForUpdates" Type="System.DateTime" Scope="User">
+      <Value Profile="(Default)">2023-06-01</Value>
+    </Setting>
+    <Setting Name="MostRecentlyUsedImageSets" Type="System.Collections.Specialized.StringCollection" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="OrderFilesByDateTime" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="SkipFileClassification" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="SuppressFileCountOnImportDialog" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="SuppressImportPrompt" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="VideoSlowdown" Type="System.Single" Scope="User">
+      <Value Profile="(Default)">5</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

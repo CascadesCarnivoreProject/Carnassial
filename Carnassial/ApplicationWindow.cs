@@ -11,9 +11,16 @@ namespace Carnassial
 {
     public class ApplicationWindow : WindowWithSystemMenu
     {
+        public bool NonpersistentUserSettings { get; set; }
+
+        public ApplicationWindow()
+        {
+            this.NonpersistentUserSettings = false;
+        }
+
         protected void Instructions_PreviewDrag(object sender, DragEventArgs dragEvent)
         {
-            if (ApplicationWindow.IsSingleTemplateFileDrag(dragEvent, out string _))
+            if (ApplicationWindow.IsSingleTemplateFileDrag(dragEvent, out string? _))
             {
                 dragEvent.Effects = DragDropEffects.All;
             }

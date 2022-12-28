@@ -199,11 +199,9 @@ namespace Carnassial.Data
 
             // don't trigger backups on image set updates as none of the properties in the image set table is particularly important
             // For example, this avoids creating a backup when a custom selection is reverted to all when Carnassial exits.
-            using (ImageSetTransactionSequence imageSetUpdate = ImageSetTransactionSequence.CreateUpdate(this))
-            {
-                imageSetUpdate.AddImageSet(this.ImageSet);
-                imageSetUpdate.Commit();
-            }
+            using ImageSetTransactionSequence imageSetUpdate = ImageSetTransactionSequence.CreateUpdate(this);
+            imageSetUpdate.AddImageSet(this.ImageSet);
+            imageSetUpdate.Commit();
             return true;
         }
 
@@ -380,7 +378,9 @@ namespace Carnassial.Data
 
             if (this.GetUserVersion() < Constant.Release.V2_2_0_3)
             {
+                #pragma warning disable CS0612 // Type or member is obsolete
                 this.UpdateControlTableTo2203Schema();
+                #pragma warning restore CS0612 // Type or member is obsolete
                 using SQLiteTransaction transaction = this.Connection.BeginTransaction();
                 this.UpdateImageSetTo2203Schema(transaction, tables);
 
@@ -412,6 +412,7 @@ namespace Carnassial.Data
             updateControl.Commit();
         }
 
+        [Obsolete]
         private void UpdateControlTableTo2203Schema()
         {
             // if this is a .tdb from Carnassial 2.2.0.2 or earlier
@@ -442,15 +443,11 @@ namespace Carnassial.Data
                 convertTypeToInteger = true;
             }
 
-            #pragma warning disable CS0618 // Type or member is obsolete
             if (currentSchema.ColumnDefinitions.SingleOrDefault(column => String.Equals(column.Name, Constant.ControlColumn.List, StringComparison.Ordinal)) != null)
-            #pragma warning restore CS0618 // Type or member is obsolete
             {
                 renameList = true;
             }
-            #pragma warning disable CS0618 // Type or member is obsolete
             if (currentSchema.ColumnDefinitions.SingleOrDefault(column => String.Equals(column.Name, Constant.ControlColumn.Width, StringComparison.Ordinal)) != null)
-            #pragma warning restore CS0618 // Type or member is obsolete
             {
                 renameWidth = true;
             }
@@ -489,14 +486,11 @@ namespace Carnassial.Data
 
                 if (renameList)
                 {
-#pragma warning disable CS0618 // Type or member is obsolete
                     this.RenameColumn(transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.List, Constant.ControlColumn.WellKnownValues, (ColumnDefinition columnWithNameChanged) => { });
                 }
                 if (renameWidth)
                 {
-#pragma warning disable CS0618 // Type or member is obsolete
                     this.RenameColumn(transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.Width, Constant.ControlColumn.MaxWidth, (ColumnDefinition columnWithNameChanged) =>
-#pragma warning restore CS0618 // Type or member is obsolete
                     {
                         columnWithNameChanged.DefaultValue = Constant.ControlDefault.MaxWidth.ToString(Constant.InvariantCulture);
                         columnWithNameChanged.NotNull = true;

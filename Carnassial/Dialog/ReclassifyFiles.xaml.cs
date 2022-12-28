@@ -19,9 +19,9 @@ namespace Carnassial.Dialog
         private bool isProgramaticNavigatiorSliderUpdate;
         private ImageRow? previousFile;
         private ReclassifyIOComputeTransaction? reclassification;
-        private readonly CarnassialUserRegistrySettings userSettings;
+        private readonly Throttles throttles;
 
-        public ReclassifyFiles(FileDatabase database, ImageCache imageCache, CarnassialUserRegistrySettings state, Window owner)
+        public ReclassifyFiles(FileDatabase database, ImageCache imageCache, Throttles throttles, Window owner)
         {
             this.InitializeComponent();
             this.Message.SetVisibility();
@@ -33,7 +33,7 @@ namespace Carnassial.Dialog
             this.isProgramaticNavigatiorSliderUpdate = false;
             this.previousFile = null;
             this.reclassification = null;
-            this.userSettings = state;
+            this.throttles = throttles;
         }
 
         /// <summary>
@@ -133,14 +133,8 @@ namespace Carnassial.Dialog
 
             if (disposing)
             {
-                if (this.fileEnumerator != null)
-                {
-                    this.fileEnumerator.Dispose();
-                }
-                if (this.reclassification != null)
-                {
-                    this.reclassification.Dispose();
-                }
+                this.fileEnumerator?.Dispose();
+                this.reclassification?.Dispose();
             }
 
             this.disposed = true;
@@ -162,11 +156,11 @@ namespace Carnassial.Dialog
             this.DarkLuminosityThresholdPercent.IsEnabled = false;
             this.FileNavigatorSlider.IsEnabled = false;
             this.MenuReset.IsEnabled = false;
-            this.userSettings.DarkLuminosityThreshold = 0.01 * this.DarkLuminosityThresholdPercent.Value;
+            CarnassialSettings.Default.DarkLuminosityThreshold = 0.01 * this.DarkLuminosityThresholdPercent.Value;
 
-            using (this.reclassification = new ReclassifyIOComputeTransaction(this.UpdateClassificationStatus, this.userSettings.Throttles.GetDesiredProgressUpdateInterval()))
+            using (this.reclassification = new ReclassifyIOComputeTransaction(this.UpdateClassificationStatus, this.throttles.GetDesiredProgressUpdateInterval()))
             {
-                await this.reclassification.ReclassifyFilesAsync(this.fileDatabase, 0.01 * this.userSettings.DarkLuminosityThreshold, (int)this.ActualWidth).ConfigureAwait(true);
+                await this.reclassification.ReclassifyFilesAsync(this.fileDatabase, 0.01 * CarnassialSettings.Default.DarkLuminosityThreshold, (int)this.ActualWidth).ConfigureAwait(true);
             }
 
             await this.DisplayFileAndClassificationAsync().ConfigureAwait(true);
@@ -197,7 +191,7 @@ namespace Carnassial.Dialog
 
         private void MenuResetCurrent_Click(object sender, RoutedEventArgs e)
         {
-            this.ResetDarkLuminosityThreshold(this.userSettings.DarkLuminosityThreshold);
+            this.ResetDarkLuminosityThreshold(CarnassialSettings.Default.DarkLuminosityThreshold);
         }
 
         private void MenuResetDefault_Click(object sender, RoutedEventArgs e)
@@ -272,7 +266,7 @@ namespace Carnassial.Dialog
             CommonUserInterface.SetDefaultDialogPosition(this);
             CommonUserInterface.TryFitWindowInWorkingArea(this);
 
-            this.DarkLuminosityThresholdPercent.Value = 100.0 * this.userSettings.DarkLuminosityThreshold;
+            this.DarkLuminosityThresholdPercent.Value = 100.0 * CarnassialSettings.Default.DarkLuminosityThreshold;
 
             this.FileNavigatorSlider.Minimum = 0;
             this.FileNavigatorSlider.Maximum = this.fileDatabase.CurrentlySelectedFileCount - 1;

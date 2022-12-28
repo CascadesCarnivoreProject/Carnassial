@@ -2,7 +2,7 @@
 <RunSettings>
   <RunConfiguration>
     <MaxCpuCount>4</MaxCpuCount>
-    <TargetFrameworkVersion>Framework45</TargetFrameworkVersion>
+    <TargetFrameworkVersion>net6.0</TargetFrameworkVersion>
     <TargetPlatform>x64</TargetPlatform>
   </RunConfiguration>
 </RunSettings>

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Carnassial.Util
@@ -6,14 +7,35 @@ namespace Carnassial.Util
     public class MostRecentlyUsedList<TElement> : IEnumerable<TElement>
     {
         private readonly LinkedList<TElement> list;
-        private readonly int maximumItems;
+        private readonly int maximumElements;
 
-        public MostRecentlyUsedList(int maximumItems)
+        public MostRecentlyUsedList(int maximumElements)
         {
             this.list = new LinkedList<TElement>();
+            this.maximumElements = maximumElements;
+        }
 
-            // subtract one off the list's maximum size as SetMostRecent() checks it after 
-            this.maximumItems = maximumItems;
+        public MostRecentlyUsedList(IList? elements, int maximumElements)
+            : this(maximumElements)
+        {
+            if (elements == null)
+            {
+                return;
+            }
+            if (elements.Count > maximumElements)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maximumElements), nameof(elements) + " has " + elements.Count + " items but a maximum of " + maximumElements + " items is allowed in the " + this.GetType().Name + ".");
+            }
+
+            for (int index = 0; index < elements.Count; ++index)
+            {
+                TElement? element = (TElement?)elements[index];
+                if (element == null)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(elements), "Element " + index + " of " + nameof(elements) + " is null.");
+                }
+                this.list.AddLast(element);
+            }
         }
 
         public int Count
@@ -33,7 +55,7 @@ namespace Carnassial.Util
 
         public bool IsFull()
         {
-            return this.list.Count == this.maximumItems;
+            return this.list.Count == this.maximumElements;
         }
 
         public void SetMostRecent(TElement mostRecent)
@@ -41,7 +63,7 @@ namespace Carnassial.Util
             if (this.list.Remove(mostRecent) == false)
             {
                 // item wasn't already in the list
-                if (this.list.Count >= this.maximumItems)
+                if (this.list.Count >= this.maximumElements)
                 {
                     // list was full, drop the oldest item to make room for new item
                     this.list.RemoveLast();
