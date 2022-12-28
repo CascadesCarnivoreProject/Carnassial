@@ -17,13 +17,13 @@ namespace Carnassial.UnitTests
         [ClassCleanup]
         public static void ClassCleanup()
         {
-            CarnassialTest.TryRevertToDefaultCultures();
+            //CarnassialTest.TryRevertToDefaultCultures();
         }
 
         [ClassInitialize]
         public static void ClassInitialize(TestContext testContext)
         {
-            CarnassialTest.TryChangeToTestCulture();
+            //CarnassialTest.TryChangeToTestCulture();
         }
 
         /// <summary>

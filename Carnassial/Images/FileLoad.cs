@@ -47,10 +47,7 @@ namespace Carnassial.Images
 
             if (disposing)
             {
-                if (this.Jpeg != null)
-                {
-                    this.Jpeg.Dispose();
-                }
+                this.Jpeg?.Dispose();
             }
             this.disposed = true;
         }

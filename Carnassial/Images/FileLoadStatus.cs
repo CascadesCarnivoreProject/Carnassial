@@ -74,10 +74,7 @@ namespace Carnassial.Images
             // this.image is set to the new image so that callers can't obtain an image which in the process of or is scheduled
             // for disposal.
             CachedImage? oldImage = Interlocked.Exchange(ref this.image, imageToDisplay);
-            if (oldImage != null)
-            {
-                oldImage.Dispose();
-            }
+            oldImage?.Dispose();
         }
 
         public bool TryDetachImage([NotNullWhen(true)] out CachedImage? image)

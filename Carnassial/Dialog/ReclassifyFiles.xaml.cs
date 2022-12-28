@@ -133,14 +133,8 @@ namespace Carnassial.Dialog
 
             if (disposing)
             {
-                if (this.fileEnumerator != null)
-                {
-                    this.fileEnumerator.Dispose();
-                }
-                if (this.reclassification != null)
-                {
-                    this.reclassification.Dispose();
-                }
+                this.fileEnumerator?.Dispose();
+                this.reclassification?.Dispose();
             }
 
             this.disposed = true;

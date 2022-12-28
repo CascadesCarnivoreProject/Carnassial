@@ -456,10 +456,7 @@ namespace Carnassial.Control
             dateTimeOffsetPicker.Calendar.SelectedDate = dateTimeOffset.Date;
             dateTimeOffsetPicker.DateTimeDisplay.Text = dateTimeOffset.ToString(dateTimeOffsetPicker.Format, CultureInfo.CurrentCulture);
 
-            if (dateTimeOffsetPicker.ValueChanged != null)
-            {
-                dateTimeOffsetPicker.ValueChanged.Invoke(dateTimeOffsetPicker, dateTimeOffsetPicker.Value);
-            }
+            dateTimeOffsetPicker.ValueChanged?.Invoke(dateTimeOffsetPicker, dateTimeOffsetPicker.Value);
         }
 
         private bool TryParseDateTimeOffset(out DateTimeOffset dateTimeOffset)

@@ -146,10 +146,7 @@ namespace Carnassial.Images
                 this.ioFilesByRelativePathEnumerator.Dispose();
                 this.ioTasks.Dispose();
                 this.loadAtoms?.Dispose();
-                if (this.transactionSequence != null)
-                {
-                    this.transactionSequence.Dispose();
-                }
+                this.transactionSequence?.Dispose();
 
                 this.Progress.End();
             }

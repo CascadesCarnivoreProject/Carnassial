@@ -227,7 +227,7 @@ namespace Carnassial.UnitTests
             byte[] bytes = new byte[hex.Length / 2];
             for (int byteIndex = 0; byteIndex < bytes.Length; ++byteIndex)
             {
-                bytes[byteIndex] = byte.Parse(hex.Substring(2 * byteIndex, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                bytes[byteIndex] = byte.Parse(hex.AsSpan(2 * byteIndex, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
             }
             return bytes;
         }

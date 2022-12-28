@@ -58,7 +58,7 @@ namespace Carnassial.Github
                 catch (WebException exception)
                 {
                     // 404 if no production releases (Github's latest endpoint doesn't return releases with prerelease = true)
-                    if ((exception.Response is HttpWebResponse == false) || (((HttpWebResponse)exception.Response).StatusCode != HttpStatusCode.NotFound))
+                    if ((exception.Response is HttpWebResponse response == false) || (response.StatusCode != HttpStatusCode.NotFound))
                     {
                         Debug.Fail(exception.ToString());
                     }

@@ -19,10 +19,7 @@ namespace Carnassial.Util
         protected RegistryKey OpenRegistryKey()
         {
             RegistryKey? registryKey = Registry.CurrentUser.OpenSubKey(this.keyPath, true);
-            if (registryKey == null)
-            {
-                registryKey = Registry.CurrentUser.CreateSubKey(this.keyPath);
-            }
+            registryKey ??= Registry.CurrentUser.CreateSubKey(this.keyPath);
             return registryKey;
         }
     }

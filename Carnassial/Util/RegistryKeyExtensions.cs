@@ -185,10 +185,7 @@ namespace Carnassial.Util
             {
                 // create the key whose values represent elements of the list
                 RegistryKey? subKey = registryKey.OpenSubKey(subKeyPath, true);
-                if (subKey == null)
-                {
-                    subKey = registryKey.CreateSubKey(subKeyPath);
-                }
+                subKey ??= registryKey.CreateSubKey(subKeyPath);
 
                 // write the values
                 int index = 0;

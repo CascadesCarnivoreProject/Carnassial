@@ -510,10 +510,7 @@ namespace Carnassial.Editor
             {
                 Visual v = (Visual)VisualTreeHelper.GetChild(parent, i);
                 child = v as T;
-                if (child == null)
-                {
-                    child = EditorWindow.GetVisualChild<T>(v);
-                }
+                child ??= EditorWindow.GetVisualChild<T>(v);
                 if (child != null)
                 {
                     break;

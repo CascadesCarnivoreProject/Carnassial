@@ -229,10 +229,7 @@ namespace Carnassial
 
             if (disposing)
             {
-                if (this.DataHandler != null)
-                {
-                    this.DataHandler.Dispose();
-                }
+                this.DataHandler?.Dispose();
                 if (this.speechSynthesizer.IsValueCreated)
                 {
                     this.speechSynthesizer.Value.Dispose();
@@ -2474,10 +2471,7 @@ namespace Carnassial
                     // notify user the database couldn't be loaded
                     MessageBox messageBox = MessageBox.FromResource(Constant.ResourceKey.CarnassialWindowDatabaseLoadFailed, this, fileDatabaseFileName);
                     messageBox.ShowDialog();
-                    if (fileDatabase != null)
-                    {
-                        fileDatabase.Dispose();
-                    }
+                    fileDatabase?.Dispose();
                     return false;
                 }
             }

@@ -309,14 +309,8 @@ namespace Carnassial.Images
 
             if (disposing)
             {
-                if (this.First != null)
-                {
-                    this.First.Dispose();
-                }
-                if (this.Second != null)
-                {
-                    this.Second.Dispose();
-                }
+                this.First?.Dispose();
+                this.Second?.Dispose();
             }
             this.disposed = true;
         }

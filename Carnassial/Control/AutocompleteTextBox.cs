@@ -166,7 +166,7 @@ namespace Carnassial.Control
         private bool UseCompletion(string? completion)
         {
             int textLength = this.Text.Length;
-            if ((completion != null) && (completion.Length >= textLength) && completion.Substring(0, textLength).Equals(this.Text, StringComparison.Ordinal))
+            if ((completion != null) && (completion.Length >= textLength) && completion[..textLength].Equals(this.Text, StringComparison.Ordinal))
             {
                 return true;
             }

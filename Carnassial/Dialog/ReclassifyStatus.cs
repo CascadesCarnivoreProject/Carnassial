@@ -47,10 +47,7 @@ namespace Carnassial.Dialog
         {
             // see remarks for FileLoadStatus.SetImage()
             CachedImage? oldImage = Interlocked.Exchange(ref this.image, imageToDisplay);
-            if (oldImage != null)
-            {
-                oldImage.Dispose();
-            }
+            oldImage?.Dispose();
         }
 
         public bool TryDetachImage([NotNullWhen(true)] out CachedImage? image)
