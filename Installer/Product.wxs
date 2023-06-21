@@ -1,7 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:netfx="http://schemas.microsoft.com/wix/NetFxExtension">
-  <Product Id="*" Name="Carnassial" Language="1033" Version="2.2.4.0" Manufacturer="Cascades Carnivore Project" UpgradeCode="9ffdb794-897b-44a6-ba07-debb23f41400">
-		<Package InstallerVersion="200" Compressed="yes" InstallScope="perUser" Platform="x64" />
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
+  <Package Name="Carnassial" Language="1033" Version="2.2.4.0" Manufacturer="Cascades Carnivore Project" UpgradeCode="9ffdb794-897b-44a6-ba07-debb23f41400" InstallerVersion="200" Scope="perUser">
+
     <Property Id="ALLUSERS" Value="2" />
     <Property Id="ARPPRODUCTICON" Value="Carnassial.ico" />
     <Property Id="MSIINSTALLPERUSER" Value="1" />
@@ -13,118 +12,108 @@
 
     <Feature Id="ProductFeature" Title="Installer" Level="1">
       <ComponentGroupRef Id="CarnassialFiles" />
-      <ComponentRef Id="InstallFolder" />
-		</Feature>
-	</Product>
+      <ComponentRef Id="INSTALLFOLDER" />
+    </Feature>
 
-	<Fragment>
-		<Directory Id="TARGETDIR" Name="SourceDir">
-			<Directory Id="ProgramFiles64Folder">
-				<Directory Id="ManufacturerProgramsFolder" Name="Cascades Carnivore Project">
-				  <Directory Id="ProductFolder" Name="Carnassial">
-				    <Directory Id="INSTALLFOLDER" Name="v2.2" />
-          </Directory>
+    <SummaryInformation/>
+  </Package>
+
+  <Fragment>
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="ManufacturerProgramsFolder" Name="Cascades Carnivore Project">
+        <Directory Id="ProductFolder" Name="Carnassial">
+          <Directory Id="INSTALLFOLDER" Name="v2.2" />
         </Directory>
-        <Component Id="InstallFolder" Guid="53058a3f-2fd8-4787-bcac-896908747ff9" Win64="yes">
-          <RemoveFolder Id="INSTALLFOLDER" On="uninstall"/>
+      </Directory>
+      <Component Id="INSTALLFOLDER" Guid="53058a3f-2fd8-4787-bcac-896908747ff9" Bitness="always64">
+        <RemoveFolder Id="INSTALLFOLDER" On="uninstall" />
+      </Component>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="Cascades Carnivore Project">
+        <Component Id="ApplicationComponent" Guid="b8dd2731-79e8-4225-86b3-87979e0188eb" Bitness="always64">
+          <ProgId Id="CarnassialDatabase" Description="Carnassial database">
+            <Extension Id="ddb" ContentType="application/ddb">
+              <Verb Id="open" Command="Open" TargetFile="$(var.Carnassial.TargetFileName)" Argument="&quot;%1&quot;" />
+            </Extension>
+          </ProgId>
+          <ProgId Id="CarnassialTemplate" Description="Carnassial template database">
+            <Extension Id="tdb" ContentType="application/tdb">
+              <Verb Id="edit" Command="Edit" TargetFile="$(var.TemplateEditor.TargetFileName)" Argument="&quot;%1&quot;" />
+              <Verb Id="open" Command="Open" TargetFile="$(var.Carnassial.TargetFileName)" Argument="&quot;%1&quot;" />
+            </Extension>
+          </ProgId>
+          <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall" />
         </Component>
       </Directory>
-    </Directory>
-	</Fragment>
+    </StandardDirectory>
+  </Fragment>
 
   <Fragment>
     <DirectoryRef Id="INSTALLFOLDER">
-      <Component Id="$(var.Carnassial.TargetFileName)" Guid="*" Win64="yes">
+      <Component Id="$(var.Carnassial.TargetFileName)" Bitness="always64">
         <File Id="$(var.Carnassial.TargetFileName)" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\$(var.Carnassial.TargetFileName)">
-          <netfx:NativeImage Id="ngen_$(var.Carnassial.TargetFileName)" Platform="64bit" Priority="0" AppBaseDirectory="INSTALLFOLDER"/>
-          <Shortcut Id="$(var.Carnassial.TargetName).shortcut"
-                    Name="Carnassial"
-                    Advertise="yes"
-                    Description="Starts $(var.Carnassial.TargetFileName)"
-                    Directory="ApplicationProgramsFolder"
-                    Icon="Carnassial.ico" />
+          <netfx:NativeImage Id="ngen_$(var.Carnassial.TargetFileName)" Platform="64bit" Priority="0" AppBaseDirectory="INSTALLFOLDER" />
+          <Shortcut Id="$(var.Carnassial.TargetName).shortcut" Name="Carnassial" Advertise="yes" Description="Starts $(var.Carnassial.TargetFileName)" Directory="ApplicationProgramsFolder" Icon="Carnassial.ico" />
         </File>
       </Component>
-      <Component Id="$(var.Carnassial.TargetFileName).runtimeconfig.json" Guid="*" Win64="yes">
+      <Component Id="$(var.Carnassial.TargetFileName).runtimeconfig.json" Bitness="always64">
         <File Id="$(var.Carnassial.TargetFileName).runtimeconfig.json" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\$(var.Carnassial.TargetFileName).config" />
       </Component>
-      <Component Id="$(var.Carnassial.TargetName).pdb" Guid="*" Win64="yes">
+      <Component Id="$(var.Carnassial.TargetName).pdb" Bitness="always64">
         <File Id="$(var.Carnassial.TargetName).pdb" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\$(var.Carnassial.TargetName).pdb" />
       </Component>
-      <Component Id="$(var.Native.TargetFileName)" Guid="*" Win64="yes">
+      <Component Id="$(var.Native.TargetFileName)" Bitness="always64">
         <File Id="$(var.Native.TargetFileName)" KeyPath="yes" Source="$(var.Native.TargetDir)\$(var.Native.TargetFileName)" />
       </Component>
-      <Component Id="$(var.Native.TargetName).pdb" Guid="*" Win64="yes">
+      <Component Id="$(var.Native.TargetName).pdb" Bitness="always64">
         <File Id="$(var.Native.TargetName).pdb" KeyPath="yes" Source="$(var.Native.TargetDir)\$(var.Native.TargetName).pdb" />
       </Component>
-      <Component Id="$(var.TemplateEditor.TargetFileName)" Guid="*" Win64="yes">
+      <Component Id="$(var.TemplateEditor.TargetFileName)" Bitness="always64">
         <File Id="$(var.TemplateEditor.TargetFileName)" KeyPath="yes" Source="$(var.TemplateEditor.TargetDir)\$(var.TemplateEditor.TargetFileName)">
-          <netfx:NativeImage Id="ngen_$(var.TemplateEditor.TargetFileName)" Platform="64bit" Priority="0" AppBaseDirectory="INSTALLFOLDER"/>
-          <Shortcut Id="$(var.TemplateEditor.TargetName).shortcut"
-                    Name="Carnassial Template Editor"
-                    Advertise="yes"
-                    Description="Starts $(var.TemplateEditor.TargetFileName)"
-                    Directory="ProgramMenuFolder"
-                    Icon="Editor.ico" />
+          <netfx:NativeImage Id="ngen_$(var.TemplateEditor.TargetFileName)" Platform="64bit" Priority="0" AppBaseDirectory="INSTALLFOLDER" />
+          <Shortcut Id="$(var.TemplateEditor.TargetName).shortcut" Name="Carnassial Template Editor" Advertise="yes" Description="Starts $(var.TemplateEditor.TargetFileName)" Directory="ProgramMenuFolder" Icon="Editor.ico" />
         </File>
       </Component>
-      <Component Id="$(var.TemplateEditor.TargetFileName).runtimeconfig.json" Guid="*" Win64="yes">
+      <Component Id="$(var.TemplateEditor.TargetFileName).runtimeconfig.json" Bitness="always64">
         <File Id="$(var.TemplateEditor.TargetFileName).runtimeconfig.json" KeyPath="yes" Source="$(var.TemplateEditor.TargetDir)\$(var.TemplateEditor.TargetFileName).config" />
       </Component>
-      <Component Id="$(var.TemplateEditor.TargetName).pdb" Guid="*" Win64="yes">
+      <Component Id="$(var.TemplateEditor.TargetName).pdb" Bitness="always64">
         <File Id="$(var.TemplateEditor.TargetName).pdb" KeyPath="yes" Source="$(var.TemplateEditor.TargetDir)\$(var.TemplateEditor.TargetName).pdb" />
       </Component>
-      <Component Id="DocumentFormat.OpenXml.dll" Guid="*" Win64="yes">
+      <Component Id="DocumentFormat.OpenXml.dll" Bitness="always64">
         <File Id="DocumentFormat.OpenXml.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\DocumentFormat.OpenXml.dll" />
       </Component>
-      <Component Id="MetadataExtractor.dll" Guid="*" Win64="yes">
+      <Component Id="MetadataExtractor.dll" Bitness="always64">
         <File Id="MetadataExtractor.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\MetadataExtractor.dll" />
       </Component>
-      <Component Id="Microsoft.WindowsAPICodePack.dll" Guid="*" Win64="yes">
+      <Component Id="Microsoft.WindowsAPICodePack.dll" Bitness="always64">
         <File Id="Microsoft.WindowsAPICodePack.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\Microsoft.WindowsAPICodePack.dll" />
       </Component>
-      <Component Id="Microsoft.WindowsAPICodePack.Shell.dll" Guid="*" Win64="yes">
+      <Component Id="Microsoft.WindowsAPICodePack.Shell.dll" Bitness="always64">
         <File Id="Microsoft.WindowsAPICodePack.Shell.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\Microsoft.WindowsAPICodePack.Shell.dll" />
       </Component>
-      <Component Id="Newtonsoft.Json.dll" Guid="*" Win64="yes">
+      <Component Id="Newtonsoft.Json.dll" Bitness="always64">
         <File Id="Newtonsoft.Json.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\Newtonsoft.Json.dll" />
       </Component>
-      <Component Id="System.Data.SQLite.dll" Guid="*" Win64="yes">
+      <Component Id="System.Data.SQLite.dll" Bitness="always64">
         <File Id="System.Data.SQLite.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\System.Data.SQLite.dll" />
       </Component>
-      <Component Id="turbojpeg.dll" Guid="*" Win64="yes">
+      <Component Id="turbojpeg.dll" Bitness="always64">
         <File Id="turbojpeg.dll" KeyPath="yes" Source="$(var.Native.TargetDir)\turbojpeg.dll" />
       </Component>
-      <Component Id="XmpCore.dll" Guid="*" Win64="yes">
+      <Component Id="XmpCore.dll" Bitness="always64">
         <File Id="XmpCore.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\XmpCore.dll" />
       </Component>
       <Directory Id="x64.Interop" Name="x64">
-        <Component Id="x64.SQLite.Interop.dll" Guid="*" Win64="yes">
+        <Component Id="x64.SQLite.Interop.dll" Bitness="always64">
           <File Id="x64.SQLite.Interop.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\runtimes\win-x64\native\SQLite.Interop.dll" />
         </Component>
       </Directory>
       <Directory Id="x86.Interop" Name="x86">
-        <Component Id="x86.SQLite.Interop.dll" Guid="*" Win64="yes">
+        <Component Id="x86.SQLite.Interop.dll" Bitness="always64">
           <File Id="x86.SQLite.Interop.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\runtimes\win-x86\native\SQLite.Interop.dll" />
         </Component>
-      </Directory>
-      <Directory Id="ProgramMenuFolder">
-        <Directory Id="ApplicationProgramsFolder" Name="Cascades Carnivore Project">
-          <Component Id="ApplicationComponent" Guid="b8dd2731-79e8-4225-86b3-87979e0188eb" Win64="yes">
-            <ProgId Id="CarnassialDatabase" Description="Carnassial database">
-              <Extension Id="ddb" ContentType="application/ddb">
-                <Verb Id="open" Command="Open" TargetFile="$(var.Carnassial.TargetFileName)" Argument='"%1"' />
-              </Extension>
-            </ProgId>
-            <ProgId Id="CarnassialTemplate" Description="Carnassial template database">
-              <Extension Id="tdb" ContentType="application/tdb">
-                <Verb Id="edit" Command="Edit" TargetFile="$(var.TemplateEditor.TargetFileName)" Argument='"%1"' />
-                <Verb Id="open" Command="Open" TargetFile="$(var.Carnassial.TargetFileName)" Argument='"%1"' />
-              </Extension>
-            </ProgId>
-            <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall"/>
-          </Component>
-        </Directory>
       </Directory>
     </DirectoryRef>
   </Fragment>
