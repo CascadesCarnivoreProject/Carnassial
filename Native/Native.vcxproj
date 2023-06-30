@@ -106,7 +106,7 @@
       <DisableSpecificWarnings>4945;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(ProjectDir)libjpeg-turbo\lib\turbojpeg.2.0.2.x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)libjpeg-turbo\lib\turbojpeg.2.1.5.1.x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
@@ -123,7 +123,7 @@
       <DisableSpecificWarnings>4945;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(ProjectDir)libjpeg-turbo\lib\turbojpeg.2.0.2.x86.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)libjpeg-turbo\lib\turbojpeg.2.1.5.1.x86.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
@@ -136,7 +136,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)libjpeg-turbo\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(ProjectDir)libjpeg-turbo\lib\turbojpeg.2.0.2.x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>$(ProjectDir)libjpeg-turbo\lib\turbojpeg.2.1.5.1.x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
