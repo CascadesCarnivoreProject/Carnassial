@@ -1,8 +1,6 @@
 ﻿using Carnassial.Util;
-using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
-using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
@@ -36,25 +34,22 @@ namespace Carnassial.Github
                 httpClient.DefaultRequestHeaders.Add("User-Agent", "Carnassial-GithubReleaseClient");
                 try
                 {
-                    string releaseJson = httpClient.GetStringAsync(this.latestReleaseAddress).GetAwaiter().GetResult();
-                    if (String.IsNullOrWhiteSpace(releaseJson) || (releaseJson.IndexOf("\"message\": \"Not Found\"", StringComparison.Ordinal) != -1))
+                    string releaseXml = httpClient.GetStringAsync(this.latestReleaseAddress).GetAwaiter().GetResult();
+                    if (String.IsNullOrWhiteSpace(releaseXml))
                     {
                         // no releases, so nothing to do
                         return false;
                     }
-                    JsonSerializer serializer = JsonSerializer.CreateDefault();
-                    using StringReader reader = new(releaseJson);
-                    using JsonReader jsonReader = new JsonTextReader(reader);
-                    GithubRelease? latestRelease = serializer.Deserialize<GithubRelease>(jsonReader);
-                    if (latestRelease == null || String.IsNullOrWhiteSpace(latestRelease.TagName))
+
+                    Feed feed = new(releaseXml, 1); // for now, assume most recent entry is most recent release
+                    if (feed.Entries.Count < 1)
                     {
+                        // also no releases
                         return false;
                     }
-                    // Version's parse implementation requires the leading v of Github convention be removed
-                    if (Version.TryParse(latestRelease.TagName[1..], out publiclyAvailableVersion) == false)
-                    {
-                        return false;
-                    }
+
+                    Entry latestRelease = feed.Entries[0];
+                    publiclyAvailableVersion = latestRelease.GetVersion();
                 }
                 catch (WebException exception)
                 {

@@ -30,12 +30,6 @@ namespace Carnassial
         public static readonly CultureInfo InvariantCulture = CultureInfo.InvariantCulture;
         public static readonly Version Windows8MinimumVersion = new(6, 2, 0, 0);
 
-        public static class ApplicationSettings
-        {
-            public const string DevTeamEmail = "devTeamEmail";
-            public const string GithubOrganizationAndRepo = "githubOrganizationAndRepo";
-        }
-
         public static class Assembly
         {
             public const string Kernel32 = "kernel32.dll";
@@ -251,7 +245,6 @@ namespace Carnassial
 
         public static class GitHub
         {
-            public static readonly Uri ApiBaseAddress = new("https://api.github.com/repos/");
             public static readonly Uri BaseAddress = new("https://github.com/");
         }
 

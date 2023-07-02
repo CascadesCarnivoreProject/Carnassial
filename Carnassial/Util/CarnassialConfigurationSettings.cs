@@ -16,7 +16,7 @@ namespace Carnassial.Util
 
         public static Uri GetLatestReleaseApiAddress()
         {
-            return CarnassialConfigurationSettings.GetUriSetting(Constant.GitHub.ApiBaseAddress, "releases", "latest");
+            return CarnassialConfigurationSettings.GetUriSetting(Constant.GitHub.BaseAddress, "releases.atom");
         }
 
         public static Uri GetIssuesBrowserAddress()
