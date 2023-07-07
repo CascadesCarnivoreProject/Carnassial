@@ -67,7 +67,7 @@ defects than Timelapse. Episodes are the main Timelapse feature absent from Carn
 If you know of other analysis tools please let us know.
 
 ### Contacting the Carnassial Development Team
-Feel free to open new issues on Carnassial here on github. Or email us at carnassialdev@gmail.com.
+Feel free to open new issues on Carnassial here on GitHub. Or email us at carnassialdev@gmail.com.
 
 ### Development Environment
 Install [Visual Studio 2022 Community](https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx) or newer 
@@ -83,13 +83,15 @@ Commits should
 * include appropriate test coverage
 * have no build warnings or live code analysis messages
 
-Application and test development is done against .NET 5.0. Carnassial is a 64 bit app and for the most part only an x64 build 
-is needed for development and testing (the installer automatically rewires itself to build x86 under an x64 build). However, 
-the Visual Studio development UI is a 32 bit app and is therefore unable to load controls from the regular Carnassial build for
-display in the WPF designer. As a result, Carnassial has a vestigial x86 build which needs to be selected when doing UI tasks if 
-the view in the designer is to match what's displayed at x64 runtime. (Building Carnassial as AnyCPU in the x64 build isn't an 
-option as StockMessageControl hits call graphs which go into Carnassial.Native, an approach which is anyways undesirable as 
-there's a moderate performance penalty to building AnyCPU rather than x64.)
+Application and test development is done against .NET 6.0. Carnassial is a 64 bit app and for the most part only an x64 build 
+is needed for development and testing. However, the Visual Studio development UI is a 32 bit app and is therefore unable to load 
+controls from the regular Carnassial build for display in the WPF designer. As a result, Carnassial has a vestigial x86 build which
+needs to be selected when doing UI tasks if the view in the designer is to match what's displayed at x64 runtime. (Building 
+Carnassial as AnyCPU in the x64 build isn't an option as StockMessageControl hits call graphs which go into Carnassial.Native, an 
+approach which is anyways undesirable as there's a moderate performance penalty to building AnyCPU rather than x64.)
+
+To build Carnassial's installer, publish both Carnassial and the template editor and then build the installer project. Since the
+installer picks up published, ready to run binaries the regular release build does not produce a .msi.
 
 Historically, Visual Studio's discovery and honoring of test.runsettings has been unreliable, requiring manual selection of x64 
 test execution. In such situations VS can fail to find any unit tests until restarted, though setting x64 and forcing a build 

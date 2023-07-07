@@ -20,8 +20,6 @@ namespace Carnassial
         {
             #if DEBUG
             LocalizedApplication.UseTestCulture = false;
-            #else
-            LocalizedApplication.UseTestCulture = false;
             #endif
 
             LocalizedApplication.ResourcesByCultureName = new Dictionary<string, ResourceDictionary>();

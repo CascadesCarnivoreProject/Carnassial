@@ -7,6 +7,7 @@
     <UseWPF>true</UseWPF>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     <Platforms>x64;x86</Platforms>
+    <SelfContained>false</SelfContained>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>Carnassial.ico</ApplicationIcon>
