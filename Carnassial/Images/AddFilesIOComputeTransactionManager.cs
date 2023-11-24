@@ -25,7 +25,7 @@ namespace Carnassial.Images
             this.disposed = false;
             this.FilesToLoad = 0;
             this.filesToLoadByRelativeFolderPath = new SortedDictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
-            this.FolderPaths = new List<string>();
+            this.FolderPaths = [];
         }
 
         public async Task<int> AddFilesAsync(FileDatabase fileDatabase, int initialImageRenderWidthInPixels)
@@ -188,12 +188,12 @@ namespace Carnassial.Images
             // - improves user experience as progress images displayed during loading are likely in order
             // - allows AddFilesAggregator to flow files to the database in order
             // - may improve disk read speed performance
-            List<string> extensions = new() { Constant.File.AviFileExtension, Constant.File.Mp4FileExtension, Constant.File.JpgFileExtension };
+            List<string> extensions = [ Constant.File.AviFileExtension, Constant.File.Mp4FileExtension, Constant.File.JpgFileExtension ];
             foreach (string folderPath in this.FolderPaths)
             {
                 DirectoryInfo folder = new(folderPath);
                 IEnumerable<FileInfo> matchingFiles = folder.EnumerateFiles().Where(file => extensions.Contains(file.Extension, StringComparer.OrdinalIgnoreCase));
-                List<string> filesToLoadfromFolder = matchingFiles.Select(file => file.Name).OrderBy(fileName => fileName, StringComparer.OrdinalIgnoreCase).ToList();
+                List<string> filesToLoadfromFolder = [.. matchingFiles.Select(file => file.Name).OrderBy(fileName => fileName, StringComparer.OrdinalIgnoreCase)];
                 string relativeFolderPath = NativeMethods.GetRelativePathFromDirectoryToDirectory(imageSetFolderPath, folderPath);
                 this.FilesToLoad += filesToLoadfromFolder.Count;
                 this.filesToLoadByRelativeFolderPath.Add(relativeFolderPath, filesToLoadfromFolder);

@@ -13,12 +13,12 @@ namespace Carnassial.Interop
     {
         private static readonly Type ShellFileOperationType = Type.GetTypeFromCLSID(Constant.ComGuid.IFileOperationClsid) ?? throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unable to obtain type for COM CLS ID {0}.", Constant.ComGuid.IFileOperationClsid));
 
-        private bool disposed;
+        private bool isDisposed;
         private readonly IFileOperation? shellFileOperation;
 
         public Recycler()
         {
-            this.disposed = false;
+            this.isDisposed = false;
 
             // move to recycle bin using IFileOperation on Windows 8 RTM and newer as FOFX_RECYCLEONDELETE is available
             if (Environment.OSVersion.Version >= Constant.Windows8MinimumVersion)
@@ -40,7 +40,7 @@ namespace Carnassial.Interop
 
         protected virtual void Dispose(bool disposing)
         {
-            if (this.disposed)
+            if (this.isDisposed)
             {
                 return;
             }
@@ -53,7 +53,7 @@ namespace Carnassial.Interop
                 }
             }
 
-            this.disposed = true;
+            this.isDisposed = true;
         }
 
         [SupportedOSPlatform(Constant.Platform.Windows)]
@@ -109,10 +109,7 @@ namespace Carnassial.Interop
 
         private void ThrowIfDisposed()
         {
-            if (this.disposed)
-            {
-                throw new ObjectDisposedException(nameof(Recycler));
-            }
+            ObjectDisposedException.ThrowIf(this.isDisposed, this);
         }
     }
 }

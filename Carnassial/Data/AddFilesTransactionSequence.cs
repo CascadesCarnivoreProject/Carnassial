@@ -19,8 +19,8 @@ namespace Carnassial.Data
         {
             this.disposed = false;
 
-            List<string> userControlDataLabels = new();
-            List<string> userControlDefaultValues = new();
+            List<string> userControlDataLabels = [];
+            List<string> userControlDefaultValues = [];
             string? deleteFlagDefaultValue = null;
             foreach (ControlRow control in controls)
             {

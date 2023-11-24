@@ -219,7 +219,7 @@ namespace Carnassial.Data
                     // user defined controls
                     default:
                         FileTableColumn userColumn = this.table.UserColumnsByName[propertyName];
-                        bool valueDifferent = false;
+                        bool valueDifferent;
                         switch (userColumn.DataType)
                         {
                             case SqlDataType.Boolean:

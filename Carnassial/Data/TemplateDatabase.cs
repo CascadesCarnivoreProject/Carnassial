@@ -31,7 +31,7 @@ namespace Carnassial.Data
             string? folderPath = Path.GetDirectoryName(filePath);
             if (folderPath == null)
             {
-                throw new ArgumentOutOfRangeException(nameof(filePath), String.Format(CultureInfo.CurrentCulture, "Unable to extract directory name from database file path '{0}'.", filePath));
+                throw new ArgumentOutOfRangeException(nameof(filePath), "Unable to extract directory name from database file path '" + filePath + "'.");
             }
             this.FolderPath = folderPath;
         }
@@ -76,7 +76,7 @@ namespace Carnassial.Data
         public string GetNextUniqueDataLabel(string dataLabelPrefix)
         {
             // get all existing data labels
-            List<string> dataLabels = new();
+            List<string> dataLabels = [];
             foreach (ControlRow control in this.Controls)
             {
                 dataLabels.Add(control.DataLabel);
@@ -503,9 +503,7 @@ namespace Carnassial.Data
             this.GetControlsSortedByControlOrder();
 
             // rename image quality control to classification
-            #pragma warning disable CS0618 // Type or member is obsolete
             ControlRow? imageQuality = this.Controls.SingleOrDefault(control => String.Equals(control.DataLabel, Constant.FileColumn.ImageQuality, StringComparison.Ordinal));
-            #pragma warning restore CS0618 // Type or member is obsolete
             if (imageQuality != null)
             {
                 imageQuality.DataLabel = Constant.FileColumn.Classification;

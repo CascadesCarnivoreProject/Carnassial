@@ -25,7 +25,7 @@ namespace Carnassial.Dialog
         public DateCorrectAmbiguous(FileDatabase database, Window owner)
         {
             this.InitializeComponent();
-            this.ambiguousDatesList = new List<AmbiguousDate>();
+            this.ambiguousDatesList = [];
             this.database = database;
             this.displayingPreview = false;
             this.Message.SetVisibility();

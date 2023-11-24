@@ -22,7 +22,7 @@ namespace Carnassial
             LocalizedApplication.UseTestCulture = false;
             #endif
 
-            LocalizedApplication.ResourcesByCultureName = new Dictionary<string, ResourceDictionary>();
+            LocalizedApplication.ResourcesByCultureName = [];
             CultureInfo keyboardCulture = NativeMethods.GetKeyboardCulture();
             if (LocalizedApplication.TryLoadCultureResources(keyboardCulture, out string cultureName, out ResourceDictionary? cultureDictionary))
             {

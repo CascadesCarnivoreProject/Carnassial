@@ -311,22 +311,22 @@ namespace Carnassial.Data
             {
                 ControlType.Counter or 
                 ControlType.DateTime or 
-                ControlType.FixedChoice => new List<string>()
-                    {
+                ControlType.FixedChoice =>
+                    [
                         Constant.SearchTermOperator.Equal,
                         Constant.SearchTermOperator.NotEqual,
                         Constant.SearchTermOperator.LessThan,
                         Constant.SearchTermOperator.GreaterThan,
                         Constant.SearchTermOperator.LessThanOrEqual,
                         Constant.SearchTermOperator.GreaterThanOrEqual
-                    },
-                ControlType.Flag => new List<string>()
-                    {
+                    ],
+                ControlType.Flag =>
+                    [
                         Constant.SearchTermOperator.Equal,
                         Constant.SearchTermOperator.NotEqual
-                    },
-                _ => new List<string>()
-                    {
+                    ],
+                ControlType.Note =>
+                    [
                         Constant.SearchTermOperator.Equal,
                         Constant.SearchTermOperator.NotEqual,
                         Constant.SearchTermOperator.LessThan,
@@ -334,7 +334,8 @@ namespace Carnassial.Data
                         Constant.SearchTermOperator.LessThanOrEqual,
                         Constant.SearchTermOperator.GreaterThanOrEqual,
                         Constant.SearchTermOperator.Glob
-                    },// notes
+                    ], // notes
+                _ => throw new NotSupportedException("Unhandled control type " + this.ControlType + ".")
             };
         }
 
@@ -389,7 +390,7 @@ namespace Carnassial.Data
                     wellKnownStrings.Remove(FileClassification.Color.ToString());
                 }
 
-                ObservableCollection<object> wellKnownValues = new();
+                ObservableCollection<object> wellKnownValues = [];
                 foreach (string wellKnownString in wellKnownStrings)
                 {
                     wellKnownValues.Add(this.ConvertWellKnownValue(wellKnownString));

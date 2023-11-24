@@ -25,11 +25,7 @@ namespace Carnassial.Images
 
         static JpegImage()
         {
-            JpegImage.JpegReaders = new List<IJpegSegmentMetadataReader>()
-            {
-                new JpegReader(),
-                new ExifReader()
-            };
+            JpegImage.JpegReaders = [ new JpegReader(), new ExifReader() ];
             JpegImage.JpegSegmentTypes = new List<JpegSegmentType>(JpegImage.JpegReaders.SelectMany(reader => reader.SegmentTypes));
         }
 

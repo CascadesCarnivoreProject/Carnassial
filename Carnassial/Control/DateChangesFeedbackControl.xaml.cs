@@ -20,7 +20,7 @@ namespace Carnassial.Control
         public DateChangesFeedbackControl()
         {
             this.InitializeComponent();
-            this.feedbackRows = new ObservableCollection<FeedbackRowTuple>();
+            this.feedbackRows = [];
             this.feedbackGrid.ItemsSource = this.feedbackRows;
         }
 

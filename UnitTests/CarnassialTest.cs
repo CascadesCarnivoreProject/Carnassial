@@ -1,6 +1,5 @@
 ﻿using Carnassial.Data;
 using Carnassial.Database;
-using Carnassial.Dialog;
 using Carnassial.Images;
 using Carnassial.Interop;
 using Carnassial.Native;
@@ -21,10 +20,10 @@ namespace Carnassial.UnitTests
         private static readonly Dispatcher AppDispatcher;
         private static bool AppStarted;
         private static bool CultureChanged;
-        private static CultureInfo CurrentCulture;
-        private static CultureInfo CurrentUICulture;
-        private static CultureInfo? DefaultThreadCurrentCulture;
-        private static CultureInfo? DefaultThreadCurrentUICulture;
+        private static readonly CultureInfo CurrentCulture;
+        private static readonly CultureInfo CurrentUICulture;
+        private static readonly CultureInfo? DefaultThreadCurrentCulture;
+        private static readonly CultureInfo? DefaultThreadCurrentUICulture;
 
         protected static App App { get; private set; }
 
@@ -214,11 +213,11 @@ namespace Carnassial.UnitTests
             // ensure subdirectory contains default files
             Debug.Assert((TestConstant.FileExpectation.DaylightBobcat.FileName != null) &&
                          (TestConstant.FileExpectation.InfraredMarten.FileName != null));
-            List<string> defaultFiles = new()
-            {
+            List<string> defaultFiles =
+            [
                 TestConstant.FileExpectation.DaylightBobcat.FileName,
                 TestConstant.FileExpectation.InfraredMarten.FileName
-            };
+            ];
             foreach (string fileName in defaultFiles)
             {
                 FileInfo sourceFile = new(Path.Combine(this.WorkingDirectory, fileName));
@@ -264,7 +263,7 @@ namespace Carnassial.UnitTests
 
             using (AddFilesTransactionSequence addFiles = fileDatabase.CreateAddFilesTransaction())
             {
-                addFiles.AddToSequence(new List<FileLoad>() { new FileLoad(martenImage), new FileLoad(bobcatImage) }, 0, 2);
+                addFiles.AddToSequence(new List<FileLoad>() { new(martenImage), new(bobcatImage) }, 0, 2);
                 addFiles.Commit();
             }
             fileDatabase.SelectFiles(FileSelection.All);
@@ -343,11 +342,7 @@ namespace Carnassial.UnitTests
             Assert.IsFalse(martenFile.HasChanges);
 
             // assemble expectations
-            List<FileExpectations> fileExpectations = new()
-            {
-                martenExpectation,
-                bobcatExpectation
-            };
+            List<FileExpectations> fileExpectations = [ martenExpectation, bobcatExpectation ];
 
             // files in subfolder
             if (excludeSubfolderFiles == false)
@@ -368,7 +363,7 @@ namespace Carnassial.UnitTests
 
                 using (AddFilesTransactionSequence addFiles = fileDatabase.CreateAddFilesTransaction())
                 {
-                    addFiles.AddToSequence(new List<FileLoad>() { new FileLoad(martenPairImage), new FileLoad(coyoteImage) }, 0, 2);
+                    addFiles.AddToSequence(new List<FileLoad>() { new(martenPairImage), new(coyoteImage) }, 0, 2);
                     addFiles.Commit();
                 }
                 fileDatabase.SelectFiles(FileSelection.All);

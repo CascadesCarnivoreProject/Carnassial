@@ -84,7 +84,7 @@ namespace Carnassial.Command
         private void RemoveUnchangedFields()
         {
             // remove any fields which have the same value in both the previous and new states
-            List<string> unchangedFields = new();
+            List<string> unchangedFields = [];
             foreach (KeyValuePair<string, object> newValue in this.newValuesByPropertyName)
             {
                 object? previousValue = this.previousValuesByPropertyName[newValue.Key];

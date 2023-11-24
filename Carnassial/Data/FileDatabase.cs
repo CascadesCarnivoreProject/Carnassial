@@ -29,7 +29,7 @@ namespace Carnassial.Data
             : base(filePath)
         {
             this.AutocompletionCache = new AutocompletionCache(this);
-            this.ControlSynchronizationIssues = new List<string>();
+            this.ControlSynchronizationIssues = [];
             this.FileName = Path.GetFileName(filePath);
             this.Files = new FileTable();
             this.OrderFilesByDateTime = false;
@@ -72,7 +72,7 @@ namespace Carnassial.Data
             }
 
             // modify date/times
-            List<ImageRow> filesToAdjust = new();
+            List<ImageRow> filesToAdjust = [];
             TimeSpan mostRecentAdjustment = TimeSpan.Zero;
             for (int row = startIndex; row <= endIndex; ++row)
             {
@@ -231,7 +231,7 @@ namespace Carnassial.Data
             }
 
             // swap day and month for each file where it's possible
-            List<ImageRow> filesToUpdate = new();
+            List<ImageRow> filesToUpdate = [];
             ImageRow firstFile = this.Files[startRow];
             ImageRow? lastFile = null;
             DateTimeOffset mostRecentOriginalDateTime = DateTime.MinValue;
@@ -306,7 +306,7 @@ namespace Carnassial.Data
         {
             // try primary key lookup first as typically the requested ID will be present in the data table
             // (ideally the caller could use the ImageRow found directly, but this doesn't compose with index based navigation)
-            if (this.Files.TryFind(fileID, out ImageRow? file, out int fileIndex))
+            if (this.Files.TryFind(fileID, out ImageRow? _, out int fileIndex))
             {
                 return fileIndex;
             }
@@ -321,7 +321,7 @@ namespace Carnassial.Data
             while (firstIndex <= lastIndex)
             {
                 int midpointIndex = (firstIndex + lastIndex) / 2;
-                file = this.Files[midpointIndex];
+                ImageRow file = this.Files[midpointIndex];
                 long midpointID = file.ID;
 
                 if (fileID > midpointID)
@@ -362,13 +362,13 @@ namespace Carnassial.Data
 
         public List<string> GetDistinctValuesInFileDataColumn(string dataLabel)
         {
-            List<string> distinctValues = new();
+            List<string> distinctValues = [];
             foreach (object value in this.GetDistinctValuesInColumn(Constant.DatabaseTable.Files, dataLabel))
             {
                 string? valueAsString = value.ToString();
                 if (valueAsString == null)
                 {
-                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Value in column {0} is unexpectedly null.", dataLabel));
+                    throw new NotSupportedException("Value in column " + dataLabel + " is unexpectedly null.");
                 }
                 distinctValues.Add(valueAsString);
             }
@@ -445,8 +445,8 @@ namespace Carnassial.Data
         {
             Debug.Assert(destinationFolderPath.StartsWith(this.FolderPath, StringComparison.OrdinalIgnoreCase), String.Format(CultureInfo.InvariantCulture, "Destination path '{0}' is not under '{1}'.", destinationFolderPath, this.FolderPath));
 
-            List<ImageRow> filesToUpdate = new();
-            List<string> immovableFiles = new();
+            List<ImageRow> filesToUpdate = [];
+            List<string> immovableFiles = [];
             foreach (ImageRow file in this.Files)
             {
                 Debug.Assert(file.HasChanges == false, "File has unexpected pending changes.");
@@ -536,7 +536,7 @@ namespace Carnassial.Data
                     if (choicesRemovedFromTemplate.Count > 0)
                     {
                         List<object> choicesInUse = this.GetDistinctValuesInColumn(Constant.DatabaseTable.Files, fileDatabaseControl.DataLabel);
-                        List<string> removedChoicesInUse = new();
+                        List<string> removedChoicesInUse = [];
                         if (String.Equals(dataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal))
                         {
                             List<FileClassification> classificationsInUse = new(choicesInUse.Select(choice => (FileClassification)choice));
@@ -579,8 +579,8 @@ namespace Carnassial.Data
                 using (SQLiteTransaction transaction = this.Connection.BeginTransaction())
                 {
                     // synchronize any changes in existing controls
-                    List<SecondaryIndex> indicesToCreate = new();
-                    List<SecondaryIndex> indicesToDrop = new();
+                    List<SecondaryIndex> indicesToCreate = [];
+                    List<SecondaryIndex> indicesToDrop = [];
                     using (ControlTransactionSequence synchronizeControls = ControlTransactionSequence.CreateUpdate(this, transaction))
                     {
                         foreach (string dataLabel in fileDataLabels)
@@ -783,7 +783,7 @@ namespace Carnassial.Data
             {
                 relativePathFromThisToOther = null;
             }
-            else if (relativePathFromThisToOther.IndexOf(Constant.File.ParentDirectory, StringComparison.Ordinal) != -1)
+            else if (relativePathFromThisToOther.Contains(Constant.File.ParentDirectory, StringComparison.Ordinal))
             {
                 throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Canonicalization of relative path from database to spreadsheet '{0}' is not currently supported.", relativePathFromThisToOther));
             }
@@ -837,8 +837,8 @@ namespace Carnassial.Data
                 importStatus.BeginRead(other.Files.RowCount);
 
                 FileTableColumnMap fileTableMap = new(this.Files);
-                List<ImageRow> filesToInsert = new();
-                List<ImageRow> filesToUpdate = new();
+                List<ImageRow> filesToInsert = [];
+                List<ImageRow> filesToUpdate = [];
                 int filesUnchanged = 0;
                 for (int fileIndex = 0, mostRecentReportCheck = 0; fileIndex < other.Files.RowCount; ++fileIndex)
                 {
@@ -949,10 +949,7 @@ namespace Carnassial.Data
 
         public int UpdateFiles(ImageRow valueSource, DataEntryControl control, int fromIndex, int toIndex)
         {
-            if (fromIndex < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(fromIndex));
-            }
+            ArgumentOutOfRangeException.ThrowIfNegative(fromIndex);
             if ((toIndex < fromIndex) || (toIndex > this.CurrentlySelectedFileCount - 1))
             {
                 throw new ArgumentOutOfRangeException(nameof(toIndex));
@@ -961,7 +958,7 @@ namespace Carnassial.Data
             object? value = valueSource.GetDatabaseValue(control.DataLabel);
             if (value == null)
             {
-                throw new ArgumentOutOfRangeException(nameof(valueSource)); // controls' data label should always be defined
+                throw new ArgumentOutOfRangeException(nameof(valueSource)); // controls' data labels should always be defined
             }
 
             List<ImageRow> filesToUpdate = new(toIndex - fromIndex + 1);

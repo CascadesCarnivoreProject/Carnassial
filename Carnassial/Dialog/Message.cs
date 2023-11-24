@@ -24,14 +24,14 @@ namespace Carnassial.Dialog
             this.Buttons = MessageBoxButton.OKCancel;
             this.DisplayDontShowAgain = false;
             this.DisplayHideExplanation = false;
-            this.Hint = new List<Inline>();
+            this.Hint = [];
             this.Image = MessageBoxImage.Exclamation;
-            this.Problem = new List<Inline>();
-            this.Reason = new List<Inline>();
-            this.Result = new List<Inline>();
-            this.Solution = new List<Inline>();
+            this.Problem = [];
+            this.Reason = [];
+            this.Result = [];
+            this.Solution = [];
             this.Title = null;
-            this.What = new List<Inline>();
+            this.What = [];
             this.WindowTitle = null;
         }
     }

@@ -401,7 +401,7 @@ namespace Carnassial
 
         private List<Marker> GetDisplayMarkers()
         {
-            List<Marker> markers = new();
+            List<Marker> markers = [];
             if (this.IsFileAvailable() == false)
             {
                 return markers;
@@ -678,7 +678,7 @@ namespace Carnassial
 
             // this callback is invoked by DeleteCurrentFile and DeleteFiles
             // The logic therefore branches for removing a single file versus all selected files marked for deletion.
-            List<ImageRow> filesToDelete = new();
+            List<ImageRow> filesToDelete = [];
             bool deleteCurrentFileOnly;
             bool deleteFilesAndData;
             if (menuItem.Name.Equals(this.MenuEditDeleteFiles.Name, StringComparison.Ordinal) || menuItem.Name.Equals(this.MenuEditDeleteFilesAndData.Name, StringComparison.Ordinal))
@@ -1249,7 +1249,7 @@ namespace Carnassial
         {
             // remove image sets which are no longer present from the most recently used list
             // probably overkill to perform this check on every refresh rather than once at application launch, but it's not particularly expensive
-            List<string> invalidPaths = new();
+            List<string> invalidPaths = [];
             foreach (string recentImageSetPath in this.State.MostRecentImageSets)
             {
                 if (File.Exists(recentImageSetPath) == false)
@@ -1845,7 +1845,7 @@ namespace Carnassial
             this.ShowExceptionReportingDialog(null, databasePath, e);
         }
 
-        private void PasteAnalysis_Click(object sender, int analysisSlot)
+        private void PasteAnalysis_Click(object _, int analysisSlot)
         {
             this.TryPasteValuesFromAnalysis(analysisSlot);
         }

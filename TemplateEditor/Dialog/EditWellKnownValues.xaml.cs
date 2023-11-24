@@ -9,7 +9,7 @@ namespace Carnassial.Editor.Dialog
 {
     public partial class EditWellKnownValues : WindowWithSystemMenu
     {
-        private static readonly string[] NewLineDelimiter = { Environment.NewLine };
+        private static readonly string[] NewLineDelimiter = [Environment.NewLine];
 
         private readonly UIElement positionReference;
 

@@ -7,8 +7,7 @@ namespace Carnassial.Util
     {
         public static StringCollection ToStringCollection(this MostRecentlyUsedList<string> list)
         {
-            StringCollection stringCollection = new();
-            stringCollection.AddRange(list.ToArray());
+            StringCollection stringCollection = [.. list.ToArray()];
             return stringCollection;
         }
     }

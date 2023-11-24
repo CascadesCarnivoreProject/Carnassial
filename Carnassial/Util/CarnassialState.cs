@@ -57,7 +57,7 @@ namespace Carnassial.Util
             this.MostRecentlyFocusedControlIndex = -1;
             this.MouseHorizontalScrollDelta = 0;
             this.MouseOverCounter = null;
-            this.NoteControlsWithNewValues = new List<DataEntryNote>();
+            this.NoteControlsWithNewValues = [];
             this.UndoRedoChain = new UndoRedoChain<CarnassialWindow>();
         }
 

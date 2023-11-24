@@ -52,7 +52,7 @@ namespace Carnassial.Control
 
         public override List<string> GetWellKnownValues()
         {
-            List<string> choices = new();
+            List<string> choices = [];
             foreach (object item in this.ContentControl.Items)
             {
                 if (item is string wellKnownString)

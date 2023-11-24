@@ -162,7 +162,7 @@ namespace Carnassial.Images
             this.addFileStartIndex = this.addFileStopIndex;
         }
 
-        protected FileLoadAtom? GetNextComputeAtom(int computeThreadID)
+        protected FileLoadAtom? GetNextComputeAtom(int computeTaskNumber)
         {
             FileLoadAtom? atom = null;
             while (atom == null)
@@ -327,10 +327,7 @@ namespace Carnassial.Images
             {
                 throw new InvalidOperationException(App.FormatResource(Constant.ResourceKey.FileIOComputeTransactionManagerCantRerun, nameof(this.RunTasksAsync)));
             }
-            if (this.disposed)
-            {
-                throw new ObjectDisposedException(this.GetType().FullName);
-            }
+            ObjectDisposedException.ThrowIf(this.disposed, this);
 
             Stopwatch stopwatch = new();
             stopwatch.Start();

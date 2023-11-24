@@ -35,7 +35,7 @@ namespace Carnassial.Control
         public TimeSpanPicker()
         {
             this.currentPartIndex = -1;
-            this.parts = new List<IndexedDateTimePart>();
+            this.parts = [];
             this.InitializeComponent();
             this.upDownButtons = new TextBoxUpDownAdorner(this.TimeSpanDisplay);
             this.upDownButtons.Button_Clicked += (textBox, direction) => { this.IncrementOrDecrement(direction); };

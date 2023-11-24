@@ -21,7 +21,7 @@ namespace Carnassial.Data
         {
             this.Count = count;
             this.DataLabel = dataLabel;
-            this.Markers = new List<Marker>();
+            this.Markers = [];
         }
 
         public void AddMarker(Marker marker)
@@ -37,7 +37,7 @@ namespace Carnassial.Data
         {
             if (this.Markers.Count < 1)
             {
-                return Array.Empty<byte>();
+                return [];
             }
 
             byte[] packedFloats = new byte[2 * this.Markers.Count * sizeof(float)];
@@ -147,7 +147,7 @@ namespace Carnassial.Data
 
         public static bool TryParseExcelStringToPackedFloats(string valueAsString, out byte[] packedFloats)
         {
-            packedFloats = Array.Empty<byte>();
+            packedFloats = [];
             if (String.IsNullOrEmpty(valueAsString))
             {
                 // position string might not contain any positions

@@ -10,7 +10,7 @@ namespace Carnassial.Database
 
         protected SQLiteTable()
         {
-            this.Rows = new List<TRow>();
+            this.Rows = [];
         }
 
         public int RowCount

@@ -50,19 +50,13 @@ namespace Carnassial.Command
 
         bool ICommand.CanExecute(object? parameter)
         {
-            if (parameter == null)
-            {
-                throw new ArgumentNullException(nameof(parameter));
-            }
+            ArgumentNullException.ThrowIfNull(parameter);
             return this.CanExecute((TParameter)parameter);
         }
 
         void ICommand.Execute(object? parameter)
         {
-            if (parameter == null)
-            {
-                throw new ArgumentNullException(nameof(parameter));
-            }
+            ArgumentNullException.ThrowIfNull(parameter);
             this.Execute((TParameter)parameter);
         }
 

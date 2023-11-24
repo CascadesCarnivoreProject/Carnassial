@@ -38,7 +38,7 @@ component of timestamps.
 
 Known limitations with earlier versions of Windows:
 
-* Users may need to [install .NET 6.0 or newer](https://docs.microsoft.com/en-us/dotnet/framework/migration-guide/versions-and-dependencies) if 
+* Users may need to [install .NET 8.0 or newer](https://docs.microsoft.com/en-us/dotnet/framework/migration-guide/versions-and-dependencies) if 
 it's not already present using, for example, the [.NET installer](https://dotnet.microsoft.com/download).
 * Users may need to [install the Universal C Runtime](https://www.microsoft.com/en-us/download/details.aspx?id=48234) if it's not already installed.
 * Recycle Bin integration is untested on Windows 7.
@@ -83,7 +83,7 @@ Commits should
 * include appropriate test coverage
 * have no build warnings or live code analysis messages
 
-Application and test development is done against .NET 6.0. Carnassial is a 64 bit app and for the most part only an x64 build 
+Application and test development is done against .NET 8.0. Carnassial is a 64 bit app and for the most part only an x64 build 
 is needed for development and testing. However, the Visual Studio development UI is a 32 bit app and is therefore unable to load 
 controls from the regular Carnassial build for display in the WPF designer. As a result, Carnassial has a vestigial x86 build which
 needs to be selected when doing UI tasks if the view in the designer is to match what's displayed at x64 runtime. (Building 
@@ -110,8 +110,8 @@ Also helpful are
 * John Skeet's discussion of [DateTime, DateTimeOffset, and TimeZoneInfo limitations](http://blog.nodatime.org/2011/08/what-wrong-with-datetime-anyway.html).
 * Microsoft's [terminology search](https://www.microsoft.com/en-us/language) for translations.
 
-User interface unit tests are currently flaky on .NET 6.0, apparently due to shifts in WPF timing and multicore race conditions. 
-Stabilization is in progress.
+User interface unit tests are currently restricted to a single test per run due to lack of support for running multiple unit
+tests in the same static apartment thread in mstest 2.0.
 
 ### Dependencies
 * Visual Studio for development

@@ -39,7 +39,7 @@ namespace Carnassial.Control
         {
             this.currentPartIndex = -1;
             this.monthPartIndex = int.MaxValue;
-            this.parts = new List<IndexedDateTimePart>();
+            this.parts = [];
             this.InitializeComponent();
             this.upDownButtons = new TextBoxUpDownAdorner(this.DateTimeDisplay);
             this.upDownButtons.Button_Clicked += (textBox, direction) => { this.IncrementOrDecrement(direction); };

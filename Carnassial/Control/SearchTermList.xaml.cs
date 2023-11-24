@@ -20,7 +20,7 @@ namespace Carnassial.Control
         {
             this.InitializeComponent();
 
-            this.controlsByLabel = new Dictionary<string, ControlRow>();
+            this.controlsByLabel = [];
             this.fileDatabase = null;
         }
 
@@ -123,7 +123,7 @@ namespace Carnassial.Control
             // labels tend to be unique at the control level but will be duplicated when multiple terms apply to a column
             // So access terms by index.
             int initialSelectionIndex = 0;
-            List<TextBlock> termLabels = new();
+            List<TextBlock> termLabels = [];
             foreach (SearchTerm searchTerm in this.fileDatabase.CustomSelection.SearchTerms)
             {
                 TextBlock labelBlock = new(new Run(searchTerm.Label))

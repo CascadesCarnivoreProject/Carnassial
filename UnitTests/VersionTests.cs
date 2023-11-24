@@ -15,7 +15,7 @@ namespace Carnassial.UnitTests
         }
 
         [ClassInitialize]
-        public static void ClassInitialize(TestContext testContext)
+        public static void ClassInitialize(TestContext _)
         {
             CarnassialTest.TryChangeToTestCulture();
         }

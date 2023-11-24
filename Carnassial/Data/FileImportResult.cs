@@ -14,7 +14,7 @@ namespace Carnassial.Data
         public FileImportResult()
         {
             this.Exception = null;
-            this.Errors = new List<string>();
+            this.Errors = [];
             this.FilesAdded = 0;
             this.FilesProcessed = 0;
             this.FilesUpdated = 0;

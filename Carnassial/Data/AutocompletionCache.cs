@@ -9,7 +9,7 @@ namespace Carnassial.Data
 
         public AutocompletionCache(FileDatabase fileDatabase)
         {
-            this.autocompletionsByDataLabel = new Dictionary<string, List<string>>();
+            this.autocompletionsByDataLabel = [];
             this.fileDatabase = fileDatabase;
         }
 

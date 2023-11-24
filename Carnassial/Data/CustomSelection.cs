@@ -16,7 +16,7 @@ namespace Carnassial.Data
 
         public CustomSelection(ControlTable controls, LogicalOperator termCombiningOperator)
         {
-            this.SearchTerms = new List<SearchTerm>();
+            this.SearchTerms = [];
             this.TermCombiningOperator = termCombiningOperator;
 
             // generate search terms as a starting point for custom selections

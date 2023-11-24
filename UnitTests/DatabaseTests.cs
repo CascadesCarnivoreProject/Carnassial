@@ -29,7 +29,7 @@ namespace Carnassial.UnitTests
         }
 
         [ClassInitialize]
-        public static void ClassInitialize(TestContext testContext)
+        public static void ClassInitialize(TestContext _)
         {
             //CarnassialTest.TryChangeToTestCulture();
         }
@@ -299,7 +299,7 @@ namespace Carnassial.UnitTests
                 ControlRow counter = counterControls[counterIndex];
                 MarkersForCounter markersForCounter = martenImage.GetMarkersForCounter(counter.DataLabel);
 
-                List<Point> expectedPositions = new();
+                List<Point> expectedPositions = [];
                 for (int markerIndex = 0; markerIndex < counterIndex; ++markerIndex)
                 {
                     int initialCounterCount = markersForCounter.Count;
@@ -418,7 +418,7 @@ namespace Carnassial.UnitTests
             }
             templateDatabase.UpdateDisplayOrder(Constant.ControlColumn.ControlOrder, newControlOrderByDataLabel);
 
-            List<string> alphabeticalDataLabels = newControlOrderByDataLabel.Keys.ToList();
+            List<string> alphabeticalDataLabels = [.. newControlOrderByDataLabel.Keys];
             alphabeticalDataLabels.Sort();
             Dictionary<string, int> newSpreadsheetOrderByDataLabel = new(StringComparer.Ordinal);
             int spreadsheetOrder = 0;
@@ -697,8 +697,8 @@ namespace Carnassial.UnitTests
             using (fileDatabaseReopened)
             {
                 Assert.IsTrue(fileDatabaseReopened.ControlSynchronizationIssues.Count == 2);
-                Assert.IsTrue(fileDatabaseReopened.ControlSynchronizationIssues[0].IndexOf(TestConstant.DefaultDatabaseColumn.Choice0, StringComparison.Ordinal) != -1);
-                Assert.IsTrue(fileDatabaseReopened.ControlSynchronizationIssues[1].IndexOf(TestConstant.DefaultDatabaseColumn.Note0, StringComparison.Ordinal) != -1);
+                Assert.IsTrue(fileDatabaseReopened.ControlSynchronizationIssues[0].Contains(TestConstant.DefaultDatabaseColumn.Choice0, StringComparison.Ordinal));
+                Assert.IsTrue(fileDatabaseReopened.ControlSynchronizationIssues[1].Contains(TestConstant.DefaultDatabaseColumn.Note0, StringComparison.Ordinal));
             }
         }
 
@@ -1184,7 +1184,7 @@ namespace Carnassial.UnitTests
 
                 using (AddFilesTransactionSequence addFiles = fileDatabase.CreateAddFilesTransaction())
                 {
-                    addFiles.AddToSequence(new List<FileLoad>() { new FileLoad(martenPairImage), new FileLoad(coyoteImage) }, 0, 2);
+                    addFiles.AddToSequence(new List<FileLoad>() { new(martenPairImage), new(coyoteImage) }, 0, 2);
                     addFiles.Commit();
                 }
                 fileDatabase.SelectFiles(FileSelection.All);
@@ -1324,9 +1324,9 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(File.Exists(templateDatabase.FilePath));
 
             // TemplateTable checks
-            List<long> ids = new();
-            List<long> controlOrders = new();
-            List<long> spreadsheetOrders = new();
+            List<long> ids = [];
+            List<long> controlOrders = [];
+            List<long> spreadsheetOrders = [];
             foreach (ControlRow control in templateDatabase.Controls)
             {
                 ids.Add(control.ID);

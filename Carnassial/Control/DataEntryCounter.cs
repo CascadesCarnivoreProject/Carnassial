@@ -36,10 +36,7 @@ namespace Carnassial.Control
 
         public override bool IsCopyableValue(object? value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
+            ArgumentNullException.ThrowIfNull(value);
             return (int)value != 0;
         }
 

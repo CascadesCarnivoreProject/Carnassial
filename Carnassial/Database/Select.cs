@@ -16,7 +16,7 @@ namespace Carnassial.Database
         {
             this.OrderBy = null;
             this.Table = table;
-            this.Where = new List<WhereClause>();
+            this.Where = [];
             this.WhereCombiningOperator = LogicalOperator.And;
         }
 
@@ -37,7 +37,7 @@ namespace Carnassial.Database
             string query = selectFrom + this.Table;
 
             // constrain with where clauses, if specified
-            List<SQLiteParameter> whereParameters = new();
+            List<SQLiteParameter> whereParameters = [];
             if (this.Where.Count > 0)
             {
                 Dictionary<string, int> numberOfClausesByColumn = new(StringComparer.Ordinal);

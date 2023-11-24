@@ -49,10 +49,7 @@ namespace Carnassial.Control
             }
             else
             {
-                if (valueAsObject == null)
-                {
-                    throw new ArgumentNullException(nameof(valueAsObject));
-                }
+                ArgumentNullException.ThrowIfNull(valueAsObject);
                 throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format(CultureInfo.CurrentCulture, "Unsupported value type {0}.", valueAsObject.GetType().Name));
             }
 

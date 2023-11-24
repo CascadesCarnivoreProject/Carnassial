@@ -28,7 +28,7 @@ namespace Carnassial.Control
         public DataEntryControls()
         {
             this.InitializeComponent();
-            this.Controls = new List<DataEntryControl>();
+            this.Controls = [];
             this.ControlsByDataLabel = new Dictionary<string, DataEntryControl>(StringComparer.Ordinal);
             this.dragAdorner = null;
         }
@@ -126,7 +126,7 @@ namespace Carnassial.Control
 
             DataEntryDateTimeOffset? dateTimeControl = null;
             bool showUtcOffset = false;
-            List<DataEntryControl> visibleControls = new();
+            List<DataEntryControl> visibleControls = [];
             foreach (ControlRow control in database.Controls)
             {
                 // no point in generating a control if it doesn't render in the UX

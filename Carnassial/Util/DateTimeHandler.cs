@@ -14,9 +14,9 @@ namespace Carnassial.Util
         {
             Debug.Assert(String.Equals(Constant.Time.DateTimeDatabaseFormat, "yyyy-MM-ddTHH:mm:ss.fffZ", StringComparison.Ordinal), nameof(DateTimeHandler.ToDatabaseDateTimeString) + "() and " + nameof(DateTimeHandler.TryParseDatabaseDateTime) + "() need to be updated for change in spreadsheet date time format.");
 
-            DateTimeHandler.DateTimeToSpreadsheetBuffer = new char[] { 'y', 'y', 'y', 'y', '-', 'M', 'M', '-', 'd', 'd', 'T', 'H', 'H', ':', 'm', 'm', ':', 's', 's', '.', 'f', 'f', 'f', 'Z' };
-            ////                                             1   2   3   4   5   6   7   8   9   10  11  12
-            DateTimeHandler.MaximumDaysInMonth = new int[] { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+            DateTimeHandler.DateTimeToSpreadsheetBuffer = [ 'y', 'y', 'y', 'y', '-', 'M', 'M', '-', 'd', 'd', 'T', 'H', 'H', ':', 'm', 'm', ':', 's', 's', '.', 'f', 'f', 'f', 'Z' ];
+            ////                                   1   2   3   4   5   6   7   8   9   10  11  12
+            DateTimeHandler.MaximumDaysInMonth = [ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ];
             DateTimeHandler.UtcOffsetToDatabaseBuffer = new char[6];
         }
 
@@ -57,7 +57,7 @@ namespace Carnassial.Util
         public static TimeSpan ParseDisplayUtcOffsetString(string utcOffsetAsString)
         {
             bool negative = false;
-            if (utcOffsetAsString.StartsWith("-", StringComparison.Ordinal))
+            if (utcOffsetAsString.StartsWith('-'))
             {
                 negative = true;
                 utcOffsetAsString = utcOffsetAsString[1..];

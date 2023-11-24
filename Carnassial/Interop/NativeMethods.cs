@@ -11,7 +11,7 @@ using IBindCtx = System.Runtime.InteropServices.ComTypes.IBindCtx;
 
 namespace Carnassial.Interop
 {
-    internal class NativeMethods
+    internal partial class NativeMethods
     {
         private const int FILE_ATTRIBUTE_DIRECTORY = 0x10;
         private const int FILE_ATTRIBUTE_NORMAL = 0x80;
@@ -32,14 +32,14 @@ namespace Carnassial.Interop
             return fileHandle;
         }
 
-        [DllImport(Constant.Assembly.Kernel32, BestFitMapping = false, CharSet = CharSet.Unicode, EntryPoint = "CreateFileW", SetLastError = true)]
-        private static extern SafeFileHandle CreateFile(string lpFileName,
-                                                        FileAccess dwDesiredAccess,
-                                                        FileShare dwShareMode,
-                                                        IntPtr lpSecurityAttributes,
-                                                        FileMode dwCreationDisposition,
-                                                        FileAttributesNative dwFlagsAndAttributes,
-                                                        IntPtr hTemplateFile);
+        [LibraryImport(Constant.Assembly.Kernel32, EntryPoint = "CreateFileW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+        private static partial SafeFileHandle CreateFile(string lpFileName,
+                                                         FileAccess dwDesiredAccess,
+                                                         FileShare dwShareMode,
+                                                         IntPtr lpSecurityAttributes,
+                                                         FileMode dwCreationDisposition,
+                                                         FileAttributesNative dwFlagsAndAttributes,
+                                                         IntPtr hTemplateFile);
 
         [SupportedOSPlatform(Constant.Platform.Windows)]
         public static ComReleaser<IShellItem> CreateShellItem(string path)
@@ -48,8 +48,9 @@ namespace Carnassial.Interop
             return new ComReleaser<IShellItem>((IShellItem)NativeMethods.SHCreateItemFromParsingName(path, null, ref shellItemGuid));
         }
 
-        [DllImport(Constant.Assembly.Kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
-        private static extern bool GetDiskFreeSpace(string lpRootPathName, out uint lpSectorsPerCluster, out uint lpBytesPerSector, out uint lpNumberOfFreeClusters, out uint lpTotalNumberOfClusters);
+        [LibraryImport(Constant.Assembly.Kernel32, SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool GetDiskFreeSpace(string lpRootPathName, out uint lpSectorsPerCluster, out uint lpBytesPerSector, out uint lpNumberOfFreeClusters, out uint lpTotalNumberOfClusters);
 
         public static long GetFileSizeEx(SafeFileHandle file)
         {
@@ -61,8 +62,9 @@ namespace Carnassial.Interop
             return fileSize;
         }
 
-        [DllImport(Constant.Assembly.Kernel32)]
-        private static extern bool GetFileSizeEx(SafeFileHandle hFile, out long lpFileSize);
+        [LibraryImport(Constant.Assembly.Kernel32)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool GetFileSizeEx(SafeFileHandle hFile, out long lpFileSize);
 
         public static CultureInfo GetKeyboardCulture()
         {
@@ -71,19 +73,13 @@ namespace Carnassial.Interop
             return new CultureInfo(languageID);
         }
 
-        [DllImport(Constant.Assembly.User32)]
-        private static extern IntPtr GetKeyboardLayout(uint idThread);
+        [LibraryImport(Constant.Assembly.User32)]
+        private static partial IntPtr GetKeyboardLayout(uint idThread);
 
         private static string GetRelativePathFromDirectory(string? fromDirectoryPath, string? toPath, int toType)
         {
-            if (fromDirectoryPath == null)
-            {
-                throw new ArgumentNullException(nameof(fromDirectoryPath));
-            }
-            if (toPath == null)
-            {
-                throw new ArgumentNullException(nameof(toPath));
-            }
+            ArgumentNullException.ThrowIfNull(fromDirectoryPath);
+            ArgumentNullException.ThrowIfNull(toPath);
 
             StringBuilder relativePathBuilder = new(260); // MAX_PATH
             if (NativeMethods.PathRelativePathTo(relativePathBuilder,
@@ -115,7 +111,7 @@ namespace Carnassial.Interop
 
         public static int GetSectorSizeInBytes(string driveLetter)
         {
-            bool success = NativeMethods.GetDiskFreeSpace(driveLetter, out uint sectorsPerCluster, out uint bytesPerSector, out uint freeClusters, out uint clusters);
+            bool success = NativeMethods.GetDiskFreeSpace(driveLetter, out uint _, out uint bytesPerSector, out uint _, out uint _);
             if (success == false)
             {
                 throw new Win32Exception(Marshal.GetLastWin32Error());
@@ -123,11 +119,11 @@ namespace Carnassial.Interop
             return (int)bytesPerSector;
         }
 
-        [DllImport(Constant.Assembly.Kernel32)]
-        public static extern SafeAccessTokenHandle GetCurrentThread();
+        [LibraryImport(Constant.Assembly.Kernel32)]
+        public static partial SafeAccessTokenHandle GetCurrentThread();
 
-        [DllImport(Constant.Assembly.Kernel32)]
-        public static extern UInt64 GetTickCount64();
+        [LibraryImport(Constant.Assembly.Kernel32)]
+        public static partial UInt64 GetTickCount64();
 
         public static void MoveToRecycleBin(string filePath)
         {
@@ -164,12 +160,12 @@ namespace Carnassial.Interop
         [DllImport(Constant.Assembly.Shlwapi, CharSet = CharSet.Unicode, SetLastError = true)]
         private static extern int PathRelativePathTo(StringBuilder pszPath, string pszFrom, int dwAttrFrom, string pszTo, int dwAttrTo);
 
-        [DllImport(Constant.Assembly.Kernel32, SetLastError = true)]
-        public static extern unsafe int ReadFile(SafeFileHandle file,
-                                                 byte* buffer,
-                                                 int bytesToRead,
-                                                 ref int bytesRead,
-                                                 NativeOverlapped* overlapped);
+        [LibraryImport(Constant.Assembly.Kernel32, SetLastError = true)]
+        public static unsafe partial int ReadFile(SafeFileHandle file,
+                                                  byte* buffer,
+                                                  int bytesToRead,
+                                                  ref int bytesRead,
+                                                  NativeOverlapped* overlapped);
 
         public static UInt64 SetThreadAffinityMask(SafeHandle unmanagedThread, UInt64 mask)
         {
@@ -181,8 +177,8 @@ namespace Carnassial.Interop
             return previousAffinity.ToUInt64();
         }
 
-        [DllImport(Constant.Assembly.Kernel32, SetLastError = true)]
-        private static extern UIntPtr SetThreadAffinityMask(SafeHandle hThread, UIntPtr dwThreadAffinityMask);
+        [LibraryImport(Constant.Assembly.Kernel32, SetLastError = true)]
+        private static partial UIntPtr SetThreadAffinityMask(SafeHandle hThread, UIntPtr dwThreadAffinityMask);
 
         [DllImport(Constant.Assembly.Shell32, SetLastError = true, PreserveSig = false)]
         [return: MarshalAs(UnmanagedType.Interface)]

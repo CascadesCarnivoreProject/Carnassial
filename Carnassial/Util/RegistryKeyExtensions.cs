@@ -137,11 +137,7 @@ namespace Carnassial.Util
         // read a series of REG_SZ keys' values from the registry
         public static MostRecentlyUsedList<string> ReadMostRecentlyUsedList(this RegistryKey registryKey, string subKeyPath)
         {
-            RegistryKey? subKey = registryKey.OpenSubKey(subKeyPath);
-            if (subKey == null)
-            {
-                throw new ArgumentOutOfRangeException(nameof(subKeyPath));
-            }
+            RegistryKey? subKey = registryKey.OpenSubKey(subKeyPath) ?? throw new ArgumentOutOfRangeException(nameof(subKeyPath));
             MostRecentlyUsedList<string> values = new(Constant.NumberOfMostRecentDatabasesToTrack);
 
             if (subKey != null)

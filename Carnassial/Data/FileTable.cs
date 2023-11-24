@@ -156,7 +156,7 @@ namespace Carnassial.Data
             {
                 if (filesByRelativePath.TryGetValue(file.RelativePath, out List<string>? filesInFolder) == false)
                 {
-                    filesInFolder = new List<string>();
+                    filesInFolder = [];
                     filesByRelativePath.Add(file.RelativePath, filesInFolder);
                 }
                 filesInFolder.Add(file.FileName);
@@ -316,7 +316,7 @@ namespace Carnassial.Data
                             byte[] value;
                             if (reader.IsDBNull(sqlIndex))
                             {
-                                value = Array.Empty<byte>();
+                                value = [];
                             }
                             else
                             {
@@ -327,7 +327,7 @@ namespace Carnassial.Data
                                 }
                                 else
                                 {
-                                    value = Array.Empty<byte>();
+                                    value = [];
                                 }
                             }
                             file.UserMarkerPositions[userColumn.DataIndex] = value;

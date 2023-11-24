@@ -785,7 +785,7 @@ namespace Carnassial.Editor
         {
             Debug.Assert(this.templateDatabase != null);
 
-            List<ControlRow> controlsInSpreadsheetOrder = this.templateDatabase.Controls.OrderBy(control => control.SpreadsheetOrder).ToList();
+            List<ControlRow> controlsInSpreadsheetOrder = [.. this.templateDatabase.Controls.OrderBy(control => control.SpreadsheetOrder)];
 
             // synchronize number of preview columns if number of controls changed
             while (this.SpreadsheetOrderPreview.Columns.Count < controlsInSpreadsheetOrder.Count)

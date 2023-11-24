@@ -18,7 +18,7 @@ namespace Carnassial.Data
         {
             this.disposed = false;
             this.Transaction = database.Connection.BeginTransaction();
-            this.userColumnNames = new List<string>();
+            this.userColumnNames = [];
 
             this.insertOrUpdateFiles = new SQLiteCommand(command.ToString(), this.Database.Connection, this.Transaction);
 

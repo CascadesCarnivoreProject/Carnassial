@@ -17,8 +17,10 @@ namespace Carnassial.UnitTests
         public const string MessageBoxAutomationID = "CarnassialMessageBox";
         public const string OkButtonAutomationID = "OkButton";
         public const string TemplatePaneAutomationID = "TemplatePane";
+        public const int UIRetries = 4;
 
         public static readonly TimeSpan UIElementSearchTimeout = TimeSpan.FromSeconds(15.0);
+        public static readonly TimeSpan UIRetryInterval = TimeSpan.FromMilliseconds(50.0);
 
         public static readonly ReadOnlyCollection<string> DefaultFileColumns = new List<string>()
         {
@@ -175,7 +177,7 @@ namespace Carnassial.UnitTests
         {
             public const string AlternateUITestCultureName = "ja";
 
-            public static readonly string[] DefaultUITestCultureNames = new string[] { "zh-Hans", "en", "hi", "es", "ar", "ms", "ru" };
+            public static readonly string[] DefaultUITestCultureNames = [ "zh-Hans", "en", "hi", "es", "ar", "ms", "ru" ];
         }
 
         public static class ThrottleValues

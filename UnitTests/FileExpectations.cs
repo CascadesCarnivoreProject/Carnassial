@@ -154,7 +154,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(markersForCounter.Count == expectedCount);
 
             string? spreadsheetPositions = markersForCounter.MarkerPositionsToSpreadsheetString();
-            string[] spreadsheetTokens = spreadsheetPositions == null ? Array.Empty<string>() : spreadsheetPositions.Split(Constant.Excel.MarkerPositionSeparator);
+            string[] spreadsheetTokens = spreadsheetPositions == null ? [] : spreadsheetPositions.Split(Constant.Excel.MarkerPositionSeparator);
 
             string markerColummn = FileTable.GetMarkerPositionColumnName(dataLabel);
             byte[] expectedPositions = (byte[])this.UserControlsByDataLabel[markerColummn];

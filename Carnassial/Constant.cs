@@ -120,7 +120,7 @@ namespace Carnassial
             public const string FlagValue = "0";
             public const string FlagWellKnownValues = "0|1";
 
-            public static readonly byte[] MarkerPositions = Array.Empty<byte>();
+            public static readonly byte[] MarkerPositions = [];
             public const string NoteTooltip = "Write a textual note";
 
             // standard controls
@@ -656,7 +656,7 @@ namespace Carnassial
             public static readonly ReadOnlyCollection<char> TimeSpanFieldCharacters = new List<char>() { 'd', 'f', 'F', 'h', 's', 'm' }.AsReadOnly();
 
             public static readonly string[] DateTimeMetadataFormats =
-            {
+            [
                 // known formats supported by Metadata Extractor
                 "yyyy:MM:dd HH:mm:ss.fff",
                 "yyyy:MM:dd HH:mm:ss",
@@ -680,7 +680,7 @@ namespace Carnassial
 
                 // File.File Modified Date
                 "ddd MMM dd HH:mm:ss K yyyy"
-            };
+            ];
         }
 
         public static class UserInterface

@@ -48,10 +48,7 @@ namespace Carnassial.Data
             }
             set
             {
-                if (value == null)
-                {
-                    throw new ArgumentNullException(nameof(value));
-                }
+                ArgumentNullException.ThrowIfNull(value);
                 ControlRow control = this.Rows[index];
                 this.Rows[index] = (ControlRow)value;
                 this.CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, value, control, index));
@@ -127,38 +124,26 @@ namespace Carnassial.Data
 
         bool IList.Contains(object? control)
         {
-            if (control == null)
-            {
-                throw new ArgumentNullException(nameof(control));
-            }
+            ArgumentNullException.ThrowIfNull(control);
             return this.Rows.Contains((ControlRow)control);
         }
 
         int IList.IndexOf(object? control)
         {
-            if (control == null)
-            {
-                throw new ArgumentNullException(nameof(control));
-            }
+            ArgumentNullException.ThrowIfNull(control);
             return this.Rows.IndexOf((ControlRow)control);
         }
 
         void IList.Insert(int index, object? control)
         {
-            if (control == null)
-            {
-                throw new ArgumentNullException(nameof(control));
-            }
+            ArgumentNullException.ThrowIfNull(control);
             this.Rows.Insert(index, (ControlRow)control);
             this.CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, control, index));
         }
 
         void IList.Remove(object? control)
         {
-            if (control == null)
-            {
-                throw new ArgumentNullException(nameof(control));
-            }
+            ArgumentNullException.ThrowIfNull(control);
             bool removed = this.Rows.Remove((ControlRow)control);
             if (removed)
             {
@@ -307,10 +292,7 @@ namespace Carnassial.Data
                 // nothing to do
                 return;
             }
-            if (sender == null)
-            {
-                throw new ArgumentNullException(nameof(sender));
-            }
+            ArgumentNullException.ThrowIfNull(sender);
 
             // if data label changed, update index in controlsByDataLabel
             ControlRow control = (ControlRow)sender;

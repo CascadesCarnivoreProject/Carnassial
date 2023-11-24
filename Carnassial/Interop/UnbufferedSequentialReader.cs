@@ -43,7 +43,7 @@ namespace Carnassial.Interop
                 string? root = Path.GetPathRoot(filePath);
                 if (root == null)
                 {
-                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Could not obtain root of path '{0}'.", filePath));
+                    throw new NotSupportedException("Could not obtain root of path '" + filePath + "'.");
                 }
                 return root;
             });

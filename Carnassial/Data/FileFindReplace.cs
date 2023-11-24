@@ -148,14 +148,8 @@ namespace Carnassial.Data
 
         private bool MatchBoolean(object? fileValueAsObject, string comparisonOperator, object? findValueAsObject)
         {
-            if (fileValueAsObject == null)
-            {
-                throw new ArgumentNullException(nameof(fileValueAsObject));
-            }
-            if (findValueAsObject == null)
-            {
-                throw new ArgumentNullException(nameof(findValueAsObject));
-            }
+            ArgumentNullException.ThrowIfNull(fileValueAsObject);
+            ArgumentNullException.ThrowIfNull(findValueAsObject);
 
             // keep in sync with FindDialog.GetOperators()
             bool fileValue = (bool)fileValueAsObject;
@@ -173,14 +167,8 @@ namespace Carnassial.Data
 
         private bool MatchDateTime(object? fileValueAsObject, string comparisonOperator, object? findValueAsObject)
         {
-            if (fileValueAsObject == null)
-            {
-                throw new ArgumentNullException(nameof(fileValueAsObject));
-            }
-            if (findValueAsObject == null)
-            {
-                throw new ArgumentNullException(nameof(findValueAsObject));
-            }
+            ArgumentNullException.ThrowIfNull(fileValueAsObject);
+            ArgumentNullException.ThrowIfNull(findValueAsObject);
 
             // keep in sync with FindDialog.GetOperators()
             DateTime fileValue = (DateTime)fileValueAsObject;
@@ -214,14 +202,8 @@ namespace Carnassial.Data
 
         private bool MatchDouble(object? fileValueAsObject, string comparisonOperator, object? findValueAsObject)
         {
-            if (fileValueAsObject == null)
-            {
-                throw new ArgumentNullException(nameof(fileValueAsObject));
-            }
-            if (findValueAsObject == null)
-            {
-                throw new ArgumentNullException(nameof(findValueAsObject));
-            }
+            ArgumentNullException.ThrowIfNull(fileValueAsObject);
+            ArgumentNullException.ThrowIfNull(findValueAsObject);
 
             // keep in sync with FindDialog.GetOperators()
             double fileValue = (double)fileValueAsObject;
@@ -255,14 +237,8 @@ namespace Carnassial.Data
 
         private bool MatchInt32(object? fileValueAsObject, string comparisonOperator, object? findValueAsObject)
         {
-            if (fileValueAsObject == null)
-            {
-                throw new ArgumentNullException(nameof(fileValueAsObject));
-            }
-            if (findValueAsObject == null)
-            {
-                throw new ArgumentNullException(nameof(findValueAsObject));
-            }
+            ArgumentNullException.ThrowIfNull(fileValueAsObject);
+            ArgumentNullException.ThrowIfNull(findValueAsObject);
 
             // keep in sync with FindDialog.GetOperators()
             int fileValue = (int)fileValueAsObject;

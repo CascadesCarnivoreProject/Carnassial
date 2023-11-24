@@ -11,7 +11,7 @@ namespace Carnassial.Util
 
         public MostRecentlyUsedList(int maximumElements)
         {
-            this.list = new LinkedList<TElement>();
+            this.list = new();
             this.maximumElements = maximumElements;
         }
 

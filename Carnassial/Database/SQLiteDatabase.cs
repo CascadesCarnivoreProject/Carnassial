@@ -149,7 +149,7 @@ namespace Carnassial.Database
         {
             ColumnDefinition? stringColumn = null;
             int stringColumnIndex = -1;
-            List<ColumnDefinition> columnsToCopy = new();
+            List<ColumnDefinition> columnsToCopy = [];
             SQLiteTableSchema currentSchema = this.GetTableSchema(table);
             for (int columnIndex = 0; columnIndex < currentSchema.ColumnDefinitions.Count; ++columnIndex)
             {
@@ -349,7 +349,7 @@ namespace Carnassial.Database
         {
             using SQLiteCommand command = new("SELECT DISTINCT " + SQLiteDatabase.QuoteIdentifier(column) + " FROM " + table, this.Connection);
             using SQLiteDataReader reader = command.ExecuteReader();
-            List<object> distinctValues = new();
+            List<object> distinctValues = [];
             while (reader.Read())
             {
                 distinctValues.Add(reader[column]);
@@ -429,14 +429,10 @@ namespace Carnassial.Database
             using SQLiteCommand command = new("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name", this.Connection);
             SQLiteDataReader reader = command.ExecuteReader();
 
-            List<string> tableNames = new();
+            List<string> tableNames = [];
             while (reader.Read())
             {
-                string? tableName = reader[0].ToString();
-                if (tableName == null)
-                {
-                    throw new SQLiteException("Encountered a null table name.");
-                }
+                string? tableName = reader[0].ToString() ?? throw new SQLiteException("Encountered a null table name.");
                 tableNames.Add(tableName);
             }
 
@@ -448,7 +444,7 @@ namespace Carnassial.Database
         {
             // as of SQLite 1.0.108 columns are returned in order so sorting by number is not strictly necessary
             // Column numbering is explicitly respected in the order of return for robustness, however.
-            Dictionary<int, ColumnDefinition> columnDefinitionsByNumber = new();
+            Dictionary<int, ColumnDefinition> columnDefinitionsByNumber = [];
             using (SQLiteCommand command = new("PRAGMA TABLE_INFO(" + table + ")", this.Connection))
             {
                 using SQLiteDataReader reader = command.ExecuteReader();
@@ -502,7 +498,7 @@ namespace Carnassial.Database
 
             // add secondary indices to schema
             // Currently, only indices on single columns are supported.
-            List<string> tableIndices = new();
+            List<string> tableIndices = [];
             using (SQLiteCommand command = new("PRAGMA INDEX_LIST(" + table + ")", this.Connection))
             {
                 using SQLiteDataReader reader = command.ExecuteReader();

@@ -12,8 +12,8 @@ namespace Carnassial.Database
 
         public SQLiteTableSchema(string table)
         {
-            this.ColumnDefinitions = new List<ColumnDefinition>();
-            this.Indices = new List<SecondaryIndex>();
+            this.ColumnDefinitions = [];
+            this.Indices = [];
             this.Table = table;
         }
 

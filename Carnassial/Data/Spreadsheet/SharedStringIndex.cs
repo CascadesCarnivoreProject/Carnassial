@@ -107,7 +107,7 @@ namespace Carnassial.Data.Spreadsheet
         // of the two methods can be factored out to delegates.
         public static List<string> GetSharedStrings(SharedStringTablePart? sharedStringPart, SpreadsheetReadWriteStatus status)
         {
-            List<string> sharedStrings = new();
+            List<string> sharedStrings = [];
             if (sharedStringPart == null)
             {
                 return sharedStrings;

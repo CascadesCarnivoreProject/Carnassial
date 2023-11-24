@@ -48,7 +48,7 @@ namespace Carnassial.Control
         public FileDisplayWithMarkers()
         {
             this.InitializeComponent();
-            this.markers = new List<Marker>();
+            this.markers = [];
             this.ResetMaximumZoom();
 
             // initialize render transforms

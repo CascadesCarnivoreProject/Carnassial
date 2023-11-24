@@ -29,10 +29,7 @@ namespace Carnassial.Dialog
             get { return this.array[index]; }
             set 
             {
-                if (value == null)
-                {
-                    throw new ArgumentNullException(nameof(value));
-                }
+                ArgumentNullException.ThrowIfNull(value);
                 this.array[index] = (T)value; 
             }
         }
@@ -95,10 +92,7 @@ namespace Carnassial.Dialog
 
         bool IList.Contains(object? value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
+            ArgumentNullException.ThrowIfNull(value);
             return ((IList<T>)this.array).Contains((T)value);
         }
 
@@ -129,10 +123,7 @@ namespace Carnassial.Dialog
 
         int IList.IndexOf(object? value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
+            ArgumentNullException.ThrowIfNull(value);
             return ((IList<T>)this.array).IndexOf((T)value);
         }
 
@@ -143,10 +134,7 @@ namespace Carnassial.Dialog
 
         void IList.Insert(int index, object? value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
+            ArgumentNullException.ThrowIfNull(value);
             ((IList<T>)this.array).Insert(index, (T)value);
         }
 
@@ -162,10 +150,7 @@ namespace Carnassial.Dialog
 
         void IList.Remove(object? value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
+            ArgumentNullException.ThrowIfNull(value);
             ((IList<T>)this.array).Remove((T)value);
         }
 

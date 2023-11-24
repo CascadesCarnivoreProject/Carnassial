@@ -113,7 +113,7 @@ namespace Carnassial.Control
         public virtual List<string> GetWellKnownValues()
         {
             // return empty set as flags and counters don't have choices
-            return new List<string>();
+            return [];
         }
 
         public abstract void HighlightIfCopyable();

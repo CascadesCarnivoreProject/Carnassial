@@ -19,7 +19,7 @@ namespace Carnassial.Github
                 throw new NotSupportedException(nameof(this.ID) + " property is null or whitespace.");
             }
 
-            int vIndex = this.ID.LastIndexOf("v", StringComparison.Ordinal); // could also use last slash
+            int vIndex = this.ID.LastIndexOf('v'); // could also use last slash
             if ((vIndex == -1) || (vIndex == this.ID.Length))
             {
                 throw new NotSupportedException(nameof(this.ID) + " is '" + this.ID + "', which does not end in a version number.");

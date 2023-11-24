@@ -9,8 +9,10 @@
     <DefineConstants>Debug;var.Carnassial.TargetDir=$(SolutionDir)Carnassial\bin\$(Configuration);var.TemplateEditor.TargetDir=$(SolutionDir)TemplateEditor\bin\$(Configuration)</DefineConstants>
     <SuppressValidation>False</SuppressValidation>
     <SuppressIces>ICE38;ICE57;ICE61;ICE69;ICE105</SuppressIces>
-    <CompilerAdditionalOptions></CompilerAdditionalOptions>
-    <LinkerAdditionalOptions></LinkerAdditionalOptions>
+    <CompilerAdditionalOptions>
+    </CompilerAdditionalOptions>
+    <LinkerAdditionalOptions>
+    </LinkerAdditionalOptions>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <SuppressIces>ICE38;ICE57;ICE61;ICE69;ICE105</SuppressIces>
@@ -45,6 +47,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="WixToolset.NetFx.wixext" Version="4.0.1" />
+    <PackageReference Include="WixToolset.NetFx.wixext" Version="4.0.3" />
   </ItemGroup>
 </Project>

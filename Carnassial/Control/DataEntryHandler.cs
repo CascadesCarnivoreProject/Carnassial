@@ -113,8 +113,8 @@ namespace Carnassial.Control
         {
             this.IsProgrammaticUpdate = true;
 
-            List<ImageRow> filesToUpdate = new();
-            List<long> fileIDsToDropFromDatabase = new();
+            List<ImageRow> filesToUpdate = [];
+            List<long> fileIDsToDropFromDatabase = [];
             using (Recycler fileOperation = new())
             {
                 foreach (ImageRow file in filesToDelete)

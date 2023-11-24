@@ -14,10 +14,7 @@ namespace Carnassial.Interop
 
         public ComReleaser(T comObject)
         {
-            if (comObject == null)
-            {
-                throw new ArgumentNullException(nameof(comObject));
-            }
+            ArgumentNullException.ThrowIfNull(comObject);
             if (!comObject.GetType().IsCOMObject)
             {
                 throw new ArgumentOutOfRangeException(nameof(comObject));

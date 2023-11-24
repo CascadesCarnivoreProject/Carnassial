@@ -15,7 +15,7 @@ namespace Carnassial.Util
 
         public static List<string> Convert(string value)
         {
-            return value.Split(Constant.Control.WellKnownValuesDelimiter).ToList();
+            return [.. value.Split(Constant.Control.WellKnownValuesDelimiter)];
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

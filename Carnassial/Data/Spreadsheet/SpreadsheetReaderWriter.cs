@@ -32,7 +32,7 @@ namespace Carnassial.Data.Spreadsheet
         {
             // a pre-populated row list avoids calling into GC on each row and calling List<>.Add() for each column
             // Multiple rows can be used for thread safety if multithreaded reads become supported.
-            this.currentRow = new List<string>();
+            this.currentRow = [];
             this.status = new SpreadsheetReadWriteStatus(onProgressUpdate, desiredProgressUpdateInterval);
         }
 
@@ -603,7 +603,7 @@ namespace Carnassial.Data.Spreadsheet
             {
                 relativePathFromDatabaseToSpreadsheet = null;
             }
-            else if (relativePathFromDatabaseToSpreadsheet.IndexOf(Constant.File.ParentDirectory, StringComparison.Ordinal) != -1)
+            else if (relativePathFromDatabaseToSpreadsheet.Contains(Constant.File.ParentDirectory, StringComparison.Ordinal))
             {
                 throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Canonicalization of relative path from database to spreadsheet '{0}' is not currently supported.", relativePathFromDatabaseToSpreadsheet));
             }
@@ -666,8 +666,8 @@ namespace Carnassial.Data.Spreadsheet
 
             // read data for file from the .csv or .xlsx file
             Dictionary<string, Dictionary<string, ImageRow>> filesAlreadyInDatabaseByRelativePath = fileDatabase.Files.GetFilesByRelativePathAndName();
-            List<ImageRow> filesToInsert = new();
-            List<ImageRow> filesToUpdate = new();
+            List<ImageRow> filesToInsert = [];
+            List<ImageRow> filesToUpdate = [];
             int filesUnchanged = 0;
             int mostRecentReportCheck = 0;
             int rowsRead = 0;

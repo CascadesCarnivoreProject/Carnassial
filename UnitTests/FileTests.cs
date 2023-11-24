@@ -25,7 +25,7 @@ namespace Carnassial.UnitTests
         }
 
         [ClassInitialize]
-        public static void ClassInitialize(TestContext testContext)
+        public static void ClassInitialize(TestContext _)
         {
             CarnassialTest.TryChangeToTestCulture();
         }
@@ -150,13 +150,13 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public async Task Classification()
         {
-            List<FileExpectations> fileExpectations = new()
-            {
+            List<FileExpectations> fileExpectations =
+            [
                 new FileExpectations(TestConstant.FileExpectation.DaylightBobcat),
                 new FileExpectations(TestConstant.FileExpectation.DaylightCoyote),
                 new FileExpectations(TestConstant.FileExpectation.DaylightMartenPair),
                 new FileExpectations(TestConstant.FileExpectation.InfraredMarten)
-            };
+            ];
 
             using TemplateDatabase templateDatabase = this.CreateTemplateDatabase(TestConstant.File.DefaultNewTemplateDatabaseFileName);
             using FileDatabase fileDatabase = this.CreateFileDatabase(templateDatabase, TestConstant.File.DefaultNewFileDatabaseFileName);
