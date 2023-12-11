@@ -85,7 +85,7 @@ namespace Carnassial.Control
             else
             {
                 int expectedDisplayWidthInPixels = this.GetWidthInPixels();
-                using CachedImage image = await file.TryLoadImageAsync(folderPath, expectedDisplayWidthInPixels).ConfigureAwait(true);
+                CachedImage image = await file.TryLoadImageAsync(folderPath, expectedDisplayWidthInPixels).ConfigureAwait(true);
                 this.Display(image);
             }
         }

@@ -6,9 +6,8 @@ using System.Threading;
 
 namespace Carnassial.Dialog
 {
-    public class ReclassifyStatus : FileIOComputeTransactionStatus, IDisposable
+    public class ReclassifyStatus : FileIOComputeTransactionStatus
     {
-        private bool disposed;
         private CachedImage? image;
 
         public ImageRow? File { get; set; }
@@ -23,31 +22,9 @@ namespace Carnassial.Dialog
             this.MostRecentImageUpdate = 0;
         }
 
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (this.disposed)
-            {
-                return;
-            }
-
-            if (disposing && (this.image != null))
-            {
-                this.image.Dispose();
-            }
-            this.disposed = true;
-        }
-
         public void SetImage(CachedImage imageToDisplay)
         {
-            // see remarks for FileLoadStatus.SetImage()
-            CachedImage? oldImage = Interlocked.Exchange(ref this.image, imageToDisplay);
-            oldImage?.Dispose();
+            this.image = imageToDisplay;
         }
 
         public bool TryDetachImage([NotNullWhen(true)] out CachedImage? image)

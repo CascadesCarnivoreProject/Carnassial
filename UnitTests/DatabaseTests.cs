@@ -751,7 +751,7 @@ namespace Carnassial.UnitTests
 
                 if (expectedIsVideo == false)
                 {
-                    using CachedImage image = await file.TryLoadImageAsync(fileDatabase.FolderPath, Constant.Images.MinimumRenderWidthInPixels).ConfigureAwait(true);
+                    CachedImage image = await file.TryLoadImageAsync(fileDatabase.FolderPath, Constant.Images.MinimumRenderWidthInPixels).ConfigureAwait(true);
                     Assert.IsTrue(image.Image != null);
 
                     stopwatch.Restart();

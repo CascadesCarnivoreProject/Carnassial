@@ -7,9 +7,8 @@ using System.Threading;
 
 namespace Carnassial.Images
 {
-    internal class FileLoadStatus : FileIOComputeTransactionStatus, IDisposable
+    internal class FileLoadStatus : FileIOComputeTransactionStatus
     {
-        private bool disposed;
         private CachedImage? image;
 
         public ImageRow? CurrentFile { get; set; }
@@ -20,31 +19,10 @@ namespace Carnassial.Images
         public FileLoadStatus()
         {
             this.CurrentFile = null;
-            this.disposed = false;
             this.image = null;
             this.MaybeUpdateImageRenderWidth(0);
             this.MostRecentImageUpdate = UInt64.MinValue;
             this.TotalFiles = 0;
-        }
-
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (this.disposed)
-            {
-                return;
-            }
-
-            if (disposing && (this.image != null))
-            {
-                this.image.Dispose();
-            }
-            this.disposed = true;
         }
 
         public string GetMessage()
@@ -70,11 +48,7 @@ namespace Carnassial.Images
         public void SetImage(CachedImage imageToDisplay)
         {
             // a race condition potentially exists between calls to this function and calls to TryDetachImage()
-            // To avoid, both functions use Interlocked.Exchange() and, in this function, the released image is diposed after
-            // this.image is set to the new image so that callers can't obtain an image which in the process of or is scheduled
-            // for disposal.
-            CachedImage? oldImage = Interlocked.Exchange(ref this.image, imageToDisplay);
-            oldImage?.Dispose();
+            this.image = imageToDisplay;
         }
 
         public bool TryDetachImage([NotNullWhen(true)] out CachedImage? image)

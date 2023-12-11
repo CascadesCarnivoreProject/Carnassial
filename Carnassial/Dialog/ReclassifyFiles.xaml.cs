@@ -1,6 +1,5 @@
 ﻿using Carnassial.Data;
 using Carnassial.Images;
-using Carnassial.Native;
 using Carnassial.Util;
 using System;
 using System.Diagnostics;

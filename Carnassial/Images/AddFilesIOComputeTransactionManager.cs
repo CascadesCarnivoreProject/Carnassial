@@ -1,6 +1,5 @@
 ﻿using Carnassial.Data;
 using Carnassial.Interop;
-using Carnassial.Native;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -161,21 +160,6 @@ namespace Carnassial.Images
             }
 
             return atoms;
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            base.Dispose(disposing);
-            if (this.disposed)
-            {
-                return;
-            }
-
-            if (disposing)
-            {
-                this.Status.Dispose();
-            }
-            this.disposed = true;
         }
 
         public void FindFilesToLoad(string imageSetFolderPath)

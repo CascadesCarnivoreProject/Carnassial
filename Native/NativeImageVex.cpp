@@ -8,21 +8,20 @@ namespace Carnassial
 	namespace Native
 	{
 		// copy/paste of CombinedDifferenceSse41()
-		void NativeImage::CombinedDifferenceSse41Vex(__int32 block, const NativeImage* previous, const NativeImage* next, unsigned __int8 threshold, NativeImage* difference)
+		void NativeImage::CombinedDifferenceSse41Vex(const NativeImage* previous, const NativeImage* next, unsigned __int8 threshold, NativeImage* difference)
 		{
 			const __m128i blackQuad = _mm_set_epi8((__int8)0xff, 0, 0, 0, (__int8)0xff, 0, 0, 0, (__int8)0xff, 0, 0, 0, (__int8)0xff, 0, 0, 0);
 			const __m128i threshold_epi16 = _mm_set1_epi16(6 * threshold);
 			const __m128i numeratorForAverage = _mm_set_epi32(0, 357913941, 0, 357913941);
 			const __m128i bgrBroadcast = _mm_set_epi8(15, 8, 8, 8, 11, 8, 8, 8, 7, 0, 0, 0, 3, 0, 0, 0);
 
-			const __int32 startPixelQuadIndex = NativeImage::CombinedDifferenceTaskBlockInBytes * block / (__int32)sizeof(__m128i);
-			const __int32 endPixelQuadIndex = std::min(this->TotalPixelBytes() / (__int32)sizeof(__m128i), startPixelQuadIndex + NativeImage::CombinedDifferenceTaskBlockInBytes / (__int32)sizeof(__m128i));
+			const __int32 endPixelQuadIndex = std::min(this->TotalPixelBytes() / (__int32)sizeof(__m128i), this->TotalPixelBytes() / (__int32)sizeof(__m128i));
 
 			__m128i* differencePixels = reinterpret_cast<__m128i*>(difference->pixels);
 			const __m128i* previousPixels = reinterpret_cast<__m128i*>(previous->pixels);
 			const __m128i* nextPixels = reinterpret_cast<__m128i*>(next->pixels);
 			const __m128i* pixels = reinterpret_cast<__m128i*>(this->pixels);
-			for (__int32 pixelQuadIndex = startPixelQuadIndex; pixelQuadIndex < endPixelQuadIndex; ++pixelQuadIndex)
+			for (__int32 pixelQuadIndex = 0; pixelQuadIndex < endPixelQuadIndex; ++pixelQuadIndex)
 			{
 				// performing thresholding on epi16 allows _mm_blendv_epi8() to be used to set all four of the output pixels' alpha channels as the red
 				// and alpha channels in each pixel are set to zero and therefore below threshold; this saves a second blend instruction
@@ -48,20 +47,19 @@ namespace Carnassial
 		}
 
 		// copy/paste of DifferenceSse41()
-		void NativeImage::DifferenceSse41Vex(__int32 block, const NativeImage* other, unsigned __int8 threshold, NativeImage* difference)
+		void NativeImage::DifferenceSse41Vex(const NativeImage* other, unsigned __int8 threshold, NativeImage* difference)
 		{
 			const __m128i blackQuad = _mm_set_epi8((__int8)0xff, 0, 0, 0, (__int8)0xff, 0, 0, 0, (__int8)0xff, 0, 0, 0, (__int8)0xff, 0, 0, 0);
 			const __m128i threshold_epi16 = _mm_set1_epi16(6 * threshold);
 			const __m128i numeratorForAverage = _mm_set_epi32(0, 715827883, 0, 715827883);
 			const __m128i bgrBroadcast = _mm_set_epi8(15, 8, 8, 8, 11, 8, 8, 8, 7, 0, 0, 0, 3, 0, 0, 0);
 
-			const __int32 startPixelQuadIndex = NativeImage::DifferenceTaskBlockInBytes * block / (__int32)sizeof(__m128i);
-			const __int32 endPixelQuadIndex = std::min(this->TotalPixelBytes() / (__int32)sizeof(__m128i), startPixelQuadIndex + NativeImage::DifferenceTaskBlockInBytes / (__int32)sizeof(__m128i));
+			const __int32 endPixelQuadIndex = std::min(this->TotalPixelBytes() / (__int32)sizeof(__m128i), this->TotalPixelBytes() / (__int32)sizeof(__m128i));
 
 			__m128i* differencePixels = reinterpret_cast<__m128i*>(difference->pixels);
 			const __m128i* otherPixels = reinterpret_cast<__m128i*>(other->pixels);
 			const __m128i* pixels = reinterpret_cast<__m128i*>(this->pixels);
-			for (__int32 pixelQuadIndex = startPixelQuadIndex; pixelQuadIndex < endPixelQuadIndex; ++pixelQuadIndex)
+			for (__int32 pixelQuadIndex = 0; pixelQuadIndex < endPixelQuadIndex; ++pixelQuadIndex)
 			{
 				__m128i thisPixelQuad = _mm_load_si128(pixels + pixelQuadIndex);
 				__m128i otherPixelQuad = _mm_load_si128(otherPixels + pixelQuadIndex);

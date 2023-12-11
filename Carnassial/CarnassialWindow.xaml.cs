@@ -2699,7 +2699,6 @@ namespace Carnassial
             {
                 progress.MaybeUpdateImageRenderWidth(this.FileDisplay.GetWidthInPixels());
                 this.FileDisplay.Display(image, null);
-                image.Dispose();
             }
         }
 

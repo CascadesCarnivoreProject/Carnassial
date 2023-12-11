@@ -166,18 +166,18 @@ namespace Carnassial.UnitTests
                 Debug.Assert((fileExpectation.RelativePath != null) && (fileExpectation.FileName != null));
                 FileInfo fileInfo = new(Path.Combine(fileExpectation.RelativePath, fileExpectation.FileName));
                 ImageRow file = fileDatabase.Files.CreateAndAppendFile(fileInfo.Name, fileExpectation.RelativePath);
-                using CachedImage? image = await file.TryLoadImageAsync(this.WorkingDirectory).ConfigureAwait(false);
+                CachedImage? image = await file.TryLoadImageAsync(this.WorkingDirectory).ConfigureAwait(false);
                 Assert.IsTrue((image != null) && (image.Image != null));
 
                 double luminosity = image.Image.GetLuminosityAndColoration(0, out double coloration);
                 FileClassification classification = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
                 if (Math.Abs(luminosity - fileExpectation.Luminosity) > TestConstant.LuminosityAndColorationTolerance)
                 {
-                    Assert.Fail("{0}: Expected luminosity to be {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Luminosity, luminosity);
+                    Assert.Fail(fileExpectation.FileName + ": Expected luminosity to be " + fileExpectation.Luminosity + ", but it was " + luminosity + ".");
                 }
-                if (Math.Abs(luminosity - fileExpectation.Luminosity) > TestConstant.LuminosityAndColorationTolerance)
+                if (Math.Abs(coloration - fileExpectation.Coloration) > TestConstant.LuminosityAndColorationTolerance)
                 {
-                    Assert.Fail("{0}: Expected coloration to be {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Coloration, coloration);
+                    Assert.Fail(fileExpectation.FileName + ": Expected coloration to be " + fileExpectation.Coloration + ", but it was " + coloration + ".");
                 }
                 Assert.IsTrue(classification == fileExpectation.Classification, "{0}: Expected classification {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Classification, classification);
             }
@@ -233,16 +233,13 @@ namespace Carnassial.UnitTests
                         Assert.IsTrue((unalteredImage != null) && (unalteredImage.Image != null));
 
                         ImageRow previousNextFile = fileDatabase.Files[previousOrNextImageRow];
-                        bool mismatched;
-                        using (CachedImage? previousNextImage = await previousNextFile.TryLoadImageAsync(fileDatabase.FolderPath).ConfigureAwait(false))
-                        {
-                            mismatched = unalteredImage.Image.MismatchedOrNot32BitBgra(previousNextImage.Image);
-                        }
+                        CachedImage? previousNextImage = await previousNextFile.TryLoadImageAsync(fileDatabase.FolderPath).ConfigureAwait(false);
+                        bool mismatched = unalteredImage.Image.MismatchedOrNot32BitBgra(previousNextImage.Image);
 
                         if (fileDatabase.IsFileRowInRange(otherImageRowForCombined))
                         {
                             ImageRow otherFileForCombined = fileDatabase.Files[otherImageRowForCombined];
-                            using CachedImage otherImageForCombined = await otherFileForCombined.TryLoadImageAsync(fileDatabase.FolderPath).ConfigureAwait(false);
+                            CachedImage otherImageForCombined = await otherFileForCombined.TryLoadImageAsync(fileDatabase.FolderPath).ConfigureAwait(false);
                             mismatched |= unalteredImage.Image.MismatchedOrNot32BitBgra(otherImageForCombined.Image);
                         }
 
@@ -273,7 +270,7 @@ namespace Carnassial.UnitTests
             TimeZoneInfo imageSetTimeZone = fileDatabase.ImageSet.GetTimeZoneInfo();
             ImageRow corruptFile = this.CreateFile(fileDatabase, imageSetTimeZone, TestConstant.FileExpectation.CorruptFieldScan, out MetadataReadResults corruptMetadataRead);
             
-            using CachedImage? corruptImage = await corruptFile.TryLoadImageAsync(fileDatabase.FolderPath).ConfigureAwait(false);
+            CachedImage? corruptImage = await corruptFile.TryLoadImageAsync(fileDatabase.FolderPath).ConfigureAwait(false);
             Assert.IsTrue((corruptImage != null) &&
                           (corruptImage.Image != null) &&
                           (corruptImage.ImageNotDecodable == false) &&
@@ -436,7 +433,6 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(currentImage != null);
             Assert.IsTrue(currentImage.Image != null);
             Assert.IsTrue(currentImage.Image.DecodeError == false);
-            Assert.IsTrue(currentImage.Image.Format == MemoryImage.PreferredPixelFormat);
             Assert.IsTrue(currentImage.ImageNotDecodable == false);
             Assert.IsTrue((1000 < currentImage.Image.PixelHeight) && (currentImage.Image.PixelHeight < 10000));
             Assert.IsTrue((1000 < currentImage.Image.PixelWidth) && (currentImage.Image.PixelWidth < 10000));

@@ -1,5 +1,4 @@
 ﻿using Carnassial.Interop;
-using Carnassial.Native;
 using MetadataExtractor;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.Jpeg;

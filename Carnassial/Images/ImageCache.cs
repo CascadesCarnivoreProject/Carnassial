@@ -1,5 +1,4 @@
 ﻿using Carnassial.Data;
-using Carnassial.Native;
 using Carnassial.Util;
 using System;
 using System.Collections.Concurrent;
@@ -50,26 +49,6 @@ namespace Carnassial.Images
         public double AverageDifferenceTimeInSeconds
         {
             get { return this.differencesCalculated == 0 ? 0.0 : this.differenceTime.TotalSeconds / this.differencesCalculated; }
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (this.disposed)
-            {
-                return;
-            }
-
-            if (disposing)
-            {
-                foreach (CachedImage image in this.unalteredImagesByID.Values)
-                {
-                    image.Dispose();
-                }
-                this.ResetDifferenceState();
-            }
-
-            base.Dispose(disposing);
-            this.disposed = true;
         }
 
         public CachedImage? GetCurrentImage()
@@ -159,10 +138,7 @@ namespace Carnassial.Images
                         {
                             if (this.mostRecentlyUsedIDs.TryGetLeastRecent(out long fileIDToRemove))
                             {
-                                if (this.unalteredImagesByID.TryRemove(fileIDToRemove, out CachedImage? imageForID))
-                                {
-                                    imageForID.Dispose();
-                                }
+                                this.unalteredImagesByID.TryRemove(fileIDToRemove, out CachedImage? imageForID);
                             }
                         }
 
@@ -196,12 +172,7 @@ namespace Carnassial.Images
 
             foreach (ImageDifference difference in new ImageDifference[] { ImageDifference.Previous, ImageDifference.Next, ImageDifference.Combined })
             {
-                CachedImage? differenceImage = this.differenceCache[difference];
-                if (differenceImage != null)
-                {
-                    differenceImage.Dispose();
-                    this.differenceCache[difference] = null;
-                }
+                this.differenceCache[difference] = null;
             }
         }
 
@@ -297,10 +268,6 @@ namespace Carnassial.Images
                 this.Reset();
             }
 
-            if (this.unalteredImagesByID.TryRemove(id, out CachedImage? imageForID))
-            {
-                imageForID.Dispose();
-            }
             lock (this.mostRecentlyUsedIDs)
             {
                 return this.mostRecentlyUsedIDs.TryRemove(id);

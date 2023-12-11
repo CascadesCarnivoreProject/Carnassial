@@ -18,16 +18,10 @@
     <ClInclude Include="Pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MemoryImage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="NativeImage.h">
+    <ClInclude Include="MemoryImageCppCli.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PchClr.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="NativeProcessor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Processor.h">
@@ -44,22 +38,13 @@
     <ClCompile Include="Pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="NativeImage.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="NativeImageVex.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PchClr.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="NativeProcessor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AssemblyInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MemoryImage.cpp">
+    <ClCompile Include="MemoryImageCppCli.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Processor.cpp">

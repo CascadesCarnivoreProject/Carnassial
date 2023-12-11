@@ -2,7 +2,6 @@
 using Carnassial.Database;
 using Carnassial.Images;
 using Carnassial.Interop;
-using Carnassial.Native;
 using Carnassial.Util;
 using MetadataExtractor;
 using MetadataExtractor.Formats.Exif;

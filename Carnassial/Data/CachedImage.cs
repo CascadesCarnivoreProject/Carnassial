@@ -1,4 +1,4 @@
-﻿using Carnassial.Native;
+﻿using Carnassial.Images;
 using System;
 
 namespace Carnassial.Data
@@ -10,17 +10,14 @@ namespace Carnassial.Data
     // = true } also applies to these cases and the special casing needed to produce an empty MemoryImage with the flag set is arguably
     // less complex than interposing the CachedImage class.  However, a C# surface for this purpose is somewhat lower cost to maintain
     // than a C++/CLI one.
-    public class CachedImage : IDisposable
+    public class CachedImage
     {
-        private bool disposed;
-
         public bool FileNoLongerAvailable { get; set; }
         public MemoryImage? Image { get; private set; }
         public bool ImageNotDecodable { get; set; }
 
         public CachedImage()
         {
-            this.disposed = false;
             this.FileNoLongerAvailable = false;
             this.Image = null;
             this.ImageNotDecodable = false;
@@ -30,26 +27,6 @@ namespace Carnassial.Data
             : this()
         {
             this.Image = image;
-        }
-
-        public void Dispose()
-        {
-            this.Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (this.disposed)
-            {
-                return;
-            }
-
-            if (disposing && (this.Image != null))
-            {
-                this.Image.Dispose();
-            }
-            this.disposed = true;
         }
     }
 }

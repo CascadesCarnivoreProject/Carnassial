@@ -1,18 +1,10 @@
 ﻿### Overview
-This repository contains the source code for and releases of Carnassial and its associated tenplate editor. Refer to Github's wiki
+This repository contains the source code for and releases of Carnassial and its associated template editor. Refer to Github's wiki
 tab above to find out how to get started and learn more about Carnassial.
 
 ### Contributing
 Bug reports, feature requests, and feedback are most welcome. Let us know!  We'd also really appreciate sample images and videos 
 to test our code on and expand some features. Shoot us an email at carnassialdev@gmail.com if you've some you'd like to share. 
-We're particularly looking for samples from
-
-* Bushnell Trophy or Trophy HD cameras from 2013 back to 2006
-* Reconyx HyperFire, UltraFire, MicroFire, and RapidFire cameras
-* SpyPoint Force-10D, 11D, and other cameras from 2016 or newer
-
-Having these in our archives helps us help you, so don't be shy. See "Contacting the Carnassial Development Team" below for how to
-reach us.
 
 If you'd like to translate Carnassial into your language it's easy. Send us your edited version of Resources.xaml or drop us a 
 line and we'll set you up.
@@ -26,8 +18,9 @@ though.
 * Windows Vista SP2 and earlier and all 32 bit versions of Windows are not supported. Carnassial is 64 bit only and has minor 
 reliance on Windows 7 common dialogs.
 
-Carnassial should run on any x64 processor but optimization effort generally targets hardware from the last five years. Screen 
-sizes of 1600 x 900 or larger are recommended.
+Carnassial should run on any 64 bit processor with AVX instructions (circal 2011; AMD Bulldozer, Intel Core 2<sup>nd</sup> gen and newer)
+but its code design and optimization targets newer processors with four or more cores (currently AMD Ryzen and Intel 6<sup>th</sup> gen and 
+newer). Display resolutions of 1600 x 900 or higher are recommended for viewing details of camera images and user interface layout.
 
 Known limitations:
 
@@ -38,7 +31,7 @@ component of timestamps.
 
 Known limitations with earlier versions of Windows:
 
-* Users may need to [install .NET 8.0 or newer](https://docs.microsoft.com/en-us/dotnet/framework/migration-guide/versions-and-dependencies) if 
+* Users may need to [install .NET 8 or newer](https://learn.microsoft.com/en-us/lifecycle/products/microsoft-net-and-net-core) if 
 it's not already present using, for example, the [.NET installer](https://dotnet.microsoft.com/download).
 * Users may need to [install the Universal C Runtime](https://www.microsoft.com/en-us/download/details.aspx?id=48234) if it's not already installed.
 * Recycle Bin integration is untested on Windows 7.
@@ -73,8 +66,8 @@ Feel free to open new issues on Carnassial here on GitHub. Or email us at carnas
 Install [Visual Studio 2022 Community](https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx) or newer 
 with the C# and C++ desktop workloads (other Visual Studio SKUs such as Enterprise are fine). After Visual Studio installation:
 
+* add WiX 4.0 support via the [HeatWave extension](https://www.firegiant.com/docs/heatwave/) 
 * clone the repo locally through Visual Studio's Team Explorer or GitHub's clone or download options
-* install the [WiX Toolset](http://wixtoolset.org/releases/) 3.14 or later and Visual Studio WiX extension
 * build Carnassial and, as a one time step, copy turbojpeg.dll from $(SolutionDir)\x64\$(Configuration) to $(SolutionDir)\x64\$(Configuration)\net6.0-windows10.0.19041.0
 so that Carnassial.Native.dll can be loaded by unit tests
 
@@ -83,7 +76,7 @@ Commits should
 * include appropriate test coverage
 * have no build warnings or live code analysis messages
 
-Application and test development is done against .NET 8.0. Carnassial is a 64 bit app and for the most part only an x64 build 
+Application and test development is done against .NET 8. Carnassial is a 64 bit app and for the most part only an x64 build 
 is needed for development and testing. However, the Visual Studio development UI is a 32 bit app and is therefore unable to load 
 controls from the regular Carnassial build for display in the WPF designer. As a result, Carnassial has a vestigial x86 build which
 needs to be selected when doing UI tasks if the view in the designer is to match what's displayed at x64 runtime. (Building 
@@ -106,7 +99,7 @@ Also helpful are
 
 * Atlassian's [https://www.sourcetreeapp.com/](SourceTree), a recommended augmentation of the git support available in Visual Studio's Team Explorer.
 * [DB Browser for SQLite](http://sqlitebrowser.org/)
-* The [Visual Studio Image Library](https://msdn.microsoft.com/en-us/library/ms246582.aspx) for icons.
+* The [Visual Studio Image Library](https://learn.microsoft.com/en-us/visualstudio/designers/the-visual-studio-image-library) for icons.
 * John Skeet's discussion of [DateTime, DateTimeOffset, and TimeZoneInfo limitations](http://blog.nodatime.org/2011/08/what-wrong-with-datetime-anyway.html).
 * Microsoft's [terminology search](https://www.microsoft.com/en-us/language) for translations.
 

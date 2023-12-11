@@ -1,6 +1,7 @@
 ﻿using Carnassial.Data;
 using Carnassial.Database;
 using Carnassial.Interop;
+using Carnassial.Native;
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;
@@ -91,20 +92,8 @@ namespace Carnassial.Images
             this.transactionSequence = null;
             this.TransactionFileCount = 0;
 
-            // physical cores              1  1  2  2  ?  4  4  ?  6   6  ?  8+
-            // logical processors          1  2  2  4  3  4  8  5  6  12  7  8+
-            // hyperthreaded               n  y  n  y  ?  n  y  ?  n   y  ?  x
-            // IO tasks                    1  1  1  2  1  2  2  2  2   2  2  2
-            // compute tasks               1  1  1  2  2  2  4  3  4   4  4  4
-            // total tasks                 2  2  2  4  3  4  6  5  6   6  6  6
-            // thread pinning beneficial   n  ?  n  y  ?  n  y  ?  n   ?  ?  ?
-            int logicalProcessors = Environment.ProcessorCount;
-            this.ioTaskCount = logicalProcessors < 4 ? 1 : 2;
-            this.computeTaskCount = Math.Min(4, logicalProcessors - 2);
-            if (logicalProcessors < 4)
-            {
-                this.computeTaskCount = logicalProcessors == 3 ? 2 : 1;
-            }
+            this.ioTaskCount = 2;
+            this.computeTaskCount = Processor.PhysicalCores - this.ioTaskCount;
             this.ioTasksActive = 0;
 
             this.computeTasks = new Task<int>[this.computeTaskCount];
@@ -348,7 +337,6 @@ namespace Carnassial.Images
                 {
                     try
                     {
-                        using HyperthreadSiblingAffinity affinity = new(ioTaskNumber);
                         this.IOTaskBody.Invoke(ioTaskNumber);
                     }
                     catch
@@ -366,7 +354,6 @@ namespace Carnassial.Images
                 {
                     try
                     {
-                        using HyperthreadSiblingAffinity affinity = new(computeTaskNumber);
                         return this.ComputeTaskBody.Invoke(computeTaskNumber);
                     }
                     catch

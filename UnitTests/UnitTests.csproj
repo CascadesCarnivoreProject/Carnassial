@@ -7,7 +7,7 @@
     <AssemblyName>Carnassial.UnitTests</AssemblyName>
     <RootNamespace>Carnassial.UnitTests</RootNamespace>
     <Platforms>x64;x86</Platforms>
-    <Copyright>Copyright © 2016-2022 Cascades Carnivore Project</Copyright>
+    <Copyright>Copyright © 2016-2023 Cascades Carnivore Project</Copyright>
     <Version>2.2.4</Version>
     <PackageLicenseExpression>https://creativecommons.org/licenses/by-nc-sa/4.0/</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/CascadesCarnivoreProject/Carnassial</PackageProjectUrl>
