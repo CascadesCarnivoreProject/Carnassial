@@ -29,42 +29,40 @@ namespace Carnassial.Github
         {
             publiclyAvailableVersion = null;
 
-            using (HttpClient httpClient = new())
+            using HttpClient httpClient = new();
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "Carnassial-GithubReleaseClient");
+            try
             {
-                httpClient.DefaultRequestHeaders.Add("User-Agent", "Carnassial-GithubReleaseClient");
-                try
+                string releaseXml = httpClient.GetStringAsync(this.latestReleaseAddress).GetAwaiter().GetResult();
+                if (String.IsNullOrWhiteSpace(releaseXml))
                 {
-                    string releaseXml = httpClient.GetStringAsync(this.latestReleaseAddress).GetAwaiter().GetResult();
-                    if (String.IsNullOrWhiteSpace(releaseXml))
-                    {
-                        // no releases, so nothing to do
-                        return false;
-                    }
-
-                    Feed feed = new(releaseXml, 1); // for now, assume most recent entry is most recent release
-                    if (feed.Entries.Count < 1)
-                    {
-                        // also no releases
-                        return false;
-                    }
-
-                    Entry latestRelease = feed.Entries[0];
-                    publiclyAvailableVersion = latestRelease.GetVersion();
-                }
-                catch (WebException exception)
-                {
-                    // 404 if no production releases (Github's latest endpoint doesn't return releases with prerelease = true)
-                    if ((exception.Response is HttpWebResponse response == false) || (response.StatusCode != HttpStatusCode.NotFound))
-                    {
-                        Debug.Fail(exception.ToString());
-                    }
+                    // no releases, so nothing to do
                     return false;
                 }
-                catch (Exception exception)
+
+                Feed feed = new(releaseXml, 1); // for now, assume most recent entry is most recent release
+                if (feed.Entries.Count < 1)
+                {
+                    // also no releases
+                    return false;
+                }
+
+                Entry latestRelease = feed.Entries[0];
+                publiclyAvailableVersion = latestRelease.GetVersion();
+            }
+            catch (WebException exception)
+            {
+                // 404 if no production releases (Github's latest endpoint doesn't return releases with prerelease = true)
+                if ((exception.Response is HttpWebResponse response == false) || (response.StatusCode != HttpStatusCode.NotFound))
                 {
                     Debug.Fail(exception.ToString());
-                    throw;
                 }
+                return false;
+            }
+            catch (Exception exception)
+            {
+                Debug.Fail(exception.ToString());
+                throw;
             }
 
             // get the running version  

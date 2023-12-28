@@ -12,11 +12,13 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Automation;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Threading;
 using MessageBox = Carnassial.Dialog.MessageBox;
@@ -34,6 +36,7 @@ namespace Carnassial.UnitTests
         [ClassCleanup]
         public static void ClassCleanup()
         {
+            UITestMethodAttribute.ClassCleanup();
             CarnassialTest.TryRevertToDefaultCultures();
         }
         
@@ -43,8 +46,7 @@ namespace Carnassial.UnitTests
             CarnassialTest.TryChangeToTestCulture();
         }
 
-        [TestMethodStaApartment]
-        [DoNotParallelize]
+        [UITestMethod]
         public void Carnassial()
         {
             using (CarnassialWindow carnassial = new() { NonpersistentUserSettings = true })
@@ -443,8 +445,7 @@ namespace Carnassial.UnitTests
             }
         }
 
-        [TestMethodStaApartment]
-        [DoNotParallelize]
+        [UITestMethod]
         public void DataEntryHandler()
         {
             List<DatabaseExpectations> databaseExpectations =
@@ -707,8 +708,7 @@ namespace Carnassial.UnitTests
             }
         }
 
-        [TestMethodStaApartment]
-        [DoNotParallelize]
+        [UITestMethod]
         public void Editor()
         {
             // open, do nothing, close
@@ -764,6 +764,63 @@ namespace Carnassial.UnitTests
             finally
             {
                 EditorSettings.Default.Reset();
+            }
+        }
+
+        [UITestMethod]
+        public void ResourceKeys()
+        {
+            foreach (FieldInfo field in typeof(Constant.ResourceKey).GetFields(BindingFlags.Public | BindingFlags.Static))
+            {
+                string? resourceKey = (string?)field.GetValue(null);
+                Assert.IsTrue(resourceKey != null);
+
+                switch (resourceKey)
+                {
+                    case Constant.ResourceKey.ApplicationWindowException:
+                    case Constant.ResourceKey.CarnassialWindowClockDriftFailed:
+                    case Constant.ResourceKey.CarnassialWindowCopyFileFailed:
+                    case Constant.ResourceKey.CarnassialWindowDatabaseLoadFailed:
+                    case Constant.ResourceKey.CarnassialWindowDaylightSavingsFailed:
+                    case Constant.ResourceKey.CarnassialWindowFileMoveIncomplete:
+                    case Constant.ResourceKey.CarnassialWindowExportSpreadsheetFailed:
+                    case Constant.ResourceKey.CarnassialWindowImageMetadataFailed:
+                    case Constant.ResourceKey.CarnassialWindowImport:
+                    case Constant.ResourceKey.CarnassialWindowImportFailed:
+                    case Constant.ResourceKey.CarnassialWindowImportIncomplete:
+                    case Constant.ResourceKey.CarnassialWindowNoAmbiguousDates:
+                    case Constant.ResourceKey.CarnassialWindowNoDeletableFiles:
+                    case Constant.ResourceKey.CarnassialWindowNoMetadataAvailable:
+                    case Constant.ResourceKey.CarnassialWindowSelectFolder:
+                    case Constant.ResourceKey.CarnassialWindowTemplateLoadFailed:
+                    case Constant.ResourceKey.DataEntryHandlerConfirmCopyAll:
+                    case Constant.ResourceKey.DataEntryHandlerConfirmCopyForward:
+                    case Constant.ResourceKey.DataEntryHandlerConfirmPropagateToHere:
+                    case Constant.ResourceKey.DataEntryHandlerNothingToCopyForward:
+                    case Constant.ResourceKey.DataEntryHandlerNothingToPropagate:
+                    case Constant.ResourceKey.DeleteFilesMessageCurrentFileAndData:
+                    case Constant.ResourceKey.DeleteFilesMessageCurrentFileOnly:
+                    case Constant.ResourceKey.DeleteFilesMessageFilesAndData:
+                    case Constant.ResourceKey.DeleteFilesMessageFilesOnly:
+                    case Constant.ResourceKey.GithubReleaseClientGetNewVersion:
+                    case Constant.ResourceKey.GithubReleaseClientNoUpdates:
+                        Message message = App.FindResource<Message>(resourceKey);
+                        Assert.IsTrue(message != null);
+                        break;
+                    case Constant.ResourceKey.AboutTermsOfUse:
+                        Span span = App.FindResource<Span>(resourceKey);
+                        Assert.IsTrue(span != null);
+                        break;
+                    case Constant.ResourceKey.SearchTermListCellMargin:
+                        Thickness thickness = App.FindResource<Thickness>(resourceKey);
+                        Assert.IsTrue((thickness.Top > 0.0) && (thickness.Right > 0.0) && (thickness.Bottom > 0.0) && (thickness.Left > 0.0));
+                        break;
+                    default:
+                        // strings
+                        string resource = App.FindResource<string>(resourceKey);
+                        Assert.IsTrue(String.IsNullOrWhiteSpace(resource) == false);
+                        break;
+                }
             }
         }
 

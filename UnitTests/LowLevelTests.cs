@@ -4,9 +4,7 @@ using Carnassial.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Threading;
 using System.Windows;
 using System.Windows.Documents;
 
@@ -128,63 +126,6 @@ namespace Carnassial.UnitTests
 
             Assert.IsTrue(mruList.TryGetLeastRecent(out int leastRecent));
             Assert.IsTrue(leastRecent == 4);
-        }
-
-        [TestMethodStaApartment]
-        public void ResourceKeys()
-        {
-            foreach (FieldInfo field in typeof(Constant.ResourceKey).GetFields(BindingFlags.Public | BindingFlags.Static))
-            {
-                string? resourceKey = (string?)field.GetValue(null);
-                Assert.IsTrue(resourceKey != null);
-
-                switch (resourceKey)
-                {
-                    case Constant.ResourceKey.ApplicationWindowException:
-                    case Constant.ResourceKey.CarnassialWindowClockDriftFailed:
-                    case Constant.ResourceKey.CarnassialWindowCopyFileFailed:
-                    case Constant.ResourceKey.CarnassialWindowDatabaseLoadFailed:
-                    case Constant.ResourceKey.CarnassialWindowDaylightSavingsFailed:
-                    case Constant.ResourceKey.CarnassialWindowFileMoveIncomplete:
-                    case Constant.ResourceKey.CarnassialWindowExportSpreadsheetFailed:
-                    case Constant.ResourceKey.CarnassialWindowImageMetadataFailed:
-                    case Constant.ResourceKey.CarnassialWindowImport:
-                    case Constant.ResourceKey.CarnassialWindowImportFailed:
-                    case Constant.ResourceKey.CarnassialWindowImportIncomplete:
-                    case Constant.ResourceKey.CarnassialWindowNoAmbiguousDates:
-                    case Constant.ResourceKey.CarnassialWindowNoDeletableFiles:
-                    case Constant.ResourceKey.CarnassialWindowNoMetadataAvailable:
-                    case Constant.ResourceKey.CarnassialWindowSelectFolder:
-                    case Constant.ResourceKey.CarnassialWindowTemplateLoadFailed:
-                    case Constant.ResourceKey.DataEntryHandlerConfirmCopyAll:
-                    case Constant.ResourceKey.DataEntryHandlerConfirmCopyForward:
-                    case Constant.ResourceKey.DataEntryHandlerConfirmPropagateToHere:
-                    case Constant.ResourceKey.DataEntryHandlerNothingToCopyForward:
-                    case Constant.ResourceKey.DataEntryHandlerNothingToPropagate:
-                    case Constant.ResourceKey.DeleteFilesMessageCurrentFileAndData:
-                    case Constant.ResourceKey.DeleteFilesMessageCurrentFileOnly:
-                    case Constant.ResourceKey.DeleteFilesMessageFilesAndData:
-                    case Constant.ResourceKey.DeleteFilesMessageFilesOnly:
-                    case Constant.ResourceKey.GithubReleaseClientGetNewVersion:
-                    case Constant.ResourceKey.GithubReleaseClientNoUpdates:
-                        Message message = App.FindResource<Message>(resourceKey);
-                        Assert.IsTrue(message != null);
-                        break;
-                    case Constant.ResourceKey.AboutTermsOfUse:
-                        Span span = App.FindResource<Span>(resourceKey);
-                        Assert.IsTrue(span != null);
-                        break;
-                    case Constant.ResourceKey.SearchTermListCellMargin:
-                        Thickness thickness = App.FindResource<Thickness>(resourceKey);
-                        Assert.IsTrue((thickness.Top > 0.0) && (thickness.Right > 0.0) && (thickness.Bottom > 0.0) && (thickness.Left > 0.0));
-                        break;
-                    default:
-                        // strings
-                        string resource = App.FindResource<string>(resourceKey);
-                        Assert.IsTrue(String.IsNullOrWhiteSpace(resource) == false);
-                        break;
-                }
-            }
         }
 
         /// <summary>

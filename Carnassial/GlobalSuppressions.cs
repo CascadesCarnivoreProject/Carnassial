@@ -4,6 +4,9 @@
 // a specific target and scoped to a namespace, type, member, etc.
 using System.Diagnostics.CodeAnalysis;
 
+[assembly: SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "spurious IDE0079", Scope = "member", Target = "~M:Carnassial.Data.FileDatabase.UpdateFileTableTo2203Schema(System.Data.SQLite.SQLiteTransaction)")]
+[assembly: SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "spurious IDE0079", Scope = "member", Target = "~M:Carnassial.Data.TemplateDatabase.OnExistingDatabaseOpened(Carnassial.Data.TemplateDatabase)~System.Boolean")]
+[assembly: SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "spurious IDE0079", Scope = "member", Target = "~M:Carnassial.Data.VideoRow.TryLoadImageAsync(System.String,System.Nullable{System.Int32})~System.Threading.Tasks.Task{Carnassial.Data.CachedImage}")]
 [assembly: SuppressMessage("Design", "CA1065:Do not raise exceptions in unexpected locations", Justification = "reviewed", Scope = "member", Target = "~M:Carnassial.Data.SearchTerm.ToString~System.String")]
 [assembly: SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time", Justification = "not supported by source generated p/invoke as of .NET 8.0", Scope = "member", Target = "~M:Carnassial.Interop.NativeMethods.SHCreateItemFromParsingName(System.String,System.Runtime.InteropServices.ComTypes.IBindCtx,System.Guid@)~System.Object")]
 [assembly: SuppressMessage("Interoperability", "SYSLIB1054:Use 'LibraryImportAttribute' instead of 'DllImportAttribute' to generate P/Invoke marshalling code at compile time", Justification = "not supported by source generated p/invoke as of .NET 8.0", Scope = "member", Target = "~M:Carnassial.Interop.NativeMethods.SHFileOperation(Carnassial.Interop.NativeMethods.SHFILEOPSTRUCT@)~System.Int32")]

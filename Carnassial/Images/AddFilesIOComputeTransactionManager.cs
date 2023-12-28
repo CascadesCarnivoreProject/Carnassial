@@ -12,7 +12,6 @@ namespace Carnassial.Images
 {
     internal class AddFilesIOComputeTransactionManager : FileIOComputeTransactionManager<FileLoadStatus>
     {
-        private bool disposed;
         private readonly SortedDictionary<string, List<string>> filesToLoadByRelativeFolderPath;
 
         public int FilesToLoad { get; private set; }
@@ -21,9 +20,8 @@ namespace Carnassial.Images
         public AddFilesIOComputeTransactionManager(Action<FileLoadStatus> onProgressUpdate, TimeSpan desiredProgressInterval)
             : base(onProgressUpdate, desiredProgressInterval)
         {
-            this.disposed = false;
             this.FilesToLoad = 0;
-            this.filesToLoadByRelativeFolderPath = new SortedDictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            this.filesToLoadByRelativeFolderPath = new(StringComparer.OrdinalIgnoreCase);
             this.FolderPaths = [];
         }
 

@@ -234,13 +234,24 @@ namespace Carnassial.UnitTests
 
                         ImageRow previousNextFile = fileDatabase.Files[previousOrNextImageRow];
                         CachedImage? previousNextImage = await previousNextFile.TryLoadImageAsync(fileDatabase.FolderPath).ConfigureAwait(false);
-                        bool mismatched = unalteredImage.Image.MismatchedOrNot32BitBgra(previousNextImage.Image);
+                        bool mismatched = true;
+                        if (previousNextImage.Image != null)
+                        {
+                            mismatched = unalteredImage.Image.MismatchedOrNot32BitBgra(previousNextImage.Image);
+                        }
 
                         if (fileDatabase.IsFileRowInRange(otherImageRowForCombined))
                         {
                             ImageRow otherFileForCombined = fileDatabase.Files[otherImageRowForCombined];
                             CachedImage otherImageForCombined = await otherFileForCombined.TryLoadImageAsync(fileDatabase.FolderPath).ConfigureAwait(false);
-                            mismatched |= unalteredImage.Image.MismatchedOrNot32BitBgra(otherImageForCombined.Image);
+                            if (otherImageForCombined.Image != null)
+                            {
+                                mismatched |= unalteredImage.Image.MismatchedOrNot32BitBgra(otherImageForCombined.Image);
+                            }
+                            else
+                            {
+                                mismatched = true;
+                            }
                         }
 
                         expectNullImage |= mismatched;

@@ -17,7 +17,6 @@ namespace Carnassial.Images
         private readonly Dictionary<ImageDifference, CachedImage?> differenceCache;
         private int differencesCalculated;
         private TimeSpan differenceTime;
-        private bool disposed;
         private readonly MostRecentlyUsedList<long> mostRecentlyUsedIDs;
         private readonly ConcurrentDictionary<long, Task> prefetchesByID;
         private readonly ConcurrentDictionary<long, CachedImage> unalteredImagesByID;
@@ -35,7 +34,6 @@ namespace Carnassial.Images
             }
             this.differencesCalculated = 0;
             this.differenceTime = TimeSpan.Zero;
-            this.disposed = false;
             this.mostRecentlyUsedIDs = new MostRecentlyUsedList<long>(Constant.Images.ImageCacheSize);
             this.prefetchesByID = new ConcurrentDictionary<long, Task>();
             this.unalteredImagesByID = new ConcurrentDictionary<long, CachedImage>();
@@ -372,7 +370,7 @@ namespace Carnassial.Images
             {
                 Stopwatch stopwatch = new();
                 stopwatch.Start();
-                bool success = unaltered.Image.TryDifference(previous.Image, next.Image, differenceThreshold, out MemoryImage difference);
+                bool success = unaltered.Image.TryDifference(previous.Image, next.Image, differenceThreshold, out MemoryImage? difference);
                 stopwatch.Stop();
                 if (success)
                 {
@@ -384,7 +382,7 @@ namespace Carnassial.Images
                         if ((this.CurrentRow == initialRow) && (this.CurrentDifferenceState == initialDifferenceState))
                         {
                             this.CurrentDifferenceState = ImageDifference.Combined;
-                            this.differenceCache[ImageDifference.Combined] = new CachedImage(difference);
+                            this.differenceCache[ImageDifference.Combined] = new CachedImage(difference!); // suppress spurious CS8604, VS 17.8.3
                             return ImageDifferenceResult.Success;
                         }
                         return ImageDifferenceResult.NoLongerValid;
@@ -458,7 +456,7 @@ namespace Carnassial.Images
             {
                 Stopwatch stopwatch = new();
                 stopwatch.Start();
-                bool success = unaltered.Image.TryDifference(comparisonImage.Image, differenceThreshold, out MemoryImage difference);
+                bool success = unaltered.Image.TryDifference(comparisonImage.Image, differenceThreshold, out MemoryImage? difference);
                 if (success)
                 {
                     lock (this.differenceCache)
@@ -469,7 +467,7 @@ namespace Carnassial.Images
                         if ((this.CurrentRow == initialRow) && (this.CurrentDifferenceState == initialDifferenceState))
                         {
                             this.CurrentDifferenceState = nextDifferenceState;
-                            this.differenceCache[nextDifferenceState] = new CachedImage(difference);
+                            this.differenceCache[nextDifferenceState] = new CachedImage(difference!); // suppress spurious CS8604, VS 17.8.3
                             return ImageDifferenceResult.Success;
                         }
                         return ImageDifferenceResult.NoLongerValid;
