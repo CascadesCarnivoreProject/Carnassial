@@ -234,7 +234,7 @@ namespace Carnassial.Data.Spreadsheet
                     writer.WriteAttributeString("xmlns", "r", null, "http://schemas.openxmlformats.org/officeDocument/2006/relationships");
 
                     writer.WriteStartElement(Constant.OpenXml.Element.Dimension, Constant.OpenXml.Namespace);
-                    writer.WriteAttributeString(Constant.OpenXml.Attribute.Reference, "A1:" + this.GetExcelColumnReference(columns.Count - 1) + (fileDatabase.Files.RowCount + 1).ToString(Constant.InvariantCulture));
+                    writer.WriteAttributeString(Constant.OpenXml.Attribute.Reference, "A1:" + SpreadsheetReaderWriter.GetExcelColumnReference(columns.Count - 1) + (fileDatabase.Files.RowCount + 1).ToString(Constant.InvariantCulture));
                     writer.WriteEndElement(); // dimension
 
                     writer.WriteStartElement(Constant.OpenXml.Element.SheetViews, Constant.OpenXml.Namespace);
@@ -291,11 +291,11 @@ namespace Carnassial.Data.Spreadsheet
                     writer.WriteStartElement(Constant.OpenXml.Element.Row, Constant.OpenXml.Namespace);
                     for (int columnIndex = 0; columnIndex < columns.Count; ++columnIndex)
                     {
-                        string columnReference = this.GetExcelColumnReference(columnIndex);
+                        string columnReference = SpreadsheetReaderWriter.GetExcelColumnReference(columnIndex);
                         columnReferences[columnIndex] = columnReference;
 
                         string stringIndex = sharedStringIndex.GetOrAdd(columns[columnIndex]).ToString(Constant.InvariantCulture);
-                        this.WriteCellToXlsx(writer, columnReference + "1", Constant.OpenXml.CellType.SharedString, boldFontStyleID, stringIndex);
+                        SpreadsheetReaderWriter.WriteCellToXlsx(writer, columnReference + "1", Constant.OpenXml.CellType.SharedString, boldFontStyleID, stringIndex);
                     }
                     writer.WriteEndElement(); // row
 
@@ -336,7 +336,7 @@ namespace Carnassial.Data.Spreadsheet
                                 throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", columnType));
                             }
 
-                            this.WriteCellToXlsx(writer, columnReferences[columnIndex] + rowReference, cellType, null, value);
+                            SpreadsheetReaderWriter.WriteCellToXlsx(writer, columnReferences[columnIndex] + rowReference, cellType, null, value);
                         }
                         writer.WriteEndElement(); // row
 
@@ -381,7 +381,7 @@ namespace Carnassial.Data.Spreadsheet
             }
         }
 
-        private int GetExcelColumnIndex(string cellReference)
+        private static int GetExcelColumnIndex(string cellReference)
         {
             Debug.Assert(cellReference.Length > 1, "Cell references must contain at least two characters.");
             int index = cellReference[0] - 'A';
@@ -402,7 +402,7 @@ namespace Carnassial.Data.Spreadsheet
             return index;
         }
 
-        private string GetExcelColumnReference(int index)
+        private static string GetExcelColumnReference(int index)
         {
             if (index < 27)
             {
@@ -544,7 +544,7 @@ namespace Carnassial.Data.Spreadsheet
                                 // get cell's column
                                 // The XML is sparse in the sense empty cells are omitted, so this is required to correctly output
                                 // rows.
-                                int column = this.GetExcelColumnIndex(cellReference);
+                                int column = SpreadsheetReaderWriter.GetExcelColumnIndex(cellReference);
 
                                 // get cell's value
                                 bool isSharedString = String.Equals(rowReader.GetAttribute(Constant.OpenXml.Attribute.CellType), Constant.OpenXml.CellType.SharedString, StringComparison.Ordinal);
@@ -851,7 +851,7 @@ namespace Carnassial.Data.Spreadsheet
                 {
                     throw new XmlException(String.Format(CultureInfo.CurrentCulture, "Worksheet dimension reference '{0}' is malformed.", dimension));
                 }
-                int maximumColumnIndex = this.GetExcelColumnIndex(range[1]);
+                int maximumColumnIndex = SpreadsheetReaderWriter.GetExcelColumnIndex(range[1]);
 
                 if (this.currentRow.Count <= maximumColumnIndex)
                 {
@@ -884,7 +884,7 @@ namespace Carnassial.Data.Spreadsheet
             }
         }
 
-        private void WriteCellToXlsx(XmlWriter writer, string reference, string? type, string? style, string? value)
+        private static void WriteCellToXlsx(XmlWriter writer, string reference, string? type, string? style, string? value)
         {
             writer.WriteStartElement(Constant.OpenXml.Element.Cell, Constant.OpenXml.Namespace);
             writer.WriteAttributeString(Constant.OpenXml.Attribute.CellReference, reference);

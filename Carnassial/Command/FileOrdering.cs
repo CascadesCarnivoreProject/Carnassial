@@ -15,12 +15,12 @@ namespace Carnassial.Command
 
         public override async Task ExecuteAsync(CarnassialWindow carnassial)
         {
-            this.ToggleOrdering(carnassial);
+            FileOrdering.ToggleOrdering(carnassial);
             await carnassial.SelectFilesAndShowFileAsync().ConfigureAwait(true);
             this.IsExecuted = true;
         }
 
-        private void ToggleOrdering(CarnassialWindow carnassial)
+        private static void ToggleOrdering(CarnassialWindow carnassial)
         {
             Debug.Assert(carnassial.IsFileDatabaseAvailable());
 
@@ -39,7 +39,7 @@ namespace Carnassial.Command
         {
             Debug.Assert(carnassial.IsFileDatabaseAvailable());
 
-            this.ToggleOrdering(carnassial);
+            FileOrdering.ToggleOrdering(carnassial);
             await carnassial.SelectFilesAndShowFileAsync(this.originalFileID, carnassial.DataHandler.FileDatabase.ImageSet.FileSelection).ConfigureAwait(true);
             this.IsExecuted = false;
         }

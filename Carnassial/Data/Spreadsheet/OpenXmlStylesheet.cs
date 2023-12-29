@@ -21,14 +21,14 @@ namespace Carnassial.Data.Spreadsheet
             this.stylesheet = styles.Stylesheet;
             if (this.stylesheet == null)
             {
-                this.stylesheet = this.CreateDefaultStylesheet();
+                this.stylesheet = OpenXmlStylesheet.CreateDefaultStylesheet();
                 this.HasChanges = true;
             }
 
             // find or insert a bold font
             if (this.stylesheet.Fonts == null)
             {
-                this.stylesheet.Fonts = this.CreateDefaultFonts();
+                this.stylesheet.Fonts = OpenXmlStylesheet.CreateDefaultFonts();
                 this.HasChanges = true;
             }
 
@@ -55,7 +55,7 @@ namespace Carnassial.Data.Spreadsheet
                 {
                     throw new NotSupportedException(App.FindResource<string>(Constant.ResourceKey.OpenXmlStylesheetInsufficientFonts));
                 }
-                this.stylesheet.CellFormats = this.CreateDefaultCellFormats();
+                this.stylesheet.CellFormats = OpenXmlStylesheet.CreateDefaultCellFormats();
                 this.HasChanges = true;
             }
             int formatIndex = 0;
@@ -75,7 +75,7 @@ namespace Carnassial.Data.Spreadsheet
             this.HasChanges = false;
         }
 
-        private CellFormats CreateDefaultCellFormats()
+        private static CellFormats CreateDefaultCellFormats()
         {
             CellFormats cellFormats = new()
             {
@@ -100,7 +100,7 @@ namespace Carnassial.Data.Spreadsheet
             return cellFormats;
         }
 
-        private Fonts CreateDefaultFonts()
+        private static Fonts CreateDefaultFonts()
         {
             Fonts fonts = new()
             {
@@ -132,7 +132,7 @@ namespace Carnassial.Data.Spreadsheet
             return fonts;
         }
 
-        private Stylesheet CreateDefaultStylesheet()
+        private static Stylesheet CreateDefaultStylesheet()
         {
             Stylesheet stylesheet = new()
             {
@@ -169,7 +169,7 @@ namespace Carnassial.Data.Spreadsheet
                 RightBorder = new RightBorder(),
                 TopBorder = new TopBorder()
             });
-            stylesheet.CellFormats = this.CreateDefaultCellFormats();
+            stylesheet.CellFormats = OpenXmlStylesheet.CreateDefaultCellFormats();
             stylesheet.CellStyleFormats.Append(new CellFormat()
             {
                 FontId = UInt32Value.FromUInt32(0),
@@ -195,7 +195,7 @@ namespace Carnassial.Data.Spreadsheet
                     PatternType = PatternValues.Gray125
                 }
             });
-            stylesheet.Fonts = this.CreateDefaultFonts();
+            stylesheet.Fonts = OpenXmlStylesheet.CreateDefaultFonts();
             return stylesheet;
         }
 

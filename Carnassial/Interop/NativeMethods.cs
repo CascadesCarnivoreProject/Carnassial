@@ -48,7 +48,7 @@ namespace Carnassial.Interop
             return new ComReleaser<IShellItem>((IShellItem)NativeMethods.SHCreateItemFromParsingName(path, null, ref shellItemGuid));
         }
 
-        [LibraryImport(Constant.Assembly.Kernel32, SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+        [LibraryImport(Constant.Assembly.Kernel32, EntryPoint = "GetDiskFreeSpaceA", SetLastError = true, StringMarshalling = StringMarshalling.Utf8)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static partial bool GetDiskFreeSpace(string lpRootPathName, out uint lpSectorsPerCluster, out uint lpBytesPerSector, out uint lpNumberOfFreeClusters, out uint lpTotalNumberOfClusters);
 

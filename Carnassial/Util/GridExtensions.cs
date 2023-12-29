@@ -20,7 +20,7 @@ namespace Carnassial.Util
                 }
             }
 
-            throw new ArgumentOutOfRangeException(nameof(row) + " or " + nameof(column), "Grid has no child at row " + row + " and column " + column + ".");
+            throw new ArgumentException(nameof(row) + " or " + nameof(column), "Grid has no child at row " + row + " and column " + column + ".");
         }
 
         public static void ReplaceOrAddChild(this Grid grid, int row, int column, UIElement newChild)

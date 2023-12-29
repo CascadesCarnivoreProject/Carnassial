@@ -12,7 +12,7 @@ namespace Carnassial.Editor {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.6.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.8.0.0")]
     internal sealed partial class EditorSettings : global::System.Configuration.ApplicationSettingsBase {
         
         private static EditorSettings defaultInstance = ((EditorSettings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new EditorSettings())));
@@ -25,7 +25,7 @@ namespace Carnassial.Editor {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("2023-06-01")]
+        [global::System.Configuration.DefaultSettingValueAttribute("2023-12-29")]
         public global::System.DateTime MostRecentCheckForUpdates {
             get {
                 return ((global::System.DateTime)(this["MostRecentCheckForUpdates"]));

@@ -1,7 +1,6 @@
 ﻿using Carnassial.Control;
 using Carnassial.Util;
 using System.Windows;
-using static Carnassial.Constant;
 
 namespace Carnassial.Dialog
 {

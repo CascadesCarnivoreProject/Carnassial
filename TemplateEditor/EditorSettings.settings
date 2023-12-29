@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="MostRecentCheckForUpdates" Type="System.DateTime" Scope="User">
-      <Value Profile="(Default)">2023-06-01</Value>
+      <Value Profile="(Default)">2023-12-29</Value>
     </Setting>
     <Setting Name="MostRecentlyUsedTemplates" Type="System.Collections.Specialized.StringCollection" Scope="User">
       <Value Profile="(Default)" />

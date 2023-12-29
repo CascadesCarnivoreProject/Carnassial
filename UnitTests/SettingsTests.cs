@@ -146,11 +146,17 @@ namespace Carnassial.UnitTests
 
             Rect carnassialWindowPosition = Rect.Parse(CarnassialSettings.Default.CarnassialWindowPosition);
             Assert.IsTrue(CarnassialSettings.Default.AudioFeedback == false);
-            Assert.IsTrue((carnassialWindowPosition.X) == 0 && (carnassialWindowPosition.Y == 0));
-            Assert.IsTrue((carnassialWindowPosition.Width == 1350) && (carnassialWindowPosition.Height == 900));
+            Assert.IsTrue((carnassialWindowPosition.X) == 0.0 && (carnassialWindowPosition.Y == 0.0));
+            Assert.IsTrue((carnassialWindowPosition.Width == 1343.0) && (carnassialWindowPosition.Height == 824.0));
+            Assert.IsTrue(CarnassialSettings.Default.ControlGridWidth == 303.0);
+            Assert.IsTrue(String.Equals(CarnassialSettings.Default.CustomSelectionTermCombiningOperator, "And", StringComparison.Ordinal));
             Assert.IsTrue(CarnassialSettings.Default.DarkLuminosityThreshold == Constant.Images.DarkLuminosityThresholdDefault);
             Assert.IsTrue(CarnassialSettings.Default.DesiredImageRendersPerSecond == TestConstant.ThrottleValues.DesiredMaximumImageRendersPerSecondDefault);
+            Assert.IsTrue(String.Equals(CarnassialSettings.Default.DevTeamEmail, "carnassialdev@gmail.com", StringComparison.Ordinal));
+            Assert.IsTrue(String.Equals(CarnassialSettings.Default.GithubOrganizationAndRepo, "CascadesCarnivoreProject/Carnassial", StringComparison.Ordinal));
             Assert.IsTrue(CarnassialSettings.Default.ImageClassificationChangeSlowdown == TestConstant.ThrottleValues.ImageClassificationSlowdownDefault);
+            Assert.IsTrue((new DateTime(2023, 12, 29) <= CarnassialSettings.Default.MostRecentCheckForUpdates) && (CarnassialSettings.Default.MostRecentCheckForUpdates < new DateTime(2030, 1, 1)));
+            Assert.IsTrue(CarnassialSettings.Default.MostRecentlyUsedImageSets == null);
             Assert.IsTrue(CarnassialSettings.Default.OrderFilesByDateTime == false);
             Assert.IsTrue(CarnassialSettings.Default.SkipFileClassification == false);
             Assert.IsTrue(CarnassialSettings.Default.SuppressImportPrompt == false);

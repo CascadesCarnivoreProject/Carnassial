@@ -4,6 +4,7 @@
 // a specific target and scoped to a namespace, type, member, etc.
 using System.Diagnostics.CodeAnalysis;
 
+[assembly: SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "spurious IDE0079", Scope = "member", Target = "~M:Carnassial.CarnassialWindow.WndProc(System.IntPtr,System.Int32,System.IntPtr,System.IntPtr,System.Boolean@)~System.IntPtr")]
 [assembly: SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "spurious IDE0079", Scope = "member", Target = "~M:Carnassial.Data.FileDatabase.UpdateFileTableTo2203Schema(System.Data.SQLite.SQLiteTransaction)")]
 [assembly: SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "spurious IDE0079", Scope = "member", Target = "~M:Carnassial.Data.TemplateDatabase.OnExistingDatabaseOpened(Carnassial.Data.TemplateDatabase)~System.Boolean")]
 [assembly: SuppressMessage("CodeQuality", "IDE0079:Remove unnecessary suppression", Justification = "spurious IDE0079", Scope = "member", Target = "~M:Carnassial.Data.VideoRow.TryLoadImageAsync(System.String,System.Nullable{System.Int32})~System.Threading.Tasks.Task{Carnassial.Data.CachedImage}")]
@@ -47,7 +48,6 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Style", "IDE0270:Use coalesce expression", Justification = "readability", Scope = "member", Target = "~M:Carnassial.Database.SQLiteDatabase.GetBackupFilePath~System.String")]
 [assembly: SuppressMessage("Style", "IDE0270:Use coalesce expression", Justification = "readability", Scope = "member", Target = "~M:Carnassial.Interop.UnbufferedSequentialReader.#ctor(System.String)")]
 [assembly: SuppressMessage("Style", "IDE0270:Use coalesce expression", Justification = "readability", Scope = "member", Target = "~M:Carnassial.Util.MostRecentlyUsedList`1.#ctor(System.Collections.IList,System.Int32)")]
-[assembly: SuppressMessage("Style", "IDE0270:Use coalesce expression", Justification = "readability", Scope = "member", Target = "~M:Carnassial.Util.RegistryKeyExtensions.ReadString(Microsoft.Win32.RegistryKey,System.String)~System.String")]
 [assembly: SuppressMessage("Style", "IDE0270:Use coalesce expression", Justification = "readability", Scope = "type", Target = "~T:Carnassial.CarnassialWindow")]
 [assembly: SuppressMessage("Style", "IDE0270:Use coalesce expression", Justification = "readability", Scope = "type", Target = "~T:Carnassial.Data.FileDatabase")]
 [assembly: SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "readability, debuggability", Scope = "member", Target = "~M:Carnassial.Command.FileOrdering.#ctor(Carnassial.Data.FileTableEnumerator)")]

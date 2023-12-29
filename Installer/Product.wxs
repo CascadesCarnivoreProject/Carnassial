@@ -37,102 +37,119 @@
 
   <Fragment>
     <DirectoryRef Id="INSTALLFOLDER">
-      <Component Id="$(var.Carnassial.TargetFileName)" Bitness="always64">
-        <File Id="$(var.Carnassial.TargetFileName)" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\$(var.Carnassial.TargetFileName)">
-          <Shortcut Id="$(var.Carnassial.TargetName).shortcut" Name="Carnassial" Advertise="yes" Description="Starts $(var.Carnassial.TargetFileName)" Directory="NonprofitProgramMenuFolder" Icon="Carnassial.ico" />
+      <Component Id="$(var.Carnassial.TargetName).exe" Bitness="always64">
+        <File Id="$(var.Carnassial.TargetName).exe" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\win-x64\$(var.Carnassial.TargetName).exe">
+          <Shortcut Id="$(var.Carnassial.TargetName).shortcut" Name="Carnassial" Advertise="yes" Description="Starts $(var.Carnassial.TargetName)" Directory="NonprofitProgramMenuFolder" Icon="Carnassial.ico" />
         </File>
         <ProgId Id="CarnassialDatabase" Description="Carnassial database">
           <Extension Id="ddb" ContentType="application/ddb">
-            <Verb Id="open" Command="Open" TargetFile="$(var.Carnassial.TargetFileName)" Argument="&quot;%1&quot;" />
+            <Verb Id="open" Command="Open" TargetFile="$(var.Carnassial.TargetName).exe" Argument="&quot;%1&quot;" />
           </Extension>
         </ProgId>
         <ProgId Id="CarnassialTemplate" Description="Carnassial template database">
           <Extension Id="tdb" ContentType="application/tdb">
-            <Verb Id="open" Command="Open" TargetFile="$(var.Carnassial.TargetFileName)" Argument="&quot;%1&quot;" />
+            <Verb Id="open" Command="Open" TargetFile="$(var.Carnassial.TargetName).exe" Argument="&quot;%1&quot;" />
           </Extension>
         </ProgId>
       </Component>
-      <Component Id="$(var.Carnassial.TargetFileName).runtimeconfig.json" Bitness="always64">
-        <File Id="$(var.Carnassial.TargetFileName).runtimeconfig.json" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\$(var.Carnassial.TargetFileName).config" />
+      <Component Id="$(var.Carnassial.TargetName).dll" Bitness="always64">
+        <File Id="$(var.Carnassial.TargetName).dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\win-x64\$(var.Carnassial.TargetName).dll" />
+      </Component>
+      <Component Id="$(var.Carnassial.TargetName).dll.config" Bitness="always64">
+        <File Id="$(var.Carnassial.TargetName).dll.config" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\win-x64\$(var.Carnassial.TargetName).dll.config" />
+      </Component>
+      <Component Id="$(var.Carnassial.TargetName).runtimeconfig.json" Bitness="always64">
+        <File Id="$(var.Carnassial.TargetName).runtimeconfig.json" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\win-x64\$(var.Carnassial.TargetName).runtimeconfig.json" />
       </Component>
       <Component Id="$(var.Carnassial.TargetName).pdb" Bitness="always64">
-        <File Id="$(var.Carnassial.TargetName).pdb" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\$(var.Carnassial.TargetName).pdb" />
+        <File Id="$(var.Carnassial.TargetName).pdb" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\win-x64\$(var.Carnassial.TargetName).pdb" />
       </Component>
-      <Component Id="$(var.Native.TargetFileName)" Bitness="always64">
-        <File Id="$(var.Native.TargetFileName)" KeyPath="yes" Source="$(var.Native.TargetDir)\$(var.Native.TargetFileName)" />
+      <Component Id="$(var.Native.TargetName).dll" Bitness="always64">
+        <File Id="$(var.Native.TargetName).dll" KeyPath="yes" Source="$(var.Native.TargetDir)\$(var.Native.TargetName).dll" />
       </Component>
       <Component Id="$(var.Native.TargetName).pdb" Bitness="always64">
         <File Id="$(var.Native.TargetName).pdb" KeyPath="yes" Source="$(var.Native.TargetDir)\$(var.Native.TargetName).pdb" />
       </Component>
-      <Component Id="$(var.TemplateEditor.TargetFileName)" Bitness="always64">
-        <File Id="$(var.TemplateEditor.TargetFileName)" KeyPath="yes" Source="$(var.TemplateEditor.TargetDir)publish\$(var.TemplateEditor.TargetFileName)">
-          <Shortcut Id="$(var.TemplateEditor.TargetName).shortcut" Name="Carnassial Template Editor" Advertise="yes" Description="Starts $(var.TemplateEditor.TargetFileName)" Directory="ProgramMenuFolder" Icon="Editor.ico" />
+      <Component Id="$(var.TemplateEditor.TargetName).exe" Bitness="always64">
+        <File Id="$(var.TemplateEditor.TargetName).exe" KeyPath="yes" Source="$(var.TemplateEditor.TargetDir)publish\win-x64\$(var.TemplateEditor.TargetName).exe">
+          <Shortcut Id="$(var.TemplateEditor.TargetName).shortcut" Name="Carnassial Template Editor" Advertise="yes" Description="Starts $(var.TemplateEditor.TargetName)" Directory="ProgramMenuFolder" Icon="Editor.ico" />
         </File>
         <ProgId Id="CarnassialTemplate" Description="Carnassial template database">
           <Extension Id="tdb" ContentType="application/tdb">
-            <Verb Id="edit" Command="Edit" TargetFile="$(var.TemplateEditor.TargetFileName)" Argument="&quot;%1&quot;" />
+            <Verb Id="edit" Command="Edit" TargetFile="$(var.TemplateEditor.TargetName).exe" Argument="&quot;%1&quot;" />
           </Extension>
         </ProgId>
       </Component>
-      <Component Id="$(var.TemplateEditor.TargetFileName).runtimeconfig.json" Bitness="always64">
-        <File Id="$(var.TemplateEditor.TargetFileName).runtimeconfig.json" KeyPath="yes" Source="$(var.TemplateEditor.TargetDir)publish\$(var.TemplateEditor.TargetFileName).config" />
+      <Component Id="$(var.TemplateEditor.TargetName).dll" Bitness="always64">
+        <File Id="$(var.TemplateEditor.TargetName).dll" KeyPath="yes" Source="$(var.TemplateEditor.TargetDir)publish\win-x64\$(var.TemplateEditor.TargetName).dll" />
+      </Component>
+      <Component Id="$(var.TemplateEditor.TargetName).dll.config" Bitness="always64">
+        <File Id="$(var.TemplateEditor.TargetName).dll.config" KeyPath="yes" Source="$(var.TemplateEditor.TargetDir)publish\win-x64\$(var.TemplateEditor.TargetName).dll.config" />
+      </Component>
+      <Component Id="$(var.TemplateEditor.TargetName).runtimeconfig.json" Bitness="always64">
+        <File Id="$(var.TemplateEditor.TargetName).runtimeconfig.json" KeyPath="yes" Source="$(var.TemplateEditor.TargetDir)publish\win-x64\$(var.TemplateEditor.TargetName).runtimeconfig.json" />
       </Component>
       <Component Id="$(var.TemplateEditor.TargetName).pdb" Bitness="always64">
-        <File Id="$(var.TemplateEditor.TargetName).pdb" KeyPath="yes" Source="$(var.TemplateEditor.TargetDir)publish\$(var.TemplateEditor.TargetName).pdb" />
+        <File Id="$(var.TemplateEditor.TargetName).pdb" KeyPath="yes" Source="$(var.TemplateEditor.TargetDir)publish\win-x64\$(var.TemplateEditor.TargetName).pdb" />
       </Component>
-      <Component Id="DocumentFormat.OpenXml.dll" Bitness="always64">
-        <File Id="DocumentFormat.OpenXml.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\DocumentFormat.OpenXml.dll" />
+      <Component Id="DocumentFormat.OpenXml.Framework.dll" Bitness="always64">
+        <File Id="DocumentFormat.OpenXml.Framework.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\win-x64\DocumentFormat.OpenXml.Framework.dll" />
       </Component>
+      <Component Id="Ijwhost.dll" Bitness="always64">
+        <!-- needed for C++/CLI, Carnassial.Native.dll fails to load if not present -->
+        <File Id="Ijwhost.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\win-x64\Ijwhost.dll" />
+      </Component>      
       <Component Id="MetadataExtractor.dll" Bitness="always64">
-        <File Id="MetadataExtractor.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\MetadataExtractor.dll" />
+        <File Id="MetadataExtractor.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\win-x64\MetadataExtractor.dll" />
       </Component>
       <Component Id="Microsoft.WindowsAPICodePack.dll" Bitness="always64">
-        <File Id="Microsoft.WindowsAPICodePack.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\Microsoft.WindowsAPICodePack.dll" />
+        <File Id="Microsoft.WindowsAPICodePack.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\win-x64\Microsoft.WindowsAPICodePack.dll" />
       </Component>
       <Component Id="Microsoft.WindowsAPICodePack.Shell.dll" Bitness="always64">
-        <File Id="Microsoft.WindowsAPICodePack.Shell.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\Microsoft.WindowsAPICodePack.Shell.dll" />
+        <File Id="Microsoft.WindowsAPICodePack.Shell.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\win-x64\Microsoft.WindowsAPICodePack.Shell.dll" />
+      </Component>
+      <Component Id="SQLite.Interop.dll" Bitness="always64">
+        <File Id="SQLite.Interop.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\publish\win-x64\SQLite.Interop.dll" />
       </Component>
       <Component Id="System.Data.SQLite.dll" Bitness="always64">
-        <File Id="System.Data.SQLite.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\System.Data.SQLite.dll" />
+        <File Id="System.Data.SQLite.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\win-x64\System.Data.SQLite.dll" />
+      </Component>
+      <Component Id="System.Speech.dll" Bitness="always64">
+        <File Id="System.Speech.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\win-x64\System.Speech.dll" />
       </Component>
       <Component Id="turbojpeg.dll" Bitness="always64">
         <!-- turbjepeg.dll isn't binplaced by publishing, so pull it from the build -->
         <File Id="turbojpeg.dll" KeyPath="yes" Source="$(var.Native.TargetDir)\turbojpeg.dll" />
       </Component>
       <Component Id="XmpCore.dll" Bitness="always64">
-        <File Id="XmpCore.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\XmpCore.dll" />
+        <File Id="XmpCore.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\win-x64\XmpCore.dll" />
       </Component>
-      <Directory Id="x64.Interop" Name="x64">
-        <Component Id="x64.SQLite.Interop.dll" Bitness="always64">
-          <File Id="x64.SQLite.Interop.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\runtimes\win-x64\native\SQLite.Interop.dll" />
-        </Component>
-      </Directory>
-      <Directory Id="x86.Interop" Name="x86">
-        <Component Id="x86.SQLite.Interop.dll" Bitness="always64">
-          <File Id="x86.SQLite.Interop.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\runtimes\win-x86\native\SQLite.Interop.dll" />
-        </Component>
-      </Directory>
     </DirectoryRef>
   </Fragment>
   <Fragment>
     <ComponentGroup Id="CarnassialAndEditor">
-      <ComponentRef Id="$(var.Carnassial.TargetFileName)" />
-      <ComponentRef Id="$(var.Carnassial.TargetFileName).runtimeconfig.json" />
+      <ComponentRef Id="$(var.Carnassial.TargetName).dll" />
+      <ComponentRef Id="$(var.Carnassial.TargetName).dll.config" />
+      <ComponentRef Id="$(var.Carnassial.TargetName).exe" />
+      <ComponentRef Id="$(var.Carnassial.TargetName).runtimeconfig.json" />
       <ComponentRef Id="$(var.Carnassial.TargetName).pdb" />
-      <ComponentRef Id="$(var.Native.TargetFileName)" />
+      <ComponentRef Id="$(var.Native.TargetName).dll" />
       <ComponentRef Id="$(var.Native.TargetName).pdb" />
-      <ComponentRef Id="$(var.TemplateEditor.TargetFileName)" />
-      <ComponentRef Id="$(var.TemplateEditor.TargetFileName).runtimeconfig.json" />
+      <ComponentRef Id="$(var.TemplateEditor.TargetName).dll" />
+      <ComponentRef Id="$(var.TemplateEditor.TargetName).dll.config" />
+      <ComponentRef Id="$(var.TemplateEditor.TargetName).exe" />
+      <ComponentRef Id="$(var.TemplateEditor.TargetName).runtimeconfig.json" />
       <ComponentRef Id="$(var.TemplateEditor.TargetName).pdb" />
-      <ComponentRef Id="DocumentFormat.OpenXml.dll" />
+      <ComponentRef Id="DocumentFormat.OpenXml.Framework.dll" />
+      <ComponentRef Id="Ijwhost.dll" />
       <ComponentRef Id="MetadataExtractor.dll" />
       <ComponentRef Id="Microsoft.WindowsAPICodePack.dll" />
       <ComponentRef Id="Microsoft.WindowsAPICodePack.Shell.dll" />
+      <ComponentRef Id="SQLite.Interop.dll" />
       <ComponentRef Id="System.Data.SQLite.dll" />
+      <ComponentRef Id="System.Speech.dll" />
       <ComponentRef Id="turbojpeg.dll" />
       <ComponentRef Id="XmpCore.dll" />
-      <ComponentRef Id="x64.SQLite.Interop.dll" />
-      <ComponentRef Id="x86.SQLite.Interop.dll" />
       <ComponentRef Id="NonprofitProgramMenuFolder" />
     </ComponentGroup>
   </Fragment>

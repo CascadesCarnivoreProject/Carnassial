@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "Carnassial as built": {
+      "commandName": "Project"
+    },
+    "Carnassial as installed": {
+      "commandName": "Executable",
+      "executablePath": "%LOCALAPPDATA%\\Programs\\Cascades Carnivore Project\\Carnassial\\v2.2\\Carnassial.exe"
+    }
+  }
+}

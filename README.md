@@ -103,9 +103,6 @@ Also helpful are
 * John Skeet's discussion of [DateTime, DateTimeOffset, and TimeZoneInfo limitations](http://blog.nodatime.org/2011/08/what-wrong-with-datetime-anyway.html).
 * Microsoft's [terminology search](https://www.microsoft.com/en-us/language) for translations.
 
-User interface unit tests are currently restricted to a single test per run due to lack of support for running multiple unit
-tests in the same static apartment thread in mstest 2.0.
-
 ### Dependencies
 * Visual Studio for development
 * nuget packages as referenced by the solution

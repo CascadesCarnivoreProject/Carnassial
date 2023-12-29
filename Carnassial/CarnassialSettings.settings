@@ -11,12 +11,6 @@
     <Setting Name="AudioFeedback" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="CarnassialWindowPosition" Type="System.String" Scope="User">
-      <Value Profile="(Default)">0,0,1350,900</Value>
-    </Setting>
-    <Setting Name="ControlGridWidth" Type="System.Double" Scope="User">
-      <Value Profile="(Default)">0</Value>
-    </Setting>
     <Setting Name="CustomSelectionTermCombiningOperator" Type="System.String" Scope="User">
       <Value Profile="(Default)">And</Value>
     </Setting>
@@ -28,9 +22,6 @@
     </Setting>
     <Setting Name="ImageClassificationChangeSlowdown" Type="System.Single" Scope="User">
       <Value Profile="(Default)">2.4</Value>
-    </Setting>
-    <Setting Name="MostRecentCheckForUpdates" Type="System.DateTime" Scope="User">
-      <Value Profile="(Default)">2023-06-01</Value>
     </Setting>
     <Setting Name="MostRecentlyUsedImageSets" Type="System.Collections.Specialized.StringCollection" Scope="User">
       <Value Profile="(Default)" />
@@ -49,6 +40,15 @@
     </Setting>
     <Setting Name="VideoSlowdown" Type="System.Single" Scope="User">
       <Value Profile="(Default)">5</Value>
+    </Setting>
+    <Setting Name="CarnassialWindowPosition" Type="System.String" Scope="User">
+      <Value Profile="(Default)">0,0,1343,824</Value>
+    </Setting>
+    <Setting Name="ControlGridWidth" Type="System.Double" Scope="User">
+      <Value Profile="(Default)">303</Value>
+    </Setting>
+    <Setting Name="MostRecentCheckForUpdates" Type="System.DateTime" Scope="User">
+      <Value Profile="(Default)">2023-12-29</Value>
     </Setting>
   </Settings>
 </SettingsFile>

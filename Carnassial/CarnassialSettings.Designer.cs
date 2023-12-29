@@ -12,7 +12,7 @@ namespace Carnassial {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.6.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.8.0.0")]
     internal sealed partial class CarnassialSettings : global::System.Configuration.ApplicationSettingsBase {
         
         private static CarnassialSettings defaultInstance = ((CarnassialSettings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new CarnassialSettings())));
@@ -50,30 +50,6 @@ namespace Carnassial {
             }
             set {
                 this["AudioFeedback"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0,0,1350,900")]
-        public string CarnassialWindowPosition {
-            get {
-                return ((string)(this["CarnassialWindowPosition"]));
-            }
-            set {
-                this["CarnassialWindowPosition"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public double ControlGridWidth {
-            get {
-                return ((double)(this["ControlGridWidth"]));
-            }
-            set {
-                this["ControlGridWidth"] = value;
             }
         }
         
@@ -122,18 +98,6 @@ namespace Carnassial {
             }
             set {
                 this["ImageClassificationChangeSlowdown"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("2023-06-01")]
-        public global::System.DateTime MostRecentCheckForUpdates {
-            get {
-                return ((global::System.DateTime)(this["MostRecentCheckForUpdates"]));
-            }
-            set {
-                this["MostRecentCheckForUpdates"] = value;
             }
         }
         
@@ -205,6 +169,42 @@ namespace Carnassial {
             }
             set {
                 this["VideoSlowdown"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0,0,1343,824")]
+        public string CarnassialWindowPosition {
+            get {
+                return ((string)(this["CarnassialWindowPosition"]));
+            }
+            set {
+                this["CarnassialWindowPosition"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("303")]
+        public double ControlGridWidth {
+            get {
+                return ((double)(this["ControlGridWidth"]));
+            }
+            set {
+                this["ControlGridWidth"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("2023-12-29")]
+        public global::System.DateTime MostRecentCheckForUpdates {
+            get {
+                return ((global::System.DateTime)(this["MostRecentCheckForUpdates"]));
+            }
+            set {
+                this["MostRecentCheckForUpdates"] = value;
             }
         }
     }
