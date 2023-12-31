@@ -21,10 +21,10 @@ namespace Carnassial.Util
         // timer for flushing FileNavigatorSlider drag events
         public DispatcherTimer FileNavigatorSliderTimer { get; private set; }
 
-        public DateTime MostRecentRender { get; set; }
+        public DateTime MostRecentFileRender { get; set; }
         public string? MostRecentFileAddFolderPath { get; set; }
         public int MostRecentlyFocusedControlIndex { get; set; }
-        public long MouseHorizontalScrollDelta { get; set; }
+        public Int16 MouseHorizontalScrollDelta { get; set; }
         public string? MouseOverCounter { get; set; }
         public List<DataEntryNote> NoteControlsWithNewValues { get; private set; }
         public UndoRedoChain<CarnassialWindow> UndoRedoChain { get; private set; }
@@ -52,7 +52,7 @@ namespace Carnassial.Util
                 Interval = TimeSpan.FromSeconds(1.0 / Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound)
             };
 
-            this.MostRecentRender = DateTime.UtcNow - this.Throttles.DesiredIntervalBetweenRenders;
+            this.MostRecentFileRender = DateTime.UtcNow - this.Throttles.DesiredIntervalBetweenRenders;
             this.MostRecentFileAddFolderPath = null;
             this.MostRecentlyFocusedControlIndex = -1;
             this.MouseHorizontalScrollDelta = 0;

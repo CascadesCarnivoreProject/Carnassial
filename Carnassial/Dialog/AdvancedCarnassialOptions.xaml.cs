@@ -80,7 +80,7 @@ namespace Carnassial.Dialog
 
         private void ResetImageClassificationChangeSlowdown_Click(object sender, RoutedEventArgs e)
         {
-            float imageClassificationChangeSlowdown = CarnassialSettings.Default.ImageClassificationChangeSlowdown;
+            float imageClassificationChangeSlowdown = Constant.ThrottleValues.ImageClassificationSlowdownDefault;
             CarnassialSettings.Default.ImageClassificationChangeSlowdown = imageClassificationChangeSlowdown;
             this.ImageClassificationChangeSlowdown.Value = imageClassificationChangeSlowdown;
             this.ImageClassificationChangeSlowdown.ToolTip = imageClassificationChangeSlowdown;
@@ -110,7 +110,7 @@ namespace Carnassial.Dialog
 
         private void ResetVideoSlowdown_Click(object sender, RoutedEventArgs e)
         {
-            float videoSlowdown = CarnassialSettings.Default.VideoSlowdown;
+            float videoSlowdown = Constant.ThrottleValues.VideoSlowdownDefault;
             this.VideoSlowdown.Value = videoSlowdown;
             this.VideoSlowdown.ToolTip = videoSlowdown;
         }

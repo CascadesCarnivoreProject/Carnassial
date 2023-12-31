@@ -340,17 +340,17 @@ namespace Carnassial
         private async void FileNavigatorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> args)
         {
             // since the minimum value is 1 there's a value change event during InitializeComponent() to ignore
-            if (this.State == null)
+            if (this.State == null) // nullability is bypassed as InitializeComponent() is called before this.State is instantiated
             {
                 args.Handled = true;
                 return;
             }
 
-            DateTime utcNow = DateTime.UtcNow;
-            if ((this.State.FileNavigatorSliderDragging == false) || (utcNow - this.State.MostRecentRender > this.State.FileNavigatorSliderTimer.Interval))
+            // nothing to do if value changes are from an in progress slider drag as rendering is done when the slider sends a timer or completion event
+            // nothing to do if drag timer events more frequently than render interval (see also Throttles.RepeatedKeyAcceptanceInterval)
+            if ((this.State.FileNavigatorSliderDragging == false) || (DateTime.UtcNow - this.State.MostRecentFileRender > this.State.FileNavigatorSliderTimer.Interval))
             {
                 await this.ShowFileAsync(this.FileNavigatorSlider).ConfigureAwait(true);
-                this.State.MostRecentRender = utcNow;
                 args.Handled = true;
             }
         }
@@ -2080,6 +2080,9 @@ namespace Carnassial
                 // clear tracking state
                 this.State.CurrentFileSnapshot.Clear();
                 this.State.NoteControlsWithNewValues.Clear();
+
+                // not actually a file render but update render timestamp as FileDisplay was redrawn
+                this.State.MostRecentFileRender = DateTime.UtcNow;
                 return;
             }
 
@@ -2172,6 +2175,9 @@ namespace Carnassial
                 this.MenuViewZoomToFit.IsEnabled = isImage;
 
                 this.MenuViewPlayVideo.IsEnabled = isVideo;
+
+                // update render timestamp
+                this.State.MostRecentFileRender = DateTime.UtcNow;
             }
         }
 
@@ -3098,24 +3104,33 @@ namespace Carnassial
 
         private void Window_SourceInitialized(object sender, EventArgs e)
         {
-            // hook touchpad swipes
+            // hook to enable image set navigation with horizontal mouse wheel moves and two finger horizontal touchpad swipes
+            // Long standing workaround for https://github.com/dotnet/wpf/issues/3201.
             HwndSource.FromHwnd(new WindowInteropHelper(this).Handle).AddHook(new HwndSourceHook(this.WndProc));
         }
 
-        private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        /// <param name="_hwnd">handle to window receiving message (unused)</param>
+        /// <param name="msg">message code</param>
+        /// <param name="wParam">wParam message parameter (should be nuint but <see cref="HwndSourceHook"/> uses nint)</param>
+        /// <param name="_lParam">lParam message parameter (unused)</param>
+        /// <param name="handled">whether <see cref="WndProc"/> handled message</param>
+        private IntPtr WndProc(nint _hwnd, int msg, nint wParam, nint _lParam, ref bool handled)
         {
             // handle left and right swipes
             // The maximum size of the horizontal scrolling increment accepted is limited as, particularly when swiping left, wParam can carry large
             // positive increments rather than the negative increment which is correct for the motion.  As it sometimes jumps large for swipe rights
             // as well the simplest solution is to declare the event out of range and drop it.  Some combining of drag events is done (MouseHWheelStep)
             // as moving to a new file is a relatively chunky operation and actioning every increment makes the user interface rather hyper.
-            if (msg == Constant.Win32Messages.WM_MOUSEHWHEEL && this.FileDisplay.IsFocused)
+            if ((msg == Constant.Win32Messages.WM_MOUSEHWHEEL) && 
+                (this.FileDisplay.FileDisplay.Dock.IsFocused || // gets focus in .NET 8 (.NET lacks Windows Desktop's Control.ContainsFocus; if needed the dock panel's child controls can also be tested)
+                 this.FileDisplay.FileDisplay.IsFocused || // also a potential focus
+                 this.FileDisplay.IsFocused)) // got focus in .NET 4.5
             {
-                long wheelIncrement = wParam.ToInt64() >> 16;
-                if (Math.Abs(wheelIncrement) < Constant.Gestures.MaximumMouseHWheelIncrement)
+                Int16 wheelDelta = (Int16)((wParam.ToInt64() & 0x00000000ffff0000) >> 16); // wParam = UInt64 (on x64) = 32 bits unused | 16 bit delta (have to cast to Int16 to get sign) | 16 bits of flags, lParam = Int64 (on x64) = mouse xy position
+                if (Int16.Abs(wheelDelta) < Constant.Gestures.MaximumMouseHWheelIncrement)
                 {
-                    this.State.MouseHorizontalScrollDelta += wheelIncrement;
-                    if (Math.Abs(this.State.MouseHorizontalScrollDelta) >= Constant.Gestures.MouseHWheelStep)
+                    this.State.MouseHorizontalScrollDelta += wheelDelta;
+                    if (Int16.Abs(this.State.MouseHorizontalScrollDelta) >= Constant.Gestures.MouseHWheelDelta)
                     {
                         // if enough swipe distance has accumulated reset the accumulator
                         // This resembles a slider drag in that the rendering needs not to be spammed with events but differs as the touchpad driver
@@ -3123,17 +3138,19 @@ namespace Carnassial
                         // the accumulator is allowed to build until the next render and the number of files traversed incremented (or decremented)
                         // accordingly.
                         DateTime utcNow = DateTime.UtcNow;
-                        if (utcNow - this.State.MostRecentRender > this.State.FileNavigatorSliderTimer.Interval)
+                        if (utcNow - this.State.MostRecentFileRender > this.State.FileNavigatorSliderTimer.Interval)
                         {
-                            // awaiting an async function within WndProc() bricks the UI, so fire it asynchronously
                             Debug.Assert(this.DataHandler != null);
-                            int increment = (int)(this.State.MouseHorizontalScrollDelta / Constant.Gestures.MouseHWheelStep);
-                            int newFileIndex = this.DataHandler.ImageCache.CurrentRow + increment;
+
+                            int fileIncrement = (int)(this.State.MouseHorizontalScrollDelta / Constant.Gestures.MouseHWheelDelta);
+                            int newFileIndex = this.DataHandler.ImageCache.CurrentRow + fileIncrement;
+
+                            // can't have an async WndProc() and awaiting an async function would brick the UI, so move to new file asynchronously
                             #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-                            this.ShowFileWithoutSliderCallbackAsync(newFileIndex, increment);
+                            this.ShowFileWithoutSliderCallbackAsync(newFileIndex, fileIncrement);
                             #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
-                            this.State.MostRecentRender = utcNow;
-                            this.State.MouseHorizontalScrollDelta = 0;
+                            
+                            this.State.MouseHorizontalScrollDelta = 0; // could also keep remainder and clear it if scroll direction changes
                         }
                     }
                 }

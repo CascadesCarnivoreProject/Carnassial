@@ -237,8 +237,8 @@ namespace Carnassial
 
         public static class Gestures
         {
-            public const long MaximumMouseHWheelIncrement = 16000;
-            public const long MouseHWheelStep = 3 * 120;
+            public const Int16 MaximumMouseHWheelIncrement = 16000;
+            public const int MouseHWheelDelta = 120; // WHEEL_DELTA
         }
 
         public static class GitHub
@@ -248,10 +248,10 @@ namespace Carnassial
 
         public static class ImageDisplay
         {
-            public const double ImageZoomMaximum = 10.0;      // user configurable maximum amount of zoom in a display image
-            public const double ImageZoomMaximumRangeMaximum = 50.0; // the highest zoom a user can configure for a display image
+            public const double ImageZoomMaximum = 10.0; // user configurable maximum amount of zoom in a display image
+            public const double ImageZoomMaximumRangeMaximum = 30.0; // the highest zoom a user can configure for a display image
             public const double ImageZoomMaximumRangeMinimum = 2.0;
-            public const double ImageZoomMinimum = 1.0;       // minimum amount of zoom
+            public const double ImageZoomMinimum = 1.0; // minimum amount of zoom
 
             public const double MagnifyingGlassDefaultFieldOfView = 300.0;
             public const int MagnifyingGlassDiameter = 275;
@@ -626,11 +626,13 @@ namespace Carnassial
             public const float DesiredMaximumImageRendersPerSecondDefault = 5.0F; // keep synchronized with CarnassialSettings.settings
             public const float DesiredMaximumImageRendersPerSecondUpperBound = 12.0F;
             public const float ImageClassificationSlowdownMaximum = 5.0F;
+            public const float ImageClassificationSlowdownDefault = 2.4F; // keep synchronized with CarnassialSettings.settings
             public const float ImageClassificationSlowdownMinimum = 0.0F;
             public const int MaximumBlackFrameAttempts = 5;
             public const int MaximumRenderAttempts = 10;
             public const int SleepForImageRenderInterval = 100;
             public const float VideoSlowdownMaximum = 10.0F;
+            public const float VideoSlowdownDefault = 5.0F;  // keep synchronized with CarnassialSettings.settings
             public const float VideoSlowdownMinimum = 0.0F;
 
             public static readonly TimeSpan DesiredIntervalBetweenImageUpdates = TimeSpan.FromSeconds(5.0);

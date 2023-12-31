@@ -71,7 +71,7 @@
                     </RichTextBox>
                     <StackPanel Orientation="Horizontal" Margin="0,5,0,0" Grid.Row="1" Grid.Column="0">
                         <TextBlock Text="low risk of missing detections" FontWeight="Normal" VerticalAlignment="Center" />
-                        <Slider Name="ImageRendersPerSecond" Width="250" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="1" Margin="10,0,10,0" TickFrequency="1.0" TickPlacement="BottomRight" VerticalAlignment="Center" />
+                        <Slider Name="ImageRendersPerSecond" Width="250" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="1" Margin="10,0,10,0" TickFrequency="0.5" TickPlacement="BottomRight" VerticalAlignment="Center" />
                         <TextBlock Text="higher risk of missing detections or stalling" FontWeight="Normal" VerticalAlignment="Center" />
                     </StackPanel>
                     <Button Content="{StaticResource AdvancedOptions.Reset}" FontWeight="Normal" Padding="10,5,10,5" Click="ResetImageRendersPerSecond_Click" Grid.Row="1" Grid.Column="1" />
@@ -136,7 +136,7 @@
                     <StaticResource ResourceKey="AdvancedCarnassialOptions.ZoomInImages.Description" />
                     <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0">
                         <TextBlock Text="{StaticResource AdvancedCarnassialOptions.ZoomInImages.Min}" FontWeight="Normal" VerticalAlignment="Center" />
-                        <Slider Name="MaxZoom" Width="300" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="2" ValueChanged="MaxZoom_ValueChanged" Margin="10,0,10,0" TickFrequency="10.0" TickPlacement="BottomRight" VerticalAlignment="Center" />
+                        <Slider Name="MaxZoom" Width="300" AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="2" ValueChanged="MaxZoom_ValueChanged" Margin="10,0,10,0" TickFrequency="5.0" TickPlacement="BottomRight" VerticalAlignment="Center" />
                         <TextBlock Text="{StaticResource AdvancedCarnassialOptions.ZoomInImages.Max}" FontWeight="Normal" VerticalAlignment="Center" />
                     </StackPanel>
                     <Button Content="{StaticResource AdvancedOptions.Reset}" FontWeight="Normal" Padding="10,5,10,5" Click="ResetMaxZoom_Click" Grid.Row="1" Grid.Column="1" />

@@ -10,9 +10,9 @@
         <Run FontWeight="Bold">Terms of use:</Run>
         <LineBreak />
         <TextBlock Margin="50,0,0,0" TextWrapping="Wrap">
-            Carnassial is supplied as is as a volunteer extension of our regular work.  However, we'd like to it make it better for you too.  Submit comments, problems, or suggestions at
+            Carnassial is supplied as is as a volunteer extension of our regular work. However, we'd like to it make it better for you too. Submit comments, problems, or suggestions at
             <Hyperlink Name="IssuesLink">https://github.com/Organization/Repo/issues</Hyperlink> or email
-            <Hyperlink Name="EmailLink">devteam@provider.net</Hyperlink>.  If you fork the repo to address your needs please submit a pull request after ensuring your changes meet the commit requirements described in the readme!
+            <Hyperlink Name="EmailLink">devteam@provider.net</Hyperlink>. If you fork the repo to address your needs please submit a pull request after ensuring your changes meet the commit requirements described in the readme!
         </TextBlock>
         <LineBreak />
         <TextBlock Margin="50,10,0,0" TextWrapping="Wrap">
@@ -24,7 +24,7 @@
 
     <system:String x:Key="AdvancedCarnassialOptions.FileDisplayRate">File display rate</system:String>
     <FlowDocument x:Key="AdvancedCarnassialOptions.FileDisplayRate.Description" PagePadding="{StaticResource RichTextBox.WpfWorkarounds.ZeroThickness}" LineHeight="{StaticResource UI.BulletSpacing}" x:Shared="False">
-        <Paragraph>The maximum rate at which Carnassial will display files during navigation using the arrow keys, slider, or while playing files.  Settings above 5 files per second are not recommended if every file needs to be seen while analyzing an image set as blinking typically takes 150-200 ms.</Paragraph>
+        <Paragraph>The maximum number of files Carnassial will display per second during navigation using the arrow keys, slider, or while playing files. Settings above 5 files per second are not recommended if every file needs to be seen while analyzing an image set as blinking typically takes 150-200 ms.</Paragraph>
         <List>
             <ListItem>
                 <Paragraph>If single image detections aren't required higher frame rates allow faster analysis of image sets.</Paragraph>
@@ -36,13 +36,13 @@
                 <Paragraph>Use a lower setting if you blink slowly (it can sometimes take 400 ms) or the default is too fast.</Paragraph>
             </ListItem>
         </List>
-        <Paragraph>This setting applies to all image sets on this machine.</Paragraph>
+        <Paragraph>This setting applies to all image sets viewed on this computer.</Paragraph>
     </FlowDocument>
     <system:String x:Key="AdvancedCarnassialOptions.FileDisplayRate.LowRisk">low risk of missing detections</system:String>
     <system:String x:Key="AdvancedCarnassialOptions.FileDisplayRate.HigherRisk">higher risk of missing detections or stalling</system:String>
     <system:String x:Key="AdvancedCarnassialOptions.FilePlaySpeed">File play speed</system:String>
     <TextBlock x:Key="AdvancedCarnassialOptions.FilePlaySpeed.Description" FontWeight="Normal" TextWrapping="Wrap" Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="0" x:Shared="False">
-        Limits on how rapidly files appear.  When large changes occur between one file and the next during file play it's often desirable to allow additional time to see the changes.
+        Limits on how rapidly files appear. When large changes occur between one file and the next during file play it's often desirable to allow additional time to see the changes. These settings modify the file display rate set above but are not used during slider drags or when a key is held down.
     </TextBlock>
     <system:String x:Key="AdvancedCarnassialOptions.FilePlaySpeed.Classification.NoSlowdown">no slowdown when image classification changes</system:String>
     <system:String x:Key="AdvancedCarnassialOptions.FilePlaySpeed.Classification.MaxSlowdown">greatest slowdown</system:String>
@@ -50,13 +50,13 @@
     <system:String x:Key="AdvancedCarnassialOptions.FilePlaySpeed.Video.MaxSlowdown">longest time for video to load</system:String>
     <system:String x:Key="AdvancedCarnassialOptions.ImageDifferencingThreshold">Image differencing threshold</system:String>
     <TextBlock x:Key="AdvancedCarnassialOptions.ImageDifferencingThreshold.Description" FontWeight="Normal" Grid.Row="0" Grid.Column="0" x:Shared="False">
-        The level below which differences between images are ignored.  Navigate to a new image to see the results.<LineBreak />
+        The level below which differences between images are ignored. Navigate to a new image to see the results.<LineBreak />
         Low thresholds allow more noise to to be shown while high thresholds may miss differences.
     </TextBlock>
     <system:String x:Key="AdvancedCarnassialOptions.ImageDifferencingThreshold.Min">no threshold</system:String>
     <system:String x:Key="AdvancedCarnassialOptions.ImageDifferencingThreshold.Max">no display of differences</system:String>
     <system:String x:Key="AdvancedCarnassialOptions.Title">Advanced Carnassial options</system:String>
-    <system:String x:Key="AdvancedCarnassialOptions.Message.What">These options should be changed with care.  See the wiki for details.</system:String>
+    <system:String x:Key="AdvancedCarnassialOptions.Message.What">These options should be changed with care. See the wiki for details.</system:String>
     <system:String x:Key="AdvancedCarnassialOptions.ZoomInImages">Zooming within images</system:String>
     <TextBlock x:Key="AdvancedCarnassialOptions.ZoomInImages.Description" FontWeight="Normal" TextWrapping="Wrap" Grid.Row="0" Grid.Column="0" x:Shared="False">
         The maximum you can zoom into an image before needing to switch over to the magnifier for more zoom. Select the highest zoom which doesn't result in excessively blurry pixels.
@@ -85,7 +85,7 @@
     <system:String x:Key="CarnassialWindow.MenuFile.Import">I_mport data...</system:String>
     <system:String x:Key="CarnassialWindow.MenuFile.ImportTooltip">Import data from another image set (.ddb) or a .csv (comma separated value) or .xlsx (Excel) spreadsheet file.</system:String>
     <system:String x:Key="CarnassialWindow.MenuFile.CloneCurrent">Make a _copy of the current file...</system:String>
-    <system:String x:Key="CarnassialWindow.MenuFile.CloneCurrentToolTip">Make a copy of the current file in a location of your choosing.  The copy is not added to the image set.</system:String>
+    <system:String x:Key="CarnassialWindow.MenuFile.CloneCurrentToolTip">Make a copy of the current file in a location of your choosing. The copy is not added to the image set.</system:String>
     <system:String x:Key="CarnassialWindow.MenuFile.MoveFiles">Mo_ve selected files...</system:String>
     <system:String x:Key="CarnassialWindow.MenuFile.MoveFilesToolTip">Move all currently selected file to a location of your choosing.</system:String>
     <system:String x:Key="CarnassialWindow.MenuFile.RenameFileDatabase">Rename the _database file...</system:String>
@@ -111,17 +111,17 @@
     <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.Copy">_Copy values</system:String>
     <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.CopyToolTip">Copy data entered for the current file to the clipboard.</system:String>
     <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.Paste">_Paste values</system:String>
-    <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.PasteToolTip">Apply data copied to the clipboard to the current file.  Only fields marked copyable in the template are set.</system:String>
+    <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.PasteToolTip">Apply data copied to the clipboard to the current file. Only fields marked copyable in the template are set.</system:String>
     <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.PastePreviousValues">Paste from pre_vious file</system:String>
-    <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.PastePreviousValuesToolTip">Paste data entered for the previous file into this file.  Only fields marked copyable in the template are copied.</system:String>
+    <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.PastePreviousValuesToolTip">Paste data entered for the previous file into this file. Only fields marked copyable in the template are copied.</system:String>
     <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.PasteNextValues">Paste from ne_xt file</system:String>
-    <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.PasteNextValuesToolTip">Paste data entered for the previous file into this file.  Only fields marked copyable in the template are copied.</system:String>
+    <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.PasteNextValuesToolTip">Paste data entered for the previous file into this file. Only fields marked copyable in the template are copied.</system:String>
     <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.CopyValuesToAnalysis">Copy values to _analysis</system:String>
     <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.CopyValuesToAnalysisToolTip">Copy data entered for the current file where it can be reused under a particular analysis number.</system:String>
     <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.PasteValuesFromAnalysis">Paste values from anal_ysis</system:String>
-    <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.PasteValuesFromAnalysisToolTip">Apply data in an analysis to the current file.  Only fields marked copyable in the template are set.</system:String>
+    <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.PasteValuesFromAnalysisToolTip">Apply data in an analysis to the current file. Only fields marked copyable in the template are set.</system:String>
     <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.ResetValues">Re_set values to defaults</system:String>
-    <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.ResetValuesToolTip">Reset data the defaults specified in the template.  Only fields marked copyable in the template are reset.</system:String>
+    <system:String x:Key="CarnassialWindow.MenuEdit.CurrentFile.ResetValuesToolTip">Reset data the defaults specified in the template. Only fields marked copyable in the template are reset.</system:String>
     <system:String x:Key="CarnassialWindow.MenuEdit.MultipleFiles">_Multiple files</system:String>
     <system:String x:Key="CarnassialWindow.MenuEdit.MultipleFiles.RereadDateTimesfromFiles">_Reread date/times from files...</system:String>
     <system:String x:Key="CarnassialWindow.MenuEdit.MultipleFiles.RereadDateTimesfromFilesToolTip">Reread dates and times from all selected files.</system:String>
@@ -158,7 +158,7 @@
     <system:String x:Key="CarnassialWindow.MenuOptions.AudioFeedback">_Audio feedback</system:String>
     <system:String x:Key="CarnassialWindow.MenuOptions.AudioFeedbackToolTip">Toggles the audio that speaks the count whenever you add a counting mark to the image.</system:String>
     <system:String x:Key="CarnassialWindow.MenuOptions.SkipFileClassification">_Skip classification when adding files</system:String>
-    <system:String x:Key="CarnassialWindow.MenuOptions.SkipFileClassificationToolTip">Make adding files to an image set faster by not checking if they're dark.  They can be checked for dark later through the Edit menu.</system:String>
+    <system:String x:Key="CarnassialWindow.MenuOptions.SkipFileClassificationToolTip">Make adding files to an image set faster by not checking if they're dark. They can be checked for dark later through the Edit menu.</system:String>
     <system:String x:Key="CarnassialWindow.MenuOptions.DialogsOnOrOff">Turn _dialogs on or off</system:String>
     <system:String x:Key="CarnassialWindow.MenuOptions.DialogsOnOrOff.AmbiguousDates">Display _ambiguous dates imported dialog</system:String>
     <system:String x:Key="CarnassialWindow.MenuOptions.DialogsOnOrOff.AmbiguousDatesToolTip">Turn on or off the informational dialog displayed when files with ambiguous dates are added to an image set.</system:String>
@@ -214,7 +214,7 @@
     <system:String x:Key="CarnassialWindow.MenuView.DifferencesCombined">View _combined image differences</system:String>
     <system:String x:Key="CarnassialWindow.MenuView.DifferencesCombinedToolTip">Show the difference between the current image and the next and previous images simultaneously.</system:String>
     <system:String x:Key="CarnassialWindow.MenuView.DisplayMagnifier">Display _magnifying glass on images</system:String>
-    <system:String x:Key="CarnassialWindow.MenuView.DisplayMagnifierToolTip">Toggles the presence of the magnifying glass on image files.  The magnifying glass is not available on videos.</system:String>
+    <system:String x:Key="CarnassialWindow.MenuView.DisplayMagnifierToolTip">Toggles the presence of the magnifying glass on image files. The magnifying glass is not available on videos.</system:String>
     <system:String x:Key="CarnassialWindow.MenuView.MagnifierZoomIncrease">Increase magnifying _glass magnification</system:String>
     <system:String x:Key="CarnassialWindow.MenuView.MagnifierZoomIncreaseToolTip">Increase the magnification of the magnifying glass.</system:String>
     <system:String x:Key="CarnassialWindow.MenuView.MagnifierZoomDecrease">_Decrease magnifying glass magnification</system:String>
@@ -295,7 +295,7 @@
             <Run>You may have to recreate the database, restore it from a backup (Carnassial makes one automatically), or use another copy of it if you have one.</Run>
         </dialog:Message.Solution>
         <dialog:Message.Result>
-            <Run>Carnassial won't do anything at the moment.  You can select another template or database file.</Run>
+            <Run>Carnassial won't do anything at the moment. You can select another template or database file.</Run>
         </dialog:Message.Result>
         <dialog:Message.Hint>
             <Run>If the database also can't be opened in a SQLite database editor the file is corrupt.</Run>
@@ -317,7 +317,7 @@
             <Run>Metadata is not available as no file in the image set can be read.</Run>
         </dialog:Message.Problem>
         <dialog:Message.Reason>
-            <Run>Carnassial must have at least one valid file in order to get its metadata.  All files are either corrupted or removed.</Run>
+            <Run>Carnassial must have at least one valid file in order to get its metadata. All files are either corrupted or removed.</Run>
         </dialog:Message.Reason>
     </dialog:Message>
 
@@ -351,7 +351,7 @@
             <Run xml:space="preserve">  &#x2022; Remove or rename the conflicting files and apply the move command again to move the remaining files.</Run>
         </dialog:Message.Solution>
         <dialog:Message.Result>
-            <Run>Carnassial moved the files which could be moved.  The remaining files were left in place.</Run>
+            <Run>Carnassial moved the files which could be moved. The remaining files were left in place.</Run>
         </dialog:Message.Result>
         <dialog:Message.Hint>
             <Run>The {2} files which could not be moved are</Run><LineBreak />
@@ -375,12 +375,12 @@
             <LineBreak />
             <Run xml:space="preserve">Changing these things is either unsupported or best done with care:</Run><LineBreak />
             <Run xml:space="preserve">  &#x2022; Changing a file's name or relative path either updates a different file or adds a new file.</Run><LineBreak />
-            <Run xml:space="preserve">  &#x2022; RelativePath is interpreted relative to the imported file.  Make sure it's in the right place!</Run><LineBreak />
+            <Run xml:space="preserve">  &#x2022; RelativePath is interpreted relative to the imported file. Make sure it's in the right place!</Run><LineBreak />
             <Run xml:space="preserve">  &#x2022; Adding, removing, or renaming columns is not supported.</Run><LineBreak />
             <Run xml:space="preserve">  &#x2022; In .xlsx files, import reads only the worksheet named '{3}'.</Run>
         </dialog:Message.What>
         <dialog:Message.Result>
-            <Run>Carnassial will import as much data as it can.  If data can't be imported you'll get a dialog listing the problems.</Run>
+            <Run>Carnassial will import as much data as it can. If data can't be imported you'll get a dialog listing the problems.</Run>
         </dialog:Message.Result>
         <dialog:Message.Hint>
             <Run xml:space="preserve">  &#x2022; Usually an exported spreadsheet will be in the same folder as the Carnassial data file ({4}) it was exported from.</Run><LineBreak />
@@ -453,7 +453,7 @@
             <Run>Metadata is not available as no file in the image set can be read.</Run>
         </dialog:Message.Problem>
         <dialog:Message.Reason>
-            <Run>At least one file must be available to read metadata from.  All files are either corrupted or removed.</Run>
+            <Run>At least one file must be available to read metadata from. All files are either corrupted or removed.</Run>
         </dialog:Message.Reason>
     </dialog:Message>
 
@@ -463,7 +463,7 @@
             <Run>There aren't any images or videos in the folder '{0}' so the image set is currently empty.</Run>
         </dialog:Message.What>
         <dialog:Message.Solution>
-            <Run>Choose Yes and select a folder containing images and/or videos.  Or choose No and add files later via the File menu.</Run>
+            <Run>Choose Yes and select a folder containing images and/or videos. Or choose No and add files later via the File menu.</Run>
         </dialog:Message.Solution>
         <dialog:Message.Hint>
             <Run xml:space="preserve">  &#x2022; The files may be in a subfolder of this folder.</Run><LineBreak />
@@ -497,7 +497,7 @@
     <system:String x:Key="CarnassialWindow.Status.Selection.Reverted">Selection reverted to all files.</system:String>
     <system:String x:Key="CarnassialWindow.Status.Spreadsheet.Export">Exporting data to {0}...</system:String>
     <system:String x:Key="CarnassialWindow.Status.Spreadsheet.Export.Completed">Data exported to {0} in {1:0.000}s ({2:0} files/second).</system:String>
-    <system:String x:Key="CarnassialWindow.Status.Spreadsheet.Export.ExcelLimitExceeded">The current selection contains {0} files, which exceeds Excel's limit of {1} rows in a worksheet.  Consider direct database access, exporting to .csv, using smaller selections with multiple Excel files.</system:String>
+    <system:String x:Key="CarnassialWindow.Status.Spreadsheet.Export.ExcelLimitExceeded">The current selection contains {0} files, which exceeds Excel's limit of {1} rows in a worksheet. Consider direct database access, exporting to .csv, using smaller selections with multiple Excel files.</system:String>
     <system:String x:Key="CarnassialWindow.Status.Undo">Undid {0}.</system:String>
     
     <dialog:Message x:Key="CarnassialWindow.TemplateLoad.Failed" WindowTitle="Carnassial could not load the template file" 
@@ -514,7 +514,7 @@
             <Run>You may have to recreate the template, restore it from a backup, or use another copy of it.</Run>
         </dialog:Message.Solution>
         <dialog:Message.Result>
-            <Run>Carnassial won't do anything.  You can select another template file.</Run>
+            <Run>Carnassial won't do anything. You can select another template file.</Run>
         </dialog:Message.Result>
         <dialog:Message.Hint>
             <Run>If the template can't be opened in a SQLite database editor the file is corrupt.</Run>
@@ -535,7 +535,7 @@
     <system:String x:Key="CustomSelection.Title">Create a custom selection</system:String>
     <system:String x:Key="CustomSelection.Message.Title">Create a custom selection.</system:String>
     <system:String x:Key="CustomSelection.Message.What">You may want to view only a subset of your images and videos which fit some criteria of interest to you.</system:String>
-    <system:String x:Key="CustomSelection.Message.Solution">Specify the search terms which describe your criteria. Each row below reflects one of your data fields.  Select one or more data fields that you want to use as part of your search, select the expresson you want to use, and select or enter the value you want to use to compare against the data field's contents.</system:String>
+    <system:String x:Key="CustomSelection.Message.Solution">Specify the search terms which describe your criteria. Each row below reflects one of your data fields. Select one or more data fields that you want to use as part of your search, select the expresson you want to use, and select or enter the value you want to use to compare against the data field's contents.</system:String>
     <system:String x:Key="CustomSelection.Message.Result">Only those files matching your search criteria will be displayed.</system:String>
     <system:String x:Key="CustomSelection.Message.Hint" xml:space="preserve">GLOB expressions are case sensitive and allow wildcards as follows:
   &#x2022; * matches any number of characters and ? matches any single character.
@@ -597,9 +597,9 @@ More complex queries can be created by right clicking on a label and duplicating
 
     <system:String x:Key="DateCorrectAmbiguous.Title">Date - Check and modify ambiguous dates</system:String>
     <system:String x:Key="DateCorrectAmbiguous.Message.Title">Correct ambiguous dates.</system:String>
-    <system:String x:Key="DateCorrectAmbiguous.Message.Problem">Days of the month that are 12 or less are interchangeable with the month.  For example, a date recorded as 01-02-2017 could be either 02-Jan-2017 or 01-Feb-2017.</system:String>
-    <system:String x:Key="DateCorrectAmbiguous.Message.Solution">For each day choose whether to keep the original date or change to the swapped date and press next.  After all days have been reviewed press 'Preview Changes' to see a summary of what dates will be changed and, if satisfied, click 'Apply' to make the changes.</system:String>
-    <system:String x:Key="DateCorrectAmbiguous.Message.Result">The month and day will be interchanged for all dates selected for swapping.  The changes can be undone by swapping the dates a second time.</system:String>
+    <system:String x:Key="DateCorrectAmbiguous.Message.Problem">Days of the month that are 12 or less are interchangeable with the month. For example, a date recorded as 01-02-2017 could be either 02-Jan-2017 or 01-Feb-2017.</system:String>
+    <system:String x:Key="DateCorrectAmbiguous.Message.Solution">For each day choose whether to keep the original date or change to the swapped date and press next. After all days have been reviewed press 'Preview Changes' to see a summary of what dates will be changed and, if satisfied, click 'Apply' to make the changes.</system:String>
+    <system:String x:Key="DateCorrectAmbiguous.Message.Result">The month and day will be interchanged for all dates selected for swapping. The changes can be undone by swapping the dates a second time.</system:String>
     <system:String x:Key="DateCorrectAmbiguous.SampleFile">Sample file:</system:String>
     <system:String x:Key="DateCorrectAmbiguous.FilesWithSameDate">Files with same date:</system:String>
     <system:String x:Key="DateCorrectAmbiguous.OriginalDate">Original date:</system:String>
@@ -613,10 +613,10 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="DateDaylightSavingsTime.Title">Date/time - Correct for changes to or from daylight savings time</system:String>
     <system:String x:Key="DateDaylightSavingsTime.Message.Title">Correct for standard and daylight savings time changes</system:String>
     <system:String x:Key="DateDaylightSavingsTime.Message.Problem">The camera did not account for daylight savings time changes so the times of some files are off by an hour.</system:String>
-    <system:String x:Key="DateDaylightSavingsTime.Message.Solution" xml:space="preserve">1. The file below must be where the time change occurred.  If it isn't, click 'Cancel', navigate to that file in the main window, and restart this dialog.
+    <system:String x:Key="DateDaylightSavingsTime.Message.Solution" xml:space="preserve">1. The file below must be where the time change occurred. If it isn't, click 'Cancel', navigate to that file in the main window, and restart this dialog.
 2. If needed, choose to subtract an hour or apply the change to previous files.
 3. Press 'Okay' to apply the changes.</system:String>
-    <system:String x:Key="DateDaylightSavingsTime.Message.Result">An hour will be added or subtracted to the time of all selected files coming after this file (forwards) or before this file (backwards).  The changes can be undone by applying an equal and opposite correction.</system:String>
+    <system:String x:Key="DateDaylightSavingsTime.Message.Result">An hour will be added or subtracted to the time of all selected files coming after this file (forwards) or before this file (backwards). The changes can be undone by applying an equal and opposite correction.</system:String>
     <system:String x:Key="DateDaylightSavingsTime.Message.Hint">It may be helpful to choose to sort files by date under the Options menu before starting this dialog.</system:String>
     <system:String x:Key="DateDaylightSavingsTime.OriginalDateTime">Original date/time:</system:String>
     <system:String x:Key="DateDaylightSavingsTime.NewDateTime">New date/time:</system:String>
@@ -633,8 +633,8 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="DateTimeFixedCorrection.Title">Date/time - Add a fixed correction value to all files selected</system:String>
     <system:String x:Key="DateTimeFixedCorrection.Message.Title">Adjust the date and time of all files selected.</system:String>
     <system:String x:Key="DateTimeFixedCorrection.Message.Problem">If the camera was set to the correct date and time every file time will be wrong by the same amount.</system:String>
-    <system:String x:Key="DateTimeFixedCorrection.Message.Solution">Adjust the date and time for this file to the correct data and time and click 'Preview Changes' (which becomes active after you enter an adjusted time) to review the changes that will be made.  If satisfied, 'Apply Changes' to apply those changes.</system:String>
-    <system:String x:Key="DateTimeFixedCorrection.Message.Result">The difference between the original and corrected date and time will be applied to all files selected.  The changes can be undone by applying an equal and opposite correction.</system:String>
+    <system:String x:Key="DateTimeFixedCorrection.Message.Solution">Adjust the date and time for this file to the correct data and time and click 'Preview Changes' (which becomes active after you enter an adjusted time) to review the changes that will be made. If satisfied, 'Apply Changes' to apply those changes.</system:String>
+    <system:String x:Key="DateTimeFixedCorrection.Message.Result">The difference between the original and corrected date and time will be applied to all files selected. The changes can be undone by applying an equal and opposite correction.</system:String>
     <system:String x:Key="DateTimeFixedCorrection.Message.Hint">The date/time format you enter should look something like '12-Apr-2017 13:00:00.'  For example, changing 12-Apr-2017 13:00:00 to 13-Apr-2017 14:00:00 would add 1 day and 1 hour to each file.</system:String>
     <system:String x:Key="DateTimeFixedCorrection.OriginalDate">Original:</system:String>
     <system:String x:Key="DateTimeFixedCorrection.CorrectedDate">Corrected:</system:String>
@@ -645,11 +645,11 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="DateTimeLinearCorrection.Message.Solution" xml:space="preserve">Estimates of when the camera's clock was last correct and when the clock's error was measured are shown below.
   &#x2022; If needed, adjust the date/time when the camera was last correct in the left date/time picker.
   &#x2022; If needed, adjust the date/time when the camera's clock drift was measured in the right date/time picker.
-  &#x2022; Set the amount of clock drift measured at far right.  Drift is positive for slow clocks, negative for fast ones.
+  &#x2022; Set the amount of clock drift measured at far right. Drift is positive for slow clocks, negative for fast ones.
   &#x2022; Click Preview Changes (which becomes active after you enter the clock drift) to review the changes that will be made.
   &#x2022; Click Apply Changes to apply those changes.</system:String>
-    <system:String x:Key="DateTimeLinearCorrection.Message.Result">Using linear interpolation, each file's date/time is adjusted based on its position within the interval to correct.  In many cases this provides sufficient correction.  However, significant error may remain due to temperature variations or other factors, especially over long intervals.  The changes can be undone by applying an equal and opposite correction.</system:String>
-    <system:String x:Key="DateTimeLinearCorrection.Message.Hint" xml:space="preserve">Drift is defined as (actual date/time - date/time displayed on camera).  Thus, if the clock runs slow, the camera's time is behind correct time and the result is a positive time span.  For example, if the camera time is 09-Sep-2016 15:00:00 and the actual time is 09-Sep-2016 16:00:00 then the clock drift should be entered as 01:00:00.  Similarly, if the camera is fast the time span is negative.  For example, if the camera time was 09-Sep-2016 17:00:00 the drift would be -01:00:00.
+    <system:String x:Key="DateTimeLinearCorrection.Message.Result">Using linear interpolation, each file's date/time is adjusted based on its position within the interval to correct. In many cases this provides sufficient correction. However, significant error may remain due to temperature variations or other factors, especially over long intervals. The changes can be undone by applying an equal and opposite correction.</system:String>
+    <system:String x:Key="DateTimeLinearCorrection.Message.Hint" xml:space="preserve">Drift is defined as (actual date/time - date/time displayed on camera). Thus, if the clock runs slow, the camera's time is behind correct time and the result is a positive time span. For example, if the camera time is 09-Sep-2016 15:00:00 and the actual time is 09-Sep-2016 16:00:00 then the clock drift should be entered as 01:00:00. Similarly, if the camera is fast the time span is negative. For example, if the camera time was 09-Sep-2016 17:00:00 the drift would be -01:00:00.
   &#x2022; Among the files whose date/times will be adjusted the ones with the earliest and latest timestamps are shown below.
   &#x2022; The date and time format should be dd-MMM-yyyy HH:mm:ss, for example, 08-Jul-2016 14:30:00.
   &#x2022; The clock drift format should be [-]HH:mm:ss, for example, -00:46:18.</system:String>
@@ -664,9 +664,9 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="DateTimeRereadFromFiles.Title">Date/time - Reread dates and times from files</system:String>
     <system:String x:Key="DateTimeRereadFromFiles.Message.Title">Reread dates and times from images and non-AVI videos.</system:String>
     <system:String x:Key="DateTimeRereadFromFiles.Message.Problem">You've changed the selected files' dates or times and now want to go back to their original dates and times.</system:String>
-    <system:String x:Key="DateTimeRereadFromFiles.Message.Solution">Click 'Start' below to replace the existing dates and times with the original dates/times on the files.  Choose 'Cancel' if you don't want to do this.</system:String>
-    <system:String x:Key="DateTimeRereadFromFiles.Message.Result" xml:space="preserve">Carnassial will replace the current date and time with the date and time from the file's metadata.  These changes cannot be undone.
-  &#x2022; If the file's metadata lacks a date or time its creation or modification time will be used instead.  A list of the changes will be displayed.
+    <system:String x:Key="DateTimeRereadFromFiles.Message.Solution">Click 'Start' below to replace the existing dates and times with the original dates/times on the files. Choose 'Cancel' if you don't want to do this.</system:String>
+    <system:String x:Key="DateTimeRereadFromFiles.Message.Result" xml:space="preserve">Carnassial will replace the current date and time with the date and time from the file's metadata. These changes cannot be undone.
+  &#x2022; If the file's metadata lacks a date or time its creation or modification time will be used instead. A list of the changes will be displayed.
   &#x2022; The AVI file format lacks metadata. Carnassial attempts to infer the time of AVIs collected from cameras operating in hybrid mode from the preceeding image file.</system:String>
     <system:String x:Key="DateTimeRereadFromFiles.File">File</system:String>
     <system:String x:Key="DateTimeRereadFromFiles.Result">Result</system:String>
@@ -685,12 +685,12 @@ More complex queries can be created by right clicking on a label and duplicating
 
     <system:String x:Key="DateTimeSetTimeZone.Title">Date/time - Set the time zone of all files selected</system:String>
     <system:String x:Key="DateTimeSetTimeZone.Message.Title">Set the time zone of all files selected.</system:String>
-    <system:String x:Key="DateTimeSetTimeZone.Message.Problem">The UTC offset needs to be changed.  This could be because the camera is located in a different time zone from the image set's time zone, no metadata was available from the files (meaning local file times were used), or the wrong time zone was set when the files were added to the image set.</system:String>
+    <system:String x:Key="DateTimeSetTimeZone.Message.Problem">The UTC offset needs to be changed. This could be because the camera is located in a different time zone from the image set's time zone, no metadata was available from the files (meaning local file times were used), or the wrong time zone was set when the files were added to the image set.</system:String>
     <system:String x:Key="DateTimeSetTimeZone.Message.Solution" xml:space="preserve">Your currently selected file is shown below.
   &#x2022; Choose the desired time zone for this image from the drop down.
   &#x2022; Click Preview Changes (which becomes active after you enter an adjusted date/time) to review the changes that will be made.
   &#x2022; Click Apply Changes to apply those changes.</system:String>
-    <system:String x:Key="DateTimeSetTimeZone.Message.Result">The UTC offset of all images and videos selected will be set to the specified time zone.  The files' date and time of day will not change.</system:String>
+    <system:String x:Key="DateTimeSetTimeZone.Message.Result">The UTC offset of all images and videos selected will be set to the specified time zone. The files' date and time of day will not change.</system:String>
     <system:String x:Key="DateTimeSetTimeZone.OriginalDateTimeOffset">Original date, time, and offset:</system:String>
     <system:String x:Key="DateTimeSetTimeZone.NewTimeZone">New time zone:</system:String>
 
@@ -780,10 +780,10 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="FileDatabase.Import.OtherColumnNotInThis">- The control '{0}' is present in the image set to import but not in this image set."</system:String>
     <system:String x:Key="FileDatabase.Import.ThisColumnNotInOther">- The control '{0}' is present in this image set but not in the image set to import."</system:String>
     <system:String x:Key="FileDatabase.EndBeforeStart">{0} must be greater than or equal to {1}.</system:String>
-    <system:String x:Key="FileDatabase.SelectionNotAll">Database doesn't have all files selected.  Checking for files already added to the image set would fail.</system:String>
+    <system:String x:Key="FileDatabase.SelectionNotAll">Database doesn't have all files selected. Checking for files already added to the image set would fail.</system:String>
 
     <system:String x:Key="FileFindReplace.NoControlsVisible">No controls are visible.</system:String>
-    <system:String x:Key="FileIOComputeTransactionManager.CantRerun">Transaction is completed.  {0} may only be called once.</system:String>
+    <system:String x:Key="FileIOComputeTransactionManager.CantRerun">Transaction is completed. {0} may only be called once.</system:String>
     <system:String x:Key="FileIOComputeTransactionManager.NullTask">{0} is null.</system:String>
 
     <system:String x:Key="FileSelection.All">(all files)</system:String>
@@ -809,7 +809,7 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="FindReplace.Replace.Current">_Replace</system:String>
     <system:String x:Key="FindReplace.Replace.All">Replace _all</system:String>
     <system:String x:Key="FindReplace.Close">_Close</system:String>
-    <system:String x:Key="FindReplace.OneMatchingFile">Only one matching file found.  Search is complete.</system:String>
+    <system:String x:Key="FindReplace.OneMatchingFile">Only one matching file found. Search is complete.</system:String>
     <system:String x:Key="FindReplace.NoMatchingFile">No matching file found.</system:String>
 
     <dialog:Message x:Key="GithubReleaseClient.GetNewVersion" WindowTitle="Update available" 
@@ -839,11 +839,11 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="ImageRow.Import.InvalidChoice">Choice '{0}' is not a valid option for the column {1}.</system:String>
     <system:String x:Key="ImageRow.Import.InvalidClassification">Value '{0}' is not a valid file classification.</system:String>
     <system:String x:Key="ImageRow.Import.InvalidCount">'{0}' is not an integer count for the column {1}.</system:String>
-    <system:String x:Key="ImageRow.Import.InvalidDateTime">Value '{0}' is not a valid date time.  File's UTC offset will be ignored and neither its date time nor UTC offset will be updated.</system:String>
+    <system:String x:Key="ImageRow.Import.InvalidDateTime">Value '{0}' is not a valid date time. File's UTC offset will be ignored and neither its date time nor UTC offset will be updated.</system:String>
     <system:String x:Key="ImageRow.Import.InvalidDeleteFlag">Value '{0}' is not a valid delete flag.</system:String>
-    <system:String x:Key="ImageRow.Import.InvalidFlag">'{0}' is not a valid value for the flag column {1}.  Flags must be either true or false, case insensitive.</system:String>
+    <system:String x:Key="ImageRow.Import.InvalidFlag">'{0}' is not a valid value for the flag column {1}. Flags must be either true or false, case insensitive.</system:String>
     <system:String x:Key="ImageRow.Import.InvalidMarkerPosition">Marker position sequence '{0}' is not valid for the column {1}.</system:String>
-    <system:String x:Key="ImageRow.Import.InvalidUtcOffset">Value '{0}' is not a valid UTC offset.  Neither the file's date time nor UTC offset will be updated.</system:String>
+    <system:String x:Key="ImageRow.Import.InvalidUtcOffset">Value '{0}' is not a valid UTC offset. Neither the file's date time nor UTC offset will be updated.</system:String>
     <system:String x:Key="ImageRow.IDImmutable">ID is immutable.</system:String>
     <system:String x:Key="ImageRow.SetDateTimeThroughDateTimeOffset">DateTime must be set through DateTimeOffset.</system:String>
     <system:String x:Key="ImageRowSet.SetFileNameThroughFileName">FileName must be set through FileName.</system:String>
@@ -875,7 +875,7 @@ More complex queries can be created by right clicking on a label and duplicating
             </ListItem>
             <ListItem>
                 <Paragraph>
-                    <Bold>Analyze your files</Bold> Examine each file and enter the appropriate data.  There are four kinds of controls for entering data.
+                    <Bold>Analyze your files</Bold> Examine each file and enter the appropriate data. There are four kinds of controls for entering data.
                 </Paragraph>
                 <List>
                     <ListItem>
@@ -901,16 +901,16 @@ More complex queries can be created by right clicking on a label and duplicating
                 </List>
                 <Paragraph>Pressing Ctrl+1, Ctrl+2,
                     <Italic>etc.</Italic>
-                    <Bold>copies the current values</Bold> to an analysis slot.  Pressing 1, 2,
+                    <Bold>copies the current values</Bold> to an analysis slot. Pressing 1, 2,
                     <Italic>etc.</Italic> or an analysis button
-                    <Bold>pastes the values</Bold> in that analysis slot.  The
-                    <Bold>Copy previous values</Bold> button (or pressing Ctrl+P) copies available values from the previous file to the fields of the current file.  The fields copyable are defined in the template (.tdb); hover the mouse over the button to see which fields are copyable.
+                    <Bold>pastes the values</Bold> in that analysis slot. The
+                    <Bold>Copy previous values</Bold> button (or pressing Ctrl+P) copies available values from the previous file to the fields of the current file. The fields copyable are defined in the template (.tdb); hover the mouse over the button to see which fields are copyable.
                     <Bold>Right click menus</Bold> for copying values are available on all controls whose values are copyable; each lets you copy existing or previous data in different ways.
                 </Paragraph>
             </ListItem>
             <ListItem>
                 <Paragraph>
-                    <Bold>Navigation</Bold> Use the left and right arrow keys or the slider to move between files.  Tip: shift+left/right moves 5 files, control+left/right moves 10, control+shift moves 50, home and end go to the first and last files, and page up and page down jump 10% of the way through the files.
+                    <Bold>Navigation</Bold> Use the left and right arrow keys or the slider to move between files. Tip: shift+left/right moves 5 files, control+left/right moves 10, control+shift moves 50, home and end go to the first and last files, and page up and page down jump 10% of the way through the files.
                 </Paragraph>
             </ListItem>
             <ListItem>
@@ -920,7 +920,7 @@ More complex queries can be created by right clicking on a label and duplicating
             </ListItem>
             <ListItem>
                 <Paragraph>
-                    <Bold>Counting</Bold> If you want to count something in an image click the name of the desired counter. Then click on the things you are counting on the image.  A marker will appear and the count will go up by one.  If you want to remove that count just right click on the marker. It will disappear and the count will go down by one.
+                    <Bold>Counting</Bold> If you want to count something in an image click the name of the desired counter. Then click on the things you are counting on the image. A marker will appear and the count will go up by one. If you want to remove that count just right click on the marker. It will disappear and the count will go down by one.
                 </Paragraph>
             </ListItem>
         </List>
@@ -937,12 +937,12 @@ More complex queries can be created by right clicking on a label and duplicating
             </ListItem>
             <ListItem>
                 <Paragraph>
-                    <Bold>Selection</Bold> Use the select menu view only certain files.  Custom selections picking out a specific camera are particularly useful when making date/time corrections.
+                    <Bold>Selection</Bold> Use the select menu view only certain files. Custom selections picking out a specific camera are particularly useful when making date/time corrections.
                 </Paragraph>
             </ListItem>
             <ListItem>
                 <Paragraph>
-                    <Bold>Magnifying glass</Bold> Use the m key or select the magnifier in the view menu to closely inspect parts of an image.  Use the u and d keys to change the magnifier's zoom.
+                    <Bold>Magnifying glass</Bold> Use the m key or select the magnifier in the view menu to closely inspect parts of an image. Use the u and d keys to change the magnifier's zoom.
                 </Paragraph>
             </ListItem>
             <ListItem>
@@ -962,7 +962,7 @@ More complex queries can be created by right clicking on a label and duplicating
             </ListItem>
         </List>
         <Paragraph>
-            <Bold>Note:</Bold> Exporting overwrites the .csv file.  Edits made to an existing .csv will be lost.
+            <Bold>Note:</Bold> Exporting overwrites the .csv file. Edits made to an existing .csv will be lost.
         </Paragraph>
     </FlowDocument>
 
@@ -980,8 +980,8 @@ More complex queries can be created by right clicking on a label and duplicating
   1. Select a data field from the left list (only Note fields and the DateTime field can be populated)
   2. Select a metadata field from the right list (which illustrates sample values taken from the current image)
   3. (Optional) If some images or videos are missing that metatdata, you can use the checkbox below to specify clearing the old data or leave it as is.
-  4. Click the Populate button to apply the above selections to your files.  If you have a large number of files the edit make take some time.</system:String>
-    <system:String x:Key="PopulateFieldWithMetadata.Message.Result">For each file the chosen data field will be filled in with the chosen metadata from that file.  These changes cannot be undone.</system:String>
+  4. Click the Populate button to apply the above selections to your files. If you have a large number of files the edit make take some time.</system:String>
+    <system:String x:Key="PopulateFieldWithMetadata.Message.Result">For each file the chosen data field will be filled in with the chosen metadata from that file. These changes cannot be undone.</system:String>
     <system:String x:Key="PopulateFieldWithMetadata.ExapleFile">Example file:</system:String>
     <system:String x:Key="PopulateFieldWithMetadata.SelectedDataField">Selected data field:</system:String>
     <system:String x:Key="PopulateFieldWithMetadata.SelectedMetadataField">Selected metadata field:</system:String>
@@ -998,7 +998,7 @@ More complex queries can be created by right clicking on a label and duplicating
     <system:String x:Key="ReclassifyFiles.Title">(Re)classify files</system:String>
     <system:String x:Key="ReclassifyFiles.Messages.Title">Identify videos and types of images.</system:String>
     <system:String x:Key="ReclassifyFiles.Messages.What">You can perform classification of new files as well as tune how classification is done and reclassify files.</system:String>
-    <system:String x:Key="ReclassifyFiles.Messages.Solution" xml:space="preserve">To perform classification of color images, greyscale images, and videos just press the Apply button.  To tune classification of images as dark, go to an image that you feel is a typical 'borderline' dark case.  Dark classification is performed automatically and the result displayed next to the file name along with the percentage of pixels which are dark.
+    <system:String x:Key="ReclassifyFiles.Messages.Solution" xml:space="preserve">To perform classification of color images, greyscale images, and videos just press the Apply button. To tune classification of images as dark, go to an image that you feel is a typical 'borderline' dark case. Dark classification is performed automatically and the result displayed next to the file name along with the percentage of pixels which are dark.
   1. Drag the sliders to adjust how dim dark pixels need to be and how many pixels in a file need to be dark until satisfied.
   2. Navigate to other borderline files using the arrow keys or slider and check the results. Refine the thresholds as needed.
   3. Once good settings are found, apply them. Review and repeat if needed.
@@ -1013,7 +1013,7 @@ At any time, you can reset thresholds to their initial values or to the Carnassi
     <system:String x:Key="ReclassifyFiles.Reset.Defaults">to Carnassial defaults</system:String>
     <system:String x:Key="ReclassifyFiles.Reset.Defaults.ToolTip">Reset thresholds to the default values Carnassial ships with.</system:String>
     <system:String x:Key="ReclassifyFiles.Apply">_Apply to selected files</system:String>
-    <system:String x:Key="ReclassifyFiles.Unloadable">File could not be loaded.  Classification skipped.</system:String>
+    <system:String x:Key="ReclassifyFiles.Unloadable">File could not be loaded. Classification skipped.</system:String>
     <system:String x:Key="ReclassifyFiles.Video">File is a video and not subject to image classification.</system:String>
 
     <system:String x:Key="RenameFileDatabaseFile.Title">Rename the database file</system:String>
@@ -1040,7 +1040,7 @@ At any time, you can reset thresholds to their initial values or to the Carnassi
     <system:String x:Key="Spreadsheet.Import.ColumnNotInSpreadsheet">- The column '{0}' is present in the image set but not in the spreadsheet file.</system:String>
     <system:String x:Key="Spreadsheet.Import.RequiredColumnNotInSpreadsheet">- The column '{0}' must be present in the spreadsheet file.</system:String>
 
-    <system:String x:Key="SpreadsheetReaderWriter.FileSelectionNotAll">Database doesn't have all files selected.  Checking for files already added to the image set would fail.</system:String>
+    <system:String x:Key="SpreadsheetReaderWriter.FileSelectionNotAll">Database doesn't have all files selected. Checking for files already added to the image set would fail.</system:String>
     <system:String x:Key="SpreadsheetReaderWriter.NoCellValue">Could not locate cell value.</system:String>
     <system:String x:Key="SpreadsheetReaderWriter.NoDimensionReference">Could not locate worksheet dimension reference.</system:String>
     <system:String x:Key="SpreadsheetReaderWriter.NoSharedString">Could not locate cell value.</system:String>
@@ -1054,7 +1054,7 @@ At any time, you can reset thresholds to their initial values or to the Carnassi
 
     <system:String x:Key="TemplateSynchronization.Title">Sorry, this template isn't compatible with this database file</system:String>
     <system:String x:Key="TemplateSynchronization.Message.Title">Template and database files are incompatible.</system:String>
-    <system:String x:Key="TemplateSynchronization.Message.Problem">The data file can't be updated to the data field definitions in the current template.  When a template is edited Carnassial automatically updates the data file to match. However, in this case changes are present which aren't supported our would result in data loss.</system:String>
+    <system:String x:Key="TemplateSynchronization.Message.Problem">The data file can't be updated to the data field definitions in the current template. When a template is edited Carnassial automatically updates the data file to match. However, in this case changes are present which aren't supported our would result in data loss.</system:String>
     <system:String x:Key="TemplateSynchronization.Message.Solution">Edit the template, data file, or both to resolve the issues listed below.</system:String>
     <system:String x:Key="TemplateSynchronization.Message.Hint">You can still open the image set using the data file's copy of the original template.</system:String>
     <system:String x:Key="TemplateSynchronization.Details">Details:</system:String>

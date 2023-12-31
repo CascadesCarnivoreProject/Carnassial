@@ -58,7 +58,7 @@
     <!-- @Title is overridden in code for the editor -->
     <dialog:Message x:Key="ApplicationWindow.Exception" WindowTitle="Oops." Image="Error" Title="Carnassial needs to close." Buttons="OK">
         <dialog:Message.Problem>
-            <Run>This is a bug and we'd appreciate your help in fixing it.  The What section below has been copied to the clipboard.  Please paste it into a new issue at {0} or an email to {1}.  Please also include a clear and specific description of what you were doing at the time.</Run>
+            <Run>This is a bug and we'd appreciate your help in fixing it. The What section below has been copied to the clipboard. Please paste it into a new issue at {0} or an email to {1}. Please also include a clear and specific description of what you were doing at the time.</Run>
         </dialog:Message.Problem>
         <dialog:Message.What>
             <Run>{2}, {3}, .NET {4}</Run><LineBreak />
@@ -66,13 +66,13 @@
             <Run>{6}</Run>
         </dialog:Message.What>
         <dialog:Message.Reason>
-            <Run>We have a bug.  If you let us know about we'll get it fixed.  If you don't tell us probably we won't know there's a problem.</Run>
+            <Run>We have a bug. If you let us know about we'll get it fixed. If you don't tell us probably we won't know there's a problem.</Run>
         </dialog:Message.Reason>
         <dialog:Message.Result>
-            <Run>The database file should be just fine.  In the unlikely event it's not you can restore it from its backup, though your most recent changes will probably have to be re-entered.</Run>
+            <Run>The database file should be just fine. In the unlikely event it's not you can restore it from its backup, though your most recent changes will probably have to be re-entered.</Run>
         </dialog:Message.Result>
         <dialog:Message.Hint>
-            <Run>If you do the same thing this'll probably happen again.  If so, that's helpful to know as well.</Run>
+            <Run>If you do the same thing this'll probably happen again. If so, that's helpful to know as well.</Run>
         </dialog:Message.Hint>
     </dialog:Message>
     
