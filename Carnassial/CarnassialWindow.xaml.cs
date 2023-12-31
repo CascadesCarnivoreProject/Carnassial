@@ -2068,7 +2068,7 @@ namespace Carnassial
         public async Task ShowFileAsync(int fileIndex, int prefetchStride, bool generateUndoRedoCommands)
         {
             // if there is no file to show, then show an image indicating no image set or an empty image set
-            if ((this.IsFileDatabaseAvailable() == false) || (this.DataHandler!.FileDatabase.CurrentlySelectedFileCount < 1))
+            if ((this.IsFileDatabaseAvailable() == false) || (this.DataHandler.FileDatabase.CurrentlySelectedFileCount < 1))
             {
                 this.FileDisplay.Display(Constant.Images.NoSelectableFileMessage);
                 this.RefreshDisplayedMarkers();
@@ -2086,7 +2086,7 @@ namespace Carnassial
             // detach from current file, if any
             if (this.IsFileAvailable())
             {
-                if (this.DataHandler.ImageCache.Current!.HasChanges)
+                if (this.DataHandler.ImageCache.Current!.HasChanges) // this.DataHandler.ImageCache.Current != null when this.IsFileAvailable() == true
                 {
                     // persist any changes to the current file in the database and, if needed, include them in the undo/redo chain
                     // Changes to the file should already be captured to the undo/redo chain through data binding (single field edits) or from command 
@@ -2127,8 +2127,11 @@ namespace Carnassial
             // the call to TryMoveToFile() above refreshes the data stored under this.dataHandler.ImageCache.Current.
             // Note: The refresh here covers only the file table as there's no scenario for edits to the markers table which don't route through
             // MarkableCanvas.MarkerCreatedOrDeleted.
-            Debug.Assert(this.IsFileAvailable());
-            this.State.CurrentFileSnapshot = this.DataHandler.ImageCache.Current!.GetValues();
+            if (this.IsFileAvailable() == false)
+            {
+                throw new InvalidOperationException("this." + nameof(this.DataHandler) + "." + nameof(this.DataHandler.ImageCache) + "." + nameof(ImageCache.Current) + " unexpectedly null after move to file index " + fileIndex + " succeeded (prefetch stride " + prefetchStride + ", generateUndoRedoCommands " + generateUndoRedoCommands + ").");
+            }
+            this.State.CurrentFileSnapshot = this.DataHandler.ImageCache.Current!.GetValues(); // this.DataHandler.ImageCache.Current != null when this.IsFileAvailable() == true
             this.DataHandler.IsProgrammaticUpdate = true;
             this.DataEntryControls.SetDataContext(this.DataHandler.ImageCache.Current);
             this.DataHandler.IsProgrammaticUpdate = false;

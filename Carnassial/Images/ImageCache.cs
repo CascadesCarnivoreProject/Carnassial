@@ -292,10 +292,13 @@ namespace Carnassial.Images
 
                 if (base.TryMoveToFile(fileIndex) == false)
                 {
-                    return new MoveToFileResult();
+                    return new MoveToFileResult(newFileToDisplay: false, succeeded: false);
                 }
 
-                Debug.Assert(this.Current != null) ;
+                if (this.Current == null)
+                {
+                    throw new InvalidOperationException("this." + nameof(this.Current) + " unexpectedly null after move to file index " + fileIndex + " succeeded (prefetch stride " + prefetchStride + ").");
+                }
                 afterMoveFile = this.Current;
                 movedToNewFile = afterMoveFile.ID != preMoveFileID;
                 if (movedToNewFile)

@@ -2,9 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.IO.Packaging;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -585,6 +583,12 @@ namespace Carnassial
             public const string LessThan = "\u003C";
             public const string LessThanOrEqual = "\u2264";
             public const string NotEqual = "\u2260";
+        }
+
+        public static class Simd256x8
+        {
+            public const byte ExtractLower128 = 0;
+            public const byte ExtractUpper128 = 1;
         }
 
         public static class Sql

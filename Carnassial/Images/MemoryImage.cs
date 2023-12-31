@@ -34,72 +34,71 @@ namespace Carnassial.Images
         {
         }
 
-        private unsafe void DifferenceAvx128(MemoryImage other, byte threshold, MemoryImage difference)
+        private unsafe void DifferenceAvx256(MemoryImage other, byte thresholdPerChannel, MemoryImage difference)
         {
-            Vector128<byte> blackQuad = Vector128.AsByte(Vector128.Create(0xff000000));
-            Vector128<Int32> thresholdEpi32 = Vector128.Create(6 * threshold);
-            Vector128<Int32> numeratorForAverageEpi32 = Vector128.Create(0, 715827883, 0, 715827883);
-            Vector128<byte> bgrBroadcast = Vector128.Create((byte)15, 8, 8, 8, 11, 8, 8, 8, 7, 0, 0, 0, 3, 0, 0, 0); // need (byte) to disambiguate byte overload
+            Vector256<byte> blackOctet = Vector256.AsByte(Vector256.Create(0xff000000)); // assume BGRA; fully opaque black
+            Vector256<Int16> thresholdEpi16 = Vector256.Create((Int16)(6 * thresholdPerChannel)); // two pixels * RGB = 6 * threshold
+            Vector256<Int32> numeratorForAverageEpi32 = Vector256.Create(715827883, 0, 715827883, 0, 715827883, 0, 715827883, 0);
+            Vector256<byte> broadcastLowPackedOctet = Vector256.Create((byte)0, 0, 0, 3, 0, 0, 0, 3, 8, 8, 8, 11, 8, 8, 8, 11, 16, 16, 16, 19, 16, 16, 16, 19, 24, 24, 24, 27, 24, 24, 24, 27); // need (byte) to disambiguate byte overload
 
             fixed (byte* differencePixels = &difference.Pixels[0])
             fixed (byte* otherPixels = &other.Pixels[0])
-            fixed (byte* pixels = &this.Pixels[0])
+            fixed (byte* thisPixels = &this.Pixels[0])
             {
-                for (int pixelQuadOffset = 0; pixelQuadOffset < this.Pixels.Length; pixelQuadOffset += sizeof(Vector128<byte>))
+                for (int pixelOctetOffset = 0; pixelOctetOffset < this.Pixels.Length; pixelOctetOffset += sizeof(Vector256<byte>))
                 {
-                    Vector128<byte> thisPixelQuad = Avx.LoadVector128(pixels + pixelQuadOffset);
-                    Vector128<byte> otherPixelQuad = Avx.LoadVector128(otherPixels + pixelQuadOffset);
-                    Vector128<Int32> sumsOfAbsoluteDifferencesEpi32 = Vector128.AsInt32(Avx.SumAbsoluteDifferences(thisPixelQuad, otherPixelQuad));
+                    Vector256<byte> thisPixelOctet = Avx.LoadVector256(thisPixels + pixelOctetOffset);
+                    Vector256<byte> otherPixelOctet = Avx.LoadVector256(otherPixels + pixelOctetOffset);
 
-                    // performing thresholding on epi16 allows _mm_blendv_epi8() to be used to set all four of the output pixels' alpha channels as the red
-                    // and alpha channels in each pixel are set to zero and therefore below threshold; this saves a second blend instruction
-                    Vector128<byte> aboveThreshold = Vector128.AsByte(Avx.CompareGreaterThan(numeratorForAverageEpi32, thresholdEpi32));
+                    // SumAbsoluteDifference() finds two 16 bit sums of absolute difference, one for the lower two pixels and one for the upper two
+                    // These two unsigned sums are in the low 16 bits of the 64 bit halves. Interpreting them as epi16 allows the above threshold
+                    // mask to propagate the alpha = 255 bytes from the black octect.
+                    Vector256<Int16> sumsOfAbsoluteDifferencesEpi16 = Vector256.AsInt16(Avx2.SumAbsoluteDifferences(thisPixelOctet, otherPixelOctet));
+                    Vector256<byte> aboveThresholdEpu8 = Vector256.AsByte(Avx2.CompareGreaterThan(sumsOfAbsoluteDifferencesEpi16, thresholdEpi16));
 
-                    // no SIMD integer division is available; use integer approximation of a divide by three to find the average for the output pixel value
+                    // no integer division is available without AVX-512VL; use integer approximation of a divide by three to find the average for the output pixel value
                     // The maximum possible 40 bits of the 64 bit intermediates are used (the maximum sum of absolute differences is 6 * 255 = 10.58 bytes)
                     // so this is equivalent to multiplying by 0.16666666674428.
-                    Vector128<byte> outputQuad = Vector128.AsByte(Avx.ShiftRightLogical(Vector128.AsInt64(Avx.Multiply(numeratorForAverageEpi32, sumsOfAbsoluteDifferencesEpi32)), 32));
-                    outputQuad = Avx.BlendVariable(blackQuad, outputQuad, aboveThreshold);
-                    outputQuad = Avx.Shuffle(outputQuad, bgrBroadcast);
-                    Avx.Store(differencePixels + pixelQuadOffset, outputQuad);
+                    Vector256<byte> greyscaleLowPackedOctet = Vector256.AsByte(Avx2.ShiftRightLogical(Avx2.Multiply(numeratorForAverageEpi32, Vector256.AsInt32(sumsOfAbsoluteDifferencesEpi16)), 32));
+                    Vector256<byte> outputLowPackedOctet = Avx2.BlendVariable(blackOctet, greyscaleLowPackedOctet, aboveThresholdEpu8);
+                    Vector256<byte> outputOctet = Avx2.Shuffle(outputLowPackedOctet, broadcastLowPackedOctet);
+                    Avx.Store(differencePixels + pixelOctetOffset, outputOctet);
                 }
             }
         }
 
-        private unsafe void DifferenceAvx128(MemoryImage previous, MemoryImage next, byte threshold, MemoryImage difference)
+        private unsafe void DifferenceAvx256(MemoryImage previous, MemoryImage next, byte thresholdPerChannel, MemoryImage difference)
         {
-            Vector128<byte> blackQuad = Vector128.AsByte(Vector128.Create(0xff000000));
-            Vector128<Int32> thresholdEpi32 = Vector128.Create(6 * threshold);
-            Vector128<Int32> numeratorForAverageEpi32 = Vector128.Create(0, 715827883, 0, 715827883);
-            Vector128<byte> bgrBroadcast = Vector128.Create((byte)15, 8, 8, 8, 11, 8, 8, 8, 7, 0, 0, 0, 3, 0, 0, 0); // need (byte) to disambiguate byte overload
+            Vector256<byte> blackOctet = Vector256.AsByte(Vector256.Create(0xff000000));
+            Vector256<Int16> thresholdEpi16 = Vector256.Create((Int16)(6 * thresholdPerChannel));
+            Vector256<Int32> numeratorForAverageEpi32 = Vector256.Create(715827883, 0, 715827883, 0, 715827883, 0, 715827883, 0);
+            Vector256<byte> broadcastLowPackedOctet = Vector256.Create((byte)0, 0, 0, 3, 0, 0, 0, 3, 8, 8, 8, 11, 8, 8, 8, 11, 16, 16, 16, 19, 16, 16, 16, 19, 24, 24, 24, 27, 24, 24, 24, 27);
 
             fixed (byte* previousPixels = &previous.Pixels[0])
             fixed (byte* nextPixels = &next.Pixels[0])
             fixed (byte* differencePixels = &difference.Pixels[0])
             fixed (byte* pixels = &this.Pixels[0])
             {
-                for (int pixelQuadOffset = 0; pixelQuadOffset < this.Pixels.Length; pixelQuadOffset += sizeof(Vector128<byte>))
+                for (int pixelOctetOffset = 0; pixelOctetOffset < this.Pixels.Length; pixelOctetOffset += sizeof(Vector256<byte>))
                 {
-                    // performing thresholding on epi16 allows _mm_blendv_epi8() to be used to set all four of the output pixels' alpha channels as the red
-                    // and alpha channels in each pixel are set to zero and therefore below threshold; this saves a second blend instruction
-                    Vector128<byte> thisPixelQuad = Avx.LoadVector128(pixels + pixelQuadOffset);
-                    Vector128<byte> previousPixelQuad = Avx.LoadVector128(previousPixels + pixelQuadOffset);
-                    Vector128<Int32> sumsOfPreviousDifferencesEpi32 = Vector128.AsInt32(Avx.SumAbsoluteDifferences(thisPixelQuad, previousPixelQuad));
-                    Vector128<byte> previousAboveThreshold = Vector128.AsByte(Avx.CompareGreaterThan(sumsOfPreviousDifferencesEpi32, thresholdEpi32));
+                    Vector256<byte> thisPixelOctet = Avx.LoadVector256(pixels + pixelOctetOffset);
+                    Vector256<byte> previousPixelOctet = Avx.LoadVector256(previousPixels + pixelOctetOffset);
+                    Vector256<Int16> sumsOfPreviousDifferencesEpi16 = Vector256.AsInt16(Avx2.SumAbsoluteDifferences(thisPixelOctet, previousPixelOctet));
+                    Vector256<byte> previousAboveThreshold = Vector256.AsByte(Avx2.CompareGreaterThan(sumsOfPreviousDifferencesEpi16, thresholdEpi16));
 
-                    Vector128<byte> nextPixelQuad = Avx.LoadVector128(nextPixels + pixelQuadOffset);
-                    Vector128<Int32> sumsOfNextDifferenceEpi32 = Vector128.AsInt32(Avx.SumAbsoluteDifferences(thisPixelQuad, nextPixelQuad));
-                    Vector128<byte> nextAboveThreshold = Vector128.AsByte(Avx.CompareGreaterThan(sumsOfNextDifferenceEpi32, thresholdEpi32));
+                    Vector256<byte> nextPixelOctet = Avx.LoadVector256(nextPixels + pixelOctetOffset);
+                    Vector256<Int16> sumsOfNextDifferenceEpi16 = Vector256.AsInt16(Avx2.SumAbsoluteDifferences(thisPixelOctet, nextPixelOctet));
+                    Vector256<byte> nextAboveThreshold = Vector256.AsByte(Avx2.CompareGreaterThan(sumsOfNextDifferenceEpi16, thresholdEpi16));
 
                     // no SIMD integer division is available; use integer approximation of a divide by 12 to find the average for the output pixel value
                     // The maximum possible 41 bits of the 64 bit intermediates are used (the maximum sum of absolute differences is 12 * 255 = 10.58 bytes)
                     // so this is equivalent to multiplying by 0.0833333334885538.
-                    Vector128<byte> outputQuad = Vector128.AsByte(Avx.ShiftRightLogical(Vector128.AsInt64(Avx.Multiply(numeratorForAverageEpi32, Avx.Add(sumsOfPreviousDifferencesEpi32, sumsOfNextDifferenceEpi32))), 32));
+                    Vector256<byte> outputOctet = Vector256.AsByte(Avx2.ShiftRightLogical(Vector256.AsInt64(Avx2.Multiply(numeratorForAverageEpi32, Vector256.AsInt32(Avx2.Add(sumsOfPreviousDifferencesEpi16, sumsOfNextDifferenceEpi16)))), 32));
 
-                    Vector128<byte> aboveThreshold = Avx.And(previousAboveThreshold, nextAboveThreshold);
-                    outputQuad = Avx.BlendVariable(blackQuad, outputQuad, aboveThreshold);
-                    outputQuad = Avx.Shuffle(outputQuad, bgrBroadcast);
-                    Avx.Store(differencePixels + pixelQuadOffset, outputQuad);
+                    Vector256<byte> aboveThreshold = Avx2.And(previousAboveThreshold, nextAboveThreshold);
+                    outputOctet = Avx2.BlendVariable(blackOctet, outputOctet, aboveThreshold);
+                    outputOctet = Avx2.Shuffle(outputOctet, broadcastLowPackedOctet);
+                    Avx.Store(differencePixels + pixelOctetOffset, outputOctet);
                 }
             }
         }
@@ -122,7 +121,7 @@ namespace Carnassial.Images
         // there's minimal benefit to testing more pixels.  AVX2 averages slower than VEX encoded SSE 4.1, consistent with Intel's guidance for memory (rather 
         // than compute) bound operations and loss of turbo from ymm register use, so is disabled from CPU dispatch.  AVX2's mode is faster but its average is 
         // worse over any substantial number of files due to greater likelihood of slow iterations.
-        public double GetLuminosityAndColoration(int bottomRowsToSkip, out double coloration)
+        public (double luminosity, double coloration) GetLuminosityAndColoration(int bottomRowsToSkip)
         {
             // require alpha channel be set to a constant value; see remarks in NativeImage::IsDarkSse41()
             if ((this.Format != MemoryImageCppCli.PreferredPixelFormat) ||
@@ -130,15 +129,15 @@ namespace Carnassial.Images
             {
                 throw new NotSupportedException("Unhandled image format " + this.Format + " or unsuppored pixel size of " + this.PixelSizeInBytes + " bytes.");
             }
-            if (Avx.IsSupported == false)
+            if (Avx2.IsSupported == false)
             {
-                throw new NotSupportedException("AVX instructions are not available.");
+                throw new NotSupportedException("AVX2 instructions are not available.");
             }
 
-            return this.GetLuminosityAndColorationAvx128(bottomRowsToSkip, out coloration);
+            return this.GetLuminosityAndColorationAvx256(bottomRowsToSkip);
         }
 
-        private unsafe double GetLuminosityAndColorationAvx128(int bottomRowsToSkip, out double coloration)
+        private unsafe (double luminosity, double coloration) GetLuminosityAndColorationAvx256(int bottomRowsToSkip)
         {
             // estimate human apparent brightness
             // In floating point this would be
@@ -147,54 +146,58 @@ namespace Carnassial.Images
             // 125 as this gives a maximum value of 31875 for a white pixel (255, 255, 255), avoiding overflow in a signed 16 bit 
             // integer (max positive value 32767).  If the coefficient scaling is changed the luminosity calculation below also 
             // needs also to be updated.
-            //                                                        G0 R0 B0 A0 G1 R1 B1 A1 G2  R2 B2  A2  G3  R3  B3  A3 
-            Vector128<byte> bgraToGrbaShuffle = Vector128.Create((byte)1, 2, 0, 3, 5, 6, 4, 7, 9, 10, 8, 11, 13, 14, 12, 15);
-            //                                                                G0  R0  B0 A0  G1  R1  B1 A1  G2  R2  B2 A2  G3  R3  B3  A3 
-            Vector128<SByte> luminosityCoefficients = Vector128.Create((SByte)14, 74, 37, 0, 14, 74, 37, 0, 14, 74, 37, 0, 14, 74, 37, 0);
+            //                                                        G0 R0 B0 A0 G1 R1 B1 A1 G2  R2 B2  A2  G3  R3  B3  A3  G4  R4  B4  A4  G5  R5  B5  A5  G6  R6  B6  A6  G7  R7  B7  A7
+            Vector256<byte> bgraToGrbaShuffle = Vector256.Create((byte)1, 2, 0, 3, 5, 6, 4, 7, 9, 10, 8, 11, 13, 14, 12, 15, 17, 18, 16, 19, 21, 22, 20, 23, 25, 26, 24, 27, 29, 30, 28, 31);
+            //                                                                B0  G0  R0 A0  B1  G1  R1 A1  B2  G2  R2 A2  B3  G3  R3  A3 B4  G4  R4 A4  B5  G5  R5 A5  B6  G6  R6 A6  B7  G7  R7 A7 
+            Vector256<SByte> luminosityCoefficients = Vector256.Create((SByte)14, 74, 37, 0, 14, 74, 37, 0, 14, 74, 37, 0, 14, 74, 37, 0, 14, 74, 37, 0, 14, 74, 37, 0, 14, 74, 37, 0, 14, 74, 37, 0);
 
-            Vector128<Int64> colorationTotal = Vector128<Int64>.Zero;
-            Vector128<Int64> luminosityTotal = Vector128<Int64>.Zero;
+            Vector256<Int64> colorationTotalEpi64 = Vector256<Int64>.Zero;
+            Vector256<Int32> luminosityRunningTotalEpi32 = Vector256<Int32>.Zero;
+            int luminosityAccumulateIncrementInBytes = 32768 * sizeof(Vector256<Int32>);
+            Int64 luminosityTotal = 0;
+            int nextLuminosityAccumulateOffset = luminosityAccumulateIncrementInBytes; // see notes for second MultiplyAddAdjacent() below
+            Vector256<Int16> oneEpi16 = Vector256<Int16>.One;
             fixed (byte* pixels = &this.Pixels[0])
             {
-                // loop notionally uses 7 xmm registers
-                //   xmm0 + luminosity coeffs + luminosity total + pixel data + shuffle + grba + coloration total
-                for (int pixelQuadOffset = 0; pixelQuadOffset < this.Pixels.Length; pixelQuadOffset += sizeof(Vector128<byte>))
+                for (int pixelOctetOffset = 0; pixelOctetOffset < this.Pixels.Length; pixelOctetOffset += sizeof(Vector256<byte>))
                 {
-                    // get next quad of pixels
-                    Vector128<byte> pixelQuad = Avx.LoadVector128(pixels + pixelQuadOffset);
+                    // get next octet of pixels
+                    Vector256<byte> pixelOctet = Avx.LoadVector256(pixels + pixelOctetOffset);
 
                     // estimate human apparent brightness
-                    // Maximum value remains below 2^15 - 1 as in IsDarkTaskScalar() so only the low 16 bits need be retained.  Since alpha
-                    // is multiplied by zero the intermediate format is [ Bscale * B0 + Gscale * G0, Rscale * R0, Bscale * B1 + Gscale * G1,
-                    // Rscale * R1, ... ] and a self hadd produces [ luminosity0, luminosity1, luminosity2, luminosity3, luminosity0, 
-                    // luminosity1, luminosity2, luminosity3 ].
-                    // First argument of _mm_maddubs_epi16() is epu8, second is epi8; pixels need to be first and coefficients must be 127 or less to avoid the 
-                    // product becoming negative.
-                    Vector128<Int16> humanPerceivedLuminosityEpi16 = Avx.MultiplyAddAdjacent(pixelQuad, luminosityCoefficients);
-                    humanPerceivedLuminosityEpi16 = Avx.HorizontalAddSaturate(humanPerceivedLuminosityEpi16, humanPerceivedLuminosityEpi16);
-                    Vector128<Int32> humanPerceivedLuminosityEpi32 = Avx.ConvertToVector128Int32(humanPerceivedLuminosityEpi16);
-                    Vector128<Int64> humanPerceivedLuminosityEpi64 = Avx.ConvertToVector128Int64(humanPerceivedLuminosityEpi32);
-                    // accumulate luminosity of lower two pixels
-                    luminosityTotal = Avx.Add(humanPerceivedLuminosityEpi64, luminosityTotal);
-                    // accumulate luminosity of upper two pixels
-                    humanPerceivedLuminosityEpi32 = Vector128.AsInt32(Avx.UnpackHigh(Vector128.AsInt64(humanPerceivedLuminosityEpi32), Vector128.AsInt64(humanPerceivedLuminosityEpi32)));
-                    humanPerceivedLuminosityEpi64 = Avx.ConvertToVector128Int64(humanPerceivedLuminosityEpi32);
-                    luminosityTotal = Avx.Add(humanPerceivedLuminosityEpi64, luminosityTotal);
+                    // First argument of first MultiplyAddAdjacent() is epu8, second is epi8; pixels need to be first and coefficients must be 127
+                    // or less to avoid the product becoming negative. Result is { WB0 + WG0, WR0, WB1 + WG1, WR1, ..., WB7 + WG7, WR7 } weighted
+                    // luminosity components.
+                    // Second MultiplyAddAdjacent() yields pixel luminosities { Luminosity0 = WB0 + WG0 + WR0, Luminosity1, ..., Luminosity7 } where
+                    // each luminiosity is in the range [ 0, 31875 ] and an epi32 can thus accumulate ~2^16 pixels.
+                    Vector256<Int16> humanPerceivedLuminosityEpi16 = Avx2.MultiplyAddAdjacent(pixelOctet, luminosityCoefficients);
+                    Vector256<Int32> humanPerceivedLuminosityEpi32 = Avx2.MultiplyAddAdjacent(humanPerceivedLuminosityEpi16, oneEpi16);
+                    luminosityRunningTotalEpi32 = Avx2.Add(humanPerceivedLuminosityEpi32, luminosityRunningTotalEpi32);
+                    if (pixelOctetOffset >= nextLuminosityAccumulateOffset)
+                    {
+                        // if luminosity vector accumulator is potentially approaching full, transfer running total to scalar accumulator
+                        Vector128<Int32> luminosityRunningTotalEpi32x4 = Avx.Add(Avx.ExtractVector128(luminosityRunningTotalEpi32, Constant.Simd256x8.ExtractLower128), Avx.ExtractVector128(luminosityRunningTotalEpi32, Constant.Simd256x8.ExtractUpper128));
+                        luminosityTotal += (Int64)Avx.Extract(luminosityRunningTotalEpi32x4, 0) + (Int64)Avx.Extract(luminosityRunningTotalEpi32x4, 1) + (Int64)Avx.Extract(luminosityRunningTotalEpi32x4, 2) + (Int64)Avx.Extract(luminosityRunningTotalEpi32x4, 3);
+
+                        luminosityRunningTotalEpi32 = Vector256<Int32>.Zero;
+                        nextLuminosityAccumulateOffset += luminosityAccumulateIncrementInBytes;
+                    }
 
                     // calculate and accumulate coloration
                     // Since alphas are set to 255 at jpeg decode and aren't shuffled they contribute zero to the sum of absolute 
-                    // differences.  A check in IsDark() excludes RGB or BGR formats where the alpha's not a controlled 
-                    // value.
-                    Vector128<byte> pixelQuadGrba = Avx.Shuffle(pixelQuad, bgraToGrbaShuffle);
-                    Vector128<Int64> pixelQuadColoration = Vector128.AsInt64(Avx.SumAbsoluteDifferences(pixelQuad, pixelQuadGrba));
-                    colorationTotal = Avx.Add(pixelQuadColoration, colorationTotal);
+                    // differences. A check in GetLuminosityAndColoration() excludes RGB or BGR formats where the alpha's not a controlled value.
+                    // Upper bound on each sum of absolute differences is 2 pixels * 2 * 255/pixel => 9 petapixels per 64 bit accumulator.
+                    Vector256<byte> pixelOctetGrba = Avx2.Shuffle(pixelOctet, bgraToGrbaShuffle);
+                    Vector256<Int64> pixelOctetColoration = Vector256.AsInt64(Avx2.SumAbsoluteDifferences(pixelOctet, pixelOctetGrba));
+                    colorationTotalEpi64 = Avx2.Add(pixelOctetColoration, colorationTotalEpi64);
                 }
             }
 
-            // _mm_cvtepi64_pd() requires AVX512VL and AVX512DQ, so convert doubles individually
-            double pixelsChecked = this.TotalPixels;
-            coloration = ((double)Sse41.X64.Extract(colorationTotal, 0) + (double)Sse41.X64.Extract(colorationTotal, 1)) / (2.0 * 255.0 * pixelsChecked);
-            return ((double)Sse41.X64.Extract(luminosityTotal, 0) + (double)Sse41.X64.Extract(luminosityTotal, 1)) / (125.0 * 2.0 * 255.0 * pixelsChecked);
+            Vector128<Int64> colorationTotalEpi64x2 = Avx.Add(Avx.ExtractVector128(colorationTotalEpi64, Constant.Simd256x8.ExtractLower128), Avx.ExtractVector128(colorationTotalEpi64, Constant.Simd256x8.ExtractUpper128));
+            Int64 colorationTotal = Avx.X64.Extract(colorationTotalEpi64x2, 0) + Avx.X64.Extract(colorationTotalEpi64x2, 1);
+            double coloration = (double)colorationTotal / (double)(2L * 255L * this.TotalPixels); // mean coloration fraction = total / (two differences/pixel * max difference of 255 * pixel count)
+            double luminosity = (double)luminosityTotal / (double)(125L * 2L * 255L * this.TotalPixels); // fractional perceived luminosity = total / ((blue weight + green weight + red weight) * 2 * max luminosity of 255 * pixel count)
+            return (luminosity, coloration);
         }
 
         // internal to provide unit test access
@@ -263,14 +266,14 @@ namespace Carnassial.Images
         // differencing is memory bound but the systems measured don't push much beyond 11GB/s and frequently run below 7.5GB/s.
         public bool TryDifference(MemoryImage other, byte threshold, [NotNullWhen(true)] out MemoryImage? difference)
         {
-            if (this.MismatchedOrNot32BitBgra(other) || (Avx.IsSupported == false))
+            if (this.MismatchedOrNot32BitBgra(other) || (Avx2.IsSupported == false))
             {
                 difference = null;
                 return false;
             }
 
             difference = new MemoryImage(this.PixelWidth, this.PixelHeight, this.Format);
-            this.DifferenceAvx128(other, threshold, difference);
+            this.DifferenceAvx256(other, threshold, difference);
             return true;
         }
 
@@ -281,14 +284,14 @@ namespace Carnassial.Images
         {
             if (this.MismatchedOrNot32BitBgra(previous) ||
                 this.MismatchedOrNot32BitBgra(next) ||
-                (Avx.IsSupported == false))
+                (Avx2.IsSupported == false))
             {
                 difference = null;
                 return false;
             }
 
             difference = new(this.PixelWidth, this.PixelHeight, this.Format);
-            this.DifferenceAvx128(previous, next, threshold, difference);
+            this.DifferenceAvx256(previous, next, threshold, difference);
             return true;
         }
     }

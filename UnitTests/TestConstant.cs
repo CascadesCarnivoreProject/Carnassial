@@ -131,7 +131,7 @@ namespace Carnassial.UnitTests
 
                 FileExpectation.DaylightBobcat = new FileExpectations(pacificTime)
                 {
-                    Luminosity = 0.22963220152779396,
+                    Luminosity = 0.22411196454303156,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2015-08-05T08:06:23.000-07:00"),
                     FileName = FileExpectation.DaylightBobcatFileName,
                     Coloration = 0.072226041956181958,
@@ -143,7 +143,7 @@ namespace Carnassial.UnitTests
                     Coloration = 0.10284907771379409,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2016-04-21T06:31:13.000-07:00"),
                     FileName = "BushnellTrophyHDAggressor-119777C-20160421-112.JPG",
-                    Luminosity = 0.2765857055787681,
+                    Luminosity = 0.26897665441961738,
                     Classification = FileClassification.Color,
                     RelativePath = TestConstant.File.CarnivoreDirectoryName
                 };
@@ -153,7 +153,7 @@ namespace Carnassial.UnitTests
                     Coloration = 0.11669914145874821,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2015-01-28T11:17:34.000-08:00"),
                     FileName = "Reconyx-HC500-20150128-201.JPG",
-                    Luminosity = 0.20386141575831992,
+                    Luminosity = 0.18697294002358431,
                     Classification = FileClassification.Color,
                     RelativePath = TestConstant.File.CarnivoreDirectoryName
                 };
@@ -163,7 +163,7 @@ namespace Carnassial.UnitTests
                     Coloration = 0.002260494349364121,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2016-02-24T04:59:46.000-08:00"),
                     FileName = "BushnellTrophyHD-119677C-20160224-056.JPG",
-                    Luminosity = 0.3138861038100762,
+                    Luminosity = 0.30628926615548824,
                     Classification = FileClassification.Greyscale
                 };
             }

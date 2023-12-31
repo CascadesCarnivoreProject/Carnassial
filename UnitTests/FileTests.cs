@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Printing;
 using System.Threading.Tasks;
 using MetadataDirectory = MetadataExtractor.Directory;
 
@@ -169,7 +170,7 @@ namespace Carnassial.UnitTests
                 CachedImage? image = await file.TryLoadImageAsync(this.WorkingDirectory).ConfigureAwait(false);
                 Assert.IsTrue((image != null) && (image.Image != null));
 
-                double luminosity = image.Image.GetLuminosityAndColoration(0, out double coloration);
+                (double luminosity, double coloration) = image.Image.GetLuminosityAndColoration(0);
                 FileClassification classification = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
                 if (Math.Abs(luminosity - fileExpectation.Luminosity) > TestConstant.LuminosityAndColorationTolerance)
                 {

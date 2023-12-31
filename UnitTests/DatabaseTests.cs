@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Printing;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -755,7 +756,7 @@ namespace Carnassial.UnitTests
                     Assert.IsTrue(image.Image != null);
 
                     stopwatch.Restart();
-                    double luminosity = image.Image.GetLuminosityAndColoration(0, out double coloration);
+                    (double luminosity, double coloration) = image.Image.GetLuminosityAndColoration(0);
                     file.Classification = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
                     stopwatch.Stop();
                     this.TestContext.WriteLine("Classify({0}, {1:0.00}MP): {2}ms", file.FileName, 1E-6 * image.Image.TotalPixels, stopwatch.ElapsedMilliseconds);

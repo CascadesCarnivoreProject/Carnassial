@@ -83,7 +83,7 @@ namespace Carnassial.Images
             Debug.Assert(preallocatedThumbnail != null);
             double thumbnailScale = (double)preallocatedThumbnail.PixelHeight / (double)imageHeight;
             infoBarHeight = (int)Math.Round(thumbnailScale * infoBarHeight);
-            double luminosity = preallocatedThumbnail.GetLuminosityAndColoration(infoBarHeight, out double coloration);
+            (double luminosity, double coloration) = preallocatedThumbnail.GetLuminosityAndColoration(infoBarHeight);
             return new ImageProperties(luminosity, coloration)
             {
                 MetadataResult = MetadataReadResults.Thumbnail
@@ -113,7 +113,7 @@ namespace Carnassial.Images
 
             double decodingScale = (double)preallocatedImage.PixelHeight / (double)imageHeight;
             infoBarHeight = (int)Math.Round(decodingScale * infoBarHeight);
-            double luminosity = preallocatedImage.GetLuminosityAndColoration(infoBarHeight, out double coloration);
+            (double luminosity, double coloration) = preallocatedImage.GetLuminosityAndColoration(infoBarHeight);
             return new ImageProperties(luminosity, coloration);
         }
 
