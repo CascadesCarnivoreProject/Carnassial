@@ -21,7 +21,7 @@
     <system:String x:Key="About.ViewReleases">_View releases</system:String>
 
     <system:String x:Key="AdvancedImageSetOptions.TimeZone">Time zone</system:String>
-    <TextBlock x:Key="AdvancedImageSetOptions.TimeZone.Description" FontWeight="Normal" TextWrapping="Wrap" Grid.Column="0" Grid.Row="0">
+    <TextBlock x:Key="AdvancedImageSetOptions.TimeZone.Description" FontWeight="Normal" TextWrapping="Wrap" Grid.Column="0" Grid.Row="0" x:Shared="False">
         By default Carnassial uses your computer's time zone, both when adding files to image sets and when displaying dates and times. If your cameras are in a different time zone or don't follow your local time zone's daylight savings time behavior because your study uses standard or universal time you can select an alternate timezone in the dropdown below.
     </TextBlock>
     <system:String x:Key="AdvancedImageSetOptions.Message.What">These options should be changed only if you know what you are doing. See the wiki for details.</system:String>

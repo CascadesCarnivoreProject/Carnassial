@@ -23,7 +23,7 @@
     </Span>
 
     <system:String x:Key="AdvancedCarnassialOptions.FileDisplayRate">File display rate</system:String>
-    <FlowDocument x:Key="AdvancedCarnassialOptions.FileDisplayRate.Description" PagePadding="{StaticResource RichTextBox.WpfWorkarounds.ZeroThickness}" LineHeight="{StaticResource UI.BulletSpacing}">
+    <FlowDocument x:Key="AdvancedCarnassialOptions.FileDisplayRate.Description" PagePadding="{StaticResource RichTextBox.WpfWorkarounds.ZeroThickness}" LineHeight="{StaticResource UI.BulletSpacing}" x:Shared="False">
         <Paragraph>The maximum rate at which Carnassial will display files during navigation using the arrow keys, slider, or while playing files.  Settings above 5 files per second are not recommended if every file needs to be seen while analyzing an image set as blinking typically takes 150-200 ms.</Paragraph>
         <List>
             <ListItem>
@@ -41,7 +41,7 @@
     <system:String x:Key="AdvancedCarnassialOptions.FileDisplayRate.LowRisk">low risk of missing detections</system:String>
     <system:String x:Key="AdvancedCarnassialOptions.FileDisplayRate.HigherRisk">higher risk of missing detections or stalling</system:String>
     <system:String x:Key="AdvancedCarnassialOptions.FilePlaySpeed">File play speed</system:String>
-    <TextBlock x:Key="AdvancedCarnassialOptions.FilePlaySpeed.Description" FontWeight="Normal" TextWrapping="Wrap" Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="0">
+    <TextBlock x:Key="AdvancedCarnassialOptions.FilePlaySpeed.Description" FontWeight="Normal" TextWrapping="Wrap" Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="0" x:Shared="False">
         Limits on how rapidly files appear.  When large changes occur between one file and the next during file play it's often desirable to allow additional time to see the changes.
     </TextBlock>
     <system:String x:Key="AdvancedCarnassialOptions.FilePlaySpeed.Classification.NoSlowdown">no slowdown when image classification changes</system:String>
@@ -49,7 +49,7 @@
     <system:String x:Key="AdvancedCarnassialOptions.FilePlaySpeed.Video.NoSlowdown">no additional time for video to display</system:String>
     <system:String x:Key="AdvancedCarnassialOptions.FilePlaySpeed.Video.MaxSlowdown">longest time for video to load</system:String>
     <system:String x:Key="AdvancedCarnassialOptions.ImageDifferencingThreshold">Image differencing threshold</system:String>
-    <TextBlock x:Key="AdvancedCarnassialOptions.ImageDifferencingThreshold.Description" FontWeight="Normal" Grid.Row="0" Grid.Column="0">
+    <TextBlock x:Key="AdvancedCarnassialOptions.ImageDifferencingThreshold.Description" FontWeight="Normal" Grid.Row="0" Grid.Column="0" x:Shared="False">
         The level below which differences between images are ignored.  Navigate to a new image to see the results.<LineBreak />
         Low thresholds allow more noise to to be shown while high thresholds may miss differences.
     </TextBlock>
@@ -58,7 +58,7 @@
     <system:String x:Key="AdvancedCarnassialOptions.Title">Advanced Carnassial options</system:String>
     <system:String x:Key="AdvancedCarnassialOptions.Message.What">These options should be changed with care.  See the wiki for details.</system:String>
     <system:String x:Key="AdvancedCarnassialOptions.ZoomInImages">Zooming within images</system:String>
-    <TextBlock x:Key="AdvancedCarnassialOptions.ZoomInImages.Description" FontWeight="Normal" TextWrapping="Wrap" Grid.Row="0" Grid.Column="0">
+    <TextBlock x:Key="AdvancedCarnassialOptions.ZoomInImages.Description" FontWeight="Normal" TextWrapping="Wrap" Grid.Row="0" Grid.Column="0" x:Shared="False">
         The maximum you can zoom into an image before needing to switch over to the magnifier for more zoom. Select the highest zoom which doesn't result in excessively blurry pixels.
     </TextBlock>
     <system:String x:Key="AdvancedCarnassialOptions.ZoomInImages.Min">less zoom</system:String>
