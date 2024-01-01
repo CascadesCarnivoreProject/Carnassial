@@ -1,6 +1,5 @@
 ﻿using Carnassial.Data;
 using Carnassial.Images;
-using Carnassial.Native;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.Exif.Makernotes;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -10,7 +9,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Printing;
 using System.Threading.Tasks;
 using MetadataDirectory = MetadataExtractor.Directory;
 
@@ -336,7 +334,7 @@ namespace Carnassial.UnitTests
                           (corruptImage.Image != null) &&
                           (corruptImage.ImageNotDecodable == false) &&
                           (corruptImage.FileNoLongerAvailable == false) &&
-                          corruptImage.Image.DecodeError);
+                          corruptImage.Image.DecompressionError);
         }
 
         [TestMethod]
@@ -493,7 +491,7 @@ namespace Carnassial.UnitTests
             CachedImage? currentImage = cache.GetCurrentImage();
             Assert.IsTrue(currentImage != null);
             Assert.IsTrue(currentImage.Image != null);
-            Assert.IsTrue(currentImage.Image.DecodeError == false);
+            Assert.IsTrue(currentImage.Image.DecompressionError == false);
             Assert.IsTrue(currentImage.ImageNotDecodable == false);
             Assert.IsTrue((1000 < currentImage.Image.PixelHeight) && (currentImage.Image.PixelHeight < 10000));
             Assert.IsTrue((1000 < currentImage.Image.PixelWidth) && (currentImage.Image.PixelWidth < 10000));

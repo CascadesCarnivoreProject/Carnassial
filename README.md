@@ -3,11 +3,12 @@ This repository contains the source code for and releases of Carnassial and its 
 tab above to find out how to get started and learn more about Carnassial.
 
 ### Contributing
-Bug reports, feature requests, and feedback are most welcome. Let us know!  We'd also really appreciate sample images and videos 
-to test our code on and expand some features. Shoot us an email at carnassialdev@gmail.com if you've some you'd like to share. 
+Bug reports, feature requests, and feedback are most welcome. Let us know! If Carnassial is crashing without putting up an error dialog please
+use Event Viewer to check for .NET runtime and application errors in Windows Logs -> Application and include that information in the issue.
 
-If you'd like to translate Carnassial into your language it's easy. Send us your edited version of Resources.xaml or drop us a 
-line and we'll set you up.
+We'd also really appreciate sample images and videos to test our code on and expand some features. Shoot us an email at 
+carnassialdev@gmail.com if you've some you'd like to share. If you'd like to translate Carnassial into your language it's easy. Send us your 
+edited version of Resources.xaml or drop us a line and we'll set you up.
 
 If you're a developer and would like to submit a pull request please see below.
 
@@ -68,8 +69,7 @@ with the C# and C++ desktop workloads (other Visual Studio SKUs such as Enterpri
 
 * add WiX 4.0 support via the [HeatWave extension](https://www.firegiant.com/docs/heatwave/) 
 * clone the repo locally through Visual Studio's Team Explorer or GitHub's clone or download options
-* build Carnassial and, as a one time step, copy turbojpeg.dll from $(SolutionDir)\x64\$(Configuration) to $(SolutionDir)\x64\$(Configuration)\net6.0-windows10.0.19041.0
-so that Carnassial.Native.dll can be loaded by unit tests
+* build Carnassial (currently Carnassial.Native compilation is tested with MSVC v143 and the Win 10.0.19041.0 SDK)
 
 Commits should
 
@@ -109,9 +109,10 @@ Also helpful are
 * libjpeg-turbo, which is managed manually as described below
 
 A nuget package for libjpeg-turbo exists but is not being maintained so the library is comitted to the Carnassial repro. To 
-update, download the [libjpeg-turbo](https://libjpeg-turbo.org/) VC and VC64 installers, copy the new bits to 
-Native\libjpeg-turbo\{bin, include, lib}, git add -f them, and update additional dependencies in Native.vcxproj's linker input
-settings to point to the new .lib.
+update, download the [libjpeg-turbo](https://libjpeg-turbo.org/) VC and VC64 installers, copy the updated bits from 
+%SYSTEMDRIVE%\libjpeg-turbox64\{bin, include, lib} and %SYSTEMDRIVE%\libjpeg-turbo\lib to Native\libjpeg-turbo\{bin, include, lib}, 
+and update the additional dependencies in Native.vcxproj's Win32 and x64 linker settings to point to the new .libs. Either a rebuild or
+code changes within Carnassial.Native are required for Visual Studio to copy the updated turbojpeg.dll to the build output.
 
 Carnassial needs MFC only for the version header of Carnassial.Native.dll. Another detail, as of Visual Studio 2019, is 
 app.rc must be Unicode as Microsoft's resource compiler does not support UTF-8. This is incompatible with git differencing's 

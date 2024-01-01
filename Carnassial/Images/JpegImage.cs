@@ -92,7 +92,7 @@ namespace Carnassial.Images
 
         public ImageProperties GetProperties(int? requestedWidth, ref MemoryImage? preallocatedImage)
         {
-            Debug.Assert(this.reader.Buffer != null, "Reader's buffer is unexpected null. " + nameof(this.reader.ExtendBuffer) + "() should have been called on the reader..");
+            Debug.Assert(this.reader.Buffer != null, "Reader's buffer is unexpectedly null. " + nameof(this.reader.ExtendBuffer) + "() should have been called on the reader..");
 
             this.reader.ExtendBuffer((int)this.reader.Length - this.reader.Buffer.Length);
             if ((preallocatedImage == null) || (preallocatedImage.TryDecode(this.reader.Buffer, 0, this.reader.Buffer.Length, requestedWidth) == false))
@@ -200,7 +200,7 @@ namespace Carnassial.Images
             {
                 throw new ImageProcessingException(String.Format(CultureInfo.CurrentCulture, "Jpeg thumbnail sizeof {0} bytes is below smallest expected size {1}.", thumbnailLength, Constant.Images.SmallestValidJpegSizeInBytes));
             }
-            Debug.Assert(this.reader.Buffer != null, "Reader's buffer is unexpected null. " + nameof(this.reader.ExtendBuffer) + "() should have been called on the reader..");
+            Debug.Assert(this.reader.Buffer != null, "Reader's buffer is unexpectedly null. " + nameof(this.reader.ExtendBuffer) + "() should have been called on the reader..");
             if ((thumbnailOffset + thumbnailLength + Constant.Exif.MaxMetadataExtractorIssue35Offset) > this.reader.Buffer.Length)
             {
                 throw new ImageProcessingException(String.Format(CultureInfo.CurrentCulture, "End position of thumbnail (byte {0}) may exceed file buffer length of '{1}'.", thumbnailOffset + thumbnailLength, this.reader.Buffer.Length));
@@ -235,7 +235,7 @@ namespace Carnassial.Images
             {
                 preallocatedThumbnail = new MemoryImage(this.reader.Buffer, thumbnailOffset, thumbnailLength, null);
             }
-            if (preallocatedThumbnail.DecodeError)
+            if (preallocatedThumbnail.DecompressionError)
             {
                 return MetadataReadResults.Failed;
             }

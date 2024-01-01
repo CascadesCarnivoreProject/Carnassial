@@ -21,7 +21,7 @@ namespace Carnassial
 		public ref class MemoryImageCppCli
 		{
 		private:
-			bool decodeError;
+			bool decompressionError;
 			PixelFormat format;
 			int pixelHeight;
 			array<byte>^ pixels;
@@ -53,14 +53,14 @@ namespace Carnassial
 				array<byte>^ get() { return this->pixels; }
 			}
 
+			property int PitchInBytes // also called stride
+			{
+				int get() { return this->pixelWidth * this->pixelSizeInBytes; }
+			}
+
 			property int PixelSizeInBytes
 			{
 				int get() { return this->pixelSizeInBytes; }
-			}
-
-			property int StrideInBytes
-			{
-				int get() { return this->pixelWidth * this->pixelSizeInBytes; }
 			}
 
 			property int TotalPixelBytes
@@ -69,9 +69,9 @@ namespace Carnassial
 			}
 
 		public:
-			property bool DecodeError
+			property bool DecompressionError
 			{
-				bool get() { return this->decodeError; }
+				bool get() { return this->decompressionError; }
 			}
 
 			property PixelFormat Format

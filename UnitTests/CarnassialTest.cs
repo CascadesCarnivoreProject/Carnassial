@@ -2,7 +2,6 @@
 using Carnassial.Database;
 using Carnassial.Images;
 using Carnassial.Interop;
-using Carnassial.Native;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;

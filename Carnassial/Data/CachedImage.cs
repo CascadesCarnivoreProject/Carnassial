@@ -1,15 +1,13 @@
 ﻿using Carnassial.Images;
-using System;
 
 namespace Carnassial.Data
 {
     // a shim for distinguishing between image files which could not be found and those which could not be loaded
-    // This class borders on unnecessary.  In general, a loadable image produces a MemoryImage (possibly with DecodeError = true,
-    // implying corruption) and an image which cannot be loaded can be indicated by a null pointer.  However, a narrow range of cases
-    // occurs where an image file exists on disk but is so corrupted or truncated no decoding is possible.  MemoryImage { DecodeError
+    // This class borders on unnecessary. In general, a loadable image produces a MemoryImage (possibly with DecompressionError = true,
+    // implying corruption) and an image which cannot be loaded can be indicated by a null pointer. However, a narrow range of cases
+    // occurs where an image file exists on disk but is so corrupted or truncated no decoding is possible. MemoryImage { DecompressionError
     // = true } also applies to these cases and the special casing needed to produce an empty MemoryImage with the flag set is arguably
-    // less complex than interposing the CachedImage class.  However, a C# surface for this purpose is somewhat lower cost to maintain
-    // than a C++/CLI one.
+    // less complex than imposing the CachedImage class.
     public class CachedImage
     {
         public bool FileNoLongerAvailable { get; set; }

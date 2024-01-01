@@ -210,11 +210,13 @@ namespace Carnassial
             public const string AviFileExtension = ".avi";
             public const string CsvFileExtension = ".csv";
             public const string CurrentDirectory = ".";
+            public const int DefaultBufferSizeInBytes = 256 * 1024; // 256 kB
             public const string DefaultFileDatabaseFileName = "CarnassialData.ddb";
             public const string DefaultTemplateDatabaseFileName = "CarnassialTemplate.tdb";
             public const string ExcelFileExtension = ".xlsx";
             public const string FileDatabaseFileExtension = ".ddb";
             public const string JpgFileExtension = ".jpg";
+            public const int JpgPixelReadBufferSizeInBytes = 512 * 1024; // 512 kB, metadata read derives from MeatadataExtractor SequentialReader
             public const string Mp4FileExtension = ".mp4";
             public const string ParentDirectory = "..";
             public const int RowsBetweenStatusReportChecks = 500;

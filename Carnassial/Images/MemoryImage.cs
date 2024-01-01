@@ -235,7 +235,7 @@ namespace Carnassial.Images
                 image.Source = writeableBitmap;
             }
 
-            writeableBitmap.WritePixels(new Int32Rect(0, 0, this.PixelWidth, this.PixelHeight), this.Pixels, this.StrideInBytes, 0, 0);
+            writeableBitmap.WritePixels(new Int32Rect(0, 0, this.PixelWidth, this.PixelHeight), this.Pixels, this.PitchInBytes, 0, 0);
             //stopwatch->Stop();
             //Trace::WriteLine(stopwatch->Elapsed.ToString("s\\.fffffff", CultureInfo.CurrentCulture));
         }

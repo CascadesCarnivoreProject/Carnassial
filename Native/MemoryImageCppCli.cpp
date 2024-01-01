@@ -18,7 +18,7 @@ namespace Carnassial
 		MemoryImageCppCli::MemoryImageCppCli(BitmapSource^ bitmap)
 			: MemoryImageCppCli(bitmap->PixelWidth, bitmap->PixelHeight, bitmap->Format)
 		{
-			bitmap->CopyPixels(this->pixels, this->StrideInBytes, 0);
+			bitmap->CopyPixels(this->pixels, this->PitchInBytes, 0);
 		}
 
 		MemoryImageCppCli::MemoryImageCppCli(array<unsigned __int8>^ jpeg, Nullable<int>^ requestedWidth)
@@ -33,7 +33,7 @@ namespace Carnassial
 
 		MemoryImageCppCli::MemoryImageCppCli(int width, int height, PixelFormat format)
 		{
-			this->decodeError = false;
+			this->decompressionError = false;
 			this->format = format;
 			this->pixelHeight = height;
 			this->pixelWidth = width;
@@ -94,22 +94,30 @@ namespace Carnassial
 			{
 				return TJPF::TJPF_RGB;
 			}
-			throw gcnew ArgumentOutOfRangeException("bitmap", String::Format("Unhandled bitmap format {0}.", format));
+			throw gcnew ArgumentOutOfRangeException("bitmap", "Unhandled bitmap format '" + format + "'.");
 		}
 
+		/// <returns>true if pixel decompresion was attempted, false if pixels are already allocated but requested decode size isn't compatible</returns>
 		bool MemoryImageCppCli::TryDecode(array<unsigned __int8>^ jpegFileBytes, int offsetInBytes, int lengthInBytes, Nullable<int>^ requestedImageWidth)
 		{
 			int requestedWidthNative = (requestedImageWidth != nullptr) && requestedImageWidth->HasValue ? requestedImageWidth->Value : -1;
 			tjhandle decompressor = tjInitDecompress();
-			int colorspace, height, subsampling, width;
 			// see http://www.libjpeg-turbo.org/About/TurboJPEG for TurboJpeg API documentation
 			pin_ptr<byte> jpegBytes = &jpegFileBytes[offsetInBytes];
-			int result = tjDecompressHeader3(decompressor, jpegBytes, lengthInBytes, &width, &height, &subsampling, &colorspace);
+			int result = tj3DecompressHeader(decompressor, jpegBytes, lengthInBytes);
 			if (result != 0)
 			{
-				throw gcnew ArgumentException(gcnew String(tjGetErrorStr2(decompressor)), "jpegFileBytes");
+				throw gcnew ArgumentException(gcnew String(tj3GetErrorStr(decompressor)), "jpegFileBytes");
 			}
 
+			int bitsPerSample = tj3Get(decompressor, TJPARAM_PRECISION);
+			if (bitsPerSample != 8)
+			{
+				throw gcnew NotSupportedException("Unhandled bit depth of " + bitsPerSample + ".");
+			}
+
+			int height = tj3Get(decompressor, TJPARAM_JPEGHEIGHT);
+			int width = tj3Get(decompressor, TJPARAM_JPEGWIDTH);
 			if (requestedWidthNative != -1)
 			{
 				// if a width was specified, downsize the decode to the smallest available size which is still larger than the requested width
@@ -117,17 +125,20 @@ namespace Carnassial
 				// If needed, supported downsizing ratios can be checked with
 				// int scalingFactorLength;
 				// tjscalingfactor* scalingFactors = tjGetScalingFactors(&scalingFactorLength);
-				// As of libjpeg-turbo 1.5.1 the only available downsizing not supported in this function was 3/8.
 				int downsizeRatio = width / requestedWidthNative;
 				if (downsizeRatio >= 8)
 				{
 					height /= 8;
 					width /= 8;
+					tjscalingfactor scalingFactor = { 1, 8 };
+					tj3SetScalingFactor(decompressor, scalingFactor);
 				}
 				else if (downsizeRatio >= 4)
 				{
 					height /= 4;
 					width /= 4;
+					tjscalingfactor scalingFactor = { 1, 4 };
+					tj3SetScalingFactor(decompressor, scalingFactor);
 				}
 				else if (downsizeRatio >= 3)
 				{
@@ -135,12 +146,17 @@ namespace Carnassial
 					width *= 3;
 					height /= 8;
 					width /= 8;
+					tjscalingfactor scalingFactor = { 3, 8 };
+					tj3SetScalingFactor(decompressor, scalingFactor);
 				}
 				else if (downsizeRatio >= 2)
 				{
 					height /= 2;
 					width /= 2;
+					tjscalingfactor scalingFactor = { 1, 2 };
+					tj3SetScalingFactor(decompressor, scalingFactor);
 				}
+				// decompressor default is TJUNSCALED = { 1, 1 }
 			}
 
 			if ((this->pixelHeight > 0) && (this->pixelHeight != height))
@@ -159,9 +175,10 @@ namespace Carnassial
 			this->AllocatePixels();
 
 			pin_ptr<unsigned __int8> pinnedPixels = &this->pixels[0];
-			result = tjDecompress2(decompressor, jpegBytes, lengthInBytes, pinnedPixels, width, this->StrideInBytes, height, MemoryImageCppCli::PreferredTurboJpegPixelFormat, 0);
+			result = tj3Decompress8(decompressor, jpegBytes, lengthInBytes, pinnedPixels, this->PitchInBytes, MemoryImageCppCli::PreferredTurboJpegPixelFormat);
 			tjDestroy(decompressor);
-			this->decodeError = result != 0;
+			// most common error is an incompletely written .jpg because a trail camera triggered when it was opened and was turned off
+			this->decompressionError = result != 0;
 
 			return true;
 		}

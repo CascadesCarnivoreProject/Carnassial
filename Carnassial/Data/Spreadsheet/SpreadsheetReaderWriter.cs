@@ -134,7 +134,7 @@ namespace Carnassial.Data.Spreadsheet
         public void ExportFileDataToXlsx(FileDatabase fileDatabase, string xlsxFilePath)
         {
             bool xlsxExists = File.Exists(xlsxFilePath);
-            using FileStream xlsxStream = new(xlsxFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read);
+            using FileStream xlsxStream = new(xlsxFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read, Constant.File.DefaultBufferSizeInBytes);
             SpreadsheetDocument xlsx;
             if (xlsxExists)
             {
@@ -797,7 +797,7 @@ namespace Carnassial.Data.Spreadsheet
 
         private FileImportResult TryImportCsv(string csvFilePath, FileDatabase fileDatabase)
         {
-            using FileStream stream = new(csvFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using FileStream stream = new(csvFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, Constant.File.DefaultBufferSizeInBytes);
             using StreamReader csvReader = new(stream);
             this.status.BeginRead(csvReader.BaseStream.Length);
             FileImportResult result = this.TryImportData(fileDatabase,
@@ -813,7 +813,7 @@ namespace Carnassial.Data.Spreadsheet
         {
             try
             {
-                using FileStream xlsxStream = new(xlsxFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                using FileStream xlsxStream = new(xlsxFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, Constant.File.DefaultBufferSizeInBytes);
                 using SpreadsheetDocument xlsx = SpreadsheetDocument.Open(xlsxStream, false);
                 // find worksheet
                 Debug.Assert((xlsx.WorkbookPart != null) && (xlsx.WorkbookPart.Workbook.Sheets != null));

@@ -900,7 +900,7 @@ namespace Carnassial.Data
                 };
             }
 
-            using FileStream stream = new(jpeg.FullName, FileMode.Open, FileAccess.Read, FileShare.Read, 64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan);
+            using FileStream stream = new(jpeg.FullName, FileMode.Open, FileAccess.Read, FileShare.Read, Constant.File.JpgPixelReadBufferSizeInBytes, FileOptions.Asynchronous | FileOptions.SequentialScan);
             if (stream.Length < Constant.Images.SmallestValidJpegSizeInBytes)
             {
                 return new CachedImage()
@@ -910,7 +910,7 @@ namespace Carnassial.Data
             }
 
             byte[] buffer = new byte[stream.Length];
-            await stream.ReadAsync(buffer.AsMemory(0, buffer.Length)).ConfigureAwait(true);
+            await stream.ReadExactlyAsync(buffer.AsMemory(0, buffer.Length)).ConfigureAwait(true);
             MemoryImage image = new(buffer, expectedDisplayWidthInPixels);
             // stopwatch.Stop();
             // Trace.WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff"));
