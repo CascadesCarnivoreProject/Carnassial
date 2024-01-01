@@ -41,6 +41,9 @@
   <ItemGroup>
     <None Remove="CarnivoreTestImages\BushnellTrophyHDAggressor-119777C-20160421-112.JPG" />
     <None Remove="CarnivoreTestImages\Reconyx-HC500-20150128-201.JPG" />
+    <None Remove="coloration blue.jpg" />
+    <None Remove="coloration green.jpg" />
+    <None Remove="coloration red.jpg" />
     <None Remove="HybridVideo\06260001.AVI" />
     <None Remove="HybridVideo\06260020.JPG" />
     <None Remove="HybridVideo\06260021.AVI" />
@@ -51,6 +54,9 @@
     <None Remove="HybridVideo\06260048.mp4" />
     <None Remove="HybridVideo\06260050.JPG" />
     <None Remove="HybridVideo\06260999.JPG" />
+    <None Remove="luminosity black.jpg" />
+    <None Remove="luminosity grey 50.jpg" />
+    <None Remove="luminosity white.jpg" />
   </ItemGroup>
 
   <ItemGroup>
@@ -73,6 +79,15 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="CarnivoreTestImages\Reconyx-HC500-20150128-201.JPG">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="LuminosityColoration\coloration blue.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="LuminosityColoration\coloration green.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="LuminosityColoration\coloration red.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="DefaultData 2.2.0.3.ddb">
@@ -109,6 +124,15 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="HybridVideo\06260999.JPG">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="LuminosityColoration\luminosity black.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="LuminosityColoration\luminosity grey 50.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="LuminosityColoration\luminosity white.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

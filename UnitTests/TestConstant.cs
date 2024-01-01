@@ -117,53 +117,54 @@ namespace Carnassial.UnitTests
             public static readonly FileExpectations InfraredMarten;
 
             public static readonly DateTime HybridVideoFileDate = new(2016, 06, 26);
+            public static readonly TimeZoneInfo PacificTime;
 
             static FileExpectation()
             {
-                TimeZoneInfo pacificTime = TimeZoneInfo.FindSystemTimeZoneById(TestConstant.TimeZone.Pacific);
+                FileExpectation.PacificTime = TimeZoneInfo.FindSystemTimeZoneById(TestConstant.TimeZone.Pacific);
 
-                FileExpectation.CorruptFieldScan = new FileExpectations(pacificTime)
+                FileExpectation.CorruptFieldScan = new FileExpectations(FileExpectation.PacificTime)
                 {
                     FileName = "BushnellTrophyHD-119677C-20170403-179.JPG",
                     Coloration = 0.5,
                     Classification = FileClassification.Corrupt
                 };
 
-                FileExpectation.DaylightBobcat = new FileExpectations(pacificTime)
+                FileExpectation.DaylightBobcat = new FileExpectations(FileExpectation.PacificTime)
                 {
-                    Luminosity = 0.22411196454303156,
+                    Coloration = 0.072226041956181958,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2015-08-05T08:06:23.000-07:00"),
                     FileName = FileExpectation.DaylightBobcatFileName,
-                    Coloration = 0.072226041956181958,
+                    Luminosity = 0.45926440305558791,
                     Classification = FileClassification.Color
                 };
 
-                FileExpectation.DaylightCoyote = new FileExpectations(pacificTime)
+                FileExpectation.DaylightCoyote = new FileExpectations(FileExpectation.PacificTime)
                 {
                     Coloration = 0.10284907771379409,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2016-04-21T06:31:13.000-07:00"),
                     FileName = "BushnellTrophyHDAggressor-119777C-20160421-112.JPG",
-                    Luminosity = 0.26897665441961738,
+                    Luminosity = 0.55317141115753621,
                     Classification = FileClassification.Color,
                     RelativePath = TestConstant.File.CarnivoreDirectoryName
                 };
 
-                FileExpectation.DaylightMartenPair = new FileExpectations(pacificTime)
+                FileExpectation.DaylightMartenPair = new FileExpectations(FileExpectation.PacificTime)
                 {
                     Coloration = 0.11669914145874821,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2015-01-28T11:17:34.000-08:00"),
                     FileName = "Reconyx-HC500-20150128-201.JPG",
-                    Luminosity = 0.18697294002358431,
+                    Luminosity = 0.40772283151663985,
                     Classification = FileClassification.Color,
                     RelativePath = TestConstant.File.CarnivoreDirectoryName
                 };
 
-                FileExpectation.InfraredMarten = new FileExpectations(pacificTime)
+                FileExpectation.InfraredMarten = new FileExpectations(FileExpectation.PacificTime)
                 {
                     Coloration = 0.002260494349364121,
                     DateTime = FileExpectations.ParseDateTimeOffsetString("2016-02-24T04:59:46.000-08:00"),
                     FileName = "BushnellTrophyHD-119677C-20160224-056.JPG",
-                    Luminosity = 0.30628926615548824,
+                    Luminosity = 0.6277722076201524,
                     Classification = FileClassification.Greyscale
                 };
             }

@@ -162,7 +162,7 @@ namespace Carnassial.Images
                 for (int pixelOctetOffset = 0; pixelOctetOffset < this.Pixels.Length; pixelOctetOffset += sizeof(Vector256<byte>))
                 {
                     // get next octet of pixels
-                    Vector256<byte> pixelOctet = Avx.LoadVector256(pixels + pixelOctetOffset);
+                    Vector256<byte> pixelOctetBgra = Avx.LoadVector256(pixels + pixelOctetOffset);
 
                     // estimate human apparent brightness
                     // First argument of first MultiplyAddAdjacent() is epu8, second is epi8; pixels need to be first and coefficients must be 127
@@ -170,7 +170,7 @@ namespace Carnassial.Images
                     // luminosity components.
                     // Second MultiplyAddAdjacent() yields pixel luminosities { Luminosity0 = WB0 + WG0 + WR0, Luminosity1, ..., Luminosity7 } where
                     // each luminiosity is in the range [ 0, 31875 ] and an epi32 can thus accumulate ~2^16 pixels.
-                    Vector256<Int16> humanPerceivedLuminosityEpi16 = Avx2.MultiplyAddAdjacent(pixelOctet, luminosityCoefficients);
+                    Vector256<Int16> humanPerceivedLuminosityEpi16 = Avx2.MultiplyAddAdjacent(pixelOctetBgra, luminosityCoefficients);
                     Vector256<Int32> humanPerceivedLuminosityEpi32 = Avx2.MultiplyAddAdjacent(humanPerceivedLuminosityEpi16, oneEpi16);
                     luminosityRunningTotalEpi32 = Avx2.Add(humanPerceivedLuminosityEpi32, luminosityRunningTotalEpi32);
                     if (pixelOctetOffset >= nextLuminosityAccumulateOffset)
@@ -187,16 +187,21 @@ namespace Carnassial.Images
                     // Since alphas are set to 255 at jpeg decode and aren't shuffled they contribute zero to the sum of absolute 
                     // differences. A check in GetLuminosityAndColoration() excludes RGB or BGR formats where the alpha's not a controlled value.
                     // Upper bound on each sum of absolute differences is 2 pixels * 2 * 255/pixel => 9 petapixels per 64 bit accumulator.
-                    Vector256<byte> pixelOctetGrba = Avx2.Shuffle(pixelOctet, bgraToGrbaShuffle);
-                    Vector256<Int64> pixelOctetColoration = Vector256.AsInt64(Avx2.SumAbsoluteDifferences(pixelOctet, pixelOctetGrba));
+                    Vector256<byte> pixelOctetGrba = Avx2.Shuffle(pixelOctetBgra, bgraToGrbaShuffle);
+                    Vector256<Int64> pixelOctetColoration = Vector256.AsInt64(Avx2.SumAbsoluteDifferences(pixelOctetBgra, pixelOctetGrba));
                     colorationTotalEpi64 = Avx2.Add(pixelOctetColoration, colorationTotalEpi64);
                 }
             }
 
+            // accumulate remaining luminosity to scalar
+            Vector128<Int32> luminosityFinalTotalEpi32x4 = Avx.Add(Avx.ExtractVector128(luminosityRunningTotalEpi32, Constant.Simd256x8.ExtractLower128), Avx.ExtractVector128(luminosityRunningTotalEpi32, Constant.Simd256x8.ExtractUpper128));
+            luminosityTotal += (Int64)Avx.Extract(luminosityFinalTotalEpi32x4, 0) + (Int64)Avx.Extract(luminosityFinalTotalEpi32x4, 1) + (Int64)Avx.Extract(luminosityFinalTotalEpi32x4, 2) + (Int64)Avx.Extract(luminosityFinalTotalEpi32x4, 3);
+
+            // accumulate coloration to scalar
             Vector128<Int64> colorationTotalEpi64x2 = Avx.Add(Avx.ExtractVector128(colorationTotalEpi64, Constant.Simd256x8.ExtractLower128), Avx.ExtractVector128(colorationTotalEpi64, Constant.Simd256x8.ExtractUpper128));
             Int64 colorationTotal = Avx.X64.Extract(colorationTotalEpi64x2, 0) + Avx.X64.Extract(colorationTotalEpi64x2, 1);
-            double coloration = (double)colorationTotal / (double)(2L * 255L * this.TotalPixels); // mean coloration fraction = total / (two differences/pixel * max difference of 255 * pixel count)
-            double luminosity = (double)luminosityTotal / (double)(125L * 2L * 255L * this.TotalPixels); // fractional perceived luminosity = total / ((blue weight + green weight + red weight) * 2 * max luminosity of 255 * pixel count)
+            double coloration = (double)colorationTotal / (double)(2L * 255L * this.TotalPixels); // mean coloration fraction = total / (two differences of up to 255/pixel * max difference of 255 * pixel count)
+            double luminosity = (double)luminosityTotal / (double)(125L * 255L * this.TotalPixels); // fractional perceived luminosity = total / ((blue weight + green weight + red weight) * max luminosity of 255 * pixel count)
             return (luminosity, coloration);
         }
 

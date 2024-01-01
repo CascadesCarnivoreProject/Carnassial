@@ -12,17 +12,17 @@ namespace Carnassial.UnitTests
         private readonly TimeZoneInfo timeZoneForDateTime;
 
         public FileClassification Classification { get; set; }
-        public double Coloration { get; set; }
+        public double Coloration { get; init; }
         public DateTimeOffset DateTime { get; set; }
         public bool DeleteFlag { get; set; }
         public string? FileName { get; set; }
-        public long ID { get; set; }
-        public double Luminosity { get; set; }
+        public long ID { get; init; }
+        public double Luminosity { get; init; }
         public string? RelativePath { get; set; }
-        public bool SkipDateTimeVerification { get; set; }
+        public bool SkipDateTimeVerification { get; init; }
         public bool SkipMarkerByteVerification { get; set; }
-        public bool SkipUserControlVerification { get; set; }
-        public Dictionary<string, object> UserControlsByDataLabel { get; private set; }
+        public bool SkipUserControlVerification { get; init; }
+        public Dictionary<string, object> UserControlsByDataLabel { get; private init; }
 
         public FileExpectations(TimeZoneInfo timeZone)
         {

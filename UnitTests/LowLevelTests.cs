@@ -200,7 +200,7 @@ namespace Carnassial.UnitTests
 
         internal class TestCommand : UndoableCommand<int>
         {
-            public int ID { get; private set; }
+            public int ID { get; private init; }
 
             public TestCommand(int id)
             {

@@ -151,12 +151,61 @@ namespace Carnassial.UnitTests
         [TestMethod]
         public async Task Classification()
         {
-            List<FileExpectations> fileExpectations =
+            string luminosityColorationFolder = "LuminosityColoration";
+            List< FileExpectations> fileExpectations =
             [
-                new FileExpectations(TestConstant.FileExpectation.DaylightBobcat),
-                new FileExpectations(TestConstant.FileExpectation.DaylightCoyote),
-                new FileExpectations(TestConstant.FileExpectation.DaylightMartenPair),
-                new FileExpectations(TestConstant.FileExpectation.InfraredMarten)
+                new(TestConstant.FileExpectation.PacificTime)
+                {
+                    FileName = "luminosity black.jpg",
+                    RelativePath = luminosityColorationFolder,
+                    Classification = FileClassification.Greyscale,
+                    Coloration = 0.0,
+                    Luminosity = 0.00392156862745098 // decompresses with RGB = { 37 * 1, 74 * 1, 14 * 1 } / (125 * 255) for all pixels rather than { 0, 0, 0 }; 0.00392156862745098 = 1/(125 * 255)
+                },
+                new(TestConstant.FileExpectation.PacificTime)
+                {
+                    FileName = "luminosity grey 50.jpg",
+                    RelativePath = luminosityColorationFolder,
+                    Classification = FileClassification.Greyscale,
+                    Coloration = 0.0,
+                    Luminosity = 0.50196078431372548 // RGB = { 37 * 128, 74 * 128, 14 * 128 } / (125 * 255)
+                },
+                new(TestConstant.FileExpectation.PacificTime)
+                {
+                    FileName = "luminosity white.jpg",
+                    RelativePath = luminosityColorationFolder,
+                    Classification = FileClassification.Greyscale,
+                    Coloration = 0.0,
+                    Luminosity = 1.0 // RGB = { 37 * 255, 74 * 255, 14 * 255 } / (125 * 255)
+                },
+                new(TestConstant.FileExpectation.PacificTime)
+                {
+                    FileName = "coloration red.jpg", // RGB = { 255, 0, 0 } saved at 70% quality
+                    RelativePath = luminosityColorationFolder,
+                    Classification = FileClassification.Color,
+                    Coloration = 0.996078431372549, // (abs(2 - 0) + abs(0 - 254) + abs(254 - 2)) / (2 * 255) = 0.9960784
+                    Luminosity = 0.29571764705882353 // RGB = { 37 * 254, 0, 14 * 2 } / (125 * 255) = 0.2957176
+                },
+                new(TestConstant.FileExpectation.PacificTime)
+                {
+                    FileName = "coloration green.jpg", // RGB = { 0, 255, 0 } saved at 70% quality
+                    RelativePath = luminosityColorationFolder,
+                    Classification = FileClassification.Color,
+                    Coloration = 0.996078431372549, // (abs(2 - 255) + abs(255 - 1) + abs(1 - 2)) / (2 * 255) = 0.9960784
+                    Luminosity = 0.59403921568627449 // RGB = { 37 * 2, 74 * 255, 14 * 1 } / (125 * 255) = 0.5947608
+                },
+                new(TestConstant.FileExpectation.PacificTime)
+                {
+                    FileName = "coloration blue.jpg", // RGB = { 0, 0, 255 } saved at 70% quality
+                    RelativePath = luminosityColorationFolder,
+                    Classification = FileClassification.Color,
+                    Coloration = 0.996078431372549, // (abs(254 - 0) + abs(0 - 0) + abs(0 - 254)) / (2 * 255) = 0.9960784
+                    Luminosity = 0.11156078431372549 // RGB = { 0, 0, 14 * 254 } / (125 * 255) = 0.1115608
+                },
+                TestConstant.FileExpectation.DaylightBobcat, // ok to use expectations from TestConstants without cloning since held const
+                TestConstant.FileExpectation.DaylightCoyote,
+                TestConstant.FileExpectation.DaylightMartenPair,
+                TestConstant.FileExpectation.InfraredMarten
             ];
 
             using TemplateDatabase templateDatabase = this.CreateTemplateDatabase(TestConstant.File.DefaultNewTemplateDatabaseFileName);
@@ -168,7 +217,7 @@ namespace Carnassial.UnitTests
                 FileInfo fileInfo = new(Path.Combine(fileExpectation.RelativePath, fileExpectation.FileName));
                 ImageRow file = fileDatabase.Files.CreateAndAppendFile(fileInfo.Name, fileExpectation.RelativePath);
                 CachedImage? image = await file.TryLoadImageAsync(this.WorkingDirectory).ConfigureAwait(false);
-                Assert.IsTrue((image != null) && (image.Image != null));
+                Assert.IsTrue((image != null) && (image.Image != null), "Failed to load image '" + fileExpectation.FileName + "'.");
 
                 (double luminosity, double coloration) = image.Image.GetLuminosityAndColoration(0);
                 FileClassification classification = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
