@@ -15,7 +15,7 @@ namespace Carnassial.Images
         private readonly SortedDictionary<string, List<string>> filesToLoadByRelativeFolderPath;
 
         public int FilesToLoad { get; private set; }
-        public List<string> FolderPaths { get; private set; }
+        public List<string> FolderPaths { get; private init; }
 
         public AddFilesIOComputeTransactionManager(Action<FileLoadStatus> onProgressUpdate, TimeSpan desiredProgressInterval)
             : base(onProgressUpdate, desiredProgressInterval)

@@ -12,22 +12,22 @@ namespace Carnassial.Util
         private int keyRepeatCount;
         private KeyEventArgs? mostRecentKey;
 
-        public List<Dictionary<string, object>?> Analysis { get; private set; }
+        public List<Dictionary<string, object>?> Analysis { get; private init; }
         public DispatcherTimer BackupTimer { get; private set; }
         public Dictionary<string, object> CurrentFileSnapshot { get; set; }
         public byte DifferenceThreshold { get; set; }
         public bool FileNavigatorSliderDragging { get; set; }
 
         // timer for flushing FileNavigatorSlider drag events
-        public DispatcherTimer FileNavigatorSliderTimer { get; private set; }
+        public DispatcherTimer FileNavigatorSliderTimer { get; private init; }
 
         public DateTime MostRecentFileRender { get; set; }
         public string? MostRecentFileAddFolderPath { get; set; }
         public int MostRecentlyFocusedControlIndex { get; set; }
         public Int16 MouseHorizontalScrollDelta { get; set; }
         public string? MouseOverCounter { get; set; }
-        public List<DataEntryNote> NoteControlsWithNewValues { get; private set; }
-        public UndoRedoChain<CarnassialWindow> UndoRedoChain { get; private set; }
+        public List<DataEntryNote> NoteControlsWithNewValues { get; private init; }
+        public UndoRedoChain<CarnassialWindow> UndoRedoChain { get; private init; }
 
         public CarnassialState()
         {

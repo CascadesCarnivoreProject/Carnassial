@@ -30,10 +30,10 @@ namespace Carnassial.Data
         private string relativePath;
         private readonly FileTable table;
 
-        public int[] UserCounters { get; private set; }
-        public bool[] UserFlags { get; private set; }
-        public byte[][] UserMarkerPositions { get; private set; }
-        public string[] UserNotesAndChoices { get; private set; }
+        public int[] UserCounters { get; private init; }
+        public bool[] UserFlags { get; private init; }
+        public byte[][] UserMarkerPositions { get; private init; }
+        public string[] UserNotesAndChoices { get; private init; }
 
         public ImageRow(string fileName, string relativePath, FileTable table)
         {

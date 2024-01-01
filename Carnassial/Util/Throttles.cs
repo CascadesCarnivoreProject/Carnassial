@@ -8,12 +8,12 @@ namespace Carnassial.Util
     public class Throttles
     {
         public TimeSpan DesiredIntervalBetweenRenders { get; private set; }
-        public DispatcherTimer FilePlayTimer { get; private set; }
+        public DispatcherTimer FilePlayTimer { get; private init; }
         public int RepeatedKeyAcceptanceInterval { get; private set; }
 
         public Throttles()
         {
-            this.FilePlayTimer = new DispatcherTimer();
+            this.FilePlayTimer = new();
             this.SetDesiredImageRendersPerSecond(CarnassialSettings.Default.DesiredImageRendersPerSecond);
         }
 

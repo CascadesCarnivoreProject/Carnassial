@@ -11,7 +11,7 @@ namespace Carnassial.Data
     /// </summary>
     public class CustomSelection
     {
-        public List<SearchTerm> SearchTerms { get; private set; }
+        public List<SearchTerm> SearchTerms { get; private init; }
         public LogicalOperator TermCombiningOperator { get; set; }
 
         public CustomSelection(ControlTable controls, LogicalOperator termCombiningOperator)

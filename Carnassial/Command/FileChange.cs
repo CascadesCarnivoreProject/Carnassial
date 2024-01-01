@@ -7,7 +7,7 @@ namespace Carnassial.Command
 {
     public abstract class FileChange : UndoableCommand<CarnassialWindow>
     {
-        protected long FileID { get; private set; }
+        protected long FileID { get; private init; }
 
         protected FileChange(long fileID)
         {

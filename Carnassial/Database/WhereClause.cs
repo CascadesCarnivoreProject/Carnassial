@@ -4,10 +4,10 @@ namespace Carnassial.Database
 {
     public class WhereClause
     {
-        public string Column { get; private set; }
-        public string Operator { get; set; }
-        public string ParameterName { get; private set; }
-        public object? Value { get; private set; }
+        public string Column { get; private init; }
+        public string Operator { get; private init; }
+        public string ParameterName { get; private init; }
+        public object? Value { get; private init; }
 
         public WhereClause(string column, string op, object? value)
         {

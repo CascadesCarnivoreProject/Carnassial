@@ -7,7 +7,7 @@ namespace Carnassial.Data
 {
     public class FileTableEnumerator : IEnumerator<ImageRow?>
     {
-        protected FileDatabase FileDatabase { get; private set; }
+        protected FileDatabase FileDatabase { get; private init; }
 
         // the current file, null if its not been set or if the database is empty
         public ImageRow? Current { get; private set; }

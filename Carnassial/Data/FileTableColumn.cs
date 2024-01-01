@@ -7,11 +7,11 @@ namespace Carnassial.Data
 {
     public class FileTableColumn
     {
-        public ControlRow Control { get; private set; }
+        public ControlRow Control { get; private init; }
         public int DataIndex { get; set; }
         public SqlDataType DataType { get; set; }
-        public string ParameterName { get; private set; }
-        public string QuotedName { get; private set; }
+        public string ParameterName { get; private init; }
+        public string QuotedName { get; private init; }
 
         public FileTableColumn(ControlRow control)
             : this(control.DataLabel, control)

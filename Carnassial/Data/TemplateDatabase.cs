@@ -17,10 +17,10 @@ namespace Carnassial.Data
     {
         private ImageSetRow? imageSet;
 
-        public ControlTable Controls { get; private set; }
+        public ControlTable Controls { get; private init; }
 
         /// <summary>Gets the complete path to the folder containing the database.</summary>
-        public string FolderPath { get; private set; }
+        public string FolderPath { get; private init; }
 
         protected TemplateDatabase(string filePath)
             : base(filePath)

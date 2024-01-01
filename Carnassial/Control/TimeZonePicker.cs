@@ -8,7 +8,7 @@ namespace Carnassial.Control
 {
     public class TimeZonePicker : ComboBox
     {
-        public ReadOnlyDictionary<string, TimeZoneInfo> TimeZonesByDisplayIdentifier { get; private set; }
+        public ReadOnlyDictionary<string, TimeZoneInfo> TimeZonesByDisplayIdentifier { get; private init; }
 
         public TimeZonePicker()
         {

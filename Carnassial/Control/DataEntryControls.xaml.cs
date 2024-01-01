@@ -20,8 +20,8 @@ namespace Carnassial.Control
 
         private HorizontalLineAdorner? dragAdorner;
 
-        public List<DataEntryControl> Controls { get; private set; }
-        public Dictionary<string, DataEntryControl> ControlsByDataLabel { get; private set; }
+        public List<DataEntryControl> Controls { get; private init; }
+        public Dictionary<string, DataEntryControl> ControlsByDataLabel { get; private init; }
 
         public event Action<DataEntryControl, DataEntryControl>? ControlOrderChangedByDragDrop;
 

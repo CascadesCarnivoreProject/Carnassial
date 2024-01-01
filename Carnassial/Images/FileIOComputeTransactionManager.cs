@@ -50,7 +50,7 @@ namespace Carnassial.Images
 
         protected Func<int, int>? ComputeTaskBody { get; set; }
         protected Action<int>? IOTaskBody { get; set; }
-        protected ExceptionPropagatingProgress<TProgress> Progress { get; private set; }
+        protected ExceptionPropagatingProgress<TProgress> Progress { get; private init; }
         protected TProgress Status { get; private set; }
         protected int TransactionFileCount { get; private set; }
 
@@ -85,7 +85,7 @@ namespace Carnassial.Images
             this.isCompleted = false;
             this.isExceptional = false;
             this.loadAtoms = null;
-            this.Progress = new ExceptionPropagatingProgress<TProgress>(onProgressUpdate, desiredProgressInterval);
+            this.Progress = new(onProgressUpdate, desiredProgressInterval);
             this.ShouldExitCurrentIteration = false;
             this.Status = new TProgress();
 

@@ -11,10 +11,10 @@ namespace Carnassial.Images
     {
         private bool disposed;
 
-        public FileLoad First { get; private set; }
+        public FileLoad First { get; private init; }
         public int Offset { get; private set; }
         public string RelativePath { get; private set; }
-        public FileLoad Second { get; private set; }
+        public FileLoad Second { get; private init; }
 
         public FileLoadAtom(string relativePath, FileLoad first, FileLoad second, int offset)
         {

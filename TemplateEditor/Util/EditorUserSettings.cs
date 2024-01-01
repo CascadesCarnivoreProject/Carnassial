@@ -4,7 +4,7 @@ namespace Carnassial.Editor.Util
 {
     internal class EditorUserSettings
     {
-        public MostRecentlyUsedList<string> MostRecentTemplates { get; private set; }
+        public MostRecentlyUsedList<string> MostRecentTemplates { get; private init; }
 
         public EditorUserSettings()
         {

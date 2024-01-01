@@ -6,8 +6,8 @@ namespace Carnassial.Util
     public class CarnassialUserSettings
     {
         public LogicalOperator CustomSelectionTermCombiningOperator { get; set; }
-        public MostRecentlyUsedList<string> MostRecentImageSets { get; private set; }
-        public Throttles Throttles { get; private set; }
+        public MostRecentlyUsedList<string> MostRecentImageSets { get; private init; }
+        public Throttles Throttles { get; private init; }
 
         public CarnassialUserSettings()
         {

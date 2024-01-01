@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Windows;
 
@@ -12,8 +11,8 @@ namespace Carnassial.Data
     public class MarkersForCounter : INotifyPropertyChanged
     {
         public int Count { get; private set; }
-        public string DataLabel { get; private set; }
-        public List<Marker> Markers { get; private set; }
+        public string DataLabel { get; private init; }
+        public List<Marker> Markers { get; private init; }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 

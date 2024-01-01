@@ -9,7 +9,7 @@ namespace Carnassial.Data.Spreadsheet
     {
         private readonly Stylesheet stylesheet;
 
-        public int BoldFontStyleID { get; private set; }
+        public int BoldFontStyleID { get; private init; }
         public bool HasChanges { get; private set; }
 
         public OpenXmlStylesheet(WorkbookStylesPart styles)

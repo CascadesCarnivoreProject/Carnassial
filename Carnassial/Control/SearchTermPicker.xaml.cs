@@ -19,7 +19,7 @@ namespace Carnassial.Control
         private readonly SearchTermPicker? previousSearchTermPicker;
         private readonly int termIndex;
 
-        public SearchTerm SearchTerm { get; private set; }
+        public SearchTerm SearchTerm { get; private init; }
 
         public event Action<bool> SubsequentSearchTermEnabledOrDisabled;
 

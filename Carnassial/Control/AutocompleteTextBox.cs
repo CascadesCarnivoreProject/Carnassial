@@ -15,7 +15,7 @@ namespace Carnassial.Control
 
         private string? mostRecentAutocompletion;
 
-        public bool AllowLeadingWhitespace { get; set; }
+        public bool AllowLeadingWhitespace { get; init; }
         public bool SuppressAutocompletion { get; set; }
 
         /// <summary>

@@ -20,7 +20,7 @@ namespace Carnassial.Control
         public override bool ContentReadOnly
         {
             get { return !this.ContentControl.IsEnabled; }
-            set { this.ContentControl.IsEnabled = !value; }
+            protected set { this.ContentControl.IsEnabled = !value; }
         }
 
         public override bool IsCopyableValue(object? value)

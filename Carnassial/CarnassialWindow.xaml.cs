@@ -26,7 +26,6 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Interop;
-using System.Windows.Media;
 using System.Windows.Threading;
 using MessageBox = Carnassial.Dialog.MessageBox;
 using SaveFileDialog = System.Windows.Forms.SaveFileDialog;
@@ -39,7 +38,7 @@ namespace Carnassial
         private readonly Lazy<SpeechSynthesizer> speechSynthesizer;
 
         public DataEntryHandler? DataHandler { get; private set; }
-        public CarnassialState State { get; private set; }
+        public CarnassialState State { get; private init; }
 
         [SupportedOSPlatform(Constant.Platform.Windows)]
         public CarnassialWindow()

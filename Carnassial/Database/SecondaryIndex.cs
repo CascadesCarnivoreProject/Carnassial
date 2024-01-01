@@ -7,9 +7,9 @@ namespace Carnassial.Database
 {
     public class SecondaryIndex
     {
-        public string Column { get; private set; }
-        public string Name { get; private set; }
-        public string Table { get; private set; }
+        public string Column { get; private init; }
+        public string Name { get; private init; }
+        public string Table { get; private init; }
 
         public SecondaryIndex(string table, string name, string column)
         {

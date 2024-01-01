@@ -16,13 +16,13 @@ namespace Carnassial.Data
 {
     public class FileDatabase : TemplateDatabase
     {
-        public AutocompletionCache AutocompletionCache { get; private set; }
-        public List<string> ControlSynchronizationIssues { get; private set; }
+        public AutocompletionCache AutocompletionCache { get; private init; }
+        public List<string> ControlSynchronizationIssues { get; private init; }
         public CustomSelection? CustomSelection { get; set; }
 
         /// <summary>Gets the file name of the database on disk.</summary>
         public string FileName { get; private set; }
-        public FileTable Files { get; private set; }
+        public FileTable Files { get; private init; }
         public bool OrderFilesByDateTime { get; set; }
 
         private FileDatabase(string filePath)

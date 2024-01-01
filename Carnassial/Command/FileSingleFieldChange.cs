@@ -5,10 +5,10 @@ namespace Carnassial.Command
 {
     public class FileSingleFieldChange : FileChange
     {
-        public string DataLabel { get; private set; }
-        public object NewValue { get; private set; }
-        public object PreviousValue { get; private set; }
-        public string PropertyName { get; private set; }
+        public string DataLabel { get; private init; }
+        public object NewValue { get; private init; }
+        public object PreviousValue { get; private init; }
+        public string PropertyName { get; private init; }
 
         public FileSingleFieldChange(long fileID, string dataLabel, string propertyName, object previousValue, object newValue, bool isExecuted)
             : base(fileID)

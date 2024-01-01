@@ -6,8 +6,8 @@ namespace Carnassial.Database
 {
     public class SQLiteTableSchema
     {
-        public List<ColumnDefinition> ColumnDefinitions { get; private set; }
-        public List<SecondaryIndex> Indices { get; private set; }
+        public List<ColumnDefinition> ColumnDefinitions { get; private init; }
+        public List<SecondaryIndex> Indices { get; private init; }
         public string Table { get; set; }
 
         public SQLiteTableSchema(string table)

@@ -15,7 +15,7 @@ namespace Carnassial.Control
     {
         private readonly ObservableCollection<FeedbackRowTuple> feedbackRows;
 
-        public bool ShowDifferenceColumn { get; set; }
+        public bool ShowDifferenceColumn { get; init; }
 
         public DateChangesFeedbackControl()
         {

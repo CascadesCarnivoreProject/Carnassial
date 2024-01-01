@@ -5,10 +5,10 @@ namespace Carnassial.Control
 {
     public class FileDisplayMessage
     {
-        public string Detail { get; private set; }
-        public string Header { get; private set; }
-        public string Midsection { get; private set; }
-        public int MidsectionFontSize { get; private set; }
+        public string Detail { get; private init; }
+        public string Header { get; private init; }
+        public string Midsection { get; private init; }
+        public int MidsectionFontSize { get; private init; }
 
         public FileDisplayMessage(string header, string midsection, int midsectionFontSize, string detail)
         {

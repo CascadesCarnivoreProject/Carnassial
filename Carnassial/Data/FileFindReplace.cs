@@ -15,8 +15,8 @@ namespace Carnassial.Data
         private Func<object?, string, object?, bool>? matchTerm2;
         private readonly Dictionary<string, SqlDataType> sqlDataTypeByLabel;
 
-        public List<string> FindTerm1Labels { get; private set; }
-        public List<string> FindTerm2Labels { get; private set; }
+        public List<string> FindTerm1Labels { get; private init; }
+        public List<string> FindTerm2Labels { get; private init; }
         public SearchTerm? ReplaceTerm { get; set; }
 
         public FileFindReplace(FileDatabase fileDatabase)

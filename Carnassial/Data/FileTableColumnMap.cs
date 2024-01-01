@@ -7,10 +7,10 @@ namespace Carnassial.Data
 {
     public class FileTableColumnMap
     {
-        public FileTableColumn[] UserCounters { get; private set; }
-        public FileTableColumn[] UserFlags { get; private set; }
-        public List<string>?[] UserNoteAndChoiceValues { get; private set; }
-        public FileTableColumn[] UserNotesAndChoices { get; private set; }
+        public FileTableColumn[] UserCounters { get; private init; }
+        public FileTableColumn[] UserFlags { get; private init; }
+        public List<string>?[] UserNoteAndChoiceValues { get; private init; }
+        public FileTableColumn[] UserNotesAndChoices { get; private init; }
 
         public FileTableColumnMap(FileTable fileTable)
         {

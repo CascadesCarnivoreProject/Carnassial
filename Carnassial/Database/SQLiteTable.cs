@@ -6,7 +6,7 @@ namespace Carnassial.Database
 {
     public abstract class SQLiteTable<TRow> : IEnumerable<TRow>
     {
-        protected List<TRow> Rows { get; private set; }
+        protected List<TRow> Rows { get; private init; }
 
         protected SQLiteTable()
         {

@@ -12,10 +12,10 @@ namespace Carnassial.Control
     public abstract class DataEntryControl
     {
         /// <summary>Gets or sets a value indicating whether the control's content is user editable.</summary>
-        public abstract bool ContentReadOnly { get; set; }
+        public abstract bool ContentReadOnly { get; protected set; }
 
         /// <summary>Gets or sets a value indicating whether the control's content is copyable.</summary>
-        public bool Copyable { get; set; }
+        public bool Copyable { get; protected set; }
 
         /// <summary>Gets the container that holds the control.</summary>
         public Grid Container { get; private set; }

@@ -11,8 +11,8 @@ namespace Carnassial.Data
 {
     public class FileTable : SQLiteTable<ImageRow>
     {
-        public Dictionary<string, SqlDataType> StandardColumnDataTypesByName { get; private set; }
-        public Dictionary<string, FileTableColumn> UserColumnsByName { get; private set; }
+        public Dictionary<string, SqlDataType> StandardColumnDataTypesByName { get; private init; }
+        public Dictionary<string, FileTableColumn> UserColumnsByName { get; private init; }
         public int UserCounters { get; private set; }
         public int UserFlags { get; private set; }
         public int UserNotesAndChoices { get; private set; }

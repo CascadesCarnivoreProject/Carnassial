@@ -9,7 +9,7 @@ namespace Carnassial.Database
     {
         public string? OrderBy { get; set; }
         public string Table { get; set; }
-        public List<WhereClause> Where { get; private set; }
+        public List<WhereClause> Where { get; private init; }
         public LogicalOperator WhereCombiningOperator { get; set; }
 
         public Select(string table)

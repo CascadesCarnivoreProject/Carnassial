@@ -8,7 +8,7 @@ namespace Carnassial.Database
         private bool disposed;
         private readonly bool ownsTransaction;
 
-        protected SQLiteDatabase Database { get; private set; }
+        protected SQLiteDatabase Database { get; private init; }
         protected bool IsInsert { get; set; }
         protected int RowsInCurrentTransaction { get; set; }
         protected SQLiteTransaction? Transaction { get; set; }
