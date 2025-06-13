@@ -31,7 +31,7 @@ namespace Carnassial.Data
             this.sqlDataTypeByLabel = new Dictionary<string, SqlDataType>(fileDatabase.Controls.RowCount);
 
             ControlRow? defaultControl = null;
-            List<ControlRow> visibleControls = fileDatabase.Controls.Where(control => control.Visible).ToList();
+            List<ControlRow> visibleControls = [.. fileDatabase.Controls.Where(control => control.Visible)];
             if (visibleControls.Count < 1)
             {
                 throw new ArgumentOutOfRangeException(nameof(fileDatabase), App.FindResource<string>(Constant.ResourceKey.FileFindReplaceNoControlsVisible));

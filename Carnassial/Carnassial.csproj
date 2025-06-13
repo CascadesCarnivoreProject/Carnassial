@@ -3,13 +3,11 @@
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <OutputType>WinExe</OutputType>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <UseWindowsForms>true</UseWindowsForms>
+    <UseWindowsForms>false</UseWindowsForms>
     <UseWPF>true</UseWPF>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     <Platforms>x64;x86</Platforms>
     <SelfContained>false</SelfContained>
-  </PropertyGroup>
-  <PropertyGroup>
     <ApplicationIcon>Carnassial.ico</ApplicationIcon>
   </PropertyGroup>
 
@@ -82,14 +80,14 @@
     <ProjectReference Include="..\Native\Native.vcxproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DocumentFormat.OpenXml" Version="3.0.0" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
     <PackageReference Include="MetadataExtractor" Version="2.8.1" />
     <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.5" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.118" />
+    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.119" />
     <PackageReference Include="System.IO.FileSystem.Primitives" Version="4.3.0" />
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="8.0.0" />
-    <PackageReference Include="System.Speech" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="9.0.6" />
+    <PackageReference Include="System.Speech" Version="9.0.6" />
   </ItemGroup>
   <ItemGroup>
     <Page Remove="Dialog\FileCounts.xaml" />

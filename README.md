@@ -67,7 +67,7 @@ Feel free to open new issues on Carnassial here on GitHub. Or email us at carnas
 Install [Visual Studio 2022 Community](https://www.visualstudio.com/en-us/products/visual-studio-community-vs.aspx) or newer 
 with the C# and C++ desktop workloads (other Visual Studio SKUs such as Enterprise are fine). After Visual Studio installation:
 
-* add WiX 4.0 support via the [HeatWave extension](https://www.firegiant.com/docs/heatwave/) 
+* add WiX 6 support via the [HeatWave extension](https://www.firegiant.com/docs/heatwave/) 
 * clone the repo locally through Visual Studio's Team Explorer or GitHub's clone or download options
 * build Carnassial (currently Carnassial.Native compilation is tested with MSVC v143 and the Win 10.0.19041.0 SDK)
 

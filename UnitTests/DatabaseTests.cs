@@ -22,7 +22,7 @@ namespace Carnassial.UnitTests
     [TestClass]
     public class DatabaseTests : CarnassialTest
     {
-        [ClassCleanup]
+        [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
         public static void ClassCleanup()
         {
             CarnassialTest.TryRevertToDefaultCultures();
@@ -71,7 +71,7 @@ namespace Carnassial.UnitTests
 
             // check images after initial add and again after reopen and application of selection
             // checks are not performed after last selection in list is applied
-            List<ControlRow> counterControls = fileDatabase.Controls.Where(control => control.ControlType == ControlType.Counter).ToList();
+            List<ControlRow> counterControls = [.. fileDatabase.Controls.Where(control => control.ControlType == ControlType.Counter)];
             Assert.IsTrue(counterControls.Count == 4);
             string currentDirectoryName = Path.GetFileName(fileDatabase.FolderPath);
             fileDatabase.SelectFiles(FileSelection.All);
@@ -174,7 +174,7 @@ namespace Carnassial.UnitTests
             // time and date manipulation
             fileDatabase.SelectFiles(FileSelection.All);
             Assert.IsTrue(fileDatabase.Files.RowCount == fileExpectations.Count);
-            List<DateTimeOffset> fileTimesBeforeAdjustment = fileDatabase.GetFileTimes().ToList();
+            List<DateTimeOffset> fileTimesBeforeAdjustment = [.. fileDatabase.GetFileTimes()];
             TimeSpan adjustment = new(0, 1, 2, 3, 0);
             fileDatabase.AdjustFileTimes(adjustment);
             foreach (FileExpectations fileExpectation in fileExpectations)
@@ -185,14 +185,14 @@ namespace Carnassial.UnitTests
             fileDatabase.SelectFiles(FileSelection.All);
             DatabaseTests.VerifyFiles(fileDatabase, fileExpectations, imageSetTimeZone);
 
-            fileTimesBeforeAdjustment = fileDatabase.GetFileTimes().ToList();
+            fileTimesBeforeAdjustment = [.. fileDatabase.GetFileTimes()];
             adjustment = new TimeSpan(-1, -2, -3, -4, 0);
             int startRow = 1;
             int endRow = fileDatabase.CurrentlySelectedFileCount - 1;
             fileDatabase.AdjustFileTimes(adjustment, startRow, endRow);
-            DatabaseTests.VerifyFileTimeAdjustment(fileTimesBeforeAdjustment, fileDatabase.GetFileTimes().ToList(), startRow, endRow, adjustment);
+            DatabaseTests.VerifyFileTimeAdjustment(fileTimesBeforeAdjustment, [.. fileDatabase.GetFileTimes()], startRow, endRow, adjustment);
             fileDatabase.SelectFiles(FileSelection.All);
-            DatabaseTests.VerifyFileTimeAdjustment(fileTimesBeforeAdjustment, fileDatabase.GetFileTimes().ToList(), startRow, endRow, adjustment);
+            DatabaseTests.VerifyFileTimeAdjustment(fileTimesBeforeAdjustment, [.. fileDatabase.GetFileTimes()], startRow, endRow, adjustment);
 
             fileDatabase.ExchangeDayAndMonthInFileDates(0, fileDatabase.Files.RowCount - 1);
 
@@ -1184,7 +1184,7 @@ namespace Carnassial.UnitTests
 
                 using (AddFilesTransactionSequence addFiles = fileDatabase.CreateAddFilesTransaction())
                 {
-                    addFiles.AddToSequence(new List<FileLoad>() { new(martenPairImage), new(coyoteImage) }, 0, 2);
+                    addFiles.AddToSequence([ new(martenPairImage), new(coyoteImage) ], 0, 2);
                     addFiles.Commit();
                 }
                 fileDatabase.SelectFiles(FileSelection.All);
@@ -1333,11 +1333,11 @@ namespace Carnassial.UnitTests
                 controlOrders.Add(control.ControlOrder);
                 spreadsheetOrders.Add(control.SpreadsheetOrder);
             }
-            List<long> uniqueIDs = ids.Distinct().ToList();
+            List<long> uniqueIDs = [.. ids.Distinct()];
             Assert.IsTrue(ids.Count == uniqueIDs.Count, "Expected {0} unique control IDs but found {1}.  {2} id(s) are duplicated.", ids.Count, uniqueIDs.Count, ids.Count - uniqueIDs.Count);
-            List<long> uniqueControlOrders = controlOrders.Distinct().ToList();
+            List<long> uniqueControlOrders = [.. controlOrders.Distinct()];
             Assert.IsTrue(controlOrders.Count == uniqueControlOrders.Count, "Expected {0} unique control orders but found {1}.  {2} order(s) are duplicated.", controlOrders.Count, uniqueControlOrders.Count, controlOrders.Count - uniqueControlOrders.Count);
-            List<long> uniqueSpreadsheetOrders = spreadsheetOrders.Distinct().ToList();
+            List<long> uniqueSpreadsheetOrders = [.. spreadsheetOrders.Distinct()];
             Assert.IsTrue(spreadsheetOrders.Count == uniqueSpreadsheetOrders.Count, "Expected {0} unique spreadsheet orders but found {1}.  {2} order(s) are duplicated.", spreadsheetOrders.Count, uniqueSpreadsheetOrders.Count, spreadsheetOrders.Count - uniqueSpreadsheetOrders.Count);
         }
 

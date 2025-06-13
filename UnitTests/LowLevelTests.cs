@@ -13,7 +13,7 @@ namespace Carnassial.UnitTests
     [TestClass]
     public class LowLevelTests : CarnassialTest
     {
-        [ClassCleanup]
+        [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
         public static void ClassCleanup()
         {
             CarnassialTest.TryRevertToDefaultCultures();

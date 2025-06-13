@@ -410,7 +410,7 @@ namespace Carnassial.Data.Spreadsheet
             }
             if (index < (26 * 26 + 1))
             {
-                return new string(new char[] { (char)('A' + index / 26), (char)('A' + (index % 26)) });
+                return new string([ (char)('A' + index / 26), (char)('A' + (index % 26))] );
             }
             else
             {
@@ -610,7 +610,7 @@ namespace Carnassial.Data.Spreadsheet
 
             // validate file header against the database
             readLine.Invoke();
-            List<string> columnsFromFileHeader = new(this.currentRow);
+            List<string> columnsFromFileHeader = [.. this.currentRow];
             List<string> columnsInDatabase = new(fileDatabase.Controls.RowCount);
             foreach (ControlRow control in fileDatabase.Controls)
             {
@@ -624,13 +624,13 @@ namespace Carnassial.Data.Spreadsheet
             }
 
             FileImportResult result = new();
-            List<string> columnsInDatabaseButNotInHeader = columnsInDatabase.Except(columnsFromFileHeader).ToList();
+            List<string> columnsInDatabaseButNotInHeader = [.. columnsInDatabase.Except(columnsFromFileHeader)];
             foreach (string column in columnsInDatabaseButNotInHeader)
             {
                 result.Errors.Add(App.FormatResource(Constant.ResourceKey.SpreadsheetImportColumnNotInSpreadsheet, column));
             }
 
-            List<string> columnsInHeaderButNotDatabase = columnsFromFileHeader.Except(columnsInDatabase).ToList();
+            List<string> columnsInHeaderButNotDatabase = [.. columnsFromFileHeader.Except(columnsInDatabase)];
             foreach (string column in columnsInHeaderButNotDatabase)
             {
                 result.Errors.Add(App.FormatResource(Constant.ResourceKey.SpreadsheetImportColumnNotInImageSet, column));

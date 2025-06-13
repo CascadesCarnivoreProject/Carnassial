@@ -218,7 +218,7 @@ namespace Carnassial.Data
                 throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Partial order updates are not supported.  New ordering for {0} controls was passed but {1} controls are present for '{2}'.", newOrderByDataLabel.Count, this.Controls.RowCount, orderColumnName));
             }
 
-            List<int> uniqueOrderValues = newOrderByDataLabel.Values.Distinct().ToList();
+            List<int> uniqueOrderValues = [.. newOrderByDataLabel.Values.Distinct()];
             if (uniqueOrderValues.Count != newOrderByDataLabel.Count)
             {
                 throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, "Each control must have a unique value for its order.  {0} duplicate values were passed for '{1}'.", newOrderByDataLabel.Count - uniqueOrderValues.Count, orderColumnName), nameof(newOrderByDataLabel));

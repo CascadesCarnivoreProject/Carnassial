@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Media;
 
-namespace Carnassial.Control
+namespace Carnassial.Util
 {
     public static class FrameworkElementExtensions
     {

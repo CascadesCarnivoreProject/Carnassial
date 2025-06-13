@@ -147,7 +147,7 @@ namespace Carnassial.Control
                     bool readOnly = control.IsFilePathComponent();
                     if (readOnly == false)
                     {
-                        autocompletions = new List<string>(getNoteAutocompletions.Invoke(control.DataLabel));
+                        autocompletions = [.. getNoteAutocompletions.Invoke(control.DataLabel)];
                     }
                     DataEntryNote noteControl = new(control, autocompletions, readOnly, this);
                     visibleControls.Add(noteControl);

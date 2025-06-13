@@ -1537,10 +1537,8 @@ namespace Carnassial
             if (this.PlayFilesButton.IsChecked == true)
             {
                 Debug.Assert(this.IsFileAvailable());
-                if (this.DataHandler.FileDatabase.Files.TryGetPreviousFile(this.DataHandler.ImageCache.CurrentRow, out ImageRow? previousFile))
-                {
-                    this.State.Throttles.StartFilePlayTimer(previousFile, this.DataHandler.ImageCache.Current!);
-                }
+                this.DataHandler.FileDatabase.Files.TryGetPreviousFile(this.DataHandler.ImageCache.CurrentRow, out ImageRow? previousFile);
+                this.State.Throttles.StartFilePlayTimer(previousFile, this.DataHandler.ImageCache.Current!);
             }
             else
             {
@@ -2371,7 +2369,7 @@ namespace Carnassial
             this.State.Analysis[analysisSlot] = analysisValuesByDataLabel;
             ((MenuItem)this.MenuEditPasteValuesFromAnalysis.Items[analysisSlot]).IsEnabled = true;
 
-            HashSet<string> analysisLabelsByDataLabel = new(this.DataHandler.FileDatabase.Controls.Where(control => control.AnalysisLabel).Select(control => control.DataLabel));
+            HashSet<string> analysisLabelsByDataLabel = [.. this.DataHandler.FileDatabase.Controls.Where(control => control.AnalysisLabel).Select(control => control.DataLabel)];
             this.AnalysisButtons.SetAnalysis(analysisSlot, analysisValuesByDataLabel, analysisLabelsByDataLabel);
             return true;
         }
@@ -2532,7 +2530,7 @@ namespace Carnassial
             if (tryAddFiles)
             {
                 // if this is a new file database, try to load files (if any) from the same folder
-                filesAdded = await this.TryAddFilesAsync(new string[] { this.FolderPath }).ConfigureAwait(true);
+                filesAdded = await this.TryAddFilesAsync([ this.FolderPath ]).ConfigureAwait(true);
             }
 
             if (filesAdded == false)
@@ -2569,7 +2567,7 @@ namespace Carnassial
             {
                 throw new ArgumentOutOfRangeException(nameof(templateDatabasePath), String.Format(CultureInfo.CurrentCulture, "Failed to extract a directory from the template database path '{0}'. Is the file name of the template database missing?", templateDatabasePath));
             }
-            List<string> fileDatabasePaths = Directory.GetFiles(directoryPath, "*" + Constant.File.FileDatabaseFileExtension).Where(databasePath => Path.GetFileNameWithoutExtension(databasePath).EndsWith(Constant.Database.BackupFileNameSuffix, StringComparison.Ordinal) == false).ToList();
+            List<string> fileDatabasePaths = [.. Directory.GetFiles(directoryPath, "*" + Constant.File.FileDatabaseFileExtension).Where(databasePath => Path.GetFileNameWithoutExtension(databasePath).EndsWith(Constant.Database.BackupFileNameSuffix, StringComparison.Ordinal) == false)];
 
             string databaseFileName;
             if (fileDatabasePaths.Count == 1)

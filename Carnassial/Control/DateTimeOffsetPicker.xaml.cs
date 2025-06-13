@@ -392,7 +392,7 @@ namespace Carnassial.Control
                         // part which just ended is an MMM month part and may render as two to eight or more characters depending on the current culture
                         // If needed this check can be done after the loop completes but there's no scenario for putting the month at the end of the date or
                         // not following it with some other part.  Lengths of zero are excluded as most calendars have 12 months.
-                        List<int> abbreviatedMonthNameLengths = CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedMonthNames.Select(name => name.Length).Distinct().Where(length => length > 0).ToList();
+                        List<int> abbreviatedMonthNameLengths = [.. CultureInfo.CurrentCulture.DateTimeFormat.AbbreviatedMonthNames.Select(name => name.Length).Distinct().Where(length => length > 0)];
                         int minimumSelectionLength = abbreviatedMonthNameLengths.Min();
                         currentPart.IsSelectionLengthVariable = abbreviatedMonthNameLengths.Count > 1;
                         currentPart.SelectionLength = minimumSelectionLength;

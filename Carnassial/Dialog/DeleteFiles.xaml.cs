@@ -77,7 +77,7 @@ namespace Carnassial.Dialog
 
         private GridView CreateFileGridDataBindings()
         {
-            List<ControlRow> controlsExceptUtcOffset = this.fileDatabase.Controls.InSpreadsheetOrder().Where(control => String.Equals(control.DataLabel, Constant.FileColumn.UtcOffset, StringComparison.Ordinal) == false).ToList();
+            List<ControlRow> controlsExceptUtcOffset = [.. this.fileDatabase.Controls.InSpreadsheetOrder().Where(control => String.Equals(control.DataLabel, Constant.FileColumn.UtcOffset, StringComparison.Ordinal) == false)];
             GridView gridView = new();
             foreach (ControlRow control in controlsExceptUtcOffset)
             {

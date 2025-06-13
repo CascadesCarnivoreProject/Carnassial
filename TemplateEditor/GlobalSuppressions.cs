@@ -5,3 +5,4 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "<Pending>", Scope = "member", Target = "~M:Carnassial.Editor.EditorWindow.InitializeDataGrid(System.String)")]
+[assembly: SuppressMessage("Style", "IDE0350:Use implicitly typed lambda", Justification = "<Pending>", Scope = "member", Target = "~M:Carnassial.Editor.EditorWindow.RebuildControlPreview")]

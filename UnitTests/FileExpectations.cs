@@ -90,7 +90,7 @@ namespace Carnassial.UnitTests
         public void Verify(ImageRow file, TimeZoneInfo timeZone)
         {
             Assert.IsTrue(file.Classification == this.Classification, "{0}: Expected Classification '{1}' but found '{2}'.", this.FileName, this.Classification, file.Classification);
-            Assert.IsTrue(file.DeleteFlag == this.DeleteFlag, "0}: Expected DeleteFlag '{1}' but found '{2}'.", this.FileName, this.DeleteFlag, file.DeleteFlag);
+            Assert.IsTrue(file.DeleteFlag == this.DeleteFlag, "{0}: Expected DeleteFlag '{1}' but found '{2}'.", this.FileName, this.DeleteFlag, file.DeleteFlag);
             Assert.IsTrue(file.FileName == this.FileName, "{0}: Expected FileName '{1}' but found '{2}'.", this.FileName, this.FileName, file.FileName);
             Assert.IsTrue(file.ID == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.FileName, this.ID, file.ID);
             Assert.IsTrue((file.IsVideo == file is VideoRow) && (file.IsVideo == (file.Classification == FileClassification.Video)));

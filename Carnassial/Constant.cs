@@ -625,7 +625,7 @@ namespace Carnassial
         public static class ThrottleValues
         {
             public const float DesiredMaximumImageRendersPerSecondLowerBound = 1.0F;
-            public const float DesiredMaximumImageRendersPerSecondDefault = 5.0F; // keep synchronized with CarnassialSettings.settings
+            public const float DesiredMaximumImageRendersPerSecondDefault = 3.0F; // keep synchronized with CarnassialSettings.settings
             public const float DesiredMaximumImageRendersPerSecondUpperBound = 12.0F;
             public const float ImageClassificationSlowdownMaximum = 5.0F;
             public const float ImageClassificationSlowdownDefault = 2.4F; // keep synchronized with CarnassialSettings.settings

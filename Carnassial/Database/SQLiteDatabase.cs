@@ -226,8 +226,8 @@ namespace Carnassial.Database
             // copy specified part of the old table's contents to the new table
             // SQLite doesn't allow autoincrement columns to be copied but their values are preserved as rows are inserted in the
             // same order.
-            List<string> sourceColumnNames = sourceColumns.Where(column => column.Autoincrement == false).Select(column => SQLiteDatabase.QuoteIdentifier(column.Name)).ToList();
-            List<string> destinationColumnNames = destinationColumns.Where(column => column.Autoincrement == false).Select(column => SQLiteDatabase.QuoteIdentifier(column.Name)).ToList();
+            List<string> sourceColumnNames = [.. sourceColumns.Where(column => column.Autoincrement == false).Select(column => SQLiteDatabase.QuoteIdentifier(column.Name))];
+            List<string> destinationColumnNames = [.. destinationColumns.Where(column => column.Autoincrement == false).Select(column => SQLiteDatabase.QuoteIdentifier(column.Name))];
 
             string copyColumns = "INSERT INTO " + newSchema.Table + " (" + String.Join(", ", destinationColumnNames) + ") SELECT " + String.Join(", ", sourceColumnNames) + " FROM " + existingTable;
             using SQLiteCommand command = new(copyColumns, this.Connection, transaction);

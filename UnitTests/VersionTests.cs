@@ -8,7 +8,7 @@ namespace Carnassial.UnitTests
     [TestClass]
     public class VersionTests : CarnassialTest
     {
-        [ClassCleanup]
+        [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
         public static void ClassCleanup()
         {
             CarnassialTest.TryRevertToDefaultCultures();

@@ -58,8 +58,8 @@ namespace Carnassial.Editor.Dialog
 
         private void ItemList_TextChanged(object sender, TextChangedEventArgs e)
         {
-            this.Values = new List<string>(this.ValuesList.Text.Split(EditWellKnownValues.NewLineDelimiter, StringSplitOptions.None));
-            List<string> uniqueValues = this.Values.Distinct().ToList();
+            this.Values = [.. this.ValuesList.Text.Split(EditWellKnownValues.NewLineDelimiter, StringSplitOptions.None)];
+            List<string> uniqueValues = [.. this.Values.Distinct()];
             this.OkButton.IsEnabled = this.Values.Count > 0 && (this.Values.Count == uniqueValues.Count);
         }
 

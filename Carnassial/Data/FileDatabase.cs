@@ -500,9 +500,9 @@ namespace Carnassial.Data
 
             // check if any controls present in the file database were removed from the template
             Debug.Assert(templateDatabase != null);
-            List<string> fileDataLabels = this.Controls.Select(control => control.DataLabel).ToList();
-            List<string> templateDataLabels = templateDatabase.Controls.Select(control => control.DataLabel).ToList();
-            List<string> dataLabelsInFileButNotTemplateDatabase = fileDataLabels.Except(templateDataLabels).ToList();
+            List<string> fileDataLabels = [.. this.Controls.Select(control => control.DataLabel)];
+            List<string> templateDataLabels = [.. templateDatabase.Controls.Select(control => control.DataLabel)];
+            List<string> dataLabelsInFileButNotTemplateDatabase = [.. fileDataLabels.Except(templateDataLabels)];
             foreach (string dataLabel in dataLabelsInFileButNotTemplateDatabase)
             {
                 // columns dropped from the template
@@ -532,14 +532,14 @@ namespace Carnassial.Data
                 {
                     List<string> fileDatabaseChoices = fileDatabaseControl.GetWellKnownValues();
                     List<string> templateChoices = templateControl.GetWellKnownValues();
-                    List<string> choicesRemovedFromTemplate = fileDatabaseChoices.Except(templateChoices).ToList();
+                    List<string> choicesRemovedFromTemplate = [.. fileDatabaseChoices.Except(templateChoices)];
                     if (choicesRemovedFromTemplate.Count > 0)
                     {
                         List<object> choicesInUse = this.GetDistinctValuesInColumn(Constant.DatabaseTable.Files, fileDatabaseControl.DataLabel);
                         List<string> removedChoicesInUse = [];
                         if (String.Equals(dataLabel, Constant.FileColumn.Classification, StringComparison.Ordinal))
                         {
-                            List<FileClassification> classificationsInUse = new(choicesInUse.Select(choice => (FileClassification)choice));
+                            List<FileClassification> classificationsInUse = [.. choicesInUse.Select(choice => (FileClassification)choice)];
                             foreach (string removedChoice in choicesRemovedFromTemplate)
                             {
                                 if (ImageRow.TryParseFileClassification(removedChoice, out FileClassification classification))
@@ -553,7 +553,7 @@ namespace Carnassial.Data
                         }
                         else
                         {
-                            List<string> choiceStringsInUse = new(choicesInUse.Select(choice => (string)choice));
+                            List<string> choiceStringsInUse = [.. choicesInUse.Select(choice => (string)choice)];
                             foreach (string removedChoice in choicesRemovedFromTemplate)
                             {
                                 if (choiceStringsInUse.Contains(removedChoice, StringComparer.Ordinal))
@@ -798,13 +798,13 @@ namespace Carnassial.Data
                 List<string> columnsInOther = other.GetFileColumnNames();
                 List<string> columnsInThis = this.GetFileColumnNames();
 
-                List<string> columnsInThisButNotOther = columnsInThis.Except(columnsInOther).ToList();
+                List<string> columnsInThisButNotOther = [.. columnsInThis.Except(columnsInOther)];
                 foreach (string column in columnsInThisButNotOther)
                 {
                     result.Errors.Add(App.FormatResource(Constant.ResourceKey.FileDatabaseImportThisColumnNotInOther, column));
                 }
 
-                List<string> columnsInOtherButNotThis = columnsInOther.Except(columnsInThis).ToList();
+                List<string> columnsInOtherButNotThis = [.. columnsInOther.Except(columnsInThis)];
                 foreach (string column in columnsInOtherButNotThis)
                 {
                     result.Errors.Add(App.FormatResource(Constant.ResourceKey.FileDatabaseImportOtherColumnNotInThis, column));

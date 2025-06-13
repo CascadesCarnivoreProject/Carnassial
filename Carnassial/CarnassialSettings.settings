@@ -18,7 +18,7 @@
       <Value Profile="(Default)">0</Value>
     </Setting>
     <Setting Name="DesiredImageRendersPerSecond" Type="System.Single" Scope="User">
-      <Value Profile="(Default)">5</Value>
+      <Value Profile="(Default)">3</Value>
     </Setting>
     <Setting Name="ImageClassificationChangeSlowdown" Type="System.Single" Scope="User">
       <Value Profile="(Default)">2.4</Value>

@@ -17,7 +17,7 @@ namespace Carnassial.UnitTests
     [TestClass]
     public class FileTests : CarnassialTest
     {
-        [ClassCleanup]
+        [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
         public static void ClassCleanup()
         {
             CarnassialTest.TryRevertToDefaultCultures();

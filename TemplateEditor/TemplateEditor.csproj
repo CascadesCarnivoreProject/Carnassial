@@ -5,17 +5,13 @@
     <RootNamespace>Carnassial.Editor</RootNamespace>
     <AssemblyName>CarnassialTemplateEditor</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <UseWindowsForms>true</UseWindowsForms>
+    <UseWindowsForms>false</UseWindowsForms>
     <UseWPF>true</UseWPF>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     <Platforms>x64;x86</Platforms>
-  </PropertyGroup>
-  <PropertyGroup>
     <ApplicationIcon>Editor.ico</ApplicationIcon>
   </PropertyGroup>
-  <PropertyGroup>
-    <TargetZone>LocalIntranet</TargetZone>
-  </PropertyGroup>
+  
   <PropertyGroup>
     <StartupObject>Carnassial.Editor.App</StartupObject>
     <PackageLicenseExpression>https://creativecommons.org/licenses/by-nc-sa/4.0/</PackageLicenseExpression>
@@ -23,6 +19,7 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutputPath>$(SolutionDir)\x64\Debug\</OutputPath>
   </PropertyGroup>

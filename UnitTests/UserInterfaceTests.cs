@@ -33,7 +33,7 @@ namespace Carnassial.UnitTests
             this.EnsureTestClassSubdirectory();
         }
 
-        [ClassCleanup]
+        [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
         public static void ClassCleanup()
         {
             UITestMethodAttribute.ClassCleanup();
@@ -476,7 +476,7 @@ namespace Carnassial.UnitTests
                         Assert.IsTrue(controls.ControlsByDataLabel.Count == expectedDataEntryControls, "Expected {0} data entry controls to be generated but {1} were.", expectedDataEntryControls, controls.ControlsByDataLabel.Count);
 
                         // check copies aren't possible when the image enumerator's not pointing to an image
-                        List<DataEntryControl> copyableControls = controls.Controls.Where(control => control.Copyable).ToList();
+                        List<DataEntryControl> copyableControls = [.. controls.Controls.Where(control => control.Copyable)];
                         foreach (DataEntryControl control in copyableControls)
                         {
                             Assert.IsFalse(dataHandler.IsCopyForwardPossible(control));

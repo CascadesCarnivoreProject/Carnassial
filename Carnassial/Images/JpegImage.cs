@@ -25,7 +25,7 @@ namespace Carnassial.Images
         static JpegImage()
         {
             JpegImage.JpegReaders = [ new JpegReader(), new ExifReader() ];
-            JpegImage.JpegSegmentTypes = new List<JpegSegmentType>(JpegImage.JpegReaders.SelectMany(reader => reader.SegmentTypes));
+            JpegImage.JpegSegmentTypes = [.. JpegImage.JpegReaders.SelectMany(reader => reader.SegmentTypes)];
         }
 
         public JpegImage(string filePath)
@@ -159,7 +159,7 @@ namespace Carnassial.Images
             try
             {
                 // follow internals of JpegMetadataReader to obtain control of the stream used for reading metadata
-                List<JpegSegment> segments = JpegSegmentReader.ReadSegments(this.reader, JpegImage.JpegSegmentTypes).ToList();
+                List<JpegSegment> segments = [.. JpegSegmentReader.ReadSegments(this.reader, JpegImage.JpegSegmentTypes)];
                 this.Metadata = JpegMetadataReader.ProcessJpegSegments(JpegImage.JpegReaders, segments);
             }
             catch (ImageProcessingException)

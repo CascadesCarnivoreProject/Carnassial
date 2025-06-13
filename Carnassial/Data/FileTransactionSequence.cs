@@ -95,7 +95,7 @@ namespace Carnassial.Data
 
         public void AddFile(ImageRow file)
         {
-            this.AddFiles(new List<ImageRow>() { file });
+            this.AddFiles([ file ]);
         }
 
         public void AddFiles(IList<ImageRow> files)

@@ -61,7 +61,7 @@ namespace Carnassial.Control
             }
             else
             {
-                this.ContentControl.Autocompletions = this.autocompletionsFromList.Union(autocompletionsFromDatabase).Distinct().ToList();
+                this.ContentControl.Autocompletions = [.. this.autocompletionsFromList.Union(autocompletionsFromDatabase).Distinct()];
             }
         }
 

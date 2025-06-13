@@ -569,7 +569,7 @@ namespace Carnassial.Editor
         /// </summary>
         private void MenuFileExit_Click(object sender, RoutedEventArgs e)
         {
-            this.MenuFileCloseTemplate_Click(sender, e);
+            this.Close();
         }
 
         /// <summary>
@@ -756,7 +756,7 @@ namespace Carnassial.Editor
                 bool wellKnonwValuesNeedSynchronization = currentValues.Count != previewValues.Count;
                 if (wellKnonwValuesNeedSynchronization == false)
                 {
-                    List<string> allValues = currentValues.Union(previewValues).ToList();
+                    List<string> allValues = [.. currentValues.Union(previewValues)];
                     wellKnonwValuesNeedSynchronization = allValues.Count != previewValues.Count;
                 }
                 if (wellKnonwValuesNeedSynchronization)

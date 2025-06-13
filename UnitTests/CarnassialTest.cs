@@ -262,7 +262,7 @@ namespace Carnassial.UnitTests
 
             using (AddFilesTransactionSequence addFiles = fileDatabase.CreateAddFilesTransaction())
             {
-                addFiles.AddToSequence(new List<FileLoad>() { new(martenImage), new(bobcatImage) }, 0, 2);
+                addFiles.AddToSequence([ new(martenImage), new(bobcatImage) ], 0, 2);
                 addFiles.Commit();
             }
             fileDatabase.SelectFiles(FileSelection.All);
@@ -362,7 +362,7 @@ namespace Carnassial.UnitTests
 
                 using (AddFilesTransactionSequence addFiles = fileDatabase.CreateAddFilesTransaction())
                 {
-                    addFiles.AddToSequence(new List<FileLoad>() { new(martenPairImage), new(coyoteImage) }, 0, 2);
+                    addFiles.AddToSequence([ new(martenPairImage), new(coyoteImage) ], 0, 2);
                     addFiles.Commit();
                 }
                 fileDatabase.SelectFiles(FileSelection.All);
