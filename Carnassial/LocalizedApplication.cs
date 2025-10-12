@@ -111,7 +111,7 @@ namespace Carnassial
 
             cultureDictionary = new ResourceDictionary()
             {
-                Source = new Uri("pack://application:,,,/Carnassial;component/Properties/SharedResources." + cultureName + ".xaml", UriKind.RelativeOrAbsolute)
+                Source = new Uri($"pack://application:,,,/Carnassial;component/Properties/SharedResources.{cultureName}.xaml", UriKind.RelativeOrAbsolute)
             };
             return true;
         }

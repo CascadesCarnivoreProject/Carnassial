@@ -108,8 +108,8 @@ namespace Carnassial.Control
             {
                 throw new ArgumentOutOfRangeException(nameof(analysisSlot));
             }
-            Debug.Assert(analysisLabelsByDataLabel != null, nameof(analysisLabelsByDataLabel) + " unexpectedly null.");
-            Debug.Assert(analysisValuesByDataLabel != null, nameof(analysisValuesByDataLabel) + " unexpectedly null.");
+            Debug.Assert(analysisLabelsByDataLabel != null, $"{nameof(analysisLabelsByDataLabel)} unexpectedly null.");
+            Debug.Assert(analysisValuesByDataLabel != null, $"{nameof(analysisValuesByDataLabel)} unexpectedly null.");
  
             Button pasteAnalysisButton = analysisSlot switch
             {
@@ -122,11 +122,11 @@ namespace Carnassial.Control
                 6 => this.PasteAnalysis7,
                 7 => this.PasteAnalysis8,
                 8 => this.PasteAnalysis9,
-                _ => throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled analysis slot {0}.", analysisSlot)),
+                _ => throw new NotSupportedException($"Unhandled analysis slot {analysisSlot}."),
             };
             int analysisNumber = analysisSlot + 1;
-            StringBuilder buttonLabel = new("_" + analysisNumber + ": ");
-            StringBuilder buttonTooltip = new("Analysis " + analysisNumber + ": ");
+            StringBuilder buttonLabel = new($"_{analysisNumber}: ");
+            StringBuilder buttonTooltip = new($"Analysis {analysisNumber}: ");
             bool analysisSpecificValues = false;
             bool copyableValueEncountered = false;
             foreach (KeyValuePair<string, object> analysisValue in analysisValuesByDataLabel)
@@ -161,7 +161,7 @@ namespace Carnassial.Control
             }
             else
             {
-                pasteAnalysisButton.Content = "Analysis _" + analysisNumber;
+                pasteAnalysisButton.Content = $"Analysis _{analysisNumber}";
             }
             if (copyableValueEncountered)
             {
@@ -169,7 +169,7 @@ namespace Carnassial.Control
             }
             else
             {
-                pasteAnalysisButton.ToolTip = "Apply copyable values stored in analysis " + analysisNumber + ".";
+                pasteAnalysisButton.ToolTip = $"Apply copyable values stored in analysis {analysisNumber}.";
             }
             pasteAnalysisButton.IsEnabled = true;
         }

@@ -145,20 +145,20 @@ namespace Carnassial.UnitTests
 
         public void Verify(ControlRow control)
         {
-            Assert.IsTrue(control.AnalysisLabel == this.AnalysisLabel, "{0}: Expected ControlOrder '{1}' but found '{2}'.", this.DataLabel, this.AnalysisLabel, control.AnalysisLabel);
-            Assert.IsTrue(control.ControlOrder == this.ControlOrder, "{0}: Expected ControlOrder '{1}' but found '{2}'.", this.DataLabel, this.ControlOrder, control.ControlOrder);
-            Assert.IsTrue(control.Copyable == this.Copyable, "{0}: Expected Copyable '{1}' but found '{2}'.", this.DataLabel, this.Copyable, control.Copyable);
-            Assert.IsTrue(String.Equals(control.DataLabel, this.DataLabel, StringComparison.Ordinal), "{0}: Expected DataLabel '{1}' but found '{2}'.", this.DataLabel, this.DataLabel, control.DataLabel);
-            Assert.IsTrue(control.DefaultValue == this.DefaultValue, "{0}: Expected DefaultValue '{1}' but found '{2}'.", this.DataLabel, this.DefaultValue, control.DefaultValue);
-            Assert.IsTrue(control.ID == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.DataLabel, this.ID, control.ID);
-            Assert.IsTrue(control.IndexInFileTable == this.Index, "{0}: Expected Index '{1}' but found '{2}'.", this.DataLabel, this.Index, control.IndexInFileTable);
-            Assert.IsTrue(control.Label == this.Label, "{0}: Expected Label '{1}' but found '{2}'.", this.DataLabel, this.Label, control.Label);
-            Assert.IsTrue(control.MaxWidth == this.MaxWidth, "{0}: Expected TextBoxWidth '{1}' but found '{2}'.", this.DataLabel, this.MaxWidth, control.MaxWidth);
-            Assert.IsTrue(control.SpreadsheetOrder == this.SpreadsheetOrder, "{0}: Expected SpreadsheetOrder '{1}' but found '{2}'.", this.DataLabel, this.SpreadsheetOrder, control.SpreadsheetOrder);
-            Assert.IsTrue(control.Tooltip == this.Tooltip, "{0}: Expected Tooltip '{1}' but found '{2}'.", this.DataLabel, this.Tooltip, control.Tooltip);
-            Assert.IsTrue(control.ControlType == this.Type, "{0}: Expected Type '{1}' but found '{2}'.", this.DataLabel, this.Type, control.ControlType);
-            Assert.IsTrue(control.Visible == this.Visible, "{0}: Expected Visible '{1}' but found '{2}'.", this.DataLabel, this.Visible, control.Visible);
-            Assert.IsTrue(control.WellKnownValues == this.WellKnownValues, "{0}: Expected List '{1}' but found '{2}'.", this.DataLabel, this.WellKnownValues, control.WellKnownValues);
+            Assert.IsTrue(control.AnalysisLabel == this.AnalysisLabel, $"{this.DataLabel}: Expected ControlOrder '{this.AnalysisLabel}' but found '{control.AnalysisLabel}'.");
+            Assert.IsTrue(control.ControlOrder == this.ControlOrder, $"{this.DataLabel}: Expected ControlOrder '{this.ControlOrder}' but found '{control.ControlOrder}'.");
+            Assert.IsTrue(control.Copyable == this.Copyable, $"{this.DataLabel}: Expected Copyable '{this.Copyable}' but found '{control.Copyable}'.");
+            Assert.IsTrue(String.Equals(control.DataLabel, this.DataLabel, StringComparison.Ordinal), $"{this.DataLabel}: Expected DataLabel '{this.DataLabel}' but found '{control.DataLabel}'.");
+            Assert.IsTrue(control.DefaultValue == this.DefaultValue, $"{this.DataLabel}: Expected DefaultValue '{this.DefaultValue}' but found '{control.DefaultValue}'.");
+            Assert.IsTrue(control.ID == this.ID, $"{this.DataLabel}: Expected ID '{this.ID}' but found '{control.ID}'.");
+            Assert.IsTrue(control.IndexInFileTable == this.Index, $"{this.DataLabel}: Expected Index '{this.Index}' but found '{control.IndexInFileTable}'.");
+            Assert.IsTrue(control.Label == this.Label, $"{this.DataLabel}: Expected Label '{this.Label}' but found '{control.Label}'.");
+            Assert.IsTrue(control.MaxWidth == this.MaxWidth, $"{this.DataLabel}: Expected TextBoxWidth '{this.MaxWidth}' but found '{control.MaxWidth}'.");
+            Assert.IsTrue(control.SpreadsheetOrder == this.SpreadsheetOrder, $"{this.DataLabel}: Expected SpreadsheetOrder '{this.SpreadsheetOrder}' but found '{control.SpreadsheetOrder}'.");
+            Assert.IsTrue(control.Tooltip == this.Tooltip, $"{this.DataLabel}: Expected Tooltip '{this.Tooltip}' but found '{control.Tooltip}'.");
+            Assert.IsTrue(control.ControlType == this.Type, $"{this.DataLabel}: Expected Type '{this.Type}' but found '{control.ControlType}'.");
+            Assert.IsTrue(control.Visible == this.Visible, $"{this.DataLabel}: Expected Visible '{this.Visible}' but found '{control.Visible}'.");
+            Assert.IsTrue(control.WellKnownValues == this.WellKnownValues, $"{this.DataLabel}: Expected List '{this.WellKnownValues}' but found '{control.WellKnownValues}'.");
         }
     }
 }

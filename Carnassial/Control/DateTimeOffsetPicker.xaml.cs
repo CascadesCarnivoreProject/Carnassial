@@ -326,7 +326,7 @@ namespace Carnassial.Control
                     newValue = newValue.AddYears(increment);
                     break;
                 default:
-                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled increment {0}.", partFormat));
+                    throw new NotSupportedException($"Unhandled increment {partFormat}.");
             }
 
             if (newValue < this.Minimum)
@@ -382,7 +382,7 @@ namespace Carnassial.Control
                         // skip delimiters and UTC indicator
                         continue;
                     default:
-                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unsupported format character '{0}'.", formatCharacter));
+                        throw new NotSupportedException($"Unsupported format character '{formatCharacter}'.");
                 }
 
                 if (formatCharacter != previousFormatCharacter)

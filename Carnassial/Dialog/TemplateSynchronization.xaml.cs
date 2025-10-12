@@ -15,7 +15,7 @@ namespace Carnassial.Dialog
             this.Owner = owner;
             foreach (string error in errors)
             {
-                this.TextBlockDetails.Inlines.Add(new Run { Text = "     " + error });
+                this.TextBlockDetails.Inlines.Add(new Run { Text = $"     {error}" });
                 this.TextBlockDetails.Inlines.Add(new LineBreak());
             }
         }

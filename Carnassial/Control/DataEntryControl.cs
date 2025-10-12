@@ -215,7 +215,7 @@ namespace Carnassial.Control
             {
                 // control can be assigned a hotkey
                 Debug.Assert(control.Label != null);
-                this.LabelControl.Content = control.Label[..hotkeyIndex] + "_" + control.Label[hotkeyIndex..];
+                this.LabelControl.Content = $"{control.Label[..hotkeyIndex]}_{control.Label[hotkeyIndex..]}";
             }
             this.LabelControl.Style = (Style)styleProvider.FindResource(labelStyleName.ToString());
             this.LabelTooltip = control.Tooltip;

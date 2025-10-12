@@ -102,7 +102,7 @@ namespace Carnassial.Control
                             menuItem.IsEnabled = this.IsCopyFromLastNonEmptyValuePossible(control);
                             break;
                         default:
-                            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled context menu item type {0}.", menuItemType));
+                            throw new NotSupportedException($"Unhandled context menu item type {menuItemType}.");
                     }
                 }
             }

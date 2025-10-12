@@ -297,7 +297,7 @@ namespace Carnassial.Images
 
                 if (this.Current == null)
                 {
-                    throw new InvalidOperationException("this." + nameof(this.Current) + " unexpectedly null after move to file index " + fileIndex + " succeeded (prefetch stride " + prefetchStride + ").");
+                    throw new InvalidOperationException($"this.{nameof(this.Current)} unexpectedly null after move to file index {fileIndex} succeeded (prefetch stride {prefetchStride}).");
                 }
                 afterMoveFile = this.Current;
                 movedToNewFile = afterMoveFile.ID != preMoveFileID;
@@ -437,7 +437,7 @@ namespace Carnassial.Images
                         break;
                     case ImageDifference.Combined:
                     default:
-                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled difference state {0}.", nextDifferenceState));
+                        throw new NotSupportedException($"Unhandled difference state {nextDifferenceState}.");
                 }
 
                 CachedImage? cachedDifference = this.differenceCache[nextDifferenceState];

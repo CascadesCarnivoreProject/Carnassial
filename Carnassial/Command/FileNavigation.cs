@@ -36,7 +36,7 @@ namespace Carnassial.Command
 
         public override string ToString()
         {
-            return "navigation to file " + this.newFileIndex;
+            return $"navigation to file {this.newFileIndex}";
         }
 
         public async override Task UndoAsync(CarnassialWindow carnassial)

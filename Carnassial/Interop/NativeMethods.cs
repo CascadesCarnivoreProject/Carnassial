@@ -153,7 +153,7 @@ namespace Carnassial.Interop
             }
             if (moveToBin.fAnyOperationsAborted)
             {
-                throw new Win32Exception(String.Format(CultureInfo.CurrentCulture, "Move of '{0}' to recycle bin was aborted.", filePath));
+                throw new Win32Exception($"Move of '{filePath}' to recycle bin was aborted.");
             }
         }
 

@@ -334,7 +334,7 @@ namespace Carnassial
                     //}
 
                     // if it's not (editor, unit tests, resource not listed in App.xaml) fall back to loading from the resources assembly
-                    BitmapImage packImage = new(new Uri("pack://application:,,,/" + typeof(Constant).Assembly.GetName().Name + ";component/Resources/" + fileName));
+                    BitmapImage packImage = new(new Uri($"pack://application:,,,/{typeof(Constant).Assembly.GetName().Name};component/Resources/{fileName}"));
                     packImage.Freeze();
                     return packImage;
                 });

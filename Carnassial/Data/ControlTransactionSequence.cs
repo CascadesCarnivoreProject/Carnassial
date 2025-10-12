@@ -16,20 +16,20 @@ namespace Carnassial.Data
         {
             this.disposed = false;
             this.insertOrUpdateControls = new SQLiteCommand(command.ToString(), this.Database.Connection, this.Transaction);
-            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter("@" + Constant.ControlColumn.AnalysisLabel));
-            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter("@" + Constant.ControlColumn.ControlOrder));
-            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter("@" + Constant.ControlColumn.Copyable));
-            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter("@" + Constant.ControlColumn.DataLabel));
-            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter("@" + Constant.ControlColumn.DefaultValue));
-            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter("@" + Constant.ControlColumn.IndexInFileTable));
-            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter("@" + Constant.ControlColumn.Label));
-            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter("@" + Constant.ControlColumn.SpreadsheetOrder));
-            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter("@" + Constant.ControlColumn.MaxWidth));
-            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter("@" + Constant.ControlColumn.Tooltip));
-            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter("@" + Constant.ControlColumn.Type));
-            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter("@" + Constant.ControlColumn.Visible));
-            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter("@" + Constant.ControlColumn.WellKnownValues));
-            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter("@" + Constant.DatabaseColumn.ID));
+            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.AnalysisLabel}"));
+            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.ControlOrder}"));
+            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.Copyable}"));
+            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.DataLabel}"));
+            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.DefaultValue}"));
+            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.IndexInFileTable}"));
+            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.Label}"));
+            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.SpreadsheetOrder}"));
+            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.MaxWidth}"));
+            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.Tooltip}"));
+            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.Type}"));
+            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.Visible}"));
+            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.WellKnownValues}"));
+            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.DatabaseColumn.ID}"));
             this.IsInsert = this.insertOrUpdateControls.CommandText.StartsWith("INSERT", StringComparison.Ordinal);
         }
 
@@ -84,10 +84,10 @@ namespace Carnassial.Data
             foreach (string column in Constant.ControlColumn.Columns)
             {
                 columns.Add(column);
-                parameterNames.Add("@" + column);
+                parameterNames.Add($"@{column}");
             }
 
-            StringBuilder insertCommand = new("INSERT INTO " + Constant.DatabaseTable.Controls + " (" + String.Join(", ", columns) + ") VALUES (" + String.Join(", ", parameterNames) + ")");
+            StringBuilder insertCommand = new($"INSERT INTO {Constant.DatabaseTable.Controls} ({String.Join(", ", columns)}) VALUES ({String.Join(", ", parameterNames)})");
             return new ControlTransactionSequence(insertCommand, database, transaction);
         }
 
@@ -98,14 +98,14 @@ namespace Carnassial.Data
 
         public static ControlTransactionSequence CreateUpdate(SQLiteDatabase database, SQLiteTransaction? transaction)
         {
-            StringBuilder updateCommand = new("UPDATE " + Constant.DatabaseTable.Controls + " SET ");
+            StringBuilder updateCommand = new($"UPDATE {Constant.DatabaseTable.Controls} SET ");
             List<string> parameters = new(Constant.ControlColumn.Columns.Count);
             foreach (string column in Constant.ControlColumn.Columns)
             {
-                parameters.Add(column + "=@" + column);
+                parameters.Add($"{column}=@{column}");
             }
             updateCommand.Append(String.Join(", ", parameters));
-            updateCommand.Append(" WHERE " + Constant.DatabaseColumn.ID + "=@" + Constant.DatabaseColumn.ID);
+            updateCommand.Append($" WHERE {Constant.DatabaseColumn.ID}=@{Constant.DatabaseColumn.ID}");
 
             return new ControlTransactionSequence(updateCommand, database, transaction);
         }

@@ -19,20 +19,20 @@ namespace Carnassial.Data
         {
             this.disposed = false;
 
-            string updateCommand = String.Format(CultureInfo.InvariantCulture, "UPDATE {0} SET {1}=@{1}, {2}=@{2} WHERE {3}=@{3}", Constant.DatabaseTable.Files, Constant.FileColumn.DateTime, Constant.FileColumn.UtcOffset, Constant.DatabaseColumn.ID);
+            string updateCommand = String.Create(CultureInfo.InvariantCulture, $"UPDATE {Constant.DatabaseTable.Files} SET {Constant.FileColumn.DateTime}=@{Constant.FileColumn.DateTime}, {Constant.FileColumn.UtcOffset}=@{Constant.FileColumn.UtcOffset} WHERE {Constant.DatabaseColumn.ID}=@{Constant.DatabaseColumn.ID}");
             this.Transaction = database.Connection.BeginTransaction();
             this.updateFiles = new SQLiteCommand(updateCommand, this.Database.Connection, this.Transaction);
-            this.updateFiles.Parameters.Add(new SQLiteParameter("@" + Constant.DatabaseColumn.ID));
-            this.updateFiles.Parameters.Add(new SQLiteParameter("@" + Constant.FileColumn.DateTime));
-            this.updateFiles.Parameters.Add(new SQLiteParameter("@" + Constant.FileColumn.UtcOffset));
+            this.updateFiles.Parameters.Add(new SQLiteParameter($"@{Constant.DatabaseColumn.ID}"));
+            this.updateFiles.Parameters.Add(new SQLiteParameter($"@{Constant.FileColumn.DateTime}"));
+            this.updateFiles.Parameters.Add(new SQLiteParameter($"@{Constant.FileColumn.UtcOffset}"));
         }
 
         public override int AddToSequence(IList<FileLoad> files, int offset, int length)
         {
-            Debug.Assert(files != null, nameof(files) + " is null.");
-            Debug.Assert(offset >= 0, nameof(offset) + " is less than zero.");
-            Debug.Assert(length >= 0, nameof(length) + " is less than zero.");
-            Debug.Assert((offset + length) <= files.Count, String.Format(CultureInfo.InvariantCulture, "Offset {0} plus length {1} exceeds length of files ({2}.", offset, length, files.Count));
+            Debug.Assert(files != null, $"{nameof(files)} is null.");
+            Debug.Assert(offset >= 0, $"{nameof(offset)} is less than zero.");
+            Debug.Assert(length >= 0, $"{nameof(length)} is less than zero.");
+            Debug.Assert((offset + length) <= files.Count, String.Create(CultureInfo.InvariantCulture, $"Offset {offset} plus length {length} exceeds length of files ({files.Count})."));
 
             int filesAdded = 0;
             int stopIndex = offset + length;
@@ -80,7 +80,7 @@ namespace Carnassial.Data
 
         public void UpdateFiles(IList<ImageRow> files)
         {
-            Debug.Assert(files != null, nameof(files) + " is null.");
+            Debug.Assert(files != null, $"{nameof(files)} is null.");
             for (int fileIndex = 0; fileIndex < files.Count; ++fileIndex)
             {
                 ImageRow file = files[fileIndex];

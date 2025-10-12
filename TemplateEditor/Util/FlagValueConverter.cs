@@ -37,7 +37,7 @@ namespace Carnassial.Editor.Util
             {
                 Constant.Sql.FalseString => EditorConstant.Resources.DisplayFalseString,
                 Constant.Sql.TrueString => EditorConstant.Resources.DisplayTrueString,
-                _ => throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled value '{0}'.", value)),
+                _ => throw new NotSupportedException($"Unhandled value '{value}'."),
             };
         }
 
@@ -67,7 +67,7 @@ namespace Carnassial.Editor.Util
             {
                 EditorConstant.Resources.DisplayFalseString => Constant.Sql.FalseString,
                 EditorConstant.Resources.DisplayTrueString => Constant.Sql.TrueString,
-                _ => throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled value '{0}'.", value)),
+                _ => throw new NotSupportedException($"Unhandled value '{value}'."),
             };
         }
     }

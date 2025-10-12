@@ -89,7 +89,7 @@ namespace Carnassial.Control
             }
             else
             {
-                this.Shortcut.Content = "_" + this.SearchTerm.Label[..1];
+                this.Shortcut.Content = $"_{this.SearchTerm.Label[..1]}";
             }
 
             this.UpdateDisplayQuery();
@@ -111,7 +111,7 @@ namespace Carnassial.Control
                 LogicalOperator? termCombiningOperator = this.parentSearchTermList.GetCombiningOperatorForTerm(this.termIndex);
                 if (termCombiningOperator.HasValue)
                 {
-                    query += " " + termCombiningOperator.ToString();
+                    query += $" {termCombiningOperator}";
                 }
                 this.Query.Content = query;
             }

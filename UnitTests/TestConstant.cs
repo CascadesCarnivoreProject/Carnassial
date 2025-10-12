@@ -183,7 +183,7 @@ namespace Carnassial.UnitTests
 
         public static class ThrottleValues
         {
-            public const float DesiredMaximumImageRendersPerSecondDefault = 5.0F;
+            public const float DesiredMaximumImageRendersPerSecondDefault = 3.0F;
             public const float ImageClassificationSlowdownDefault = 2.4F;
             public const float VideoSlowdownDefault = 5.0F;
         }

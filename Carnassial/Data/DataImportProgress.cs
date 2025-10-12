@@ -12,7 +12,7 @@ namespace Carnassial.Data
 
         public override string GetMessage()
         {
-            return String.Format(CultureInfo.CurrentCulture, "Read {0} of {1} files...", this.CurrentPosition, this.EndPosition);
+            return $"Read {this.CurrentPosition} of {this.EndPosition} files...";
         }
     }
 }

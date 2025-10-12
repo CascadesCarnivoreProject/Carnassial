@@ -45,7 +45,7 @@ namespace Carnassial.Data
                         case ControlType.DateTime:
                         case ControlType.UtcOffset:
                         default:
-                            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled control type {0}.", control.ControlType));
+                            throw new NotSupportedException($"Unhandled control type {control.ControlType}.");
                     }
                     userControlDefaultValues.Add(defaultValue);
                 }
@@ -62,21 +62,10 @@ namespace Carnassial.Data
             string? defaultValuesConcatenated = null;
             if (userControlDataLabels.Count > 0)
             {
-                dataLabelsConcatenated = ", " + String.Join(", ", userControlDataLabels);
-                defaultValuesConcatenated = ", " + String.Join(", ", userControlDefaultValues);
+                dataLabelsConcatenated = $", {String.Join(", ", userControlDataLabels)}";
+                defaultValuesConcatenated = $", {String.Join(", ", userControlDefaultValues)}";
             }
-            string fileInsertText = String.Format(CultureInfo.InvariantCulture,
-                                                  "INSERT INTO {0} ({1}, {2}, {3}, {4}, {5}, {6}{7}) VALUES (@DateTime, {8}, @FileName, @Classification, @RelativePath, @UtcOffset{9})",
-                                                  Constant.DatabaseTable.Files,
-                                                  Constant.FileColumn.DateTime,
-                                                  Constant.FileColumn.DeleteFlag,
-                                                  Constant.FileColumn.File,
-                                                  Constant.FileColumn.Classification,
-                                                  Constant.FileColumn.RelativePath,
-                                                  Constant.FileColumn.UtcOffset,
-                                                  dataLabelsConcatenated,
-                                                  deleteFlagDefaultValue,
-                                                  defaultValuesConcatenated);
+            string fileInsertText = String.Create(CultureInfo.InvariantCulture, $"INSERT INTO {Constant.DatabaseTable.Files} ({Constant.FileColumn.DateTime}, {Constant.FileColumn.DeleteFlag}, {Constant.FileColumn.File}, {Constant.FileColumn.Classification}, {Constant.FileColumn.RelativePath}, {Constant.FileColumn.UtcOffset}{dataLabelsConcatenated}) VALUES (@DateTime, {deleteFlagDefaultValue}, @FileName, @Classification, @RelativePath, @UtcOffset{defaultValuesConcatenated})");
 
             this.Transaction = this.Database.Connection.BeginTransaction();
             this.addFiles = new SQLiteCommand(fileInsertText, this.Database.Connection, this.Transaction);
@@ -97,7 +86,7 @@ namespace Carnassial.Data
             Debug.Assert(files != null, nameof(files) + " is null.");
             Debug.Assert(offset >= 0, nameof(offset) + " is less than zero.");
             Debug.Assert(length >= 0, nameof(length) + " is less than zero.");
-            Debug.Assert((offset + length) <= files.Count, String.Format(CultureInfo.CurrentCulture, "Offset {0} plus length {1} exceeds length of files ({2}.", offset, length, files.Count));
+            Debug.Assert((offset + length) <= files.Count, $"Offset {offset} plus length {length} exceeds length of {nameof(files)} ({files.Count}).");
 
             // insert performance of early Carnassial 2.2.0.3 development (still using 2.2.0.2 schema)
             //                                   column defaults   specified defaults

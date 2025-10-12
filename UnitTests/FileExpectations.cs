@@ -89,29 +89,29 @@ namespace Carnassial.UnitTests
 
         public void Verify(ImageRow file, TimeZoneInfo timeZone)
         {
-            Assert.IsTrue(file.Classification == this.Classification, "{0}: Expected Classification '{1}' but found '{2}'.", this.FileName, this.Classification, file.Classification);
-            Assert.IsTrue(file.DeleteFlag == this.DeleteFlag, "{0}: Expected DeleteFlag '{1}' but found '{2}'.", this.FileName, this.DeleteFlag, file.DeleteFlag);
-            Assert.IsTrue(file.FileName == this.FileName, "{0}: Expected FileName '{1}' but found '{2}'.", this.FileName, this.FileName, file.FileName);
-            Assert.IsTrue(file.ID == this.ID, "{0}: Expected ID '{1}' but found '{2}'.", this.FileName, this.ID, file.ID);
+            Assert.IsTrue(file.Classification == this.Classification, $"{this.FileName}: Expected Classification '{this.Classification}' but found '{file.Classification}'.");
+            Assert.IsTrue(file.DeleteFlag == this.DeleteFlag, $"{this.FileName}: Expected DeleteFlag '{this.DeleteFlag}' but found '{file.DeleteFlag}'.");
+            Assert.IsTrue(file.FileName == this.FileName, $"{this.FileName}: Expected FileName '{this.FileName}' but found '{file.FileName}'.");
+            Assert.IsTrue(file.ID == this.ID, $"{this.FileName}: Expected ID '{this.ID}' but found '{file.ID}'.");
             Assert.IsTrue((file.IsVideo == file is VideoRow) && (file.IsVideo == (file.Classification == FileClassification.Video)));
-            Assert.IsTrue(file.RelativePath == this.RelativePath, "{0}: Expected RelativePath '{1}' but found '{2}'.", this.FileName, this.RelativePath, file.RelativePath);
-            Assert.IsTrue(file.UtcDateTime.Kind == DateTimeKind.Utc, "{0}: Expected UtcDateTime.Kind '{1}' but found '{2}'.", this.FileName, DateTimeKind.Utc, file.UtcDateTime.Kind);
+            Assert.IsTrue(file.RelativePath == this.RelativePath, $"{this.FileName}: Expected RelativePath '{this.RelativePath}' but found '{file.RelativePath}'.");
+            Assert.IsTrue(file.UtcDateTime.Kind == DateTimeKind.Utc, $"{this.FileName}: Expected UtcDateTime.Kind '{DateTimeKind.Utc}' but found '{file.UtcDateTime.Kind}'.");
 
             // bypass checking of DateTimeOffset if requested, for example if the camera didn't generate image taken metadata
             if (this.SkipDateTimeVerification == false)
             {
                 DateTimeOffset fileDateTime = file.DateTimeOffset;
                 DateTimeOffset expectedDateTime = this.ConvertDateTimeToTimeZone(timeZone);
-                Assert.IsTrue(fileDateTime.UtcDateTime == expectedDateTime.UtcDateTime, "{0}: Expected date time '{1}' but found '{2}'.", this.FileName, DateTimeHandler.ToDatabaseDateTimeString(expectedDateTime), DateTimeHandler.ToDatabaseDateTimeString(fileDateTime.UtcDateTime));
-                Assert.IsTrue(fileDateTime.Offset == expectedDateTime.Offset, "{0}: Expected date time offset '{1}' but found '{2}'.", this.FileName, expectedDateTime.Offset, fileDateTime.Offset);
-                Assert.IsTrue(file.UtcDateTime == expectedDateTime.UtcDateTime, "{0}: Expected DateTime '{1}' but found '{2}'.", this.FileName, DateTimeHandler.ToDatabaseDateTimeString(expectedDateTime), DateTimeHandler.ToDatabaseDateTimeString(file.UtcDateTime));
-                Assert.IsTrue(file.UtcOffset == expectedDateTime.Offset, "{0}: Expected UtcOffset '{1}' but found '{2}'.", this.FileName, expectedDateTime.Offset, file.UtcOffset);
+                Assert.IsTrue(fileDateTime.UtcDateTime == expectedDateTime.UtcDateTime, $"{this.FileName}: Expected date time '{DateTimeHandler.ToDatabaseDateTimeString(expectedDateTime)}' but found '{DateTimeHandler.ToDatabaseDateTimeString(fileDateTime.UtcDateTime)}'.");
+                Assert.IsTrue(fileDateTime.Offset == expectedDateTime.Offset, $"{this.FileName}: Expected date time offset '{expectedDateTime.Offset}' but found '{fileDateTime.Offset}'.");
+                Assert.IsTrue(file.UtcDateTime == expectedDateTime.UtcDateTime, $"{this.FileName}: Expected DateTime '{DateTimeHandler.ToDatabaseDateTimeString(expectedDateTime)}' but found '{DateTimeHandler.ToDatabaseDateTimeString(file.UtcDateTime)}'.");
+                Assert.IsTrue(file.UtcOffset == expectedDateTime.Offset, $"{this.FileName}: Expected UtcOffset '{expectedDateTime.Offset}' but found '{file.UtcOffset}'.");
             }
 
             if (this.SkipUserControlVerification == false)
             {
                 int actualUserControlCount = file.UserCounters.Length + file.UserFlags.Length + file.UserMarkerPositions.Length + file.UserNotesAndChoices.Length;
-                Assert.IsTrue(actualUserControlCount == this.UserControlsByDataLabel.Count, "{0}: Expected '{1}' user control values but found '{2}'.", this.FileName, this.UserControlsByDataLabel.Count, actualUserControlCount);
+                Assert.IsTrue(actualUserControlCount == this.UserControlsByDataLabel.Count, $"{this.FileName}: Expected '{this.UserControlsByDataLabel.Count}' user control values but found '{actualUserControlCount}'.");
                 foreach (KeyValuePair<string, object> userControlExpectation in this.UserControlsByDataLabel)
                 {
                     string dataLabel = userControlExpectation.Key;
@@ -119,7 +119,7 @@ namespace Carnassial.UnitTests
                     object expectedValue = userControlExpectation.Value;
                     if (expectedValue is bool expectedBool)
                     {
-                        Assert.IsTrue((actualValue != null) && ((bool)actualValue == expectedBool), "{0}: Expected {1} to be '{2}' but found '{3}'.", this.FileName, userControlExpectation.Key, expectedBool, actualValue);
+                        Assert.IsTrue((actualValue != null) && ((bool)actualValue == expectedBool), $"{this.FileName}: Expected {userControlExpectation.Key} to be '{expectedBool}' but found '{actualValue}'.");
                     }
                     else if (expectedValue is byte[] expectedBytes)
                     {
@@ -135,13 +135,13 @@ namespace Carnassial.UnitTests
                     }
                     else if (expectedValue is int expectedInt)
                     {
-                        Assert.IsTrue((actualValue != null) && ((int)actualValue == expectedInt), "{0}: Expected {1} to be '{2}' but found '{3}'.", this.FileName, userControlExpectation.Key, expectedInt, actualValue);
+                        Assert.IsTrue((actualValue != null) && ((int)actualValue == expectedInt), $"{this.FileName}: Expected {userControlExpectation.Key} to be '{expectedInt}' but found '{actualValue}'.");
                         MarkersForCounter markersForCounter = file.GetMarkersForCounter(dataLabel);
                         this.Verify(dataLabel, markersForCounter);
                     }
                     else
                     {
-                        Assert.IsTrue(String.Equals((string?)actualValue, (string)expectedValue, StringComparison.Ordinal), "{0}: Expected {1} to be '{2}' but found '{3}'.", this.FileName, userControlExpectation.Key, expectedValue, actualValue);
+                        Assert.IsTrue(String.Equals((string?)actualValue, (string)expectedValue, StringComparison.Ordinal), $"{this.FileName}: Expected {userControlExpectation.Key} to be '{expectedValue}' but found '{actualValue}'.");
                     }
                 }
             }

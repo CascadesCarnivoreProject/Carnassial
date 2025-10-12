@@ -305,7 +305,7 @@ namespace Carnassial.Editor
                             // no restrictions on note or time controls
                             break;
                         default:
-                            throw new NotSupportedException(String.Format(CultureInfo.InvariantCulture, "Unhandled control type {0}.", control.ControlType));
+                            throw new NotSupportedException(String.Create(CultureInfo.InvariantCulture, $"Unhandled control type {control.ControlType}."));
                     }
                     break;
                 // EditorConstant.Control.ID is not editable
@@ -479,7 +479,7 @@ namespace Carnassial.Editor
                 this.ControlDataGrid.ItemsSource = this.templateDatabase.Controls;
 
                 this.Tabs.SelectedIndex = 1;
-                this.Title = Path.GetFileName(this.templateDatabase.FilePath) + " - " + EditorConstant.MainWindowBaseTitle;
+                this.Title = $"{Path.GetFileName(this.templateDatabase.FilePath)} - {EditorConstant.MainWindowBaseTitle}";
                 this.userSettings.MostRecentTemplates.SetMostRecent(this.templateDatabase.FilePath);
                 this.MenuFileRecentTemplates_Refresh();
 
@@ -633,7 +633,7 @@ namespace Carnassial.Editor
             {
                 MenuItem recentImageSetItem = new();
                 recentImageSetItem.Click += this.MenuFileRecentTemplate_Click;
-                recentImageSetItem.Header = String.Format(CultureInfo.CurrentCulture, "_{0} {1}", index, recentTemplatePath);
+                recentImageSetItem.Header = $"_{index} {recentTemplatePath}";
                 recentImageSetItem.ToolTip = recentTemplatePath;
                 this.MenuFileRecentTemplates.Items.Add(recentImageSetItem);
                 ++index;

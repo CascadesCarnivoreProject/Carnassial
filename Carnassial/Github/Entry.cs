@@ -16,13 +16,13 @@ namespace Carnassial.Github
         {
             if (String.IsNullOrWhiteSpace(this.ID))
             {
-                throw new NotSupportedException(nameof(this.ID) + " property is null or whitespace.");
+                throw new NotSupportedException($"{nameof(this.ID)} property is null or whitespace.");
             }
 
             int vIndex = this.ID.LastIndexOf('v'); // could also use last slash
             if ((vIndex == -1) || (vIndex == this.ID.Length))
             {
-                throw new NotSupportedException(nameof(this.ID) + " is '" + this.ID + "', which does not end in a version number.");
+                throw new NotSupportedException($"{nameof(this.ID)} is '{this.ID}', which does not end in a version number.");
             }
 
             return Version.Parse(this.ID[(vIndex + 1)..]);

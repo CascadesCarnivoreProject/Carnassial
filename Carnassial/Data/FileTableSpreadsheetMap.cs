@@ -77,7 +77,7 @@ namespace Carnassial.Data
                             }
                             else
                             {
-                                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled data type {0} for column {1}.", userColumn.DataType, userColumn.Control.DataLabel));
+                                throw new NotSupportedException($"Unhandled data type {userColumn.DataType} for column {userColumn.Control.DataLabel}.");
                             }
                             break;
                         case ControlType.FixedChoice:
@@ -90,7 +90,7 @@ namespace Carnassial.Data
                             this.UserNoteAndChoiceSpreadsheetIndices.Add(spreadsheetIndex);
                             break;
                         default:
-                            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled control type {0} for column {1}.", userColumn.Control.ControlType, userColumn.Control.DataLabel));
+                            throw new NotSupportedException($"Unhandled control type {userColumn.Control.ControlType} for column {userColumn.Control.DataLabel}.");
                     }
                 }
             }

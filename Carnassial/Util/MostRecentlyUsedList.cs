@@ -24,7 +24,7 @@ namespace Carnassial.Util
             }
             if (elements.Count > maximumElements)
             {
-                throw new ArgumentOutOfRangeException(nameof(maximumElements), nameof(elements) + " has " + elements.Count + " items but a maximum of " + maximumElements + " items is allowed in the " + this.GetType().Name + ".");
+                throw new ArgumentOutOfRangeException(nameof(maximumElements), $"{nameof(elements)} has {elements.Count} items but a maximum of {maximumElements} items is allowed in the {this.GetType().Name}.");
             }
 
             for (int index = 0; index < elements.Count; ++index)
@@ -32,7 +32,7 @@ namespace Carnassial.Util
                 TElement? element = (TElement?)elements[index];
                 if (element == null)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(elements), "Element " + index + " of " + nameof(elements) + " is null.");
+                    throw new ArgumentOutOfRangeException(nameof(elements), $"Element {index} of {nameof(elements)} is null.");
                 }
                 this.list.AddLast(element);
             }

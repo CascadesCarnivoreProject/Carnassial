@@ -29,10 +29,10 @@ namespace Carnassial.Images
         {
             if (this.CurrentFileIndex == 0)
             {
-                return String.Format(CultureInfo.CurrentCulture, "File {0} of {1}...", this.CurrentFileIndex, this.TotalFiles);
+                return $"File {this.CurrentFileIndex} of {this.TotalFiles}...";
             }
             Debug.Assert(this.CurrentFile != null);
-            return String.Format(CultureInfo.CurrentCulture, "Loading file {0} of {1} ({2})...", this.CurrentFileIndex, this.TotalFiles, this.CurrentFile.FileName);
+            return $"Loading file {this.CurrentFileIndex} of {this.TotalFiles} ({this.CurrentFile.FileName})...";
         }
 
         public double GetPercentage()

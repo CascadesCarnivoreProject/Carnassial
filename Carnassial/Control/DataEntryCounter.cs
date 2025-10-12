@@ -70,7 +70,7 @@ namespace Carnassial.Control
             }
             else
             {
-                throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format(CultureInfo.CurrentCulture, "Unsupported value type {0}.", valueAsObject.GetType()));
+                throw new ArgumentOutOfRangeException(nameof(valueAsObject), $"Unsupported value type {valueAsObject.GetType()}.");
             }
 
             this.ContentControl.Text = valueAsString;

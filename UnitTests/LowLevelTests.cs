@@ -1,19 +1,14 @@
 ﻿using Carnassial.Command;
-using Carnassial.Dialog;
 using Carnassial.Util;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using System.Collections.Generic;
-using System.Reflection;
-using System.Windows;
-using System.Windows.Documents;
 
 namespace Carnassial.UnitTests
 {
     [TestClass]
     public class LowLevelTests : CarnassialTest
     {
-        [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
+        [ClassCleanup]
         public static void ClassCleanup()
         {
             CarnassialTest.TryRevertToDefaultCultures();

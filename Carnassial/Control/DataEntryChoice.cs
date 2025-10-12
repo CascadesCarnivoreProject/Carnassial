@@ -86,7 +86,7 @@ namespace Carnassial.Control
                     bool success = ImageRow.TryParseFileClassification(choice, out FileClassification classification);
                     if (success == false)
                     {
-                        throw new ArgumentOutOfRangeException(nameof(wellKnownValues), String.Format(CultureInfo.CurrentCulture, "'{0}' is not a valid FileClassification.", choice));
+                        throw new ArgumentOutOfRangeException(nameof(wellKnownValues), $"'{choice}' is not a valid FileClassification.");
                     }
                     this.ContentControl.Items.Add(classification);
                 }
@@ -119,7 +119,7 @@ namespace Carnassial.Control
             }
             else
             {
-                throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format(CultureInfo.CurrentCulture, "Unsupported value type {0}.", valueAsObject.GetType()));
+                throw new ArgumentOutOfRangeException(nameof(valueAsObject), $"Unsupported value type {valueAsObject.GetType()}.");
             }
 
             this.ContentControl.SelectedValue = valueAsString;

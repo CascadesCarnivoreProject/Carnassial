@@ -57,24 +57,24 @@ namespace Carnassial.Database
             SQLiteTableSchema currentSchema = this.GetTableSchema(table);
             if (currentSchema.ColumnDefinitions.Any(column => String.Equals(column.Name, columnDefinition.Name, StringComparison.Ordinal)))
             {
-                throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, "Column '{0}' is already present in table '{1}'.", columnDefinition.Name, table), nameof(columnDefinition));
+                throw new ArgumentException($"Column '{columnDefinition.Name}' is already present in table '{table}'.", nameof(columnDefinition));
             }
             if (columnNumber > currentSchema.ColumnDefinitions.Count)
             {
-                throw new ArgumentOutOfRangeException(String.Format(CultureInfo.CurrentCulture, "Attempt to add column in position {0} but the '{1}' table has only {2} columns.", columnNumber, table, currentSchema.ColumnDefinitions.Count));
+                throw new ArgumentOutOfRangeException($"Attempt to add column in position {columnNumber} but the '{table}' table has only {currentSchema.ColumnDefinitions.Count} columns.");
             }
 
             // optimization for appending column to end of table
             if (columnNumber >= currentSchema.ColumnDefinitions.Count)
             {
-                using SQLiteCommand command = new("ALTER TABLE " + table + " ADD COLUMN " + columnDefinition.ToString(), this.Connection);
+                using SQLiteCommand command = new($"ALTER TABLE {table} ADD COLUMN {columnDefinition}", this.Connection);
                 command.ExecuteNonQuery();
                 Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
                 return;
             }
 
             // otherwise, SQLite requires copying to a table with a new schema
-            SQLiteTableSchema newSchema = new(table + "Replacement");
+            SQLiteTableSchema newSchema = new($"{table}Replacement");
             newSchema.ColumnDefinitions.AddRange(currentSchema.ColumnDefinitions);
             newSchema.ColumnDefinitions.Insert(columnNumber, columnDefinition);
             this.CopyTableToNewSchema(transaction, table, newSchema, currentSchema.ColumnDefinitions, currentSchema.ColumnDefinitions);
@@ -98,7 +98,8 @@ namespace Carnassial.Database
             },
             (SQLiteTableSchema newSchema) =>
             {
-                string commandText = String.Format(CultureInfo.InvariantCulture, "UPDATE {0} SET {1} = @BooleanAsBoolean WHERE {2} IN (SELECT {2} FROM {3} WHERE {1} = @BooleanAsString)", newSchema.Table, SQLiteDatabase.QuoteIdentifier(column), Constant.DatabaseColumn.ID, table);
+                string quotedColumnID = SQLiteDatabase.QuoteIdentifier(column);
+				string commandText = String.Create(CultureInfo.InvariantCulture, $"UPDATE {newSchema.Table} SET {quotedColumnID} = @BooleanAsBoolean WHERE {Constant.DatabaseColumn.ID} IN (SELECT {Constant.DatabaseColumn.ID} FROM {table} WHERE {quotedColumnID} = @BooleanAsString)");
                 using SQLiteCommand command = new(commandText, this.Connection, transaction);
                 SQLiteParameter integerParameter = new("@BooleanAsBoolean", true);
                 SQLiteParameter stringParameter = new("@BooleanAsString", Boolean.TrueString);
@@ -122,7 +123,8 @@ namespace Carnassial.Database
             },
             (SQLiteTableSchema newSchema) =>
             {
-                string commandText = String.Format(CultureInfo.InvariantCulture, "UPDATE {0} SET {1} = @EnumAsInteger WHERE {2} IN (SELECT {2} FROM {3} WHERE {1} = @EnumAsString)", newSchema.Table, SQLiteDatabase.QuoteIdentifier(column), Constant.DatabaseColumn.ID, table);
+                string quotedColumnID = SQLiteDatabase.QuoteIdentifier(column);
+				string commandText = String.Create(CultureInfo.InvariantCulture, $"UPDATE {newSchema.Table} SET {quotedColumnID} = @EnumAsInteger WHERE {Constant.DatabaseColumn.ID} IN (SELECT {Constant.DatabaseColumn.ID} FROM {table} WHERE {quotedColumnID} = @EnumAsString)");
                 using SQLiteCommand command = new(commandText, this.Connection, transaction);
                 SQLiteParameter integerParameter = new("@EnumAsInteger");
                 SQLiteParameter stringParameter = new("@EnumAsString");
@@ -166,18 +168,18 @@ namespace Carnassial.Database
             }
             if (stringColumn == null)
             {
-                throw new ArgumentOutOfRangeException(nameof(column), String.Format(CultureInfo.CurrentCulture, "Column '{0}' is not present in table '{1}'.", column, table));
+                throw new ArgumentOutOfRangeException(nameof(column), $"Column '{column}' is not present in table '{table}'.");
             }
             if (String.Equals(stringColumn.Type, Constant.SQLiteAffinity.Text, StringComparison.OrdinalIgnoreCase) == false)
             {
-                throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, "Column '{0}' has type '{1}'.", column, stringColumn.Type), nameof(column));
+                throw new ArgumentException($"Column '{column}' has type '{stringColumn.Type}'.", nameof(column));
             }
 
             // change the column from string to integer
             // This results in a new table identical to the old except that all entries in the column being converted are defaulted.
             SQLiteTableSchema newSchema = new(currentSchema)
             {
-                Table = table + "Replacement"
+                Table = $"{table}Replacement"
             };
             newSchema.ColumnDefinitions[stringColumnIndex] = createIntegerColumnDefinition.Invoke();
             Debug.Assert(String.Equals(newSchema.ColumnDefinitions[stringColumnIndex].DefaultValue, "0", StringComparison.Ordinal), "Default value of boolean column is expected to be false.");
@@ -210,11 +212,11 @@ namespace Carnassial.Database
         {
             if (sourceColumns.Count != destinationColumns.Count)
             {
-                throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, "Source and destination column lists must be of the same length. Source list has {0} columns and destination list has {1} columns.", sourceColumns.Count, destinationColumns.Count));
+                throw new ArgumentException($"Source and destination column lists must be of the same length. Source list has {sourceColumns.Count} columns and destination list has {destinationColumns.Count} columns.");
             }
             if (newSchema.ColumnDefinitions.Count < sourceColumns.Count)
             {
-                throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, "Source and destination column lists exceed length of new column list. New column list has {0} columns while the other lists have {1} columns.", newSchema.ColumnDefinitions.Count, sourceColumns.Count));
+                throw new ArgumentException($"Source and destination column lists exceed length of new column list. New column list has {newSchema.ColumnDefinitions.Count} columns while the other lists have {sourceColumns.Count} columns.");
             }
 
             // create replacement table with the new schema
@@ -229,7 +231,7 @@ namespace Carnassial.Database
             List<string> sourceColumnNames = [.. sourceColumns.Where(column => column.Autoincrement == false).Select(column => SQLiteDatabase.QuoteIdentifier(column.Name))];
             List<string> destinationColumnNames = [.. destinationColumns.Where(column => column.Autoincrement == false).Select(column => SQLiteDatabase.QuoteIdentifier(column.Name))];
 
-            string copyColumns = "INSERT INTO " + newSchema.Table + " (" + String.Join(", ", destinationColumnNames) + ") SELECT " + String.Join(", ", sourceColumnNames) + " FROM " + existingTable;
+            string copyColumns = $"INSERT INTO {newSchema.Table} ({String.Join(", ", destinationColumnNames)}) SELECT {String.Join(", ", sourceColumnNames)} FROM {existingTable}";
             using SQLiteCommand command = new(copyColumns, this.Connection, transaction);
             command.ExecuteNonQuery();
             Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
@@ -251,7 +253,7 @@ namespace Carnassial.Database
             // drop the requested column from the schema
             SQLiteTableSchema newSchema = new(currentSchema)
             {
-                Table = table + "Replacement"
+                Table = $"{table}Replacement"
             };
             int columnToRemove = -1;
             for (int columnIndex = 0; columnIndex < currentSchema.ColumnDefinitions.Count; ++columnIndex)
@@ -265,7 +267,7 @@ namespace Carnassial.Database
             }
             if (columnToRemove == -1)
             {
-                throw new ArgumentOutOfRangeException(nameof(column), String.Format(CultureInfo.CurrentCulture, "Column '{0}' not found in table '{1}'.", column, table));
+                throw new ArgumentOutOfRangeException(nameof(column), $"Column '{column}' not found in table '{table}'.");
             }
             newSchema.ColumnDefinitions.RemoveAt(columnToRemove);
 
@@ -307,12 +309,12 @@ namespace Carnassial.Database
         private void DropAndReplaceTable(SQLiteTransaction transaction, string tableToDrop, string tableToRename)
         {
             // drop the old table and rename the new table into place
-            using (SQLiteCommand command = new("DROP TABLE " + tableToDrop, this.Connection, transaction))
+            using (SQLiteCommand command = new($"DROP TABLE {tableToDrop}", this.Connection, transaction))
             {
                 command.ExecuteNonQuery();
                 Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
             }
-            using (SQLiteCommand command = new("ALTER TABLE " + tableToRename + " RENAME TO " + tableToDrop, this.Connection, transaction))
+            using (SQLiteCommand command = new($"ALTER TABLE {tableToRename} RENAME TO {tableToDrop}", this.Connection, transaction))
             {
                 command.ExecuteNonQuery();
                 Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
@@ -332,7 +334,7 @@ namespace Carnassial.Database
             string? directoryPath = Path.GetDirectoryName(this.FilePath);
             if (directoryPath == null)
             {
-                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unable to obtain directory path from file path '{0}'.", this.FilePath));
+                throw new NotSupportedException($"Unable to obtain directory path from file path '{this.FilePath}'.");
             }
             return Path.Combine(directoryPath, Path.GetFileNameWithoutExtension(this.FilePath) + Constant.Database.BackupFileNameSuffix + Path.GetExtension(this.FilePath));
         }
@@ -347,7 +349,7 @@ namespace Carnassial.Database
 
         protected List<object> GetDistinctValuesInColumn(string table, string column)
         {
-            using SQLiteCommand command = new("SELECT DISTINCT " + SQLiteDatabase.QuoteIdentifier(column) + " FROM " + table, this.Connection);
+            using SQLiteCommand command = new($"SELECT DISTINCT {SQLiteDatabase.QuoteIdentifier(column)} FROM {table}", this.Connection);
             using SQLiteDataReader reader = command.ExecuteReader();
             List<object> distinctValues = [];
             while (reader.Read())
@@ -391,7 +393,7 @@ namespace Carnassial.Database
             }
             else
             {
-                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled synchronous mode '{0}'.", mode));
+                throw new NotSupportedException($"Unhandled synchronous mode '{mode}'.");
             }
         }
 
@@ -411,7 +413,7 @@ namespace Carnassial.Database
             }
             else
             {
-                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled synchronous mode '{0}'.", mode));
+                throw new NotSupportedException($"Unhandled synchronous mode '{mode}'.");
             }
         }
 
@@ -445,7 +447,7 @@ namespace Carnassial.Database
             // as of SQLite 1.0.108 columns are returned in order so sorting by number is not strictly necessary
             // Column numbering is explicitly respected in the order of return for robustness, however.
             Dictionary<int, ColumnDefinition> columnDefinitionsByNumber = [];
-            using (SQLiteCommand command = new("PRAGMA TABLE_INFO(" + table + ")", this.Connection))
+            using (SQLiteCommand command = new($"PRAGMA TABLE_INFO({table})", this.Connection))
             {
                 using SQLiteDataReader reader = command.ExecuteReader();
                 while (reader.Read())
@@ -499,7 +501,7 @@ namespace Carnassial.Database
             // add secondary indices to schema
             // Currently, only indices on single columns are supported.
             List<string> tableIndices = [];
-            using (SQLiteCommand command = new("PRAGMA INDEX_LIST(" + table + ")", this.Connection))
+            using (SQLiteCommand command = new($"PRAGMA INDEX_LIST({table})", this.Connection))
             {
                 using SQLiteDataReader reader = command.ExecuteReader();
                 while (reader.Read())
@@ -511,7 +513,7 @@ namespace Carnassial.Database
                     }
                     else
                     {
-                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled index origin '{0}'.", origin));
+                        throw new NotSupportedException($"Unhandled index origin '{origin}'.");
                     }
                 }
                 Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Done, "Result code indicates error.");
@@ -519,7 +521,7 @@ namespace Carnassial.Database
 
             foreach (string index in tableIndices)
             {
-                using SQLiteCommand command = new("PRAGMA INDEX_INFO(" + index + ")", this.Connection);
+                using SQLiteCommand command = new($"PRAGMA INDEX_INFO({index})", this.Connection);
                 using SQLiteDataReader reader = command.ExecuteReader();
                 while (reader.Read())
                 {
@@ -600,7 +602,7 @@ namespace Carnassial.Database
             }
 
             // best practice per https://www.sqlite.org/lang_keywords.html
-            return "\"" + identifier.Replace("\"", "\"\"") + "\"";
+            return $"\"{identifier.Replace("\"", "\"\"")}\"";
         }
 
         /// <summary>
@@ -615,7 +617,7 @@ namespace Carnassial.Database
             }
 
             // for an input of "foo's bar" the output is "'foo''s bar'"
-            return "'" + literal.Replace("'", "''") + "'";
+            return $"'{literal.Replace("'", "''")}'";
         }
 
         protected void RenameColumn(SQLiteTransaction transaction, string table, string currentColumnName, string newColumnName, Action<ColumnDefinition> modifyColumnDefinition)
@@ -632,16 +634,16 @@ namespace Carnassial.Database
             SQLiteTableSchema currentSchema = this.GetTableSchema(table);
             if (currentSchema.ColumnDefinitions.Any(column => String.Equals(column.Name, currentColumnName, StringComparison.Ordinal)) == false)
             {
-                throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, "No column named '{0}' exists to rename.", currentColumnName), nameof(currentColumnName));
+                throw new ArgumentException($"No column named '{currentColumnName}' exists to rename.", nameof(currentColumnName));
             }
             if (currentSchema.ColumnDefinitions.Any(column => String.Equals(column.Name, newColumnName, StringComparison.Ordinal)))
             {
-                throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, "Column named '{0}' already exists.", newColumnName), nameof(newColumnName));
+                throw new ArgumentException($"Column named '{newColumnName}' already exists.", nameof(newColumnName));
             }
 
             SQLiteTableSchema newSchema = new(currentSchema)
             {
-                Table = table + "Replacement"
+                Table = $"{table}Replacement"
             };
             for (int columnIndex = 0; columnIndex < newSchema.ColumnDefinitions.Count; ++columnIndex)
             {
@@ -667,7 +669,7 @@ namespace Carnassial.Database
 
         protected void RenameTable(SQLiteTransaction transaction, string currentTable, string newTable)
         {
-            using (SQLiteCommand command = new("ALTER TABLE " + currentTable + " RENAME TO " + newTable, this.Connection, transaction))
+            using (SQLiteCommand command = new($"ALTER TABLE {currentTable} RENAME TO {newTable}", this.Connection, transaction))
             {
                 command.ExecuteNonQuery();
                 Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
@@ -678,7 +680,7 @@ namespace Carnassial.Database
 
         protected void SetAutoVacuum(SQLiteAutoVacuum vacuum)
         {
-            using (SQLiteCommand command = new("PRAGMA AUTO_VACUUM = " + (int)vacuum, this.Connection))
+            using (SQLiteCommand command = new($"PRAGMA AUTO_VACUUM = {(int)vacuum}", this.Connection))
             {
                 command.ExecuteNonQuery();
                 Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
@@ -689,7 +691,7 @@ namespace Carnassial.Database
 
         protected void SetLockingMode(SQLiteLockMode mode)
         {
-            using (SQLiteCommand command = new("PRAGMA LOCKING_MODE = " + mode.ToString().ToUpperInvariant(), this.Connection))
+            using (SQLiteCommand command = new($"PRAGMA LOCKING_MODE = {mode.ToString().ToUpperInvariant()}", this.Connection))
             {
                 command.ExecuteNonQuery();
                 Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
@@ -705,7 +707,7 @@ namespace Carnassial.Database
 
         private static void SetTemporaryStore(SQLiteConnection connection, SQLiteTemporaryStore store)
         {
-            using SQLiteCommand command = new("PRAGMA TEMP_STORE = " + (int)store, connection);
+            using SQLiteCommand command = new($"PRAGMA TEMP_STORE = {(int)store}", connection);
             command.ExecuteNonQuery();
             Debug.Assert(connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
         }
@@ -730,7 +732,7 @@ namespace Carnassial.Database
             }
 
             int versionAsInt = (version.Major << 24) | (version.Minor << 16) | (version.Build << 8) | version.Revision;
-            using (SQLiteCommand command = new("PRAGMA USER_VERSION(" + versionAsInt.ToString(Constant.InvariantCulture) + ")", this.Connection, transaction))
+            using (SQLiteCommand command = new($"PRAGMA USER_VERSION({versionAsInt.ToString(Constant.InvariantCulture)})", this.Connection, transaction))
             {
                 command.ExecuteNonQuery();
                 Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
@@ -741,7 +743,7 @@ namespace Carnassial.Database
 
         protected void SetWalAutocheckpoint(int interval)
         {
-            using SQLiteCommand command = new("PRAGMA WAL_AUTOCHECKPOINT = " + interval, this.Connection);
+            using SQLiteCommand command = new($"PRAGMA WAL_AUTOCHECKPOINT = {interval}", this.Connection);
             command.ExecuteNonQuery();
             Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
         }
@@ -753,7 +755,7 @@ namespace Carnassial.Database
                 throw new ArgumentOutOfRangeException(nameof(column));
             }
 
-            return "@" + column.Replace(' ', '_').Replace('"', '_');
+            return $"@{column.Replace(' ', '_').Replace('"', '_')}";
         }
 
         public async Task<bool> TryBackupAsync()
@@ -789,7 +791,7 @@ namespace Carnassial.Database
 
         protected void WalCheckpoint(SQLiteWalCheckpoint checkpoint)
         {
-            using SQLiteCommand command = new("PRAGMA WAL_CHECKPOINT(" + checkpoint.ToString().ToUpperInvariant() + ")", this.Connection);
+            using SQLiteCommand command = new($"PRAGMA WAL_CHECKPOINT({checkpoint.ToString().ToUpperInvariant()})", this.Connection);
             command.ExecuteNonQuery();
             Debug.Assert(this.Connection.ResultCode() == SQLiteErrorCode.Ok, "Result code indicates error.");
         }

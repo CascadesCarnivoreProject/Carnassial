@@ -27,7 +27,7 @@ namespace Carnassial.Util
                 ControlType.Flag => "Flag",
                 ControlType.Note => "Note",
                 ControlType.UtcOffset => "UtcOffset",
-                _ => throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled control type {0}.", type)),
+                _ => throw new NotSupportedException($"Unhandled control type {type}."),
             };
         }
 
@@ -64,7 +64,7 @@ namespace Carnassial.Util
                 return ControlType.UtcOffset;
             }
 
-            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled control type '{0}'.", type));
+            throw new NotSupportedException($"Unhandled control type '{type}'.");
         }
     }
 }

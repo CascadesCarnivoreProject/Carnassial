@@ -100,7 +100,7 @@ namespace Carnassial.Dialog
             this.FeedbackGrid.ItemsSource = feedbackRows;
 
             // switch UI to feedback datagrid
-            this.PopulatingMessage.Text = "Populating the data field '" + this.dataFieldLabel + "' from each file's '" + this.metadataField.Name + "' field.";
+            this.PopulatingMessage.Text = $"Populating the data field '{this.dataFieldLabel}' from each file's '{this.metadataField.Name}' field.";
             this.PopulateButton.Visibility = Visibility.Collapsed;
             this.ClearIfNoMetadata.Visibility = Visibility.Collapsed;
             this.PrimaryPanel.Visibility = Visibility.Collapsed;

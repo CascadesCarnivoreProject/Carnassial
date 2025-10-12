@@ -39,7 +39,7 @@ namespace Carnassial.Images
 
         public override string ToString()
         {
-            return String.Format(CultureInfo.InvariantCulture, "{0},{1},{2},{3}", this.Scale.X, this.Scale.Y, this.Translation.X, this.Translation.Y);
+            return String.Create(CultureInfo.InvariantCulture, $"{this.Scale.X},{this.Scale.Y},{this.Translation.X},{this.Translation.Y}");
         }
     }
 }

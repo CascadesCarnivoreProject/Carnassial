@@ -841,7 +841,7 @@ namespace Carnassial
             {
                 if (stateToRedo.CanExecute(this) == false)
                 {
-                    throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, "Cannot redo {0}.", stateToRedo));
+                    throw new InvalidOperationException($"Cannot redo {stateToRedo}.");
                 }
 
                 if (stateToRedo.IsAsync)
@@ -908,7 +908,7 @@ namespace Carnassial
             {
                 if (stateToUndo.CanUndo(this) == false)
                 {
-                    throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, "Cannot undo {0}.", stateToUndo));
+                    throw new InvalidOperationException($"Cannot undo {stateToUndo}.");
                 }
 
                 if (stateToUndo.IsAsync)
@@ -956,10 +956,11 @@ namespace Carnassial
             }
 
             string sourceFileName = this.DataHandler.ImageCache.Current.FileName;
+            string sourceFileExtension = Path.GetExtension(sourceFileName);
 
             using SaveFileDialog saveFileDialog = new();
             saveFileDialog.Title = App.FindResource<string>(Constant.ResourceKey.CarnassialWindowCopyFile);
-            saveFileDialog.Filter = String.Format(CultureInfo.CurrentCulture, "*{0}|*{0}", Path.GetExtension(this.DataHandler.ImageCache.Current.FileName));
+            saveFileDialog.Filter = $"*{sourceFileExtension}|*{sourceFileExtension}";
             saveFileDialog.FileName = sourceFileName;
             saveFileDialog.OverwritePrompt = true;
 
@@ -977,7 +978,7 @@ namespace Carnassial
                 }
                 catch (IOException exception)
                 {
-                    Debug.Fail(String.Format(CultureInfo.InvariantCulture, "Copy of '{0}' to '{1}' failed.", sourceFileName, destinationPath), exception.ToString());
+                    Debug.Fail($"Copy of '{sourceFileName}' to '{destinationPath}' failed.", exception.ToString());
                     this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusCopyFileFailed, exception.GetType().Name);
                 }
             }
@@ -1024,7 +1025,7 @@ namespace Carnassial
                     foreach (string fileName in immovableFiles)
                     {
                         messageBox.Message.Hint.Inlines.Add(new LineBreak());
-                        messageBox.Message.Hint.Inlines.Add(new Run("  \u2022 " + fileName));
+                        messageBox.Message.Hint.Inlines.Add(new Run($"  \u2022 {fileName}"));
                     }
                     messageBox.ShowDialog();
                 }
@@ -1146,7 +1147,7 @@ namespace Carnassial
             string defaultSpreadsheetFileName = Path.GetFileNameWithoutExtension(this.DataHandler.FileDatabase.FileName) + Constant.File.ExcelFileExtension;
             if (CommonUserInterface.TryGetFileFromUser("Select a data file to merge into the current image set",
                                                        Path.Combine(this.DataHandler.FileDatabase.FolderPath, defaultSpreadsheetFileName),
-                                                       String.Format(CultureInfo.CurrentCulture, "Data files (*{0};*{1};*{2})|*{0};*{1};*{2}", Constant.File.FileDatabaseFileExtension, Constant.File.CsvFileExtension, Constant.File.ExcelFileExtension),
+                                                       $"Data files (*{Constant.File.FileDatabaseFileExtension};*{Constant.File.CsvFileExtension};*{Constant.File.ExcelFileExtension})|*{Constant.File.FileDatabaseFileExtension};*{Constant.File.CsvFileExtension};*{Constant.File.ExcelFileExtension}",
                                                        out string? otherDataFilePath) == false)
             {
                 return;
@@ -1260,7 +1261,7 @@ namespace Carnassial
             foreach (string path in invalidPaths)
             {
                 bool result = this.State.MostRecentImageSets.TryRemove(path);
-                Debug.Assert(result, String.Format(CultureInfo.InvariantCulture, "Removal of image set '{0}' no longer present on disk unexpectedly failed.", path));
+                Debug.Assert(result, String.Create(CultureInfo.InvariantCulture, $"Removal of image set '{path}' no longer present on disk unexpectedly failed."));
             }
 
             // Enable recent image sets only if there are recent sets and the parent menu is also enabled (indicating no image set has been loaded)
@@ -1274,7 +1275,7 @@ namespace Carnassial
                 // Create a menu item for each path
                 MenuItem recentImageSetItem = new();
                 recentImageSetItem.Click += this.MenuFileRecentImageSet_Click;
-                recentImageSetItem.Header = String.Format(CultureInfo.CurrentCulture, "_{0} {1}", index++, recentImageSetPath);
+                recentImageSetItem.Header = $"_{index++} {recentImageSetPath}";
                 recentImageSetItem.ToolTip = recentImageSetPath;
                 this.MenuFileRecentImageSets.Items.Add(recentImageSetItem);
             }
@@ -1451,7 +1452,7 @@ namespace Carnassial
             }
             else
             {
-                throw new ArgumentOutOfRangeException(nameof(sender), String.Format(CultureInfo.CurrentCulture, "Unknown sender {0}.", sender));
+                throw new ArgumentOutOfRangeException(nameof(sender), $"Unknown sender {sender}.");
             }
 
             await this.SelectFilesAndShowFileAsync(selection).ConfigureAwait(true);
@@ -1781,7 +1782,7 @@ namespace Carnassial
             object? previousValue = this.State.CurrentFileSnapshot[propertyName];
             object? newValue = this.DataHandler.ImageCache.Current![propertyName];
             FileSingleFieldChange fileEdit = new(this.DataHandler.ImageCache.Current.ID, ImageRow.GetDataLabel(propertyName), propertyName, previousValue, newValue, true);
-            Debug.Assert((this.State.CurrentFileSnapshot.ContainsKey(propertyName) == false) || (this.State.CurrentFileSnapshot[propertyName] == fileEdit.PreviousValue), String.Format(CultureInfo.InvariantCulture, "Change tracking failure: previous value in file snapshot '{0}' does not match the previous value of the edit '{1}'.", this.State.CurrentFileSnapshot[propertyName], fileEdit.PreviousValue));
+            Debug.Assert((this.State.CurrentFileSnapshot.ContainsKey(propertyName) == false) || (this.State.CurrentFileSnapshot[propertyName] == fileEdit.PreviousValue), String.Create(CultureInfo.InvariantCulture, $"Change tracking failure: previous value in file snapshot '{this.State.CurrentFileSnapshot[propertyName]}' does not match the previous value of the edit '{fileEdit.PreviousValue}'."));
 
             if (fileEdit.HasChange())
             {
@@ -1809,7 +1810,7 @@ namespace Carnassial
 
             // update status and menu state to reflect what ended up being selected
             this.SetFileCount(this.DataHandler.FileDatabase.CurrentlySelectedFileCount);
-            this.SetSelection(App.FindResource<string>(nameof(FileSelection) + "." + selection.ToString()));
+            this.SetSelection(App.FindResource<string>($"{nameof(FileSelection)}.{selection}"));
 
             this.EnableOrDisableMenusAndControls();
             this.MenuSelectAllFiles.IsChecked = selection == FileSelection.All;
@@ -2014,7 +2015,7 @@ namespace Carnassial
                          (dialog.GetType() == typeof(DateTimeSetTimeZone)) ||
                          (dialog.GetType() == typeof(ReclassifyFiles)) ||
                          (dialog.GetType() == typeof(PopulateFieldWithMetadata)),
-                         String.Format(CultureInfo.InvariantCulture, "Unexpected dialog {0}.", dialog.GetType()));
+                         String.Create(CultureInfo.InvariantCulture, $"Unexpected dialog {dialog.GetType()}."));
 
             Debug.Assert(this.DataHandler != null);
             this.DataHandler.TrySyncCurrentFileToDatabase();
@@ -2119,7 +2120,7 @@ namespace Carnassial
             MoveToFileResult moveToFile = await this.DataHandler.ImageCache.TryMoveToFileAsync(fileIndex, prefetchStride).ConfigureAwait(true);
             if (moveToFile.Succeeded == false)
             {
-                throw new ArgumentOutOfRangeException(nameof(fileIndex), String.Format(CultureInfo.CurrentCulture, "{0} is not a valid index in the file table.", fileIndex));
+                throw new ArgumentOutOfRangeException(nameof(fileIndex), $"{fileIndex} is not a valid index in the file table.");
             }
 
             // update each control with the data for the now current file
@@ -2129,7 +2130,7 @@ namespace Carnassial
             // MarkableCanvas.MarkerCreatedOrDeleted.
             if (this.IsFileAvailable() == false)
             {
-                throw new InvalidOperationException("this." + nameof(this.DataHandler) + "." + nameof(this.DataHandler.ImageCache) + "." + nameof(ImageCache.Current) + " unexpectedly null after move to file index " + fileIndex + " succeeded (prefetch stride " + prefetchStride + ", generateUndoRedoCommands " + generateUndoRedoCommands + ").");
+                throw new InvalidOperationException($"this.{nameof(this.DataHandler)}.{nameof(this.DataHandler.ImageCache)}.{nameof(ImageCache.Current)} unexpectedly null after move to file index {fileIndex} succeeded (prefetch stride {prefetchStride}, generateUndoRedoCommands {generateUndoRedoCommands}).");
             }
             this.State.CurrentFileSnapshot = this.DataHandler.ImageCache.Current!.GetValues(); // this.DataHandler.ImageCache.Current != null when this.IsFileAvailable() == true
             this.DataHandler.IsProgrammaticUpdate = true;
@@ -2398,7 +2399,7 @@ namespace Carnassial
             this.State.MostRecentImageSets.TryGetMostRecent(out string? defaultTemplateDatabasePath);
             if (CommonUserInterface.TryGetFileFromUser("Select a template file, which should be located in the root folder containing your images and videos",
                                                        defaultTemplateDatabasePath,
-                                                       String.Format(CultureInfo.CurrentCulture, "Template files (*{0})|*{0}", Constant.File.TemplateFileExtension),
+                                                       $"Template files (*{Constant.File.TemplateFileExtension})|*{Constant.File.TemplateFileExtension}",
                                                        out templateDatabasePath) == false)
             {
                 return false;
@@ -2492,7 +2493,7 @@ namespace Carnassial
             // since database open was successful, update recent image set state
             this.State.MostRecentFileAddFolderPath = fileDatabase.FolderPath;
             this.State.MostRecentImageSets.SetMostRecent(templateDatabasePath);
-            this.Title = fileDatabaseFileName + " - " + Constant.MainWindowBaseTitle;
+            this.Title = $"{fileDatabaseFileName} - {Constant.MainWindowBaseTitle}";
             this.MenuFileRecentImageSets_Refresh();
 
             // generate and render the data entry controls regardless of whether there are files in the database
@@ -2565,9 +2566,9 @@ namespace Carnassial
             string? directoryPath = Path.GetDirectoryName(templateDatabasePath);
             if (directoryPath == null)
             {
-                throw new ArgumentOutOfRangeException(nameof(templateDatabasePath), String.Format(CultureInfo.CurrentCulture, "Failed to extract a directory from the template database path '{0}'. Is the file name of the template database missing?", templateDatabasePath));
+                throw new ArgumentOutOfRangeException(nameof(templateDatabasePath), $"Failed to extract a directory from the template database path '{templateDatabasePath}'. Is the file name of the template database missing?");
             }
-            List<string> fileDatabasePaths = [.. Directory.GetFiles(directoryPath, "*" + Constant.File.FileDatabaseFileExtension).Where(databasePath => Path.GetFileNameWithoutExtension(databasePath).EndsWith(Constant.Database.BackupFileNameSuffix, StringComparison.Ordinal) == false)];
+            List<string> fileDatabasePaths = [.. Directory.GetFiles(directoryPath, $"*{Constant.File.FileDatabaseFileExtension}").Where(databasePath => Path.GetFileNameWithoutExtension(databasePath).EndsWith(Constant.Database.BackupFileNameSuffix, StringComparison.Ordinal) == false)];
 
             string databaseFileName;
             if (fileDatabasePaths.Count == 1)
@@ -2647,7 +2648,7 @@ namespace Carnassial
                     }
                     break;
                 default:
-                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled combined difference result {0}.", result));
+                    throw new NotSupportedException($"Unhandled combined difference result {result}.");
             }
         }
 
@@ -2691,7 +2692,7 @@ namespace Carnassial
                     }
                     break;
                 default:
-                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled difference result {0}.", result));
+                    throw new NotSupportedException($"Unhandled difference result {result}.");
             }
         }
 
@@ -2770,9 +2771,9 @@ namespace Carnassial
                     string? directoryPath = Path.GetDirectoryName(filePath);
                     if (directoryPath == null)
                     {
-                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unable to obtain directory from database file path '{0}'.", filePath));
+                        throw new NotSupportedException($"Unable to obtain directory from database file path '{filePath}'.");
                     }
-                    string[] templatePaths = Directory.GetFiles(directoryPath, "*" + Constant.File.TemplateFileExtension);
+                    string[] templatePaths = Directory.GetFiles(directoryPath, $"*{Constant.File.TemplateFileExtension}");
                     if (templatePaths != null && templatePaths.Length == 1)
                     {
                         await this.TryOpenTemplateAndFileDatabaseAsync(templatePaths[0]).ConfigureAwait(true);

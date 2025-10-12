@@ -232,7 +232,7 @@ namespace Carnassial.Data
                         maxWidthIndex = column;
                         break;
                     default:
-                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column '{0}' in {1} table schema.", columnName, reader.GetTableName(0)));
+                        throw new NotSupportedException($"Unhandled column '{columnName}' in {reader.GetTableName(0)} table schema.");
                 }
             }
 
@@ -252,7 +252,7 @@ namespace Carnassial.Data
                                              (visibleIndex != -1);
             if (allStandardColumnsPresent == false)
             {
-                throw new SQLiteException(SQLiteErrorCode.Schema, "At least one standard column is missing from table " + reader.GetTableName(0));
+                throw new SQLiteException(SQLiteErrorCode.Schema, $"At least one standard column is missing from table {reader.GetTableName(0)}.");
             }
 
             this.controlsByDataLabel.Clear();

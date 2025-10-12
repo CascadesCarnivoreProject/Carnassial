@@ -77,17 +77,17 @@ namespace Carnassial.Database
 
         public override string ToString()
         {
-            StringBuilder columnDefinition = new(SQLiteDatabase.QuoteIdentifier(this.Name) + " " + this.Type);
+            StringBuilder columnDefinition = new($"{SQLiteDatabase.QuoteIdentifier(this.Name)} {this.Type}");
             if (this.DefaultValue != null)
             {
                 if (String.Equals(this.Type, Constant.SQLiteAffinity.Text, StringComparison.OrdinalIgnoreCase) ||
                     String.Equals(this.Type, Constant.SQLiteAffinity.DateTime, StringComparison.OrdinalIgnoreCase))
                 {
-                    columnDefinition.Append(" DEFAULT " + SQLiteDatabase.QuoteStringLiteral(this.DefaultValue));
+                    columnDefinition.Append($" DEFAULT {SQLiteDatabase.QuoteStringLiteral(this.DefaultValue)}");
                 }
                 else
                 {
-                    columnDefinition.Append(" DEFAULT " + this.DefaultValue);
+                    columnDefinition.Append($" DEFAULT {this.DefaultValue}");
                 }
             }
             if (this.NotNull)

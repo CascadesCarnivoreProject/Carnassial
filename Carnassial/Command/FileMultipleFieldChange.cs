@@ -32,7 +32,7 @@ namespace Carnassial.Command
             Debug.Assert(previousID != null);
             if ((long)previousID != fileEnumerator.Current.ID)
             {
-                throw new ArgumentOutOfRangeException(nameof(previousValuesByPropertyName), String.Format(CultureInfo.CurrentCulture, "Previous state is for file {0} rather than {1}.", previousValuesByPropertyName[Constant.DatabaseColumn.ID], fileEnumerator.Current.ID));
+                throw new ArgumentOutOfRangeException(nameof(previousValuesByPropertyName), $"Previous state is for file {previousValuesByPropertyName[Constant.DatabaseColumn.ID]} rather than {fileEnumerator.Current.ID}.");
             }
 
             this.IsExecuted = true;
@@ -66,7 +66,7 @@ namespace Carnassial.Command
         {
             if (this.Changes != 1)
             {
-                throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, "A multiple field change with {0} changes cannot be converted to a single field change.", this.Changes));
+                throw new InvalidOperationException($"A multiple field change with {this.Changes} changes cannot be converted to a single field change.");
             }
 
             KeyValuePair<string, object> newValue = this.newValuesByPropertyName.First();

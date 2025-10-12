@@ -59,12 +59,12 @@ namespace Carnassial.Database
                     }
                     if (valueIsNullOrEmpty && (clause.Operator == Constant.SearchTermOperator.Equal))
                     {
-                        whereClauses.Add("(" + quotedColumn + " IS NULL OR " + quotedColumn + " = '')");
+                        whereClauses.Add($"({quotedColumn} IS NULL OR {quotedColumn} = '')");
                     }
                     else
                     {
                         string parameterName = clause.ParameterName + clausesEncounteredForThisColumn.ToString(Constant.InvariantCulture);
-                        whereClauses.Add(quotedColumn + " " + clause.Operator + " " + parameterName);
+                        whereClauses.Add($"{quotedColumn} {clause.Operator} {parameterName}");
                         whereParameters.Add(new SQLiteParameter(parameterName, clause.Value));
                     }
 
@@ -75,7 +75,7 @@ namespace Carnassial.Database
                 {
                     LogicalOperator.And => " AND ",
                     LogicalOperator.Or => " OR ",
-                    _ => throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled logical operator {0}.", this.WhereCombiningOperator)),
+                    _ => throw new NotSupportedException($"Unhandled logical operator {this.WhereCombiningOperator}."),
                 };
                 query += Constant.Sql.Where + String.Join(whereCombiningTerm, whereClauses);
             }
@@ -83,7 +83,7 @@ namespace Carnassial.Database
             // add ordering, if specified
             if (String.IsNullOrEmpty(this.OrderBy) == false)
             {
-                query += " ORDER BY " + this.OrderBy;
+                query += $" ORDER BY {this.OrderBy}";
             }
 
             SQLiteCommand command = new(query, connection);

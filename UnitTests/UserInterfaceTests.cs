@@ -33,7 +33,7 @@ namespace Carnassial.UnitTests
             this.EnsureTestClassSubdirectory();
         }
 
-        [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
+        [ClassCleanup]
         public static void ClassCleanup()
         {
             UITestMethodAttribute.ClassCleanup();
@@ -112,7 +112,7 @@ namespace Carnassial.UnitTests
                     // Since UserInterface tests directory is shared with the DataEntryHandler test filesystem state can
                     // potentially cause the DataEntryHandler.ddb to be selected instead of Carnassial.ddb.
                     Assert.IsTrue(carnassial.DataHandler != null);
-                    Assert.IsTrue(carnassial.DataHandler.FileDatabase.FilePath == fileDatabaseFilePath, "Expected database file path to be '" + fileDatabaseFilePath + "' but it was '" + carnassial.DataHandler.FileDatabase.FilePath + "'.");
+                    Assert.IsTrue(carnassial.DataHandler.FileDatabase.FilePath == fileDatabaseFilePath, $"Expected database file path to be '{fileDatabaseFilePath}' but it was '{carnassial.DataHandler.FileDatabase.FilePath}'.");
                     Assert.IsTrue(carnassial.DataHandler.FileDatabase.CurrentlySelectedFileCount == 2);
                     Assert.IsNotNull(carnassial.DataHandler.ImageCache.Current);
 
@@ -473,7 +473,7 @@ namespace Carnassial.UnitTests
 
                         // 4 controls not visible in default database + 4 marker position columns + date time and utc offset as single control + no control for id column
                         int expectedDataEntryControls = databaseExpectation.ExpectedColumns.Count - 4 - 4 - 1 - 1;
-                        Assert.IsTrue(controls.ControlsByDataLabel.Count == expectedDataEntryControls, "Expected {0} data entry controls to be generated but {1} were.", expectedDataEntryControls, controls.ControlsByDataLabel.Count);
+                        Assert.IsTrue(controls.ControlsByDataLabel.Count == expectedDataEntryControls, $"Expected {expectedDataEntryControls} data entry controls to be generated but {controls.ControlsByDataLabel.Count} were.");
 
                         // check copies aren't possible when the image enumerator's not pointing to an image
                         List<DataEntryControl> copyableControls = [.. controls.Controls.Where(control => control.Copyable)];

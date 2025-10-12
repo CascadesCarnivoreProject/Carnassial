@@ -65,7 +65,7 @@ namespace Carnassial.Data
                     }
                     else
                     {
-                        throw new ArgumentOutOfRangeException(nameof(fileDatabase), String.Format(CultureInfo.CurrentCulture, "Couldn't locate SQL data type for '{0}'.", control.DataLabel));
+                        throw new ArgumentOutOfRangeException(nameof(fileDatabase), $"Couldn't locate SQL data type for '{control.DataLabel}'.");
                     }
                 }
                 this.sqlDataTypeByLabel.Add(control.Label, sqlDataType);
@@ -120,7 +120,7 @@ namespace Carnassial.Data
                 SqlDataType.Integer => this.MatchInt32,
                 SqlDataType.Real => this.MatchDouble,
                 SqlDataType.String => this.MatchString,
-                _ => throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled SQL data type {0}.", dataType)),
+                _ => throw new NotSupportedException($"Unhandled SQL data type {dataType}."),
             };
         }
 
@@ -162,7 +162,7 @@ namespace Carnassial.Data
             {
                 return fileValue != findValue;
             }
-            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled operator '{0}'.", comparisonOperator));
+            throw new NotSupportedException($"Unhandled operator '{comparisonOperator}'.");
         }
 
         private bool MatchDateTime(object? fileValueAsObject, string comparisonOperator, object? findValueAsObject)
@@ -197,7 +197,7 @@ namespace Carnassial.Data
             {
                 return fileValue <= findValue;
             }
-            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled operator '{0}'.", comparisonOperator));
+            throw new NotSupportedException($"Unhandled operator '{comparisonOperator}'.");
         }
 
         private bool MatchDouble(object? fileValueAsObject, string comparisonOperator, object? findValueAsObject)
@@ -232,7 +232,7 @@ namespace Carnassial.Data
             {
                 return fileValue <= findValue;
             }
-            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled operator '{0}'.", comparisonOperator));
+            throw new NotSupportedException($"Unhandled operator '{comparisonOperator}'.");
         }
 
         private bool MatchInt32(object? fileValueAsObject, string comparisonOperator, object? findValueAsObject)
@@ -267,7 +267,7 @@ namespace Carnassial.Data
             {
                 return fileValue <= findValue;
             }
-            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled operator '{0}'.", comparisonOperator));
+            throw new NotSupportedException($"Unhandled operator '{comparisonOperator}'.");
         }
 
         private bool MatchString(object? fileValueAsObject, string comparisonOperator, object? findValueAsObject)
@@ -300,7 +300,7 @@ namespace Carnassial.Data
             {
                 return String.Compare(fileValue, findValue, StringComparison.Ordinal) <= 0;
             }
-            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled operator '{0}'.", comparisonOperator));
+            throw new NotSupportedException($"Unhandled operator '{comparisonOperator}'.");
         }
 
         public bool TryReplace(ImageRow file)

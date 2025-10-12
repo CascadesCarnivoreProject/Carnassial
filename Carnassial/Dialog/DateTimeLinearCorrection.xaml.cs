@@ -125,11 +125,11 @@ namespace Carnassial.Dialog
             }
 
             double imagePositionInInterval = (double)(imageDateTime - this.ClockLastCorrect.Value).Ticks / (double)intervalFromCorrectToMeasured.Ticks;
-            Debug.Assert((-0.0000001 < imagePositionInInterval) && (imagePositionInInterval < 1.0000001), String.Format(CultureInfo.InvariantCulture, "Interval position {0} is not between 0.0 and 1.0.", imagePositionInInterval));
+            Debug.Assert((-0.0000001 < imagePositionInInterval) && (imagePositionInInterval < 1.0000001), String.Create(CultureInfo.InvariantCulture, $"Interval position {imagePositionInInterval} is not between 0.0 and 1.0."));
 
             TimeSpan adjustment = TimeSpan.FromTicks((long)(imagePositionInInterval * this.ClockDrift.Value.Ticks + 0.5));
             // check the duration of the adjustment as slow clocks have negative adjustments
-            Debug.Assert((TimeSpan.Zero <= adjustment.Duration()) && (adjustment.Duration() <= this.ClockDrift.Value.Duration()), String.Format(CultureInfo.InvariantCulture, "Expected adjustment {0} to be within [{1} {2}].", adjustment, TimeSpan.Zero, this.ClockDrift.Value));
+            Debug.Assert((TimeSpan.Zero <= adjustment.Duration()) && (adjustment.Duration() <= this.ClockDrift.Value.Duration()), String.Create(CultureInfo.InvariantCulture, $"Expected adjustment {adjustment} to be within [{TimeSpan.Zero} {this.ClockDrift.Value}]."));
             return adjustment;
         }
 

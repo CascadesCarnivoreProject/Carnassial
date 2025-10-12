@@ -7,9 +7,9 @@ namespace Carnassial.Util
     {
         public static Uri GetDevTeamEmailLink()
         {
-            UriBuilder mailto = new(Uri.UriSchemeMailto + ":" + CarnassialSettings.Default.DevTeamEmail)
+            UriBuilder mailto = new($"{Uri.UriSchemeMailto}:{CarnassialSettings.Default.DevTeamEmail}")
             {
-                Query = String.Format(CultureInfo.InvariantCulture, "subject={0} {1}: feedback", Constant.ApplicationName, typeof(CarnassialConfigurationSettings).Assembly.GetName().Version)
+                Query = String.Create(CultureInfo.InvariantCulture, $"subject={Constant.ApplicationName} {typeof(CarnassialConfigurationSettings).Assembly.GetName().Version}: feedback")
             };
             return mailto.Uri;
         }
@@ -40,7 +40,7 @@ namespace Carnassial.Util
             uriBuilder.Path += CarnassialSettings.Default.GithubOrganizationAndRepo;
             foreach (string token in additionalPath)
             {
-                uriBuilder.Path += "/" + token;
+                uriBuilder.Path += $"/{token}";
             }
             return uriBuilder.Uri;
         }

@@ -52,7 +52,7 @@ namespace Carnassial.Data
                     this.DataType = SqlDataType.Real;
                     break;
                 default:
-                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled control type {0}.", control.ControlType));
+                    throw new NotSupportedException($"Unhandled control type {control.ControlType}.");
             }
         }
     }

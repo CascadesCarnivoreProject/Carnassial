@@ -37,7 +37,7 @@ namespace Carnassial.Images
                 {
                     MetadataReadResults.Failed => FileClassification.Corrupt,
                     MetadataReadResults.None => FileClassification.NoLongerAvailable,
-                    _ => throw new NotSupportedException("Unhandled metadata result " + this.MetadataResult.ToString()),
+                    _ => throw new NotSupportedException($"Unhandled metadata result {this.MetadataResult}."),
                 };
             }
 
@@ -69,7 +69,7 @@ namespace Carnassial.Images
             {
                 return "File is in color and therefore not dark.";
             }
-            return String.Format(CultureInfo.CurrentCulture, "Normalized brightness is {0:P1}.", this.Luminosity);
+            return $"Normalized brightness is {this.Luminosity:P1}.";
         }
     }
 }

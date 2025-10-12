@@ -125,7 +125,7 @@ namespace Carnassial.UnitTests
             File.Copy(templateDatabaseSourceFilePath, templateDatabaseCloneFilePath, true);
 
             bool result = TemplateDatabase.TryCreateOrOpen(templateDatabaseCloneFilePath, out TemplateDatabase clone);
-            Assert.IsTrue(result, "Open of template database '{0}' failed.", templateDatabaseCloneFilePath);
+            Assert.IsTrue(result, $"Open of template database '{templateDatabaseCloneFilePath}' failed.");
             return clone;
         }
 
@@ -443,8 +443,8 @@ namespace Carnassial.UnitTests
 
         protected string GetUniqueFilePathForTest(string baseFileName)
         {
-            string uniqueTestIdentifier = String.Format(CultureInfo.InvariantCulture, "{0}.{1}", this.GetType().FullName, this.TestContext!.TestName);
-            string uniqueFileName = String.Format(CultureInfo.InvariantCulture, "{0}.{1}{2}", Path.GetFileNameWithoutExtension(baseFileName), uniqueTestIdentifier, Path.GetExtension(baseFileName));
+            string uniqueTestIdentifier = String.Create(CultureInfo.InvariantCulture, $"{this.GetType().FullName}.{this.TestContext!.TestName}");
+            string uniqueFileName = String.Create(CultureInfo.InvariantCulture, $"{Path.GetFileNameWithoutExtension(baseFileName)}.{uniqueTestIdentifier}{Path.GetExtension(baseFileName)}");
 
             if (String.IsNullOrWhiteSpace(this.TestClassSubdirectory))
             {

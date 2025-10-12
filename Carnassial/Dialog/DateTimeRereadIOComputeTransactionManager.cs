@@ -28,7 +28,7 @@ namespace Carnassial.Dialog
                 {
                     if (loadAtom.First.File == null)
                     {
-                        throw new NotSupportedException("Load atom's first file '" + loadAtom.First.FileName + " has not been opened.");
+                        throw new NotSupportedException($"Load atom's first file '{loadAtom.First.FileName} has not been opened.");
                     }
 
                     DateTimeOffset originalDateTimeFirst = loadAtom.First.File.DateTimeOffset;

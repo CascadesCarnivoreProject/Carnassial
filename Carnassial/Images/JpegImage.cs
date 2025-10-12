@@ -92,7 +92,7 @@ namespace Carnassial.Images
 
         public ImageProperties GetProperties(int? requestedWidth, ref MemoryImage? preallocatedImage)
         {
-            Debug.Assert(this.reader.Buffer != null, "Reader's buffer is unexpectedly null. " + nameof(this.reader.ExtendBuffer) + "() should have been called on the reader..");
+            Debug.Assert(this.reader.Buffer != null, $"Reader's buffer is unexpectedly null. {nameof(this.reader.ExtendBuffer)}() should have been called on the reader..");
 
             this.reader.ExtendBuffer((int)this.reader.Length - this.reader.Buffer.Length);
             if ((preallocatedImage == null) || (preallocatedImage.TryDecode(this.reader.Buffer, 0, this.reader.Buffer.Length, requestedWidth) == false))
@@ -177,7 +177,7 @@ namespace Carnassial.Images
         {
             if (this.Metadata == null)
             {
-                throw new NotSupportedException(App.FormatResource(Constant.ResourceKey.JpegImageMetadataRequired, nameof(this.TryGetMetadata), nameof(this.TryGetThumbnail) + "()."));
+                throw new NotSupportedException(App.FormatResource(Constant.ResourceKey.JpegImageMetadataRequired, nameof(this.TryGetMetadata), $"{nameof(this.TryGetThumbnail)}()."));
             }
 
             ExifThumbnailDirectory? thumbnailDirectory = this.Metadata.OfType<ExifThumbnailDirectory>().FirstOrDefault();
@@ -198,19 +198,19 @@ namespace Carnassial.Images
             int thumbnailLength = thumbnailDirectory.GetInt32(ExifThumbnailDirectory.TagThumbnailLength);
             if (thumbnailLength < Constant.Images.SmallestValidJpegSizeInBytes)
             {
-                throw new ImageProcessingException(String.Format(CultureInfo.CurrentCulture, "Jpeg thumbnail sizeof {0} bytes is below smallest expected size {1}.", thumbnailLength, Constant.Images.SmallestValidJpegSizeInBytes));
+                throw new ImageProcessingException($"Jpeg thumbnail sizeof {thumbnailLength} bytes is below smallest expected size {Constant.Images.SmallestValidJpegSizeInBytes}.");
             }
-            Debug.Assert(this.reader.Buffer != null, "Reader's buffer is unexpectedly null. " + nameof(this.reader.ExtendBuffer) + "() should have been called on the reader..");
+            Debug.Assert(this.reader.Buffer != null, $"Reader's buffer is unexpectedly null. {nameof(this.reader.ExtendBuffer)}() should have been called on the reader..");
             if ((thumbnailOffset + thumbnailLength + Constant.Exif.MaxMetadataExtractorIssue35Offset) > this.reader.Buffer.Length)
             {
-                throw new ImageProcessingException(String.Format(CultureInfo.CurrentCulture, "End position of thumbnail (byte {0}) may exceed file buffer length of '{1}'.", thumbnailOffset + thumbnailLength, this.reader.Buffer.Length));
+                throw new ImageProcessingException($"End position of thumbnail (byte {thumbnailOffset + thumbnailLength}) may exceed file buffer length of '{this.reader.Buffer.Length}'.");
             }
 
             // work around Metadata Extractor issue #35
             // https://github.com/drewnoakes/metadata-extractor-dotnet/issues/35
             if (thumbnailLength <= Constant.Exif.MaxMetadataExtractorIssue35Offset + 1)
             {
-                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled thumbnail length {0}.", thumbnailLength));
+                throw new NotSupportedException($"Unhandled thumbnail length {thumbnailLength}.");
             }
             int issue35Offset = 0;
             for (int offset = 0; offset <= Constant.Exif.MaxMetadataExtractorIssue35Offset; ++offset)
@@ -228,7 +228,7 @@ namespace Carnassial.Images
             thumbnailOffset += issue35Offset;
             if ((thumbnailOffset + thumbnailLength) > this.reader.Buffer.Length)
             {
-                throw new ImageProcessingException(String.Format(CultureInfo.CurrentCulture, "End position of thumbnail (byte {0}) is beyond the file's buffer length of '{1}'.", thumbnailOffset + thumbnailLength, this.reader.Buffer.Length));
+                throw new ImageProcessingException($"End position of thumbnail (byte {thumbnailOffset + thumbnailLength}) is beyond the file's buffer length of '{this.reader.Buffer.Length}'.");
             }
 
             if ((preallocatedThumbnail == null) || (preallocatedThumbnail.TryDecode(this.reader.Buffer, thumbnailOffset, thumbnailLength, null) == false))

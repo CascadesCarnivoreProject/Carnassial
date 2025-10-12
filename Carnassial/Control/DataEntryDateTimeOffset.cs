@@ -39,7 +39,7 @@ namespace Carnassial.Control
                 {
                     if (DateTimeHandler.TryParseDisplayDateTime(valueAsString, out value) == false)
                     {
-                        throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format(CultureInfo.CurrentCulture, "Unsupported date time format {0}.", valueAsObject));
+                        throw new ArgumentOutOfRangeException(nameof(valueAsObject), $"Unsupported date time format {valueAsObject}.");
                     }
                 }
             }
@@ -50,7 +50,7 @@ namespace Carnassial.Control
             else
             {
                 ArgumentNullException.ThrowIfNull(valueAsObject);
-                throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format(CultureInfo.CurrentCulture, "Unsupported value type {0}.", valueAsObject.GetType().Name));
+                throw new ArgumentOutOfRangeException(nameof(valueAsObject), $"Unsupported value type {valueAsObject.GetType().Name}.");
             }
 
             // persist selection through value changes

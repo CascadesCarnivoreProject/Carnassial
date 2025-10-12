@@ -81,7 +81,7 @@ namespace Carnassial.Control
             else
             {
                 ArgumentNullException.ThrowIfNull(valueAsObject);
-                throw new ArgumentOutOfRangeException(nameof(valueAsObject), String.Format(CultureInfo.CurrentCulture, "Unsupported value type {0}.", valueAsObject.GetType()));
+                throw new ArgumentOutOfRangeException(nameof(valueAsObject), $"Unsupported value type {valueAsObject.GetType()}.");
             }
 
             this.ContentControl.SuppressAutocompletion = true;

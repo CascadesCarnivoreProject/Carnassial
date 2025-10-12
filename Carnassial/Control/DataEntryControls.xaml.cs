@@ -173,7 +173,7 @@ namespace Carnassial.Control
                 }
                 else
                 {
-                    Debug.Fail(String.Format(CultureInfo.CurrentCulture, "Unhandled control type {0}.", control.ControlType));
+                    Debug.Fail($"Unhandled control type {control.ControlType}.");
                     continue;
                 }
             }

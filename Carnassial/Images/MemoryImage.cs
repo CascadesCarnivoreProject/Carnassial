@@ -127,7 +127,7 @@ namespace Carnassial.Images
             if ((this.Format != MemoryImageCppCli.PreferredPixelFormat) ||
                 (this.PixelSizeInBytes != MemoryImageCppCli.CalculationPixelSizeInBytes))
             {
-                throw new NotSupportedException("Unhandled image format " + this.Format + " or unsuppored pixel size of " + this.PixelSizeInBytes + " bytes.");
+                throw new NotSupportedException($"Unhandled image format {this.Format} or unsuppored pixel size of {this.PixelSizeInBytes} bytes.");
             }
             if (Avx2.IsSupported == false)
             {

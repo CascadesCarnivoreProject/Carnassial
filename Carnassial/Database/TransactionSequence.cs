@@ -44,7 +44,7 @@ namespace Carnassial.Database
         {
             if (this.Transaction == null)
             {
-                throw new InvalidOperationException("Set " + nameof(this.Transaction) + " before calling " + nameof(this.Commit) + "().");
+                throw new InvalidOperationException($"Set {nameof(this.Transaction)} before calling {nameof(this.Commit)}().");
             }
 
             this.Transaction.Commit();

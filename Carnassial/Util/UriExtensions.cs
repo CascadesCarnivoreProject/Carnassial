@@ -6,7 +6,7 @@ namespace Carnassial.Util
     {
         public static string ToEmailAddress(this Uri uri)
         {
-            return uri.UserInfo + "@" + uri.Host;
+            return $"{uri.UserInfo}@{uri.Host}";
         }
     }
 }

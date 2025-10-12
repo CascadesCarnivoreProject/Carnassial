@@ -29,7 +29,7 @@ namespace Carnassial.Editor.Dialog
 
         private void OpenFile_Click(object sender, RoutedEventArgs e)
         {
-            string filter = String.Format(CultureInfo.CurrentCulture, "Images and videos (*{0};*{1};*{2})|*{0};*{1};*{2}", Constant.File.JpgFileExtension, Constant.File.AviFileExtension, Constant.File.Mp4FileExtension);
+            string filter = $"Images and videos (*{Constant.File.JpgFileExtension};*{Constant.File.AviFileExtension};*{Constant.File.Mp4FileExtension})|*{Constant.File.JpgFileExtension};*{Constant.File.AviFileExtension};*{Constant.File.Mp4FileExtension}";
             if (CommonUserInterface.TryGetFileFromUser("Select a typical file to inspect", Constant.File.CurrentDirectory, filter, out string? selectedFilePath))
             {
                 this.ImageName.Content = Path.GetFileName(selectedFilePath);

@@ -40,7 +40,7 @@ namespace Carnassial.Command
             {
                 return "custom selection";
             }
-            return "selection of " + this.newSelection.ToString().ToLowerInvariant() + " files";
+            return $"selection of {this.newSelection.ToString().ToLowerInvariant()} files";
         }
 
         public async override Task UndoAsync(CarnassialWindow carnassial)

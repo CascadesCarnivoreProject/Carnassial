@@ -103,8 +103,8 @@ namespace Carnassial.Data
 
                 // add log entry recording the change
                 StringBuilder log = new(Environment.NewLine);
-                log.AppendFormat(CultureInfo.CurrentCulture, "System entry: Adjusted dates and times of {0} selected files.{1}", filesToAdjust.Count, Environment.NewLine);
-                log.AppendFormat(CultureInfo.CurrentCulture, "The first file adjusted was '{0}', the last '{1}', and the last file was adjusted by {2}.{3}", filesToAdjust[0].FileName, filesToAdjust[^1].FileName, mostRecentAdjustment, Environment.NewLine);
+                log.AppendLine($"System entry: Adjusted dates and times of {filesToAdjust.Count} selected files.");
+                log.AppendLine($"The first file adjusted was '{filesToAdjust[0].FileName}', the last '{filesToAdjust[^1].FileName}', and the last file was adjusted by {mostRecentAdjustment}.");
                 this.AppendToImageSetLog(log);
             }
         }
@@ -174,7 +174,7 @@ namespace Carnassial.Data
                     Debug.Assert(this.CustomSelection != null);
                     return this.CustomSelection.CreateSelect();
                 default:
-                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled selection {0}.", selection));
+                    throw new NotSupportedException($"Unhandled selection {selection}.");
             }
             return select;
         }
@@ -190,7 +190,7 @@ namespace Carnassial.Data
 
             using (SQLiteTransaction transaction = this.Connection.BeginTransaction())
             {
-                using (SQLiteCommand deleteFiles = new(String.Format(CultureInfo.InvariantCulture, "DELETE FROM {0} WHERE {1} = @Id", Constant.DatabaseTable.Files, Constant.DatabaseColumn.ID), this.Connection, transaction))
+                using (SQLiteCommand deleteFiles = new(String.Create(CultureInfo.InvariantCulture, $"DELETE FROM {Constant.DatabaseTable.Files} WHERE {Constant.DatabaseColumn.ID} = @Id"), this.Connection, transaction))
                 {
                     SQLiteParameter id = new("@Id");
                     deleteFiles.Parameters.Add(id);
@@ -266,12 +266,9 @@ namespace Carnassial.Data
                 }
 
                 StringBuilder log = new(Environment.NewLine);
-                log.AppendFormat(CultureInfo.CurrentCulture, "System entry: Swapped days and months for {0} files.", filesToUpdate.Count);
-                log.AppendLine();
-                log.AppendFormat(CultureInfo.CurrentCulture, "The first file adjusted was '{0}' and the last '{1}'.", firstFile.FileName, lastFile?.FileName);
-                log.AppendLine();
-                log.AppendFormat(CultureInfo.CurrentCulture, "The last file's date was changed from '{0}' to '{1}'.", DateTimeHandler.ToDisplayDateString(mostRecentOriginalDateTime), DateTimeHandler.ToDisplayDateString(mostRecentReversedDateTime));
-                log.AppendLine();
+                log.AppendLine(CultureInfo.CurrentCulture, $"System entry: Swapped days and months for {filesToUpdate.Count} files.");
+                log.AppendLine(CultureInfo.CurrentCulture, $"The first file adjusted was '{firstFile.FileName}' and the last '{lastFile?.FileName}'.");
+                log.AppendLine(CultureInfo.CurrentCulture, $"The last file's date was changed from '{DateTimeHandler.ToDisplayDateString(mostRecentOriginalDateTime)}' to '{DateTimeHandler.ToDisplayDateString(mostRecentReversedDateTime)}'.");
                 this.AppendToImageSetLog(log);
             }
         }
@@ -368,7 +365,7 @@ namespace Carnassial.Data
                 string? valueAsString = value.ToString();
                 if (valueAsString == null)
                 {
-                    throw new NotSupportedException("Value in column " + dataLabel + " is unexpectedly null.");
+                    throw new NotSupportedException($"Value in column {dataLabel} is unexpectedly null.");
                 }
                 distinctValues.Add(valueAsString);
             }
@@ -443,7 +440,7 @@ namespace Carnassial.Data
 
         public List<string> MoveSelectedFilesToFolder(string destinationFolderPath)
         {
-            Debug.Assert(destinationFolderPath.StartsWith(this.FolderPath, StringComparison.OrdinalIgnoreCase), String.Format(CultureInfo.InvariantCulture, "Destination path '{0}' is not under '{1}'.", destinationFolderPath, this.FolderPath));
+            Debug.Assert(destinationFolderPath.StartsWith(this.FolderPath, StringComparison.OrdinalIgnoreCase), String.Create(CultureInfo.InvariantCulture, $"Destination path '{destinationFolderPath}' is not under '{this.FolderPath}'."));
 
             List<ImageRow> filesToUpdate = [];
             List<string> immovableFiles = [];
@@ -507,7 +504,7 @@ namespace Carnassial.Data
             {
                 // columns dropped from the template
                 // Renames could be detected by checking for additions which match removals but this isn't currently supported.
-                this.ControlSynchronizationIssues.Add("The field " + dataLabel + " is present in the file database but has been removed from the template.");
+                this.ControlSynchronizationIssues.Add($"The field {dataLabel} is present in the file database but has been removed from the template.");
             }
 
             // check existing controls for compatibility
@@ -525,7 +522,7 @@ namespace Carnassial.Data
                     // controls are potentially interchangeable if their values are compatible
                     // For example, any other control can be converted to a note and a note can be changed to a choice if the choices
                     // include all values in use.  For now, however, such conversions aren't supported.
-                    this.ControlSynchronizationIssues.Add(String.Format(CultureInfo.CurrentCulture, "The field {0} is of type '{1}' in the file database but of type '{2}' in the template.", dataLabel, ControlTypeConverter.Convert(fileDatabaseControl.ControlType), ControlTypeConverter.Convert(templateControl.ControlType)));
+                    this.ControlSynchronizationIssues.Add($"The field {dataLabel} is of type '{ControlTypeConverter.Convert(fileDatabaseControl.ControlType)}' in the file database but of type '{ControlTypeConverter.Convert(templateControl.ControlType)}' in the template.");
                 }
 
                 if (fileDatabaseControl.ControlType == ControlType.FixedChoice)
@@ -565,7 +562,7 @@ namespace Carnassial.Data
 
                         foreach (string removedChoice in removedChoicesInUse)
                         {
-                            this.ControlSynchronizationIssues.Add(String.Format(CultureInfo.CurrentCulture, "Files have {0} set to the choice '{1}' but this value is removed from the template.", dataLabel, removedChoice));
+                            this.ControlSynchronizationIssues.Add($"Files have {dataLabel} set to the choice '{removedChoice}' but this value is removed from the template.");
                         }
                     }
                 }
@@ -630,7 +627,7 @@ namespace Carnassial.Data
                                 int columnNumber = templateDataLabels.IndexOf(dataLabelToAdd);
                                 if (columnNumber < 0)
                                 {
-                                    throw new SQLiteException(SQLiteErrorCode.Constraint, String.Format(CultureInfo.CurrentCulture, "Internal consistency failure: could not add file table column for data label '{0}' because it could not be found in the template table's control definitions.", dataLabelToAdd));
+                                    throw new SQLiteException(SQLiteErrorCode.Constraint, $"Internal consistency failure: could not add file table column for data label '{dataLabelToAdd}' because it could not be found in the template table's control definitions.");
                                 }
                                 this.AddColumnToTable(transaction, Constant.DatabaseTable.Files, columnNumber, columnToAdd);
                             }
@@ -785,7 +782,7 @@ namespace Carnassial.Data
             }
             else if (relativePathFromThisToOther.Contains(Constant.File.ParentDirectory, StringComparison.Ordinal))
             {
-                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Canonicalization of relative path from database to spreadsheet '{0}' is not currently supported.", relativePathFromThisToOther));
+                throw new NotSupportedException($"Canonicalization of relative path from database to spreadsheet '{relativePathFromThisToOther}' is not currently supported.");
             }
 
             FileImportResult result = new();
@@ -845,7 +842,7 @@ namespace Carnassial.Data
                     ImageRow otherFile = other.Files[fileIndex];
                     if (String.IsNullOrWhiteSpace(otherFile.FileName))
                     {
-                        result.Errors.Add(String.Format(CultureInfo.CurrentCulture, "No file name found in row {0}.  Row skipped, database will not be updated for this file.", fileIndex));
+                        result.Errors.Add($"No file name found in row {fileIndex}.  Row skipped, database will not be updated for this file.");
                         continue;
                     }
 

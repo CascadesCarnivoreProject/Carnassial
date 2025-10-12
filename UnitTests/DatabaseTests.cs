@@ -22,7 +22,7 @@ namespace Carnassial.UnitTests
     [TestClass]
     public class DatabaseTests : CarnassialTest
     {
-        [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
+        [ClassCleanup]
         public static void ClassCleanup()
         {
             CarnassialTest.TryRevertToDefaultCultures();
@@ -146,7 +146,7 @@ namespace Carnassial.UnitTests
                     TestConstant.DefaultDatabaseColumn.Counter0 or
                     TestConstant.DefaultDatabaseColumn.Note0 or
                     TestConstant.DefaultDatabaseColumn.Note3 => 3,
-                    _ => throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled data label '{0}'.", control.DataLabel)),
+                    _ => throw new NotSupportedException($"Unhandled data label '{control.DataLabel}'."),
                 };
                 Assert.IsTrue(distinctValues != null && distinctValues.Count == expectedValues);
                 Assert.IsTrue(distinctValues.Count == distinctValues.Distinct().Count());
@@ -165,7 +165,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(fileDatabase.ImageSet.ID == 1);
             Assert.IsTrue(fileDatabase.ImageSet.FileSelection == FileSelection.Custom);
             Assert.IsTrue(fileDatabase.ImageSet.MostRecentFileID == -1);
-            Assert.IsTrue(fileDatabase.ImageSet.Log == Constant.Database.ImageSetDefaultLog + "Test log entry.");
+            Assert.IsTrue(fileDatabase.ImageSet.Log == $"{Constant.Database.ImageSetDefaultLog}Test log entry.");
             Assert.IsTrue(fileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier));
             Assert.IsTrue(fileDatabase.ImageSet.TimeZone == "Test Time Zone");
 
@@ -230,7 +230,7 @@ namespace Carnassial.UnitTests
             SearchTerm fileName = fileControl.CreateSearchTerm();
             fileName.UseForSearching = true;
             fileName.Operator = Constant.SearchTermOperator.Glob;
-            fileName.DatabaseValue = "*" + Constant.File.JpgFileExtension.ToUpperInvariant();
+            fileName.DatabaseValue = $"*{Constant.File.JpgFileExtension.ToUpperInvariant()}";
             fileDatabase.CustomSelection.SearchTerms.Add(fileName);
             Assert.IsTrue(fileDatabase.CustomSelection.CreateSelect().Where.Count == 1);
             fileDatabase.SelectFiles(FileSelection.Custom);
@@ -461,7 +461,7 @@ namespace Carnassial.UnitTests
 
             int listIndex = numberOfStandardControls + (3 * iterations) - 2;
             ControlRow listControl = templateDatabase.Controls[listIndex];
-            string modifiedList = listControl.WellKnownValues + "|NewChoice0|NewChoice1";
+            string modifiedList = $"{listControl.WellKnownValues}|NewChoice0|NewChoice1";
             listControl.WellKnownValues = modifiedList;
             templateDatabase.TrySyncControlToDatabase(listControl);
             Assert.IsTrue(templateDatabase.Controls[listIndex].WellKnownValues == modifiedList);
@@ -725,7 +725,7 @@ namespace Carnassial.UnitTests
                 Assert.IsTrue(fileDatabase.Files.RowCount == imagesAndVideos.Length);
                 fileDatabase.SelectFiles(FileSelection.All);
                 Assert.IsTrue(fileDatabase.Files.RowCount == imagesAndVideos.Length);
-                this.TestContext!.WriteLine("AddFilesAsync({0}): {1:0.000}s", filesLoaded, stopwatch.Elapsed.TotalSeconds);
+                this.TestContext!.WriteLine($"AddFilesAsync({filesLoaded}): {stopwatch.Elapsed.TotalSeconds:0.000}s");
 
                 Assert.IsTrue(folderLoad.IODuration >= TimeSpan.Zero);
                 Assert.IsTrue(folderLoad.ComputeDuration >= folderLoad.IODuration);
@@ -758,7 +758,7 @@ namespace Carnassial.UnitTests
                     (double luminosity, double coloration) = image.Image.GetLuminosityAndColoration(0);
                     file.Classification = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
                     stopwatch.Stop();
-                    this.TestContext.WriteLine("Classify({0}, {1:0.00}MP): {2}ms", file.FileName, 1E-6 * image.Image.TotalPixels, stopwatch.ElapsedMilliseconds);
+                    this.TestContext.WriteLine($"Classify({file.FileName}, {1E-6 * image.Image.TotalPixels:0.00}MP): {stopwatch.ElapsedMilliseconds} ms");
                     Assert.IsTrue(file.Classification == FileClassification.Color);
                 }
                 else
@@ -923,7 +923,7 @@ namespace Carnassial.UnitTests
 
             List<FileExpectations> fileExpectationsWithSubfolder;
             string subfolderDatabasePath;
-            using (FileDatabase fileDatabaseWithSubfolderImages = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, "DefaultUnitTestWithSubfulder.ddb"))
+            using (FileDatabase fileDatabaseWithSubfolderImages = this.CreateFileDatabase(TestConstant.File.DefaultTemplateDatabaseFileName, "DefaultUnitTestWithSubfolder.ddb"))
             {
                 subfolderDatabasePath = fileDatabaseWithSubfolderImages.FilePath;
                 fileExpectationsWithSubfolder = this.PopulateDefaultDatabase(fileDatabaseWithSubfolderImages);
@@ -1077,7 +1077,7 @@ namespace Carnassial.UnitTests
                     string? fileNameWithoutExtension = Path.GetFileNameWithoutExtension(initialFilePath);
                     Debug.Assert((directoryPath != null) && (fileNameWithoutExtension != null));
 
-                    string roundtripFilePath = Path.Combine(directoryPath, fileNameWithoutExtension + ".Roundtrip" + spreadsheetFileExtension);
+                    string roundtripFilePath = Path.Combine(directoryPath, $"{fileNameWithoutExtension}.Roundtrip{spreadsheetFileExtension}");
                     if (xlsx)
                     {
                         readerWriter.ExportFileDataToXlsx(fileDatabase, roundtripFilePath);
@@ -1093,12 +1093,12 @@ namespace Carnassial.UnitTests
                         // For .xlsx this isn't meaningful as file internals can change.
                         string initialFileContent = File.ReadAllText(initialFilePath);
                         string roundtripFileContent = File.ReadAllText(roundtripFilePath);
-                        Assert.IsTrue(initialFileContent == roundtripFileContent, "Initial and roundtrip {0} files don't match.", spreadsheetFileExtension);
+                        Assert.IsTrue(initialFileContent == roundtripFileContent, $"Initial and roundtrip {spreadsheetFileExtension} files don't match.");
                     }
 
                     // merge and refresh in memory table
                     int filesBeforeMerge = fileDatabase.CurrentlySelectedFileCount;
-                    string mergeFilePath = Path.Combine(directoryPath, fileNameWithoutExtension + ".FilesToMerge" + spreadsheetFileExtension);
+                    string mergeFilePath = Path.Combine(directoryPath, $"{fileNameWithoutExtension}.FilesToMerge{spreadsheetFileExtension}");
                     importResult = readerWriter.TryImportData(mergeFilePath, fileDatabase);
                     Assert.IsTrue(importResult.Errors.Count == 0);
 
@@ -1296,17 +1296,17 @@ namespace Carnassial.UnitTests
             for (int row = 0; row < startRow; ++row)
             {
                 TimeSpan actualAdjustment = fileTimesAfterAdjustment[row] - fileTimesBeforeAdjustment[row];
-                Assert.IsTrue(actualAdjustment == TimeSpan.Zero, "Expected file time not to change but it shifted by {0}.", actualAdjustment);
+                Assert.IsTrue(actualAdjustment == TimeSpan.Zero, $"Expected file time not to change but it shifted by {actualAdjustment}.");
             }
             for (int row = startRow; row <= endRow; ++row)
             {
                 TimeSpan actualAdjustment = fileTimesAfterAdjustment[row] - fileTimesBeforeAdjustment[row];
-                Assert.IsTrue(actualAdjustment == expectedAdjustment, "Expected file time to change by {0} but it shifted by {1}.", expectedAdjustment, actualAdjustment);
+                Assert.IsTrue(actualAdjustment == expectedAdjustment, $"Expected file time to change by {expectedAdjustment} but it shifted by {actualAdjustment}.");
             }
             for (int row = endRow + 1; row < fileTimesBeforeAdjustment.Count; ++row)
             {
                 TimeSpan actualAdjustment = fileTimesAfterAdjustment[row] - fileTimesBeforeAdjustment[row];
-                Assert.IsTrue(actualAdjustment == TimeSpan.Zero, "Expected file time not to change but it shifted by {0}.", actualAdjustment);
+                Assert.IsTrue(actualAdjustment == TimeSpan.Zero, $"Expected file time not to change but it shifted by {actualAdjustment}.");
             }
         }
 
@@ -1334,11 +1334,11 @@ namespace Carnassial.UnitTests
                 spreadsheetOrders.Add(control.SpreadsheetOrder);
             }
             List<long> uniqueIDs = [.. ids.Distinct()];
-            Assert.IsTrue(ids.Count == uniqueIDs.Count, "Expected {0} unique control IDs but found {1}.  {2} id(s) are duplicated.", ids.Count, uniqueIDs.Count, ids.Count - uniqueIDs.Count);
+            Assert.IsTrue(ids.Count == uniqueIDs.Count, $"Expected {ids.Count} unique control IDs but found {uniqueIDs.Count}.  {ids.Count - uniqueIDs.Count} id(s) are duplicated.");
             List<long> uniqueControlOrders = [.. controlOrders.Distinct()];
-            Assert.IsTrue(controlOrders.Count == uniqueControlOrders.Count, "Expected {0} unique control orders but found {1}.  {2} order(s) are duplicated.", controlOrders.Count, uniqueControlOrders.Count, controlOrders.Count - uniqueControlOrders.Count);
+            Assert.IsTrue(controlOrders.Count == uniqueControlOrders.Count, $"Expected {controlOrders.Count} unique control orders but found {uniqueControlOrders.Count}.  {controlOrders.Count - uniqueControlOrders.Count} order(s) are duplicated.");
             List<long> uniqueSpreadsheetOrders = [.. spreadsheetOrders.Distinct()];
-            Assert.IsTrue(spreadsheetOrders.Count == uniqueSpreadsheetOrders.Count, "Expected {0} unique spreadsheet orders but found {1}.  {2} order(s) are duplicated.", spreadsheetOrders.Count, uniqueSpreadsheetOrders.Count, spreadsheetOrders.Count - uniqueSpreadsheetOrders.Count);
+            Assert.IsTrue(spreadsheetOrders.Count == uniqueSpreadsheetOrders.Count, $"Expected {spreadsheetOrders.Count} unique spreadsheet orders but found {uniqueSpreadsheetOrders.Count}.  {spreadsheetOrders.Count - uniqueSpreadsheetOrders.Count} order(s) are duplicated.");
         }
 
         private static void VerifyDefaultImageSet(FileDatabase fileDatabase)

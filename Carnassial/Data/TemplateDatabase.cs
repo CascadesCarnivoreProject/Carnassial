@@ -31,7 +31,7 @@ namespace Carnassial.Data
             string? folderPath = Path.GetDirectoryName(filePath);
             if (folderPath == null)
             {
-                throw new ArgumentOutOfRangeException(nameof(filePath), "Unable to extract directory name from database file path '" + filePath + "'.");
+                throw new ArgumentOutOfRangeException(nameof(filePath), $"Unable to extract directory name from database file path '{filePath}'.");
             }
             this.FolderPath = folderPath;
         }
@@ -42,7 +42,7 @@ namespace Carnassial.Data
             { 
                 if (this.imageSet == null)
                 {
-                    throw new InvalidOperationException("this." + nameof(this.imageSet) + " is null. Call LoadImageSet() before accessing the ImageSet property.");
+                    throw new InvalidOperationException($"this.{nameof(this.imageSet)} is null. Call LoadImageSet() before accessing the ImageSet property.");
                 }
                 return this.imageSet; 
             }
@@ -105,7 +105,7 @@ namespace Carnassial.Data
         {
             if (controlToRemove.IsUserControl() == false)
             {
-                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Standard control {0} cannot be removed.", controlToRemove.DataLabel));
+                throw new NotSupportedException($"Standard control {controlToRemove.DataLabel} cannot be removed.");
             }
 
             // capture state
@@ -129,7 +129,7 @@ namespace Carnassial.Data
             // drop the control from the database and data table
             using (SQLiteTransaction transaction = this.Connection.BeginTransaction())
             {
-                using (SQLiteCommand removeControl = new("DELETE FROM " + Constant.DatabaseTable.Controls + Constant.Sql.Where + Constant.DatabaseColumn.ID + " = " + controlToRemove.ID, this.Connection))
+                using (SQLiteCommand removeControl = new($"DELETE FROM {Constant.DatabaseTable.Controls}{Constant.Sql.Where}{Constant.DatabaseColumn.ID} = {controlToRemove.ID}", this.Connection))
                 {
                     removeControl.ExecuteNonQuery();
                 }
@@ -210,18 +210,18 @@ namespace Carnassial.Data
             // argument validation
             if (orderColumnName != Constant.ControlColumn.ControlOrder && orderColumnName != Constant.ControlColumn.SpreadsheetOrder)
             {
-                throw new ArgumentOutOfRangeException(nameof(orderColumnName), String.Format(CultureInfo.CurrentCulture, "'{0}' is not a control order column.  Only '{1}' and '{2}' are order columns.", orderColumnName, Constant.ControlColumn.ControlOrder, Constant.ControlColumn.SpreadsheetOrder));
+                throw new ArgumentOutOfRangeException(nameof(orderColumnName), $"'{orderColumnName}' is not a control order column.  Only '{Constant.ControlColumn.ControlOrder}' and '{Constant.ControlColumn.SpreadsheetOrder}' are order columns.");
             }
 
             if (newOrderByDataLabel.Count != this.Controls.RowCount)
             {
-                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Partial order updates are not supported.  New ordering for {0} controls was passed but {1} controls are present for '{2}'.", newOrderByDataLabel.Count, this.Controls.RowCount, orderColumnName));
+                throw new NotSupportedException($"Partial order updates are not supported.  New ordering for {newOrderByDataLabel.Count} controls was passed but {this.Controls.RowCount} controls are present for '{orderColumnName}'.");
             }
 
             List<int> uniqueOrderValues = [.. newOrderByDataLabel.Values.Distinct()];
             if (uniqueOrderValues.Count != newOrderByDataLabel.Count)
             {
-                throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, "Each control must have a unique value for its order.  {0} duplicate values were passed for '{1}'.", newOrderByDataLabel.Count - uniqueOrderValues.Count, orderColumnName), nameof(newOrderByDataLabel));
+                throw new ArgumentException($"Each control must have a unique value for its order.  {newOrderByDataLabel.Count - uniqueOrderValues.Count} duplicate values were passed for '{orderColumnName}'.", nameof(newOrderByDataLabel));
             }
 
             uniqueOrderValues.Sort();
@@ -230,7 +230,7 @@ namespace Carnassial.Data
                 int expectedOrder = control + 1;
                 if (uniqueOrderValues[control] != expectedOrder)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(newOrderByDataLabel), String.Format(CultureInfo.CurrentCulture, "Control order must be a ones based count.  An order of {0} was passed instead of the expected order {1} for '{2}'.", uniqueOrderValues[0], expectedOrder, orderColumnName));
+                    throw new ArgumentOutOfRangeException(nameof(newOrderByDataLabel), $"Control order must be a ones based count.  An order of {uniqueOrderValues[0]} was passed instead of the expected order {expectedOrder} for '{orderColumnName}'.");
                 }
             }
 
@@ -248,7 +248,7 @@ namespace Carnassial.Data
                         control.SpreadsheetOrder = newOrder;
                         break;
                     default:
-                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column '{0}'.", orderColumnName));
+                        throw new NotSupportedException($"Unhandled column '{orderColumnName}'.");
                 }
             }
 
@@ -298,7 +298,7 @@ namespace Carnassial.Data
                     Version otherVersion = other.GetUserVersion();
                     if (otherVersion != Constant.Release.V2_2_0_3)
                     {
-                        throw new ArgumentOutOfRangeException(nameof(other), String.Format(CultureInfo.CurrentCulture, "Unexpected database version {0}.", otherVersion));
+                        throw new ArgumentOutOfRangeException(nameof(other), $"Unexpected database version {otherVersion}.");
                     }
 
                     // if an existing template database was passed, clone its contents into this database

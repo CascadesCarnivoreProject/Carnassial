@@ -17,7 +17,7 @@ namespace Carnassial.UnitTests
     [TestClass]
     public class FileTests : CarnassialTest
     {
-        [ClassCleanup(ClassCleanupBehavior.EndOfClass)]
+        [ClassCleanup]
         public static void ClassCleanup()
         {
             CarnassialTest.TryRevertToDefaultCultures();
@@ -215,19 +215,19 @@ namespace Carnassial.UnitTests
                 FileInfo fileInfo = new(Path.Combine(fileExpectation.RelativePath, fileExpectation.FileName));
                 ImageRow file = fileDatabase.Files.CreateAndAppendFile(fileInfo.Name, fileExpectation.RelativePath);
                 CachedImage? image = await file.TryLoadImageAsync(this.WorkingDirectory).ConfigureAwait(false);
-                Assert.IsTrue((image != null) && (image.Image != null), "Failed to load image '" + fileExpectation.FileName + "'.");
+                Assert.IsTrue((image != null) && (image.Image != null), $"Failed to load image '{fileExpectation.FileName}'.");
 
                 (double luminosity, double coloration) = image.Image.GetLuminosityAndColoration(0);
                 FileClassification classification = new ImageProperties(luminosity, coloration).EvaluateNewClassification(Constant.Images.DarkLuminosityThresholdDefault);
                 if (Math.Abs(luminosity - fileExpectation.Luminosity) > TestConstant.LuminosityAndColorationTolerance)
                 {
-                    Assert.Fail(fileExpectation.FileName + ": Expected luminosity to be " + fileExpectation.Luminosity + ", but it was " + luminosity + ".");
+                    Assert.Fail($"{fileExpectation.FileName}: Expected luminosity to be {fileExpectation.Luminosity}, but it was {luminosity}.");
                 }
                 if (Math.Abs(coloration - fileExpectation.Coloration) > TestConstant.LuminosityAndColorationTolerance)
                 {
-                    Assert.Fail(fileExpectation.FileName + ": Expected coloration to be " + fileExpectation.Coloration + ", but it was " + coloration + ".");
+                    Assert.Fail($"{fileExpectation.FileName}: Expected coloration to be {fileExpectation.Coloration}, but it was {coloration}.");
                 }
-                Assert.IsTrue(classification == fileExpectation.Classification, "{0}: Expected classification {1}, but it was {2}.", fileExpectation.FileName, fileExpectation.Classification, classification);
+                Assert.IsTrue(classification == fileExpectation.Classification, $"{fileExpectation.FileName}: Expected classification {fileExpectation.Classification}, but it was {classification}.");
             }
         }
 
@@ -307,18 +307,18 @@ namespace Carnassial.UnitTests
 
                     if (expectNullImage)
                     {
-                        Assert.IsTrue((currentImage == null) || (currentImage.Image == null), "Expected a null image for difference result {0} and state {1}.", result, cache.CurrentDifferenceState);
+                        Assert.IsTrue((currentImage == null) || (currentImage.Image == null), $"Expected a null image for difference result {result} and state {cache.CurrentDifferenceState}.");
                     }
                     else
                     {
-                        Assert.IsTrue((currentImage != null) && (currentImage.Image != null), "Expected an image for difference result {0} and state {1}.", result, cache.CurrentDifferenceState);
+                        Assert.IsTrue((currentImage != null) && (currentImage.Image != null), $"Expected an image for difference result {result} and state {cache.CurrentDifferenceState}.");
                     }
                     break;
                 case ImageDifferenceResult.Success:
                     Assert.IsTrue((currentImage != null) && (currentImage.Image != null));
                     break;
                 default:
-                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled result {0}.", result));
+                    throw new NotSupportedException($"Unhandled result {result}.");
             }
         }
 
@@ -391,7 +391,7 @@ namespace Carnassial.UnitTests
             string filePath = Path.Combine(this.WorkingDirectory, fileExpectation.RelativePath, fileExpectation.FileName);
             Assert.IsTrue(JpegImage.IsJpeg(filePath));
             IReadOnlyCollection<MetadataDirectory> metadata = JpegImage.LoadMetadata(filePath);
-            Assert.IsTrue(metadata.Count >= 5, "Expected at least 5 metadata directories to be retrieved from {0}", filePath);
+            Assert.IsTrue(metadata.Count >= 5, $"Expected at least 5 metadata directories to be retrieved from {filePath}");
             // example information returned from ExifTool
             // field name                   Bushnell                                    Reconyx
             // --- fields of likely interest for image analysis ---

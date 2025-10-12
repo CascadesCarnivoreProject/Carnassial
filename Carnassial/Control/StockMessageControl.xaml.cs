@@ -40,7 +40,7 @@ namespace Carnassial.Control
                     MessageBoxImage.None => null,
                     MessageBoxImage.Information => Constant.Images.StatusInformation.Value,
                     MessageBoxImage.Error => Constant.Images.StatusError.Value,
-                    _ => throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled icon type {0}.", value)),
+                    _ => throw new NotSupportedException($"Unhandled icon type {value}."),
                 };
             }
         }
@@ -77,7 +77,7 @@ namespace Carnassial.Control
                 }
                 else
                 {
-                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled inline of type {0}.", textElement.GetType()));
+                    throw new NotSupportedException($"Unhandled inline of type {textElement.GetType()}.");
                 }
             }
         }
@@ -128,7 +128,7 @@ namespace Carnassial.Control
                 else
                 {
                     // best effort as this method is called for reporting on unhandled exceptions
-                    Debug.Fail(String.Format(CultureInfo.InvariantCulture, "Unhandled inline type {0}.", inline.GetType()));
+                    Debug.Fail(String.Create(CultureInfo.InvariantCulture, $"Unhandled inline type {inline.GetType()}."));
                 }
             }
             return what.ToString();

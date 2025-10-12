@@ -1,36 +1,36 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Carnassial.UnitTests
 {
-    public class UITestMethodAttribute : TestMethodAttribute
+    public class UITestMethodAttribute([CallerFilePath] string callerFilePath = "", [CallerLineNumber] int callerLineNumber = -1) : TestMethodAttribute(callerFilePath, callerLineNumber)
     {
-        private static readonly Thread UXTestThread;
-
         private static ITestMethod? CurrentTest;
-        private static readonly object Lock;
-        private static readonly AutoResetEvent TestAvailableOrExitRequested;
+        private static readonly SemaphoreSlim Lock;
+        private static readonly AutoResetEvent TestAvailableToRunOrExitRequested;
         private static TaskCompletionSource<TestResult>? TestCompletionSource;
+        private static readonly Thread UXTestThread;
         private static bool WaitForNextTest;
 
         static UITestMethodAttribute()
         {
             UITestMethodAttribute.CurrentTest = null;
-            UITestMethodAttribute.Lock = new();
-            UITestMethodAttribute.TestAvailableOrExitRequested = new(initialState: false);
+            UITestMethodAttribute.Lock = new(initialCount: 1, maxCount: 1);
+            UITestMethodAttribute.TestAvailableToRunOrExitRequested = new(initialState: false);
             UITestMethodAttribute.TestCompletionSource = null;
             UITestMethodAttribute.UXTestThread = new(() =>
             {
                 while (UITestMethodAttribute.WaitForNextTest)
                 {
-                    UITestMethodAttribute.TestAvailableOrExitRequested.WaitOne();
+                    UITestMethodAttribute.TestAvailableToRunOrExitRequested.WaitOne();
                     if ((UITestMethodAttribute.CurrentTest != null) && (UITestMethodAttribute.TestCompletionSource != null))
                     {
                         try
                         {
-                            UITestMethodAttribute.TestCompletionSource.SetResult(UITestMethodAttribute.CurrentTest.Invoke(null));
+                            UITestMethodAttribute.TestCompletionSource.SetResult(UITestMethodAttribute.CurrentTest.InvokeAsync(null).GetAwaiter().GetResult());
                         }
                         catch (Exception exception)
                         {
@@ -48,7 +48,7 @@ namespace Carnassial.UnitTests
             UITestMethodAttribute.UXTestThread.Start();
         }
 
-        public override TestResult[] Execute(ITestMethod testMethod)
+        public async override Task<TestResult[]> ExecuteAsync(ITestMethod testMethod)
         {
             // ideally the dispatcher thread would be STA by the time Execute() is called but it's MTA
             // Therefore, the approach below isn't viable even though the app and dispatcher have been created.
@@ -61,14 +61,15 @@ namespace Carnassial.UnitTests
             // potential test harness parallelism but might allow more accurate reporting of test times. Locking is somewhat simpler,
             // robust to missing [DoNotParellelize] attributes, very slightly faster, and (as of mstest 3.1.1) doesn't affect test
             // runtime reporting.
+            await UITestMethodAttribute.Lock.WaitAsync(); // could also use a lock object and lock() { } but a CS1998 results as there's no use of await
             TestResult testResult;
-            lock (UITestMethodAttribute.Lock)
+            try
             {
                 UITestMethodAttribute.CurrentTest = testMethod;
                 UITestMethodAttribute.TestCompletionSource = new();
-                UITestMethodAttribute.TestAvailableOrExitRequested.Set();
+                UITestMethodAttribute.TestAvailableToRunOrExitRequested.Set();
 
-                Task<TestResult> test = UITestMethodAttribute.TestCompletionSource.Task;
+                Task<TestResult> test = UITestMethodAttribute.TestCompletionSource.Task; // ClassCleanup() hangs at UXTestThread.Join() if await is used rather than Wait()
                 try
                 {
                     test.Wait();
@@ -85,14 +86,18 @@ namespace Carnassial.UnitTests
                 UITestMethodAttribute.CurrentTest = null;
                 UITestMethodAttribute.TestCompletionSource = null;
             }
+            finally
+            {
+                UITestMethodAttribute.Lock.Release();
+            }
 
-            return [testResult];
+            return [ testResult ];
         }
 
         public static void ClassCleanup()
         {
             UITestMethodAttribute.WaitForNextTest = false;
-            UITestMethodAttribute.TestAvailableOrExitRequested.Set();
+            UITestMethodAttribute.TestAvailableToRunOrExitRequested.Set();
             UITestMethodAttribute.UXTestThread.Join();
         }
     }

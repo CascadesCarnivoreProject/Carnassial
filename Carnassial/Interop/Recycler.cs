@@ -11,7 +11,7 @@ namespace Carnassial.Interop
     [SupportedOSPlatform(Constant.Platform.Windows)]
     internal class Recycler : IDisposable
     {
-        private static readonly Type ShellFileOperationType = Type.GetTypeFromCLSID(Constant.ComGuid.IFileOperationClsid) ?? throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unable to obtain type for COM CLS ID {0}.", Constant.ComGuid.IFileOperationClsid));
+        private static readonly Type ShellFileOperationType = Type.GetTypeFromCLSID(Constant.ComGuid.IFileOperationClsid) ?? throw new NotSupportedException($"Unable to obtain type for COM CLS ID {Constant.ComGuid.IFileOperationClsid}.");
 
         private bool isDisposed;
         private readonly IFileOperation? shellFileOperation;
@@ -26,7 +26,7 @@ namespace Carnassial.Interop
                 this.shellFileOperation = (IFileOperation?)Activator.CreateInstance(Recycler.ShellFileOperationType);
                 if (this.shellFileOperation == null)
                 {
-                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unable to instantiate shell file operation."));
+                    throw new NotSupportedException("Unable to instantiate shell file operation.");
                 }
                 this.shellFileOperation.SetOperationFlags(FileOperationFlags.FOFX_RECYCLEONDELETE | FileOperationFlags.FOF_SILENT | FileOperationFlags.FOF_NOERRORUI);
             }

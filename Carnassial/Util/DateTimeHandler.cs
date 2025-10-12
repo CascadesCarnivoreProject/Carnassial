@@ -12,7 +12,7 @@ namespace Carnassial.Util
 
         static DateTimeHandler()
         {
-            Debug.Assert(String.Equals(Constant.Time.DateTimeDatabaseFormat, "yyyy-MM-ddTHH:mm:ss.fffZ", StringComparison.Ordinal), nameof(DateTimeHandler.ToDatabaseDateTimeString) + "() and " + nameof(DateTimeHandler.TryParseDatabaseDateTime) + "() need to be updated for change in spreadsheet date time format.");
+            Debug.Assert(String.Equals(Constant.Time.DateTimeDatabaseFormat, "yyyy-MM-ddTHH:mm:ss.fffZ", StringComparison.Ordinal), $"{nameof(DateTimeHandler.ToDatabaseDateTimeString)}() and {nameof(DateTimeHandler.TryParseDatabaseDateTime)}() need to be updated for change in spreadsheet date time format.");
 
             DateTimeHandler.DateTimeToSpreadsheetBuffer = [ 'y', 'y', 'y', 'y', '-', 'M', 'M', '-', 'd', 'd', 'T', 'H', 'H', ':', 'm', 'm', ':', 's', 's', '.', 'f', 'f', 'f', 'Z' ];
             ////                                   1   2   3   4   5   6   7   8   9   10  11  12
@@ -46,7 +46,7 @@ namespace Carnassial.Util
             {
                 return dateTime;
             }
-            throw new ArgumentOutOfRangeException(nameof(dateTimeAsString), String.Format(CultureInfo.CurrentCulture, "'{0}' is not in the format '{1}'.", dateTimeAsString, Constant.Time.DateTimeDatabaseFormat));
+            throw new ArgumentOutOfRangeException(nameof(dateTimeAsString), $"'{dateTimeAsString}' is not in the format '{Constant.Time.DateTimeDatabaseFormat}'.");
         }
 
         public static DateTime ParseDisplayDateTimeString(string dateTimeAsString)
@@ -170,7 +170,7 @@ namespace Carnassial.Util
 
         public static string ToDisplayDateTimeUtcOffsetString(DateTimeOffset dateTime)
         {
-            return dateTime.DateTime.ToString(Constant.Time.DateTimeDisplayFormat, CultureInfo.CurrentCulture) + " " + DateTimeHandler.ToDisplayUtcOffsetString(dateTime.Offset);
+            return $"{dateTime.DateTime.ToString(Constant.Time.DateTimeDisplayFormat, CultureInfo.CurrentCulture)} {DateTimeHandler.ToDisplayUtcOffsetString(dateTime.Offset)}";
         }
 
         public static string ToDisplayTimeSpanString(TimeSpan timeSpan)
@@ -185,10 +185,10 @@ namespace Carnassial.Util
             }
             if (duration.Days == 1)
             {
-                return sign + "1 day " + timeSpanAsString;
+                return $"{sign}1 day {timeSpanAsString}";
             }
 
-            return sign + duration.Days.ToString("D", CultureInfo.CurrentCulture) + " days " + timeSpanAsString;
+            return $"{sign + duration.Days.ToString("D", CultureInfo.CurrentCulture)} days {timeSpanAsString}";
         }
 
         public static string ToDisplayUtcOffsetString(TimeSpan utcOffset)
@@ -196,7 +196,7 @@ namespace Carnassial.Util
             string displayString = utcOffset.ToString(Constant.Time.UtcOffsetDisplayFormat, CultureInfo.CurrentCulture);
             if (utcOffset < TimeSpan.Zero)
             {
-                displayString = "-" + displayString;
+                displayString = $"-{displayString}";
             }
             return displayString;
         }

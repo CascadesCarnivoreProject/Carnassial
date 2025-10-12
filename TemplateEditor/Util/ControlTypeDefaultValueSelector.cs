@@ -19,7 +19,7 @@ namespace Carnassial.Editor.Util
                     ControlType.DateTime or 
                     ControlType.Note or 
                     ControlType.UtcOffset => (DataTemplate)App.Current.MainWindow.FindResource(EditorConstant.Resources.DefaultValueTextBox),
-                    _ => throw new NotSupportedException("Unhandled control type " + control.ControlType + "."),
+                    _ => throw new NotSupportedException($"Unhandled control type {control.ControlType}."),
                 };
             }
 

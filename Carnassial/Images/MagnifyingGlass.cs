@@ -218,7 +218,7 @@ namespace Carnassial.Images
             // If the angle has changed, animate the magnifying glass and its contained image to the new angle
             if (this.magnifyingGlassAngle != newMagnifyingGlassAngle)
             {
-                Debug.Assert((newMagnifyingGlassAngle == -90.0) || (newMagnifyingGlassAngle == 0.0) || (newMagnifyingGlassAngle == 90.0) || (newMagnifyingGlassAngle == 180.0), String.Format(CultureInfo.InvariantCulture, "Unexpected magnifying glass angle {0}.", newMagnifyingGlassAngle));
+                Debug.Assert((newMagnifyingGlassAngle == -90.0) || (newMagnifyingGlassAngle == 0.0) || (newMagnifyingGlassAngle == 90.0) || (newMagnifyingGlassAngle == 180.0), String.Create(CultureInfo.InvariantCulture, $"Unexpected magnifying glass angle {newMagnifyingGlassAngle}."));
 
                 // RotateTransform rotates between the start and stop angle specified in the DoubleAnimation passed to it.  The greater the rotation, the
                 // more intrusive it is, so 270 degree rotations are converted to 90 degree rotations in the opposite direction.

@@ -194,13 +194,13 @@ namespace Carnassial.Data
                 {
                     return null;
                 }
-                throw new ArgumentOutOfRangeException(nameof(value), String.Format(CultureInfo.CurrentCulture, "Cannot convert null to database column type {0}.", this.databaseColumnType.Name));
+                throw new ArgumentOutOfRangeException(nameof(value), $"Cannot convert null to database column type {this.databaseColumnType.Name}.");
             }
 
             Type typeOfValue = value.GetType();
             if (this.databaseColumnType != typeOfValue)
             {
-                throw new ArgumentOutOfRangeException(nameof(value), String.Format(CultureInfo.CurrentCulture, "Cannot convert {0} to database column type {1}.", typeOfValue, this.databaseColumnType.Name));
+                throw new ArgumentOutOfRangeException(nameof(value), $"Cannot convert {typeOfValue} to database column type {this.databaseColumnType.Name}.");
             }
 
             return value;
@@ -231,7 +231,7 @@ namespace Carnassial.Data
                 {
                     return classification;
                 }
-                throw new ArgumentOutOfRangeException(nameof(value), String.Format(CultureInfo.CurrentCulture, "Unknown file classification '{0}'.", value));
+                throw new ArgumentOutOfRangeException(nameof(value), $"Unknown file classification '{value}'.");
             }
             if (this.databaseColumnType == typeof(int))
             {
@@ -246,7 +246,7 @@ namespace Carnassial.Data
                 return DateTimeHandler.ToDatabaseUtcOffset(DateTimeHandler.ParseDisplayUtcOffsetString(value));
             }
 
-            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled type {0}.", this.databaseColumnType));
+            throw new NotSupportedException($"Unhandled type {this.databaseColumnType}.");
         }
 
         public override bool Equals(object? obj)
@@ -335,7 +335,7 @@ namespace Carnassial.Data
                         Constant.SearchTermOperator.GreaterThanOrEqual,
                         Constant.SearchTermOperator.Glob
                     ], // notes
-                _ => throw new NotSupportedException("Unhandled control type " + this.ControlType + ".")
+                _ => throw new NotSupportedException($"Unhandled control type {this.ControlType}.")
             };
         }
 
@@ -350,7 +350,7 @@ namespace Carnassial.Data
                 Constant.SearchTermOperator.LessThan => Constant.SqlOperator.LessThan,
                 Constant.SearchTermOperator.LessThanOrEqual => Constant.SqlOperator.LessThanOrEqual,
                 Constant.SearchTermOperator.NotEqual => Constant.SqlOperator.NotEqual,
-                _ => throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled search term operator '{0}'.", this.Operator)),
+                _ => throw new NotSupportedException($"Unhandled search term operator '{this.Operator}'."),
             };
             return new WhereClause(this.DataLabel, sqlOperator, this.DatabaseValue);
         }
@@ -430,11 +430,11 @@ namespace Carnassial.Data
                 }
                 else
                 {
-                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled type {0}.", this.databaseColumnType));
+                    throw new NotSupportedException($"Unhandled type {this.databaseColumnType}.");
                 }
             }
 
-            return this.DataLabel + " " + this.Operator + " \"" + displayValue + "\"";
+            return $"{this.DataLabel} {this.Operator} \"{displayValue}\"";
         }
     }
 }

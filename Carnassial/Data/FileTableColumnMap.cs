@@ -46,7 +46,7 @@ namespace Carnassial.Data
                         this.UserNoteAndChoiceValues[userColumn.DataIndex] = null;
                         break;
                     default:
-                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled control type {0} for column {1}.", userColumn.Control.ControlType, userColumn.Control.DataLabel));
+                        throw new NotSupportedException($"Unhandled control type {userColumn.Control.ControlType} for column {userColumn.Control.DataLabel}.");
                 }
             }
         }

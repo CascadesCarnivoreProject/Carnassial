@@ -125,7 +125,7 @@ namespace Carnassial.Control
                 'h' => TimeSpan.FromHours(incrementOrDecrement),
                 'm' => TimeSpan.FromMinutes(incrementOrDecrement),
                 's' => TimeSpan.FromSeconds(incrementOrDecrement),
-                _ => throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled part format {0}.", partFormat)),
+                _ => throw new NotSupportedException($"Unhandled part format {partFormat}."),
             };
         }
 
@@ -169,7 +169,7 @@ namespace Carnassial.Control
                         // skip delimiters and spaces
                         continue;
                     default:
-                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unsupported format character '{0}'.", formatCharacter));
+                        throw new NotSupportedException($"Unsupported format character '{formatCharacter}'.");
                 }
 
                 if (formatCharacter != previousFormatCharacter)
@@ -357,7 +357,7 @@ namespace Carnassial.Control
             {
                 return true;
             }
-            return TimeSpan.TryParseExact(this.TimeSpanDisplay.Text, @"\-" + this.Format, CultureInfo.CurrentCulture, TimeSpanStyles.AssumeNegative, out timeSpan);
+            return TimeSpan.TryParseExact(this.TimeSpanDisplay.Text, $@"\-{this.Format}", CultureInfo.CurrentCulture, TimeSpanStyles.AssumeNegative, out timeSpan);
         }
 
         private bool TrySelectCurrentPart()

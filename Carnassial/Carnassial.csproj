@@ -81,13 +81,13 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
-    <PackageReference Include="MetadataExtractor" Version="2.8.1" />
+    <PackageReference Include="MetadataExtractor" Version="2.9.0" />
     <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.5" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.119" />
     <PackageReference Include="System.IO.FileSystem.Primitives" Version="4.3.0" />
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="9.0.6" />
-    <PackageReference Include="System.Speech" Version="9.0.6" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="9.0.9" />
+    <PackageReference Include="System.Speech" Version="9.0.9" />
   </ItemGroup>
   <ItemGroup>
     <Page Remove="Dialog\FileCounts.xaml" />

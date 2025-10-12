@@ -70,7 +70,7 @@ namespace Carnassial.Data.Spreadsheet
                 }
                 if (escape)
                 {
-                    return "\"" + value + "\"";
+                    return $"\"{value}\"";
                 }
                 return value;
             }
@@ -234,7 +234,7 @@ namespace Carnassial.Data.Spreadsheet
                     writer.WriteAttributeString("xmlns", "r", null, "http://schemas.openxmlformats.org/officeDocument/2006/relationships");
 
                     writer.WriteStartElement(Constant.OpenXml.Element.Dimension, Constant.OpenXml.Namespace);
-                    writer.WriteAttributeString(Constant.OpenXml.Attribute.Reference, "A1:" + SpreadsheetReaderWriter.GetExcelColumnReference(columns.Count - 1) + (fileDatabase.Files.RowCount + 1).ToString(Constant.InvariantCulture));
+                    writer.WriteAttributeString(Constant.OpenXml.Attribute.Reference, String.Create(CultureInfo.InvariantCulture, $"A1:{SpreadsheetReaderWriter.GetExcelColumnReference(columns.Count - 1)}{fileDatabase.Files.RowCount + 1}"));
                     writer.WriteEndElement(); // dimension
 
                     writer.WriteStartElement(Constant.OpenXml.Element.SheetViews, Constant.OpenXml.Namespace);
@@ -295,7 +295,7 @@ namespace Carnassial.Data.Spreadsheet
                         columnReferences[columnIndex] = columnReference;
 
                         string stringIndex = sharedStringIndex.GetOrAdd(columns[columnIndex]).ToString(Constant.InvariantCulture);
-                        SpreadsheetReaderWriter.WriteCellToXlsx(writer, columnReference + "1", Constant.OpenXml.CellType.SharedString, boldFontStyleID, stringIndex);
+                        SpreadsheetReaderWriter.WriteCellToXlsx(writer, $"{columnReference}1", Constant.OpenXml.CellType.SharedString, boldFontStyleID, stringIndex);
                     }
                     writer.WriteEndElement(); // row
 
@@ -333,7 +333,7 @@ namespace Carnassial.Data.Spreadsheet
                             }
                             else
                             {
-                                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", columnType));
+                                throw new NotSupportedException($"Unhandled column data type {columnType}.");
                             }
 
                             SpreadsheetReaderWriter.WriteCellToXlsx(writer, columnReferences[columnIndex] + rowReference, cellType, null, value);
@@ -349,7 +349,7 @@ namespace Carnassial.Data.Spreadsheet
                     writer.WriteEndElement(); // sheetData
 
                     writer.WriteStartElement(Constant.OpenXml.Element.AutoFilter, Constant.OpenXml.Namespace);
-                    writer.WriteAttributeString(Constant.OpenXml.Attribute.Reference, "A1:" + columnReferences[columns.Count - 1] + "1");
+                    writer.WriteAttributeString(Constant.OpenXml.Attribute.Reference, $"A1:{columnReferences[columns.Count - 1]}1");
                     writer.WriteEndElement(); // autoFilter
 
                     writer.WriteEndElement(); // worksheet
@@ -414,7 +414,7 @@ namespace Carnassial.Data.Spreadsheet
             }
             else
             {
-                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unable to translate column {0} to an Excel cell reference.", index));
+                throw new NotSupportedException($"Unable to translate column {index} to an Excel cell reference.");
             }
         }
 
@@ -562,7 +562,7 @@ namespace Carnassial.Data.Spreadsheet
                                         char character = value[index];
                                         if ((character > '9') || (character < '0'))
                                         {
-                                            throw new FormatException("Shared string index '" + value + "' is not an integer greater than or equal to zero.");
+                                            throw new FormatException($"Shared string index '{value}' is not an integer greater than or equal to zero.");
                                         }
                                         sharedStringIndex = 10 * sharedStringIndex + character - '0';
                                     }
@@ -605,7 +605,7 @@ namespace Carnassial.Data.Spreadsheet
             }
             else if (relativePathFromDatabaseToSpreadsheet.Contains(Constant.File.ParentDirectory, StringComparison.Ordinal))
             {
-                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Canonicalization of relative path from database to spreadsheet '{0}' is not currently supported.", relativePathFromDatabaseToSpreadsheet));
+                throw new NotSupportedException($"Canonicalization of relative path from database to spreadsheet '{relativePathFromDatabaseToSpreadsheet}' is not currently supported.");
             }
 
             // validate file header against the database
@@ -683,7 +683,7 @@ namespace Carnassial.Data.Spreadsheet
                 }
                 else if (this.currentRow.Count != columnsInDatabase.Count)
                 {
-                    result.Errors.Add(String.Format(CultureInfo.CurrentCulture, "Expected {0} fields in row '{1}' but found {2}.  Row skipped, database will not be updated for this file.", columnsInDatabase.Count, String.Join(",", this.currentRow), this.currentRow.Count));
+                    result.Errors.Add($"Expected {columnsInDatabase.Count} fields in row '{String.Join(",", this.currentRow)}' but found {this.currentRow.Count}.  Row skipped, database will not be updated for this file.");
                     continue;
                 }
 
@@ -693,7 +693,7 @@ namespace Carnassial.Data.Spreadsheet
                 string fileName = this.currentRow[spreadsheetMap.FileNameSpreadsheetIndex];
                 if (String.IsNullOrWhiteSpace(fileName))
                 {
-                    result.Errors.Add(String.Format(CultureInfo.CurrentCulture, "No file name found in row {0}.  Row skipped, database will not be updated for this file.", filesToInsert.Count + filesToUpdate.Count + filesUnchanged + 1));
+                    result.Errors.Add($"No file name found in row {filesToInsert.Count + filesToUpdate.Count + filesUnchanged + 1}.  Row skipped, database will not be updated for this file.");
                     continue;
                 }
 
@@ -822,7 +822,7 @@ namespace Carnassial.Data.Spreadsheet
                 if (worksheetInfo == null)
                 {
                     FileImportResult worksheetNotFound = new();
-                    worksheetNotFound.Errors.Add(String.Format(CultureInfo.CurrentCulture, "Worksheet {0} not found.", Constant.Excel.FileDataWorksheetName));
+                    worksheetNotFound.Errors.Add($"Worksheet {Constant.Excel.FileDataWorksheetName} not found.");
                     return worksheetNotFound;
                 }
                 Debug.Assert((worksheetInfo.Id != null) && (worksheetInfo.Id.Value != null));
@@ -849,7 +849,7 @@ namespace Carnassial.Data.Spreadsheet
                 string[] range = dimension.Split(':');
                 if ((range == null) || (range.Length != 2))
                 {
-                    throw new XmlException(String.Format(CultureInfo.CurrentCulture, "Worksheet dimension reference '{0}' is malformed.", dimension));
+                    throw new XmlException($"Worksheet dimension reference '{dimension}' is malformed.");
                 }
                 int maximumColumnIndex = SpreadsheetReaderWriter.GetExcelColumnIndex(range[1]);
 

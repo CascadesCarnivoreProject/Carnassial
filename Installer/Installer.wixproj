@@ -47,6 +47,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="WixToolset.NetFx.wixext" Version="6.0.1" />
+    <PackageReference Include="WixToolset.NetFx.wixext" Version="6.0.2" />
   </ItemGroup>
 </Project>

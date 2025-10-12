@@ -128,7 +128,7 @@ namespace Carnassial.Control
                     BindingOperations.SetBinding(utcOffset, CheckBox.IsEnabledProperty, new Binding(nameof(searchTerm.UseForSearching)));
                     return utcOffset;
                 default:
-                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled control type '{0}'.", controlType));
+                    throw new NotSupportedException($"Unhandled control type '{controlType}'.");
             }
         }
 

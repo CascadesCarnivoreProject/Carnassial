@@ -63,7 +63,7 @@ namespace Carnassial.Data
             }
             else
             {
-                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled extension for file '{0}'.", fileName));
+                throw new NotSupportedException($"Unhandled extension for file '{fileName}'.");
             }
 
             this.Rows.Add(file);
@@ -266,7 +266,7 @@ namespace Carnassial.Data
                                 userNoteAndChoiceSqlIndices[dataIndex] = columnIndex;
                                 break;
                             default:
-                                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", userColumn.DataIndex));
+                                throw new NotSupportedException($"Unhandled column data type {userColumn.DataIndex}.");
                         }
                         userColumn.DataIndex = dataIndex;
                         break;
@@ -282,7 +282,7 @@ namespace Carnassial.Data
                                              (utcOffsetIndex != -1);
             if (allStandardColumnsPresent == false)
             {
-                throw new SQLiteException(SQLiteErrorCode.Schema, "At least one standard column is missing from table " + reader.GetTableName(0));
+                throw new SQLiteException(SQLiteErrorCode.Schema, $"At least one standard column is missing from table {reader.GetTableName(0)}.");
             }
 
             this.Rows.Clear();
@@ -341,7 +341,7 @@ namespace Carnassial.Data
                             file.UserNotesAndChoices[userColumn.DataIndex] = reader.GetString(sqlIndex);
                             break;
                         default:
-                            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", userColumn.DataIndex));
+                            throw new NotSupportedException($"Unhandled column data type {userColumn.DataIndex}.");
                     }
                 }
                 file.AcceptChanges();
@@ -378,7 +378,7 @@ namespace Carnassial.Data
                         case ControlType.DateTime:
                         case ControlType.UtcOffset:
                         default:
-                            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled control type {0}.", control.ControlType));
+                            throw new NotSupportedException($"Unhandled control type {control.ControlType}.");
                     }
                 }
             }

@@ -16,13 +16,13 @@ namespace Carnassial.Data
         {
             this.disposed = false;
             this.insertOrUpdateImageSet = new SQLiteCommand(command.ToString(), this.Database.Connection, this.Transaction);
-            this.insertOrUpdateImageSet.Parameters.Add(new SQLiteParameter("@" + Constant.ImageSetColumn.FileSelection));
-            this.insertOrUpdateImageSet.Parameters.Add(new SQLiteParameter("@" + Constant.ImageSetColumn.InitialFolderName));
-            this.insertOrUpdateImageSet.Parameters.Add(new SQLiteParameter("@" + Constant.ImageSetColumn.Log));
-            this.insertOrUpdateImageSet.Parameters.Add(new SQLiteParameter("@" + Constant.ImageSetColumn.MostRecentFileID));
-            this.insertOrUpdateImageSet.Parameters.Add(new SQLiteParameter("@" + Constant.ImageSetColumn.Options));
-            this.insertOrUpdateImageSet.Parameters.Add(new SQLiteParameter("@" + Constant.ImageSetColumn.TimeZone));
-            this.insertOrUpdateImageSet.Parameters.Add(new SQLiteParameter("@" + Constant.DatabaseColumn.ID));
+            this.insertOrUpdateImageSet.Parameters.Add(new SQLiteParameter($"@{Constant.ImageSetColumn.FileSelection}"));
+            this.insertOrUpdateImageSet.Parameters.Add(new SQLiteParameter($"@{Constant.ImageSetColumn.InitialFolderName}"));
+            this.insertOrUpdateImageSet.Parameters.Add(new SQLiteParameter($"@{Constant.ImageSetColumn.Log}"));
+            this.insertOrUpdateImageSet.Parameters.Add(new SQLiteParameter($"@{Constant.ImageSetColumn.MostRecentFileID}"));
+            this.insertOrUpdateImageSet.Parameters.Add(new SQLiteParameter($"@{Constant.ImageSetColumn.Options}"));
+            this.insertOrUpdateImageSet.Parameters.Add(new SQLiteParameter($"@{Constant.ImageSetColumn.TimeZone}"));
+            this.insertOrUpdateImageSet.Parameters.Add(new SQLiteParameter($"@{Constant.DatabaseColumn.ID}"));
             this.IsInsert = this.insertOrUpdateImageSet.CommandText.StartsWith("INSERT", StringComparison.Ordinal);
         }
 
@@ -57,10 +57,10 @@ namespace Carnassial.Data
             foreach (string column in Constant.ImageSetColumn.Columns)
             {
                 columns.Add(column);
-                parameterNames.Add("@" + column);
+                parameterNames.Add($"@{column}");
             }
 
-            StringBuilder insertCommand = new("INSERT INTO " + Constant.DatabaseTable.ImageSet + " (" + String.Join(", ", columns) + ") VALUES (" + String.Join(", ", parameterNames) + ")");
+            StringBuilder insertCommand = new($"INSERT INTO {Constant.DatabaseTable.ImageSet} ({String.Join(", ", columns)}) VALUES ({String.Join(", ", parameterNames)})");
             return new ImageSetTransactionSequence(insertCommand, database, transaction);
         }
 
@@ -71,14 +71,14 @@ namespace Carnassial.Data
 
         public static ImageSetTransactionSequence CreateUpdate(SQLiteDatabase database, SQLiteTransaction? transaction)
         {
-            StringBuilder updateCommand = new("UPDATE " + Constant.DatabaseTable.ImageSet + " SET ");
+            StringBuilder updateCommand = new($"UPDATE {Constant.DatabaseTable.ImageSet} SET ");
             List<string> parameters = new(Constant.ImageSetColumn.Columns.Count);
             foreach (string column in Constant.ImageSetColumn.Columns)
             {
-                parameters.Add(column + "=@" + column);
+                parameters.Add($"{column}=@{column}");
             }
             updateCommand.Append(String.Join(", ", parameters));
-            updateCommand.Append(" WHERE " + Constant.DatabaseColumn.ID + "=@" + Constant.DatabaseColumn.ID);
+            updateCommand.Append($" WHERE {Constant.DatabaseColumn.ID}=@{Constant.DatabaseColumn.ID}");
 
             return new ImageSetTransactionSequence(updateCommand, database, transaction);
         }

@@ -182,7 +182,7 @@ namespace Carnassial.Data
                             SqlDataType.Blob => this.UserMarkerPositions[userColumn.DataIndex],
                             SqlDataType.Integer => this.UserCounters[userColumn.DataIndex],
                             SqlDataType.String => this.UserNotesAndChoices[userColumn.DataIndex],
-                            _ => throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", userColumn.DataIndex)),
+                            _ => throw new NotSupportedException($"Unhandled column data type {userColumn.DataIndex}."),
                         };
                 }
             }
@@ -222,27 +222,27 @@ namespace Carnassial.Data
                         switch (userColumn.DataType)
                         {
                             case SqlDataType.Boolean:
-                                bool valueAsBool = (bool)(value ?? throw new ArgumentNullException(nameof(value), String.Format("Boolean value for '{0}' cannot be null.", propertyName)));
+                                bool valueAsBool = (bool)(value ?? throw new ArgumentNullException(nameof(value), $"Boolean value for '{propertyName}' cannot be null."));
                                 valueDifferent = this.UserFlags[userColumn.DataIndex] != valueAsBool;
                                 this.UserFlags[userColumn.DataIndex] = valueAsBool;
                                 break;
                             case SqlDataType.Blob:
-                                byte[] valueAsByteArray = (byte[])(value ?? throw new ArgumentNullException(nameof(value), String.Format("Blob value for '{0}' cannot be null.", propertyName))); ;
+                                byte[] valueAsByteArray = (byte[])(value ?? throw new ArgumentNullException(nameof(value), $"Blob value for '{propertyName}' cannot be null."));
                                 valueDifferent = ImageRow.ByteArraysEqual(this.UserMarkerPositions[userColumn.DataIndex], valueAsByteArray) == false;
                                 this.UserMarkerPositions[userColumn.DataIndex] = valueAsByteArray;
                                 break;
                             case SqlDataType.Integer:
-                                int valueAsInt = (int)(value ?? throw new ArgumentNullException(nameof(value), String.Format("Integer value for '{0}' cannot be null.", propertyName)));
+                                int valueAsInt = (int)(value ?? throw new ArgumentNullException(nameof(value), $"Integer value for '{propertyName}' cannot be null."));
                                 valueDifferent = this.UserCounters[userColumn.DataIndex] != valueAsInt;
                                 this.UserCounters[userColumn.DataIndex] = valueAsInt;
                                 break;
                             case SqlDataType.String:
-                                string valueAsString = (string)(value ?? throw new ArgumentNullException(nameof(value), String.Format("String value for '{0}' cannot be null.", propertyName)));
+                                string valueAsString = (string)(value ?? throw new ArgumentNullException(nameof(value), $"String value for '{propertyName}' cannot be null."));
                                 valueDifferent = String.Equals(this.UserNotesAndChoices[userColumn.DataIndex], valueAsString, StringComparison.Ordinal) == false;
                                 this.UserNotesAndChoices[userColumn.DataIndex] = valueAsString;
                                 break;
                             default:
-                                throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", userColumn.DataType));
+                                throw new NotSupportedException($"Unhandled column data type {userColumn.DataType}.");
                         }
                         if (valueDifferent)
                         {
@@ -284,7 +284,7 @@ namespace Carnassial.Data
                 case Constant.FileColumn.DateTime:
                     return this.UtcDateTime;
                 case nameof(this.DateTimeOffset):
-                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Database values for {0} and {1} must be accessed through {2}.", nameof(this.UtcDateTime), nameof(this.UtcOffset), nameof(this.DateTimeOffset)));
+                    throw new NotSupportedException($"Database values for {nameof(this.UtcDateTime)} and {nameof(this.UtcOffset)} must be accessed through {nameof(this.DateTimeOffset)}.");
                 case Constant.FileColumn.DeleteFlag:
                     return this.DeleteFlag;
                 case Constant.FileColumn.File:
@@ -305,7 +305,7 @@ namespace Carnassial.Data
                         SqlDataType.Blob => this.UserMarkerPositions[userColumn.DataIndex],
                         SqlDataType.Integer => this.UserCounters[userColumn.DataIndex],
                         SqlDataType.String => this.UserNotesAndChoices[userColumn.DataIndex],
-                        _ => throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", userColumn.DataIndex)),
+                        _ => throw new NotSupportedException($"Unhandled column data type {userColumn.DataIndex}."),
                     };
             }
         }
@@ -313,7 +313,7 @@ namespace Carnassial.Data
         public static string GetDataBindingPath(ControlRow control)
         {
             string dataLabel = control.DataLabel;
-            Debug.Assert(dataLabel != Constant.FileColumn.UtcOffset, String.Format(CultureInfo.InvariantCulture, "Display and editing of UTC offset should be integrated into {0}.", nameof(DataEntryDateTimeOffset)));
+            Debug.Assert(dataLabel != Constant.FileColumn.UtcOffset, String.Create(CultureInfo.InvariantCulture, $"Display and editing of UTC offset should be integrated into {nameof(DataEntryDateTimeOffset)}."));
 
             if (String.Equals(dataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal))
             {
@@ -325,7 +325,7 @@ namespace Carnassial.Data
             }
             if (control.IsUserControl())
             {
-                return "[" + dataLabel + "]";
+                return $"[{dataLabel}]";
             }
             return dataLabel;
         }
@@ -380,7 +380,7 @@ namespace Carnassial.Data
                         }
                         else
                         {
-                            throw new ArgumentOutOfRangeException(control.DataLabel, String.Format(CultureInfo.CurrentCulture, "'{0}' is not a valid classification.", control.DefaultValue));
+                            throw new ArgumentOutOfRangeException(control.DataLabel, $"'{control.DefaultValue}' is not a valid classification.");
                         }
                         break;
                     // not currently supported
@@ -402,7 +402,7 @@ namespace Carnassial.Data
                     // case SqlDataType.Real:
                     //     if (DateTimeHandler.TryParseDatabaseUtcOffset(control.DefaultValue, out utcOffset) == false)
                     //     {
-                    //         throw new ArgumentOutOfRangeException(control.DataLabel, String.Format("'{0}' is not a valid UTC offset.", control.DefaultValue));
+                    //         throw new ArgumentOutOfRangeException(control.DataLabel, $"'{control.DefaultValue}' is not a valid UTC offset."));
                     //     }
                     //     continue;
                     case SqlDataType.String:
@@ -410,7 +410,7 @@ namespace Carnassial.Data
                         break;
                     case SqlDataType.Blob:
                     default:
-                        throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled SQL data type {0} for column '{1}'.", dataType, control.DataLabel));
+                        throw new NotSupportedException($"Unhandled SQL data type {dataType} for column '{control.DataLabel}'.");
                 }
 
                 defaultValues.Add(control.DataLabel, defaultValue);
@@ -433,7 +433,7 @@ namespace Carnassial.Data
             switch (control.PropertyName)
             {
                 case Constant.FileColumn.DateTime:
-                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Control has unexpected property name {0}.", Constant.FileColumn.DateTime));
+                    throw new NotSupportedException($"Control has unexpected property name {Constant.FileColumn.DateTime}.");
                 case nameof(this.DateTimeOffset):
                     return this.GetDisplayDateTime();
                 case Constant.FileColumn.DeleteFlag:
@@ -455,7 +455,7 @@ namespace Carnassial.Data
                         SqlDataType.Boolean => this.UserFlags[userColumn.DataIndex] ? Boolean.TrueString : Boolean.FalseString,
                         SqlDataType.Integer => this.UserCounters[userColumn.DataIndex].ToString(Constant.InvariantCulture),
                         SqlDataType.String => this.UserNotesAndChoices[userColumn.DataIndex],
-                        _ => throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", userColumn.DataType))
+                        _ => throw new NotSupportedException($"Unhandled column data type {userColumn.DataType}.")
                     };
             }
         }
@@ -484,7 +484,7 @@ namespace Carnassial.Data
 
         public static string GetPropertyName(string dataLabel)
         {
-            Debug.Assert(dataLabel != Constant.FileColumn.UtcOffset, String.Format(CultureInfo.InvariantCulture, "UTC offset should be accessed by {0}.", nameof(ImageRow.DateTimeOffset)));
+            Debug.Assert(dataLabel != Constant.FileColumn.UtcOffset, String.Create(CultureInfo.InvariantCulture, $"UTC offset should be accessed by {nameof(ImageRow.DateTimeOffset)}."));
 
             if (String.Equals(dataLabel, Constant.FileColumn.DateTime, StringComparison.Ordinal))
             {
@@ -515,7 +515,7 @@ namespace Carnassial.Data
                 case Constant.FileColumn.DeleteFlag:
                     return this.DeleteFlag ? Constant.Sql.TrueString : Constant.Sql.FalseString;
                 case nameof(this.DateTimeOffset):
-                    throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unexpected data label {0}.", nameof(this.DateTimeOffset)));
+                    throw new NotSupportedException($"Unexpected data label {nameof(this.DateTimeOffset)}.");
                 case Constant.FileColumn.File:
                     return this.FileName;
                 case Constant.DatabaseColumn.ID:
@@ -544,7 +544,7 @@ namespace Carnassial.Data
                         case SqlDataType.String:
                             return this.UserNotesAndChoices[userColumn.DataIndex];
                         default:
-                            throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", userColumn.DataType));
+                            throw new NotSupportedException($"Unhandled column data type {userColumn.DataType}.");
                     }
             }
         }
@@ -570,7 +570,7 @@ namespace Carnassial.Data
                     SqlDataType.Blob => this.UserMarkerPositions[userColumn.DataIndex],
                     SqlDataType.Integer => this.UserCounters[userColumn.DataIndex],
                     SqlDataType.String => this.UserNotesAndChoices[userColumn.DataIndex],
-                    _ => throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled column data type {0}.", userColumn.DataIndex)),
+                    _ => throw new NotSupportedException($"Unhandled column data type {userColumn.DataIndex}."),
                 };
                 valuesByDataLabel[columnAndName.Key] = value;
             }
@@ -875,7 +875,7 @@ namespace Carnassial.Data
                 FileClassification.Greyscale => "Greyscale",
                 FileClassification.NoLongerAvailable => "NoLongerAvailable",
                 FileClassification.Video => "Video",
-                _ => throw new NotSupportedException(String.Format(CultureInfo.CurrentCulture, "Unhandled classification {0}.", classification)),
+                _ => throw new NotSupportedException($"Unhandled classification {classification}."),
             };
         }
 
@@ -1048,7 +1048,7 @@ namespace Carnassial.Data
             }
             else
             {
-                throw new NotSupportedException("Unhandled DateTimeOriginal type " + dateTimeOriginalAsObject.GetType() + ".");
+                throw new NotSupportedException($"Unhandled DateTimeOriginal type {dateTimeOriginalAsObject.GetType()}.");
             }
         }
     }

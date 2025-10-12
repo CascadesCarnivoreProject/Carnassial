@@ -43,7 +43,7 @@ namespace Carnassial.Interop
                 string? root = Path.GetPathRoot(filePath);
                 if (root == null)
                 {
-                    throw new NotSupportedException("Could not obtain root of path '" + filePath + "'.");
+                    throw new NotSupportedException($"Could not obtain root of path '{filePath}'.");
                 }
                 return root;
             });
@@ -77,7 +77,7 @@ namespace Carnassial.Interop
             int bytesRead = this.Read(this.Buffer, existingBufferLength, bytesToRead);
             if (bytesRead != bytesToRead)
             {
-                throw new IOException(String.Format(CultureInfo.CurrentCulture, "Only {0} instead of {1} bytes were read.", bytesRead, bytesToRead));
+                throw new IOException($"Only {bytesRead} instead of {bytesToRead} bytes were read.");
             }
             this.filePosition += bytesRead;
         }
@@ -119,6 +119,11 @@ namespace Carnassial.Interop
             return this.Buffer[this.bufferPosition++];
         }
 
+        public override void GetBytes(byte[] buffer, int offset, int count)
+        {
+            this.GetBytes(buffer.AsSpan(offset, count));
+        }
+
         public override byte[] GetBytes(int count)
         {
             byte[] bytes = new byte[count];
@@ -126,13 +131,14 @@ namespace Carnassial.Interop
             return bytes;
         }
 
-        public override void GetBytes(byte[] buffer, int offset, int count)
+        public override void GetBytes(Span<byte> bytes)
         {
             if (this.Buffer == null)
             {
                 throw new NotSupportedException(App.FormatResource(Constant.ResourceKey.UnbufferedSequentialReaderExtendBuffer, nameof(this.ExtendBuffer), nameof(this.GetBytes)));
             }
 
+            int count = bytes.Length;
             int endPosition = this.bufferPosition + count;
             if (endPosition > this.Buffer.Length)
             {
@@ -145,7 +151,8 @@ namespace Carnassial.Interop
                 }
                 this.ExtendBuffer(bytesToRead);
             }
-            ClrBuffer.BlockCopy(this.Buffer, this.bufferPosition, buffer, offset, count);
+
+            this.Buffer[this.bufferPosition..endPosition].CopyTo(bytes);
             this.bufferPosition += count;
         }
 

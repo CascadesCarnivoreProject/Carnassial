@@ -397,12 +397,12 @@ namespace Carnassial.Images
             Dictionary<string, ImageRow> filesByName = filesByRelativePathAndName[this.RelativePath];
 
             this.First.File = filesByName[this.First.FileName];
-            Debug.Assert(String.Equals(this.RelativePath, this.First.File.RelativePath, StringComparison.OrdinalIgnoreCase), String.Format(CultureInfo.InvariantCulture, "Relative path of atom '{0}' doesn't match relative path of first file '{1}'.", this.RelativePath, this.First.File.RelativePath));
+            Debug.Assert(String.Equals(this.RelativePath, this.First.File.RelativePath, StringComparison.OrdinalIgnoreCase), String.Create(CultureInfo.InvariantCulture, $"Relative path of atom '{this.RelativePath}' doesn't match relative path of first file '{this.First.File.RelativePath}'."));
 
             if (this.Second.FileName != null)
             {
                 this.Second.File = filesByName[this.Second.FileName];
-                Debug.Assert(String.Equals(this.RelativePath, this.Second.File.RelativePath, StringComparison.OrdinalIgnoreCase), String.Format(CultureInfo.InvariantCulture, "Relative path of atom '{0}' doesn't match relative path of first file '{1}'.", this.RelativePath, this.Second.File.RelativePath));
+                Debug.Assert(String.Equals(this.RelativePath, this.Second.File.RelativePath, StringComparison.OrdinalIgnoreCase), String.Create(CultureInfo.InvariantCulture, $"Relative path of atom '{this.RelativePath}' doesn't match relative path of first file '{this.Second.File.RelativePath}'."));
             }
         }
     }

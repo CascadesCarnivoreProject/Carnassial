@@ -55,7 +55,7 @@ namespace Carnassial.Dialog
                         break;
                     case MessageBoxButton.YesNoCancel:
                     default:
-                        throw new ArgumentOutOfRangeException(nameof(value), String.Format(CultureInfo.CurrentCulture, "Unhandled button type {0}.", value));
+                        throw new ArgumentOutOfRangeException(nameof(value), $"Unhandled button type {value}.");
                 }
                 this.buttonType = value;
             }
