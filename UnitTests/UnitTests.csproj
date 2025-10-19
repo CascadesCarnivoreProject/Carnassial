@@ -2,18 +2,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework>net9.0-windows10.0.22621.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <AssemblyName>Carnassial.UnitTests</AssemblyName>
     <RootNamespace>Carnassial.UnitTests</RootNamespace>
     <Platforms>x64;x86</Platforms>
-    <Copyright>Copyright © 2016-2023 Cascades Carnivore Project</Copyright>
-    <Version>2.2.4</Version>
+    <Copyright>Copyright © Cascades Carnivore Project</Copyright>
     <PackageLicenseExpression>https://creativecommons.org/licenses/by-nc-sa/4.0/</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/CascadesCarnivoreProject/Carnassial</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <OutputType>Library</OutputType>
     <Nullable>enable</Nullable>
+    <FileVersion>2.2.5.0</FileVersion>
+    <AssemblyVersion>2.2.5.0</AssemblyVersion>
+    <SupportedOSPlatformVersion>10.0.22621.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -139,12 +141,13 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
-    <PackageReference Include="MSTest.TestAdapter" Version="4.0.0" />
-    <PackageReference Include="MSTest.TestFramework" Version="4.0.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="4.0.1" />
+    <PackageReference Include="MSTest.TestFramework" Version="4.0.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Carnassial\Carnassial.csproj" />
+    <ProjectReference Include="..\Native\Native.vcxproj" />
     <ProjectReference Include="..\TemplateEditor\TemplateEditor.csproj" />
   </ItemGroup>
 

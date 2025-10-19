@@ -9,7 +9,6 @@ namespace Carnassial.UnitTests
     public class UITestMethodAttribute([CallerFilePath] string callerFilePath = "", [CallerLineNumber] int callerLineNumber = -1) : TestMethodAttribute(callerFilePath, callerLineNumber)
     {
         private static ITestMethod? CurrentTest;
-        private static readonly SemaphoreSlim Lock;
         private static readonly AutoResetEvent TestAvailableToRunOrExitRequested;
         private static TaskCompletionSource<TestResult>? TestCompletionSource;
         private static readonly Thread UXTestThread;
@@ -18,7 +17,6 @@ namespace Carnassial.UnitTests
         static UITestMethodAttribute()
         {
             UITestMethodAttribute.CurrentTest = null;
-            UITestMethodAttribute.Lock = new(initialCount: 1, maxCount: 1);
             UITestMethodAttribute.TestAvailableToRunOrExitRequested = new(initialState: false);
             UITestMethodAttribute.TestCompletionSource = null;
             UITestMethodAttribute.UXTestThread = new(() =>
@@ -61,7 +59,7 @@ namespace Carnassial.UnitTests
             // potential test harness parallelism but might allow more accurate reporting of test times. Locking is somewhat simpler,
             // robust to missing [DoNotParellelize] attributes, very slightly faster, and (as of mstest 3.1.1) doesn't affect test
             // runtime reporting.
-            await UITestMethodAttribute.Lock.WaitAsync(); // could also use a lock object and lock() { } but a CS1998 results as there's no use of await
+            await CarnassialTest.AppLock.WaitAsync(); // could also use a lock object and lock() { } but a CS1998 results as there's no use of await
             TestResult testResult;
             try
             {
@@ -88,7 +86,7 @@ namespace Carnassial.UnitTests
             }
             finally
             {
-                UITestMethodAttribute.Lock.Release();
+                CarnassialTest.AppLock.Release();
             }
 
             return [ testResult ];

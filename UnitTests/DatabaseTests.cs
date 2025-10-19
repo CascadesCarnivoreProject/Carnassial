@@ -9,7 +9,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -25,13 +24,13 @@ namespace Carnassial.UnitTests
         [ClassCleanup]
         public static void ClassCleanup()
         {
-            CarnassialTest.TryRevertToDefaultCultures();
+            CarnassialTest.AppLock.Release();
         }
 
         [ClassInitialize]
-        public static void ClassInitialize(TestContext _)
+        public static void ClassInitialize(TestContext testContext)
         {
-            //CarnassialTest.TryChangeToTestCulture();
+            CarnassialTest.AppLock.Wait(testContext.CancellationToken);
         }
 
         [TestMethod]
@@ -1255,7 +1254,7 @@ namespace Carnassial.UnitTests
             Assert.IsTrue(control.SpreadsheetOrder > 0);
             Assert.IsTrue(control.MaxWidth > 0);
             Assert.IsFalse(String.IsNullOrWhiteSpace(control.Tooltip));
-            Assert.IsTrue(Enum.IsDefined(typeof(ControlType), control.ControlType));
+            Assert.IsTrue(Enum.IsDefined(control.ControlType));
             Assert.IsTrue((control.Visible == true) || (control.Visible == false));
         }
 

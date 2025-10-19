@@ -386,7 +386,7 @@ namespace Carnassial
             this.FileDisplay.FileDisplay.Dock.Focus();
         }
 
-        private void FolderSelectionDialog_FolderChanging(object? sender, CommonFileDialogFolderChangeEventArgs e)
+        private void FolderSelectionDialog_FolderChanging(object? _, CommonFileDialogFolderChangeEventArgs e)
         {
             // require folders to be loaded be either the same folder as the .tdb and .ddb or subfolders of it
             if ((e.Folder == null) || (e.Folder.StartsWith(this.FolderPath, StringComparison.OrdinalIgnoreCase) == false))
@@ -934,7 +934,7 @@ namespace Carnassial
 
         private async void MenuFileAddFilesToImageSet_Click(object sender, RoutedEventArgs e)
         {
-            if (this.ShowFolderSelectionDialog(out IEnumerable<string>? folderPaths))
+            if (this.ShowFolderSelectionDialog(out List<string>? folderPaths))
             {
                 await this.TryAddFilesAsync(folderPaths).ConfigureAwait(true);
             }
@@ -1007,7 +1007,7 @@ namespace Carnassial
             folderSelectionDialog.IsFolderPicker = true;
             folderSelectionDialog.FolderChanging += this.FolderSelectionDialog_FolderChanging;
 
-            if (folderSelectionDialog.ShowDialog() == CommonFileDialogResult.Ok)
+            if ((folderSelectionDialog.ShowDialog() == CommonFileDialogResult.Ok) && (folderSelectionDialog.FileName != null))
             {
                 // flush any pending changes so MoveFilesToFolder() has clean state
                 Debug.Assert(this.DataHandler != null);
@@ -2226,7 +2226,7 @@ namespace Carnassial
             this.FileNavigatorSlider_EnableOrDisableValueChangedCallback(true);
         }
 
-        private bool ShowFolderSelectionDialog([NotNullWhen(true)] out IEnumerable<string>? folderPaths)
+        private bool ShowFolderSelectionDialog([NotNullWhen(true)] out List<string>? folderPaths)
         {
             using (CommonOpenFileDialog folderSelectionDialog = new())
             {
@@ -2240,17 +2240,26 @@ namespace Carnassial
 
                 if (folderSelectionDialog.ShowDialog() == CommonFileDialogResult.Ok)
                 {
-                    folderPaths = folderSelectionDialog.FileNames;
-
-                    // remember the parent of the selected folder path to save the user clicks and scrolling in case files from additional 
-                    // directories are added later
-                    // Moves above the location of the template file are disallowed, however.
-                    string? parentFolderPath = Path.GetDirectoryName(folderPaths.First());
-                    if ((parentFolderPath != null) && parentFolderPath.StartsWith(this.FolderPath, StringComparison.OrdinalIgnoreCase))
+                    folderPaths = [];
+                    foreach (string? folderPath in folderSelectionDialog.FileNames)
                     {
-                        this.State.MostRecentFileAddFolderPath = parentFolderPath;
+                        if (folderPath != null)
+                        {
+                            folderPaths.Add(folderPath);
+                        }
                     }
-                    return true;
+                    if (folderPaths.Count > 0)
+                    {
+                        // remember the parent of the selected folder path to save the user clicks and scrolling in case files from additional 
+                        // directories are added later
+                        // Moves above the location of the template file are disallowed, however.
+                        string? parentFolderPath = Path.GetDirectoryName(folderPaths.First());
+                        if ((parentFolderPath != null) && parentFolderPath.StartsWith(this.FolderPath, StringComparison.OrdinalIgnoreCase))
+                        {
+                            this.State.MostRecentFileAddFolderPath = parentFolderPath;
+                        }
+                        return true;
+                    }
                 }
             }
 
@@ -2285,7 +2294,7 @@ namespace Carnassial
         }
 
         // out parameters can't be used in anonymous methods, so a separate pointer to backgroundWorker is required for return to the caller
-        private async Task<bool> TryAddFilesAsync(IEnumerable<string> folderPaths)
+        private async Task<bool> TryAddFilesAsync(IList<string> folderPaths)
         {
             using AddFilesIOComputeTransactionManager folderLoad = new(this.UpdateFolderLoadProgress, this.State.Throttles.GetDesiredProgressUpdateInterval());
             folderLoad.FolderPaths.AddRange(folderPaths);
@@ -2299,7 +2308,7 @@ namespace Carnassial
                     return false;
                 }
 
-                if (this.ShowFolderSelectionDialog(out IEnumerable<string>? folderPathFromDialog))
+                if (this.ShowFolderSelectionDialog(out List<string>? folderPathFromDialog))
                 {
                     return await this.TryAddFilesAsync(folderPathFromDialog).ConfigureAwait(true);
                 }

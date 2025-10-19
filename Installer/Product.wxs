@@ -18,16 +18,7 @@
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="NonprofitProgramFilesFolder" Name="Cascades Carnivore Project">
         <Directory Id="CarnassialFilesFolder" Name="Carnassial">
-          <Directory Id="INSTALLFOLDER" Name="v2.2">
-            <Directory Id="runtimes" Name="runtimes">
-              <Directory Id="runtimes_win" Name="win">
-                <Directory Id="runtimes_win_lib" Name="lib">
-                  <Directory Id="runtimes_win_lib_net8.0" Name="net8.0" />
-                </Directory>
-              </Directory>
-              <Directory Id="runtimes_win_x64" Name="win-x64" />
-            </Directory>
-          </Directory>
+          <Directory Id="INSTALLFOLDER" Name="v2.2" />
         </Directory>
       </Directory>
       <Component Id="INSTALLFOLDER" Guid="53058a3f-2fd8-4787-bcac-896908747ff9" Bitness="always64">
@@ -132,32 +123,15 @@
       <Component Id="SQLite.Interop.dll" Bitness="always64">
         <File Id="SQLite.Interop.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\publish\SQLite.Interop.dll" />
       </Component>
-      <Component Id="System.Configuration.ConfigurationManager.dll" Bitness="always64">
-        <File Id="System.Configuration.ConfigurationManager.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\System.Configuration.ConfigurationManager.dll" />
-      </Component>
       <Component Id="System.Data.SQLite.dll" Bitness="always64">
         <File Id="System.Data.SQLite.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\System.Data.SQLite.dll" />
-      </Component>
-      <Component Id="System.IO.Packaging.dll" Bitness="always64">
-        <File Id="System.IO.Packaging.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\System.IO.Packaging.dll" />
       </Component>
       <Component Id="XmpCore.dll" Bitness="always64">
         <File Id="XmpCore.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\XmpCore.dll" />
       </Component>
-    </DirectoryRef>
-
-    <DirectoryRef Id="runtimes_win_lib_net8.0">
-      <Component Id="Microsoft.Win32.SystemEvents.dll" Bitness="always64">
-        <File Id="Microsoft.Win32.SystemEvents.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\publish\runtimes\win\lib\net8.0\Microsoft.Win32.SystemEvents.dll" />
-      </Component>
       <Component Id="System.Speech.dll" Bitness="always64">
-        <File Id="System.Speech.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\runtimes\win\lib\net8.0\System.Speech.dll" />
+        <File Id="System.Speech.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\System.Speech.dll" />
       </Component>
-      <Component Id="System.Windows.Extensions.dll" Bitness="always64">
-        <File Id="System.Windows.Extensions.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\runtimes\win\lib\net8.0\System.Windows.Extensions.dll" />
-      </Component>
-    </DirectoryRef>
-    <DirectoryRef Id="runtimes_win_x64">
       <Component Id="turbojpeg.dll" Bitness="always64">
         <!-- turbjepeg.dll isn't binplaced by publishing, so pull it from the build -->
         <File Id="turbojpeg.dll" KeyPath="yes" Source="$(var.Native.TargetDir)\turbojpeg.dll" />
@@ -185,15 +159,11 @@
       <ComponentRef Id="DocumentFormat.OpenXml.Framework.dll" />
       <ComponentRef Id="Ijwhost.dll" />
       <ComponentRef Id="MetadataExtractor.dll" />
-      <ComponentRef Id="Microsoft.Win32.SystemEvents.dll" />
       <ComponentRef Id="Microsoft.WindowsAPICodePack.dll" />
       <ComponentRef Id="Microsoft.WindowsAPICodePack.Shell.dll" />
       <ComponentRef Id="SQLite.Interop.dll" />
-      <ComponentRef Id="System.Configuration.ConfigurationManager.dll" />
       <ComponentRef Id="System.Data.SQLite.dll" />
-      <ComponentRef Id="System.IO.Packaging.dll" />
       <ComponentRef Id="System.Speech.dll" />
-      <ComponentRef Id="System.Windows.Extensions.dll" />
       <ComponentRef Id="turbojpeg.dll" />
       <ComponentRef Id="XmpCore.dll" />
       <ComponentRef Id="NonprofitProgramMenuFolder" />

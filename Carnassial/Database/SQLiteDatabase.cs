@@ -133,7 +133,7 @@ namespace Carnassial.Database
 
                 foreach (string name in Enum.GetNames(typeof(TEnum)))
                 {
-                    TEnum value = (TEnum)Enum.Parse(typeof(TEnum), name);
+                    TEnum value = Enum.Parse<TEnum>(name);
                     if (value.Equals(default(TEnum)))
                     {
                         continue;

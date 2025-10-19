@@ -28,7 +28,7 @@ namespace Carnassial.Images
         {
             this.CurrentDifferenceState = ImageDifference.Unaltered;
             this.differenceCache = new Dictionary<ImageDifference, CachedImage?>(4);
-            foreach (ImageDifference differenceState in Enum.GetValues(typeof(ImageDifference)))
+            foreach (ImageDifference differenceState in Enum.GetValues<ImageDifference>())
             {
                 this.differenceCache.Add(differenceState, null);
             }

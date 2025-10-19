@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
 
@@ -25,6 +26,7 @@ namespace Carnassial.UnitTests
         private static readonly CultureInfo? DefaultThreadCurrentUICulture;
 
         protected static App App { get; private set; }
+        public static SemaphoreSlim AppLock { get; private set; }
 
         public TestContext? TestContext { get; set; }
 
@@ -70,6 +72,7 @@ namespace Carnassial.UnitTests
             });
             Debug.Assert(CarnassialTest.App != null);
 
+            CarnassialTest.AppLock = new(initialCount: 1, maxCount: 1);
             CarnassialTest.CultureChanged = false;
             CarnassialTest.CurrentCulture = CultureInfo.CurrentCulture;
             CarnassialTest.CurrentUICulture = CultureInfo.CurrentUICulture;
@@ -92,6 +95,8 @@ namespace Carnassial.UnitTests
         [AssemblyCleanup]
         public static void AssemblyCleanup()
         {
+            CarnassialTest.TryRevertToDefaultCultures();
+
             //Carnassial.Properties.Settings.Default.Save();
             if (CarnassialTest.AppStarted)
             {
@@ -99,6 +104,12 @@ namespace Carnassial.UnitTests
                 // blocks indefinitely
                 CarnassialTest.AppDispatcher.Invoke(() => CarnassialTest.App.Shutdown());
             }
+        }
+
+        [AssemblyInitialize]
+        public static void AssemblyInitialize(TestContext _)
+        {
+            CarnassialTest.TryChangeToTestCulture();
         }
 
         /// <summary>
@@ -460,56 +471,50 @@ namespace Carnassial.UnitTests
 
         protected static bool TryChangeToTestCulture()
         {
-            lock (CarnassialTest.App)
+            if (CarnassialTest.CultureChanged)
             {
-                if (CarnassialTest.CultureChanged)
-                {
-                    return false;
-                }
-
                 return false;
-                //#if DEBUG
-                //LocalizedApplication.UseTestCulture = true;
-                //#endif
-
-                //CarnassialTest.CurrentCulture = CultureInfo.CurrentCulture;
-                //CarnassialTest.CurrentUICulture = CultureInfo.CurrentUICulture;
-                //CarnassialTest.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentCulture;
-                //CarnassialTest.DefaultThreadCurrentUICulture = CultureInfo.DefaultThreadCurrentUICulture;
-
-                //// change to a culture other than the developer's to provide sanity coverage
-                //string cultureName = TestConstant.Globalization.DefaultUITestCultureNames[(int)DateTime.UtcNow.DayOfWeek];
-                //if (CultureInfo.CurrentCulture.Name.StartsWith(cultureName, StringComparison.Ordinal))
-                //{
-                //    cultureName = TestConstant.Globalization.AlternateUITestCultureName;
-                //}
-
-                //CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(cultureName);
-                //CultureInfo.CurrentUICulture = CultureInfo.CurrentCulture;
-                //CultureInfo.DefaultThreadCurrentCulture = CultureInfo.CurrentCulture;
-                //CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CurrentCulture;
-
-                //CarnassialTest.CultureChanged = true;
-                //return true;
             }
+
+            return false;
+            //#if DEBUG
+            //LocalizedApplication.UseTestCulture = true;
+            //#endif
+
+            //CarnassialTest.CurrentCulture = CultureInfo.CurrentCulture;
+            //CarnassialTest.CurrentUICulture = CultureInfo.CurrentUICulture;
+            //CarnassialTest.DefaultThreadCurrentCulture = CultureInfo.DefaultThreadCurrentCulture;
+            //CarnassialTest.DefaultThreadCurrentUICulture = CultureInfo.DefaultThreadCurrentUICulture;
+
+            //// change to a culture other than the developer's to provide sanity coverage
+            //string cultureName = TestConstant.Globalization.DefaultUITestCultureNames[(int)DateTime.UtcNow.DayOfWeek];
+            //if (CultureInfo.CurrentCulture.Name.StartsWith(cultureName, StringComparison.Ordinal))
+            //{
+            //    cultureName = TestConstant.Globalization.AlternateUITestCultureName;
+            //}
+
+            //CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(cultureName);
+            //CultureInfo.CurrentUICulture = CultureInfo.CurrentCulture;
+            //CultureInfo.DefaultThreadCurrentCulture = CultureInfo.CurrentCulture;
+            //CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CurrentCulture;
+
+            //CarnassialTest.CultureChanged = true;
+            //return true;
         }
 
         protected static bool TryRevertToDefaultCultures()
         {
-            lock (CarnassialTest.App)
+            if (CarnassialTest.CultureChanged == false)
             {
-                if (CarnassialTest.CultureChanged == false)
-                {
-                    return false;
-                }
-
-                CultureInfo.CurrentCulture = UserInterfaceTests.CurrentCulture;
-                CultureInfo.CurrentUICulture = UserInterfaceTests.CurrentUICulture;
-                CultureInfo.DefaultThreadCurrentCulture = UserInterfaceTests.DefaultThreadCurrentCulture;
-                CultureInfo.DefaultThreadCurrentUICulture = UserInterfaceTests.DefaultThreadCurrentUICulture;
-                CarnassialTest.CultureChanged = false;
-                return true;
+                return false;
             }
+
+            CultureInfo.CurrentCulture = UserInterfaceTests.CurrentCulture;
+            CultureInfo.CurrentUICulture = UserInterfaceTests.CurrentUICulture;
+            CultureInfo.DefaultThreadCurrentCulture = UserInterfaceTests.DefaultThreadCurrentCulture;
+            CultureInfo.DefaultThreadCurrentUICulture = UserInterfaceTests.DefaultThreadCurrentUICulture;
+            CarnassialTest.CultureChanged = false;
+            return true;
         }
     }
 }

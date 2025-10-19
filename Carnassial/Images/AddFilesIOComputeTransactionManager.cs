@@ -55,6 +55,9 @@ namespace Carnassial.Images
             // - Carnassial 2.2.0.3, two files/atom, 8k reads
             //   threads   files/s
             //   4         ~450
+            //
+            // - Carnassial 2.2.0.5
+            //   7200 files/s on 5650U using one compute thread per core and hyperthreaded IO. See FileIOComputeTransactionManager..ctor().
             Dictionary<string, HashSet<string>> filesAlreadyInFileTableByRelativePath = fileDatabase.Files.HashFileNamesByRelativePath();
             this.ComputeTaskBody = (int computeTaskNumber) =>
             {

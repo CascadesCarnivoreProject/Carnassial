@@ -37,15 +37,8 @@ namespace Carnassial.UnitTests
         public static void ClassCleanup()
         {
             UITestMethodAttribute.ClassCleanup();
-            CarnassialTest.TryRevertToDefaultCultures();
         }
         
-        [ClassInitialize]
-        public static void ClassInitialize(TestContext _)
-        {
-            CarnassialTest.TryChangeToTestCulture();
-        }
-
         [UITestMethod]
         public void Carnassial()
         {

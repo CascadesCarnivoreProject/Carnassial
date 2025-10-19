@@ -92,8 +92,52 @@ namespace Carnassial.Images
             this.transactionSequence = null;
             this.TransactionFileCount = 0;
 
-            this.ioTaskCount = 2;
-            this.computeTaskCount = Processor.PhysicalCores - this.ioTaskCount;
+            // by default, run one compute thread per core and do IO on hyperthreads
+            // Effectively assumes an NVMe data drive, or at least a SATA SSD, and works well on Ryzen. No performance characterization
+            // data available for Intel. If needed, thread counts can be capped to limit NVMe oversubscription on EPYC, Threadripper, or
+            // Xeon.
+            //
+            // 56650U with 11,819 8 MP images, .NET 9 release build
+            //                           images/second
+            // compute thread per core   ~7200          three IO threads
+            //                           ~6700          two IO threads
+            // one thread per core       ~5200          two IO threads, four compute threads
+            // all threads               ~4800
+            int threadsAvailable = Environment.ProcessorCount;
+            int physicalCores = Processor.PhysicalCores;
+            int hyperthreadsAvailable = threadsAvailable - physicalCores;
+            if (hyperthreadsAvailable == physicalCores)
+            {
+                // AMD, Intel prior to Alder Lake
+                // Leaves half of hyperthreads available for SQL, OS, and other processes.
+                this.ioTaskCount = Int32.Max(hyperthreadsAvailable / 2, 1); // guarantee an IO thread in single core edge case
+                this.computeTaskCount = physicalCores;
+            }
+            else
+            {
+                Debug.Assert(hyperthreadsAvailable < physicalCores);
+                // asymmetric Intel with single threaded P-cores (Arrow Lake)
+                // P-cores  E-cores   cores   threads   IO threads   compute threads
+                // 8        16        24      24        7            16
+                //          12        20      20        6            13
+                //          8         16      16        5            10
+                // 6        8         14      14        4            9
+                //          6         12      12        3            8
+                //          4         10      10        3            6
+                //
+                // asymmetric Intel with hyperthreaded P-cores
+                // P-cores  E-cores   cores   threads   IO threads   compute threads
+                // 8        16        24      32        10           21
+                //          12        20      28        9            18
+                //          8         16      24        7            16
+                // 6        8         14      20        6            13
+                //          6         12      18        5            12
+                //          4         10      16        5            10
+                // for now, leave one thread for background SQL
+                int netThreadsAvailable = threadsAvailable - 1; // reserved threads can be increased if a performance advantage is found
+                this.ioTaskCount = netThreadsAvailable / 3;
+                this.computeTaskCount = netThreadsAvailable - this.ioTaskCount;
+            }
             this.ioTasksActive = 0;
 
             this.computeTasks = new Task<int>[this.computeTaskCount];

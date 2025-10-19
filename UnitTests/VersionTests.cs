@@ -8,18 +8,6 @@ namespace Carnassial.UnitTests
     [TestClass]
     public class VersionTests : CarnassialTest
     {
-        [ClassCleanup]
-        public static void ClassCleanup()
-        {
-            CarnassialTest.TryRevertToDefaultCultures();
-        }
-
-        [ClassInitialize]
-        public static void ClassInitialize(TestContext _)
-        {
-            CarnassialTest.TryChangeToTestCulture();
-        }
-
         [TestMethod]
         public void CheckForUpdates()
         {
