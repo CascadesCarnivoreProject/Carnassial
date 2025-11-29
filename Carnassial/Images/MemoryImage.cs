@@ -1,38 +1,78 @@
-﻿using Carnassial.Native;
-using System.Runtime.Intrinsics;
+﻿using Carnassial.Interop;
 using System;
-using System.Runtime.Intrinsics.X86;
-using System.Windows.Media.Imaging;
 using System.Diagnostics.CodeAnalysis;
-using System.Windows.Media;
-using System.Windows.Controls;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 
 namespace Carnassial.Images
 {
-    public class MemoryImage : MemoryImageCppCli
+    public class MemoryImage
     {
+        private const int CalculationPixelSizeInBytes = 4;
         private const int DefaultDpi = 96;
 
+        // preferred formats for WriteableBitmap are Bgr32 or Pbgra32 as these do not require conversion (see MSDN docs for .ctor)
+        // Since SetSource() uses drives image display destinations in Carnassial to WriteableBitmap it's typically most efficient to load images
+        // in a WriteableBitmap friendly format from the start.  The value here must be kept in sync with the value of PreferredPixelFormat along
+        // with the implementations of Difference(), IsDark(), and so on.
+        private static readonly PixelFormat PreferredPixelFormat = PixelFormats.Pbgra32; // not used in C++/CLI but kept adjacent to PreferredTurboJpegPixelFormat for consistency
+        private const LibjpegPixelFormat PreferredTurboJpegPixelFormat = LibjpegPixelFormat.TJPF_BGRA;
+
+        private PixelFormat format;
+        private byte[] pixels;
+        private int pixelSizeInBytes;
+
+        public bool DecompressionError { get; private set; }
+        public int PixelHeight { get; private set; }
+        public int PixelWidth { get; private set; }
+
         public MemoryImage(BitmapSource bitmap)
-            : base(bitmap) 
-        {
+            : this(bitmap.PixelWidth, bitmap.PixelHeight, bitmap.Format)
+		{
+			bitmap.CopyPixels(this.pixels, this.PitchInBytes, 0);
         }
 
         public MemoryImage(byte[] jpeg, Nullable<int> requestedWidth)
-            : base(jpeg, requestedWidth)
+            : this(jpeg, 0, jpeg.Length, requestedWidth)
         {
         }
 
-        public MemoryImage(byte[] jpeg, int offset, int length, Nullable<int> requestedWidth)
-            : base(jpeg, offset, length, requestedWidth)
+        public MemoryImage(byte[] jpegFileBytes, int offsetInBytes, int lengthInBytes, Nullable<int> requestedWidth)
         {
+            if (this.TryDecode(jpegFileBytes, offsetInBytes, lengthInBytes, requestedWidth) == false)
+            {
+                this.pixels = [];
+            }
         }
 
         public MemoryImage(int width, int height, PixelFormat format)
-            : base(width, height, format)
         {
+            this.DecompressionError = false;
+            this.format = format;
+            this.PixelHeight = height;
+            this.PixelWidth = width;
+            this.pixelSizeInBytes = format.BitsPerPixel / 8;
+            this.ReallocatePixelsIfNeeded();
         }
+
+        private int PitchInBytes // also called stride
+        {
+            get { return this.PixelWidth * this.pixelSizeInBytes; }
+        }
+
+        private int TotalPixelBytes
+        {
+            get { return this.TotalPixels * this.pixelSizeInBytes; }
+        }
+
+        public int TotalPixels
+        {
+            get { return this.PixelWidth * this.PixelHeight; }
+		}
 
         private unsafe void DifferenceAvx256(MemoryImage other, byte thresholdPerChannel, MemoryImage difference)
         {
@@ -41,11 +81,11 @@ namespace Carnassial.Images
             Vector256<Int32> numeratorForAverageEpi32 = Vector256.Create(715827883, 0, 715827883, 0, 715827883, 0, 715827883, 0);
             Vector256<byte> broadcastLowPackedOctet = Vector256.Create((byte)0, 0, 0, 3, 0, 0, 0, 3, 8, 8, 8, 11, 8, 8, 8, 11, 16, 16, 16, 19, 16, 16, 16, 19, 24, 24, 24, 27, 24, 24, 24, 27); // need (byte) to disambiguate byte overload
 
-            fixed (byte* differencePixels = &difference.Pixels[0])
-            fixed (byte* otherPixels = &other.Pixels[0])
-            fixed (byte* thisPixels = &this.Pixels[0])
+            fixed (byte* differencePixels = &difference.pixels[0])
+            fixed (byte* otherPixels = &other.pixels[0])
+            fixed (byte* thisPixels = &this.pixels[0])
             {
-                for (int pixelOctetOffset = 0; pixelOctetOffset < this.Pixels.Length; pixelOctetOffset += sizeof(Vector256<byte>))
+                for (int pixelOctetOffset = 0; pixelOctetOffset < this.pixels.Length; pixelOctetOffset += sizeof(Vector256<byte>))
                 {
                     Vector256<byte> thisPixelOctet = Avx.LoadVector256(thisPixels + pixelOctetOffset);
                     Vector256<byte> otherPixelOctet = Avx.LoadVector256(otherPixels + pixelOctetOffset);
@@ -74,12 +114,12 @@ namespace Carnassial.Images
             Vector256<Int32> numeratorForAverageEpi32 = Vector256.Create(715827883, 0, 715827883, 0, 715827883, 0, 715827883, 0);
             Vector256<byte> broadcastLowPackedOctet = Vector256.Create((byte)0, 0, 0, 3, 0, 0, 0, 3, 8, 8, 8, 11, 8, 8, 8, 11, 16, 16, 16, 19, 16, 16, 16, 19, 24, 24, 24, 27, 24, 24, 24, 27);
 
-            fixed (byte* previousPixels = &previous.Pixels[0])
-            fixed (byte* nextPixels = &next.Pixels[0])
-            fixed (byte* differencePixels = &difference.Pixels[0])
-            fixed (byte* pixels = &this.Pixels[0])
+            fixed (byte* previousPixels = &previous.pixels[0])
+            fixed (byte* nextPixels = &next.pixels[0])
+            fixed (byte* differencePixels = &difference.pixels[0])
+            fixed (byte* pixels = &this.pixels[0])
             {
-                for (int pixelOctetOffset = 0; pixelOctetOffset < this.Pixels.Length; pixelOctetOffset += sizeof(Vector256<byte>))
+                for (int pixelOctetOffset = 0; pixelOctetOffset < this.pixels.Length; pixelOctetOffset += sizeof(Vector256<byte>))
                 {
                     Vector256<byte> thisPixelOctet = Avx.LoadVector256(pixels + pixelOctetOffset);
                     Vector256<byte> previousPixelOctet = Avx.LoadVector256(previousPixels + pixelOctetOffset);
@@ -124,10 +164,10 @@ namespace Carnassial.Images
         public (double luminosity, double coloration) GetLuminosityAndColoration(int bottomRowsToSkip)
         {
             // require alpha channel be set to a constant value; see remarks in NativeImage::IsDarkSse41()
-            if ((this.Format != MemoryImageCppCli.PreferredPixelFormat) ||
-                (this.PixelSizeInBytes != MemoryImageCppCli.CalculationPixelSizeInBytes))
+            if ((this.format != MemoryImage.PreferredPixelFormat) ||
+                (this.pixelSizeInBytes != MemoryImage.CalculationPixelSizeInBytes))
             {
-                throw new NotSupportedException($"Unhandled image format {this.Format} or unsuppored pixel size of {this.PixelSizeInBytes} bytes.");
+                throw new NotSupportedException($"Unhandled image format {this.format} or unsuppored pixel size of {this.pixelSizeInBytes} bytes.");
             }
             if (Avx2.IsSupported == false)
             {
@@ -157,9 +197,9 @@ namespace Carnassial.Images
             Int64 luminosityTotal = 0;
             int nextLuminosityAccumulateOffset = luminosityAccumulateIncrementInBytes; // see notes for second MultiplyAddAdjacent() below
             Vector256<Int16> oneEpi16 = Vector256<Int16>.One;
-            fixed (byte* pixels = &this.Pixels[0])
+            fixed (byte* pixels = &this.pixels[0])
             {
-                for (int pixelOctetOffset = 0; pixelOctetOffset < this.Pixels.Length; pixelOctetOffset += sizeof(Vector256<byte>))
+                for (int pixelOctetOffset = 0; pixelOctetOffset < this.pixels.Length; pixelOctetOffset += sizeof(Vector256<byte>))
                 {
                     // get next octet of pixels
                     Vector256<byte> pixelOctetBgra = Avx.LoadVector256(pixels + pixelOctetOffset);
@@ -210,34 +250,147 @@ namespace Carnassial.Images
         {
             if ((this.PixelWidth != other.PixelWidth) ||
                 (this.PixelHeight != other.PixelHeight) ||
-                (this.Format != MemoryImageCppCli.PreferredPixelFormat) ||
-                (other.Format != MemoryImageCppCli.PreferredPixelFormat) ||
-                (this.PixelSizeInBytes != other.PixelSizeInBytes))
+                (this.format != MemoryImage.PreferredPixelFormat) ||
+                (other.format != MemoryImage.PreferredPixelFormat) ||
+                (this.pixelSizeInBytes != other.pixelSizeInBytes))
             {
                 return true;
             }
             return false;
         }
 
+        [MemberNotNull(nameof(this.pixels))]
+        private void ReallocatePixelsIfNeeded()
+        {
+            // round the size of the pixel array up to the next 32 byte multiple for loop simplicity
+            int totalPixelBytes = this.TotalPixelBytes;
+
+            int bytesToAllocate = Constant.Simd256x8.SizeInBytes * (totalPixelBytes / Constant.Simd256x8.SizeInBytes);
+            if ((totalPixelBytes % Constant.Simd256x8.SizeInBytes) != 0)
+            {
+                bytesToAllocate += Constant.Simd256x8.SizeInBytes;
+            }
+
+            if ((this.pixels == null) || (bytesToAllocate > this.pixels.Length))
+            {
+                this.pixels = new byte[bytesToAllocate];
+            }
+        }
+
         // 8MP average performance (n ~= 40): 5.6ms
         // Not worth running in parallel.
         public void SetSource(Image image)
         {
-            //Stopwatch^ stopwatch = gcnew Stopwatch();
-            //stopwatch->Start();
+            //Stopwatch stopwatch = new Stopwatch();
+            //stopwatch.Start();
             WriteableBitmap? writeableBitmap = (WriteableBitmap?)image.Source;
             if ((writeableBitmap == null) ||
                 (writeableBitmap.PixelHeight != this.PixelHeight) ||
                 (writeableBitmap.PixelWidth != this.PixelWidth) ||
-                (writeableBitmap.Format != this.Format))
+                (writeableBitmap.Format != this.format))
             {
-                writeableBitmap = new(this.PixelWidth, this.PixelHeight, MemoryImage.DefaultDpi, MemoryImage.DefaultDpi, this.Format, null);
+                writeableBitmap = new(this.PixelWidth, this.PixelHeight, MemoryImage.DefaultDpi, MemoryImage.DefaultDpi, this.format, null);
                 image.Source = writeableBitmap;
             }
 
-            writeableBitmap.WritePixels(new Int32Rect(0, 0, this.PixelWidth, this.PixelHeight), this.Pixels, this.PitchInBytes, 0, 0);
-            //stopwatch->Stop();
-            //Trace::WriteLine(stopwatch->Elapsed.ToString("s\\.fffffff", CultureInfo.CurrentCulture));
+            writeableBitmap.WritePixels(new Int32Rect(0, 0, this.PixelWidth, this.PixelHeight), this.pixels, this.PitchInBytes, 0, 0);
+            //stopwatch.Stop();
+            //Trace::WriteLine(stopwatch.Elapsed.ToString("s\\.fffffff", CultureInfo.CurrentCulture));
+        }
+
+        /// <returns>true if pixel decompresion was attempted, false if pixels are already allocated but requested decode size isn't compatible</returns>
+        [MemberNotNullWhen(true, nameof(this.pixels))]
+        public unsafe bool TryDecode(byte[] jpegFileBytes, int offsetInBytes, int lengthInBytes, Nullable<int> requestedImageWidth)
+        {
+            IntPtr decompressor = LibjpegTurbo3.InitDecompress();
+            try
+            {
+                fixed (byte* jpegBytes = &jpegFileBytes[offsetInBytes])
+                {
+                    int result = LibjpegTurbo3.DecompressHeader(decompressor, jpegBytes, lengthInBytes);
+                    if (result != 0)
+                    {
+                        throw new ArgumentException(LibjpegTurbo3.GetErrorStr(decompressor), nameof(jpegFileBytes));
+                    }
+
+                    int bitsPerSample = LibjpegTurbo3.Get(decompressor, LibjpegParameter.TJPARAM_PRECISION);
+                    if (bitsPerSample != 8)
+                    {
+                        throw new NotSupportedException("Unhandled bit depth of " + bitsPerSample + ".");
+                    }
+
+                    int height = LibjpegTurbo3.Get(decompressor, LibjpegParameter.TJPARAM_JPEGHEIGHT);
+                    int width = LibjpegTurbo3.Get(decompressor, LibjpegParameter.TJPARAM_JPEGWIDTH);
+                    if (requestedImageWidth.HasValue)
+                    {
+                        // if a width was specified, downsize the decode to the smallest available size which is still larger than the requested width
+                        // if no width was specified, default to full size decode
+                        // If needed, supported downsizing ratios can be checked with
+                        // int scalingFactorLength;
+                        // TurboJpegScalingFactor* scalingFactors = tjGetScalingFactors(&scalingFactorLength);
+                        int downsizeRatio = width / requestedImageWidth.Value;
+                        if (downsizeRatio >= 8)
+                        {
+                            height /= 8;
+                            width /= 8;
+                            LibjpegScalingFactor scalingFactor = new() { num = 1, denom = 8 };
+                            LibjpegTurbo3.SetScalingFactor(decompressor, scalingFactor);
+                        }
+                        else if (downsizeRatio >= 4)
+                        {
+                            height /= 4;
+                            width /= 4;
+                            LibjpegScalingFactor scalingFactor = new() { num = 1, denom = 4 };
+                            LibjpegTurbo3.SetScalingFactor(decompressor, scalingFactor);
+                        }
+                        else if (downsizeRatio >= 3)
+                        {
+                            height *= 3;
+                            width *= 3;
+                            height /= 8;
+                            width /= 8;
+                            LibjpegScalingFactor scalingFactor = new() { num = 3, denom = 8 };
+                            LibjpegTurbo3.SetScalingFactor(decompressor, scalingFactor);
+                        }
+                        else if (downsizeRatio >= 2)
+                        {
+                            height /= 2;
+                            width /= 2;
+                            LibjpegScalingFactor scalingFactor = new() { num = 1, denom = 2 };
+                            LibjpegTurbo3.SetScalingFactor(decompressor, scalingFactor);
+                        }
+                        // decompressor default is TJUNSCALED = { 1, 1 }
+                    }
+
+                    if ((this.PixelHeight > 0) && (this.PixelHeight != height))
+                    {
+                        return false;
+                    }
+                    if ((this.PixelWidth > 0) && (this.PixelWidth != width))
+                    {
+                        return false;
+                    }
+
+                    this.format = MemoryImage.PreferredPixelFormat;
+                    this.PixelHeight = height;
+                    this.pixelSizeInBytes = LibjpegTurbo3.PixelSize[(int)MemoryImage.PreferredTurboJpegPixelFormat];
+                    this.PixelWidth = width;
+                    this.ReallocatePixelsIfNeeded();
+
+                    fixed (byte* pinnedPixels = &this.pixels[0])
+                    {
+                        result = LibjpegTurbo3.Decompress8(decompressor, jpegBytes, lengthInBytes, pinnedPixels, this.PitchInBytes, MemoryImage.PreferredTurboJpegPixelFormat);
+                    }
+                    // most common error is an incompletely written .jpg because a trail camera triggered when it was opened and was turned off
+                    this.DecompressionError = result != 0;
+                }
+            }
+            finally
+            {
+                LibjpegTurbo3.Destroy(decompressor);
+            }
+
+            return this.DecompressionError == false;
         }
 
         /// <summary>
@@ -277,7 +430,7 @@ namespace Carnassial.Images
                 return false;
             }
 
-            difference = new MemoryImage(this.PixelWidth, this.PixelHeight, this.Format);
+            difference = new MemoryImage(this.PixelWidth, this.PixelHeight, this.format);
             this.DifferenceAvx256(other, threshold, difference);
             return true;
         }
@@ -295,7 +448,7 @@ namespace Carnassial.Images
                 return false;
             }
 
-            difference = new(this.PixelWidth, this.PixelHeight, this.Format);
+            difference = new(this.PixelWidth, this.PixelHeight, this.format);
             this.DifferenceAvx256(previous, next, threshold, difference);
             return true;
         }

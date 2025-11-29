@@ -137,10 +137,7 @@ namespace Carnassial.Control
         {
             bool isEnabled = this.UseCheckBox.IsChecked ?? false;
             this.OperatorBox.IsEnabled = isEnabled;
-            if (this.databaseValueControl != null)
-            {
-                this.databaseValueControl.IsEnabled = isEnabled;
-            }
+            this.databaseValueControl?.IsEnabled = isEnabled;
 
             this.UpdateDisplayQuery();
 

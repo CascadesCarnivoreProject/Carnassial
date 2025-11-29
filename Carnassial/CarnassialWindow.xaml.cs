@@ -383,7 +383,7 @@ namespace Carnassial
         private void FocusFileDisplay()
         {
             Debug.Assert(this.FileDisplay.FileDisplay.Dock.Focusable, "FileDisplay isn't focusable.");
-            this.FileDisplay.FileDisplay.Dock.Focus();
+            FocusManager.SetFocusedElement(this, this.FileDisplay.FileDisplay.Dock);
         }
 
         private void FolderSelectionDialog_FolderChanging(object? _, CommonFileDialogFolderChangeEventArgs e)
@@ -781,7 +781,7 @@ namespace Carnassial
                 return;
             }
 
-            IDataObject clipboardData = Clipboard.GetDataObject();
+            IDataObject? clipboardData = Clipboard.GetDataObject();
             if (clipboardData == null || clipboardData.GetDataPresent(typeof(Dictionary<string, object>)) == false)
             {
                 return;
@@ -1570,13 +1570,13 @@ namespace Carnassial
 
         private void MenuViewShowFiles_Click(object sender, RoutedEventArgs? e)
         {
-            this.Tabs.SelectedIndex = 1;
+            this.Tabs.SelectedIndex = Constant.UserInterface.TabSelectionIndexFiles;
             this.FocusFileDisplay();
         }
 
         private void MenuViewShowInstructions_Click(object sender, RoutedEventArgs? e)
         {
-            this.Tabs.SelectedIndex = 0;
+            this.Tabs.SelectedIndex = Constant.UserInterface.TabSelectionIndexInstructions;
         }
 
         private async void MenuViewShowLastFile_Click(object sender, RoutedEventArgs e)
@@ -2725,6 +2725,22 @@ namespace Carnassial
             StatusBarItem statusMessage = (StatusBarItem)this.LongRunningFeedback.StatusMessage.Items[0];
             statusMessage.Content = progress.GetMessage();
             this.LongRunningFeedback.ProgressBar.Value = progress.GetPercentage();
+        }
+
+        private void Window_Activated(object _1, EventArgs _2)
+        {
+            // when activated (app launch, taskbar click, alt+tab) change focus to the instructions or files tab
+            // This diverts the special case where, if a user clicks the minimize button and then reactivates Carnassial, WPF leaves
+            // keyboard focus on the minimize button by default. This can result in confusing behavior, for example if the user
+            // presses space to play files by default that gets interpreted as another press of the minimize button.
+            if (this.Tabs.SelectedIndex == Constant.UserInterface.TabSelectionIndexInstructions)
+            {
+                FocusManager.SetFocusedElement(this, this.Tabs);
+            }
+            else
+            {
+                this.FocusFileDisplay();
+            }
         }
 
         [SupportedOSPlatform(Constant.Platform.Windows)]

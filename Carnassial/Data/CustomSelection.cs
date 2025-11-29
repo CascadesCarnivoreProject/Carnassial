@@ -123,10 +123,7 @@ namespace Carnassial.Data
             }
 
             SearchTerm? utcOffsetTerm = this.SearchTerms.FirstOrDefault(term => String.Equals(term.DataLabel, Constant.FileColumn.UtcOffset, StringComparison.Ordinal));
-            if (utcOffsetTerm != null)
-            {
-                utcOffsetTerm.DatabaseValue = DateTimeHandler.ToDatabaseUtcOffset(dateTimeOffset.Offset);
-            }
+            utcOffsetTerm?.DatabaseValue = DateTimeHandler.ToDatabaseUtcOffset(dateTimeOffset.Offset);
         }
     }
 }

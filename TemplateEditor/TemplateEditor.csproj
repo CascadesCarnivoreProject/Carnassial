@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net9.0-windows10.0.22621.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.22621.0</TargetFramework>
     <OutputType>WinExe</OutputType>
     <RootNamespace>Carnassial.Editor</RootNamespace>
     <AssemblyName>CarnassialTemplateEditor</AssemblyName>
@@ -18,7 +18,7 @@
     <PackageProjectUrl>https://github.com/CascadesCarnivoreProject/Carnassial</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <Nullable>enable</Nullable>
-    <Version>2.2.5.0</Version>
+    <Version>2.2.10.0</Version>
     <SupportedOSPlatformVersion>10.0.22621.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 

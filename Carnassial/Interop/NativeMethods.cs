@@ -76,6 +76,37 @@ namespace Carnassial.Interop
         [LibraryImport(Constant.Assembly.User32)]
         private static partial IntPtr GetKeyboardLayout(uint idThread);
 
+        [LibraryImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static unsafe partial bool GetLogicalProcessorInformation(SYSTEM_LOGICAL_PROCESSOR_INFORMATION* buffer, ref UInt32 bufferSize);
+
+        public static unsafe int GetPhysicalCoreCount()
+        {
+            UInt32 bufferSizeInBytes = 0;
+            NativeMethods.GetLogicalProcessorInformation(null, ref bufferSizeInBytes);
+            int processorInformationFields = (int)(bufferSizeInBytes / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION));
+
+            int physicalCores = 0;
+            SYSTEM_LOGICAL_PROCESSOR_INFORMATION[] logicalProcessorInfo = new SYSTEM_LOGICAL_PROCESSOR_INFORMATION[processorInformationFields];
+            fixed (SYSTEM_LOGICAL_PROCESSOR_INFORMATION* pLogicalProcessorInfo = logicalProcessorInfo)
+            {
+                if (NativeMethods.GetLogicalProcessorInformation(pLogicalProcessorInfo, ref bufferSizeInBytes) == false)
+                {
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+                }
+            }
+
+            for (int logicalProcessorIndex = 0; logicalProcessorIndex < processorInformationFields; ++logicalProcessorIndex)
+            {
+                SYSTEM_LOGICAL_PROCESSOR_INFORMATION info = logicalProcessorInfo[logicalProcessorIndex];
+                if (info.Relationship == LOGICAL_PROCESSOR_RELATIONSHIP.RelationProcessorCore)
+                {
+                    ++physicalCores;
+                }
+            }
+
+            return physicalCores;
+        }
         private static string GetRelativePathFromDirectory(string? fromDirectoryPath, string? toPath, int toType)
         {
             ArgumentNullException.ThrowIfNull(fromDirectoryPath);
@@ -187,6 +218,16 @@ namespace Carnassial.Interop
         [DllImport(Constant.Assembly.Shell32, CharSet = CharSet.Unicode)]
         private static extern int SHFileOperation([In] ref SHFILEOPSTRUCT lpFileOp);
 
+        [StructLayout(LayoutKind.Sequential)]
+        private struct CACHE_DESCRIPTOR
+        {
+            public byte Level;
+            public byte Associativity;
+            public ushort LineSize;
+            public uint Size;
+            public uint Type;
+        }
+
         [Flags]
         private enum FileAttributesNative : uint
         {
@@ -288,6 +329,18 @@ namespace Carnassial.Interop
             FOF_NORECURSEREPARSE = 0x8000
         }
 
+        private enum LOGICAL_PROCESSOR_RELATIONSHIP
+        {
+            RelationProcessorCore = 0,
+            RelationNumaNode = 1,
+            RelationCache = 2,
+            RelationProcessorPackage = 3,
+            RelationGroup,
+            RelationProcessorDie,
+            RelationNumaNodeEx,
+            RelationAll = 0xffff
+        }
+
         private enum SHFileOpFunc : uint
         {
             FO_MOVE = 0x1,
@@ -311,6 +364,29 @@ namespace Carnassial.Interop
             public IntPtr hNameMappings;
             [MarshalAs(UnmanagedType.LPWStr)]
             public string? lpszProgressTitle;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct SYSTEM_LOGICAL_PROCESSOR_INFORMATION
+        {
+            public UIntPtr ProcessorMask;
+            public LOGICAL_PROCESSOR_RELATIONSHIP Relationship;
+            public SYSTEM_LOGICAL_PROCESSOR_INFORMATION_UNION ProcessorInformation;
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        private struct SYSTEM_LOGICAL_PROCESSOR_INFORMATION_UNION
+        {
+            [FieldOffset(0)]
+            public byte ProcessorCore;
+            [FieldOffset(0)]
+            public UInt32 NumaNode;
+            [FieldOffset(0)]
+            public CACHE_DESCRIPTOR Cache;
+            [FieldOffset(0)]
+            private readonly UInt64 Reserved0;
+            [FieldOffset(8)]
+            private readonly UInt64 Reserved1;
         }
     }
 }

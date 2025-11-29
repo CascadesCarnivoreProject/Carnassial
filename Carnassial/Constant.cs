@@ -33,6 +33,7 @@ namespace Carnassial
             public const string Kernel32 = "kernel32.dll";
             public const string Shell32 = "shell32.dll";
             public const string Shlwapi = "shlwapi.dll";
+            public const string TurboJpeg = "turbojpeg.dll";
             public const string User32 = "user32.dll";
         }
 
@@ -591,6 +592,7 @@ namespace Carnassial
         {
             public const byte ExtractLower128 = 0;
             public const byte ExtractUpper128 = 1;
+            public const int SizeInBytes = 256 / 8;
         }
 
         public static class Sql
@@ -701,6 +703,9 @@ namespace Carnassial
 
             public static readonly Thickness FindCellMargin = new(5, 2, 5, 2);
             public static readonly ReadOnlyCollection<string> Localizations = new List<string>() { "ar", "es", "hi", "ms", "ru", "zh-Hans" }.AsReadOnly();
+
+            public const int TabSelectionIndexFiles = 1;
+            public const int TabSelectionIndexInstructions = 0;
         }
 
         public static class Win32Messages

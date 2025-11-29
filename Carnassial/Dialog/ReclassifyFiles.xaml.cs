@@ -170,10 +170,7 @@ namespace Carnassial.Dialog
         // Cancel or Stop - exit the dialog
         private void CancelStopButton_Click(object sender, RoutedEventArgs e)
         {
-            if (this.reclassification != null)
-            {
-                this.reclassification.ShouldExitCurrentIteration = true;
-            }
+            this.reclassification?.ShouldExitCurrentIteration = true;
             this.DialogResult = false;
         }
 

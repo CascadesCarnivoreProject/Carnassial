@@ -1,5 +1,5 @@
 ﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:netfx="http://wixtoolset.org/schemas/v4/wxs/netfx">
-  <Package Name="Carnassial" Language="1033" Version="2.2.5.0" Manufacturer="Cascades Carnivore Project" Scope="perUserOrMachine" UpgradeCode="9ffdb794-897b-44a6-ba07-debb23f41400">
+  <Package Name="Carnassial" Language="1033" Version="2.2.10.0" Manufacturer="Cascades Carnivore Project" Scope="perUserOrMachine" UpgradeCode="9ffdb794-897b-44a6-ba07-debb23f41400">
 
     <Property Id="ARPPRODUCTICON" Value="Carnassial.ico" />
 
@@ -18,7 +18,7 @@
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="NonprofitProgramFilesFolder" Name="Cascades Carnivore Project">
         <Directory Id="CarnassialFilesFolder" Name="Carnassial">
-          <Directory Id="INSTALLFOLDER" Name="v2.2" />
+          <Directory Id="INSTALLFOLDER" Name="v2.2.10" />
         </Directory>
       </Directory>
       <Component Id="INSTALLFOLDER" Guid="53058a3f-2fd8-4787-bcac-896908747ff9" Bitness="always64">
@@ -70,12 +70,6 @@
         <!-- Carnassial.pdb isn't binplaced by publishing, so pull it from the build -->
         <File Id="$(var.Carnassial.TargetName).pdb" KeyPath="yes" Source="$(var.Carnassial.TargetDir)\$(var.Carnassial.TargetName).pdb" />
       </Component>
-      <Component Id="$(var.Native.TargetName).dll" Bitness="always64">
-        <File Id="$(var.Native.TargetName).dll" KeyPath="yes" Source="$(var.Native.TargetDir)\$(var.Native.TargetName).dll" />
-      </Component>
-      <Component Id="$(var.Native.TargetName).pdb" Bitness="always64">
-        <File Id="$(var.Native.TargetName).pdb" KeyPath="yes" Source="$(var.Native.TargetDir)\$(var.Native.TargetName).pdb" />
-      </Component>
       <Component Id="$(var.TemplateEditor.TargetName).exe" Bitness="always64">
         <File Id="$(var.TemplateEditor.TargetName).exe" KeyPath="yes" Source="$(var.TemplateEditor.TargetDir)publish\$(var.TemplateEditor.TargetName).exe">
           <Shortcut Id="$(var.TemplateEditor.TargetName).shortcut" Name="Carnassial Template Editor" Advertise="yes" Description="Starts $(var.TemplateEditor.TargetName)" Directory="NonprofitProgramMenuFolder" Icon="Editor.ico" />
@@ -107,10 +101,6 @@
       <Component Id="DocumentFormat.OpenXml.Framework.dll" Bitness="always64">
         <File Id="DocumentFormat.OpenXml.Framework.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\DocumentFormat.OpenXml.Framework.dll" />
       </Component>
-      <Component Id="Ijwhost.dll" Bitness="always64">
-        <!-- needed for C++/CLI, Carnassial.Native.dll fails to load if not present -->
-        <File Id="Ijwhost.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\Ijwhost.dll" />
-      </Component>      
       <Component Id="MetadataExtractor.dll" Bitness="always64">
         <File Id="MetadataExtractor.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\MetadataExtractor.dll" />
       </Component>
@@ -133,8 +123,7 @@
         <File Id="System.Speech.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\System.Speech.dll" />
       </Component>
       <Component Id="turbojpeg.dll" Bitness="always64">
-        <!-- turbjepeg.dll isn't binplaced by publishing, so pull it from the build -->
-        <File Id="turbojpeg.dll" KeyPath="yes" Source="$(var.Native.TargetDir)\turbojpeg.dll" />
+        <File Id="turbojpeg.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\turbojpeg.dll" />
       </Component>
     </DirectoryRef>
   </Fragment>
@@ -147,8 +136,6 @@
       <ComponentRef Id="$(var.Carnassial.TargetName).exe" />
       <ComponentRef Id="$(var.Carnassial.TargetName).runtimeconfig.json" />
       <ComponentRef Id="$(var.Carnassial.TargetName).pdb" />
-      <ComponentRef Id="$(var.Native.TargetName).dll" />
-      <ComponentRef Id="$(var.Native.TargetName).pdb" />
       <ComponentRef Id="$(var.TemplateEditor.TargetName).deps.json" />
       <ComponentRef Id="$(var.TemplateEditor.TargetName).dll" />
       <ComponentRef Id="$(var.TemplateEditor.TargetName).dll.config" />
@@ -157,7 +144,6 @@
       <ComponentRef Id="$(var.TemplateEditor.TargetName).pdb" />
       <ComponentRef Id="DocumentFormat.OpenXml.dll" />
       <ComponentRef Id="DocumentFormat.OpenXml.Framework.dll" />
-      <ComponentRef Id="Ijwhost.dll" />
       <ComponentRef Id="MetadataExtractor.dll" />
       <ComponentRef Id="Microsoft.WindowsAPICodePack.dll" />
       <ComponentRef Id="Microsoft.WindowsAPICodePack.Shell.dll" />

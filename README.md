@@ -25,8 +25,8 @@ Known limitations:
 
 Known limitations with earlier versions of Windows:
 
-* Users may need to [install .NET 9 or newer](https://learn.microsoft.com/en-us/lifecycle/products/microsoft-net-and-net-core) if 
-  it's not already present using, for example, the [.NET installer](https://dotnet.microsoft.com/download).
+* Users may need to [install .NET 10 or newer](https://learn.microsoft.com/en-us/lifecycle/products/microsoft-net-and-net-core) if 
+  it's not already present using the [.NET desktop runtime installer](https://dotnet.microsoft.com/en-us/download/dotnet/10.0/runtime).
 * Users may need to [install the Universal C Runtime](https://www.microsoft.com/en-us/download/details.aspx?id=48234) if it's not 
   already installed.
 
@@ -94,8 +94,8 @@ Also helpful are
 * nuget packages as referenced by the solution
 * libjpeg-turbo, which is managed manually as described below
 
-Multiple nuget packages for libjpeg-turbo exist but none seem reliably maintained. So, instead, the .libs are comitted to the Carnassial 
-repo. To update, download the [libjpeg-turbo](https://libjpeg-turbo.org/) VC and VC64 installers, copy the updated bits from 
-%SYSTEMDRIVE%\libjpeg-turbox64\{bin, include, lib} and %SYSTEMDRIVE%\libjpeg-turbo\lib to $(SolutionDir)Native\libjpeg-turbo\{bin, include,
-lib}, and update the additional dependencies in Native.vcxproj's Win32 and x64 linker settings to point to the new .libs. Either a rebuild
-or code changes within Carnassial.Native are required for Visual Studio to copy the updated turbojpeg.dll to the build output.
+Multiple nuget packages for libjpeg-turbo exist but none seem reliably maintained. So the .dll is comitted to the Carnassial 
+repo. So in most cases all that's needed to update the version of libjpeg-turbo used in Carnassial is to download and run the 
+[libjpeg-turbo](https://libjpeg-turbo.org/) vc-x64 installer then and copy the updated turbojpeg.dll from 
+%SYSTEMDRIVE%\libjpeg-turbox64\bin to $(SolutionDir)Carnassial. More significant updates likely require review of turbojpeg.h
+and updates to the p/invoke signatures in Carnassial\Interop.

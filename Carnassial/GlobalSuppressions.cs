@@ -98,4 +98,5 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Style", "IDE0350:Use implicitly typed lambda", Justification = "readability, type safety", Scope = "member", Target = "~M:Carnassial.Images.ImageCache.CacheImage(System.Int64,Carnassial.Data.CachedImage)")]
 [assembly: SuppressMessage("Style", "IDE0350:Use implicitly typed lambda", Justification = "readability, type safety", Scope = "member", Target = "~M:Carnassial.Images.ImageCache.TryInitiatePrefetch(System.Int32)~System.Boolean")]
 [assembly: SuppressMessage("Style", "IDE0350:Use implicitly typed lambda", Justification = "readability, type safety", Scope = "member", Target = "~M:Carnassial.Interop.UnbufferedSequentialReader.GetSectorSize~System.Int32")]
+[assembly: SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "p/invoke", Scope = "type", Target = "~T:Carnassial.Interop.LibjpegTurbo3")]
 [assembly: SuppressMessage("Usage", "CA2214:Do not call overridable methods in constructors", Justification = "reviewed", Scope = "member", Target = "~M:Carnassial.Data.FileTableEnumerator.#ctor(Carnassial.Data.FileDatabase,System.Int32)")]

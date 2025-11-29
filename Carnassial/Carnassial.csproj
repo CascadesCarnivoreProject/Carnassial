@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net9.0-windows10.0.22621.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.22621.0</TargetFramework>
     <OutputType>WinExe</OutputType>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <UseWindowsForms>false</UseWindowsForms>
@@ -17,8 +17,8 @@
     <PackageProjectUrl>https://github.com/CascadesCarnivoreProject/Carnassial</PackageProjectUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <Nullable>enable</Nullable>
-    <FileVersion>2.2.5.0</FileVersion>
-    <AssemblyVersion>2.2.5.0</AssemblyVersion>
+    <FileVersion>2.2.10.0</FileVersion>
+    <AssemblyVersion>2.2.10.0</AssemblyVersion>
     <SupportedOSPlatformVersion>10.0.22621.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
@@ -36,6 +36,10 @@
     <OutputPath>$(SolutionDir)\x64\Release\</OutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="turbojpeg.dll" />
+  </ItemGroup>
 
   <ItemGroup>
     <AppDesigner Include="Properties\" />
@@ -80,20 +84,20 @@
     <Resource Include="Resources\Menu\ZoomToFit_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Native\Native.vcxproj" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
     <PackageReference Include="MetadataExtractor" Version="2.9.0" />
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.119" />
-    <PackageReference Include="System.IO.FileSystem.Primitives" Version="4.3.0" />
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="9.0.10" />
-    <PackageReference Include="System.Speech" Version="9.0.10" />
-    <PackageReference Include="WindowsAPICodePack" Version="8.0.11" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="10.0.0" />
+    <PackageReference Include="System.Speech" Version="10.0.0" />
+    <PackageReference Include="WindowsAPICodePack" Version="8.0.12" />
   </ItemGroup>
   <ItemGroup>
     <Page Remove="Dialog\FileCounts.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="turbojpeg.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Compile Update="CarnassialSettings.Designer.cs">

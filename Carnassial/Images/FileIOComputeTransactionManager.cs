@@ -1,7 +1,6 @@
 ﻿using Carnassial.Data;
 using Carnassial.Database;
 using Carnassial.Interop;
-using Carnassial.Native;
 using Carnassial.Util;
 using System;
 using System.Collections.Generic;

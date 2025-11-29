@@ -51,11 +51,8 @@ namespace Carnassial.Control
             if ((this.ControlsView.SelectedItem != null) &&
                 this.TryFindDataEntryControl(dropEvent.GetPosition(this.ControlsView), out DataEntryControl? dropTargetControl))
             {
-                if (this.dragAdorner != null)
-                {
-                    this.dragAdorner.Remove();
-                    this.dragAdorner = null;
-                }
+                this.dragAdorner?.Remove();
+                this.dragAdorner = null;
 
                 int dropTargetIndex = -1;
                 for (int index = 0; index < this.ControlsView.Items.Count; ++index)

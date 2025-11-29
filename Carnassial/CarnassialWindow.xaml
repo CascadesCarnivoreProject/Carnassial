@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:Carnassial"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         AutomationProperties.AutomationId="Carnassial" Icon="Carnassial.ico"
-        Closing="Window_Closing" ContentRendered="Window_ContentRendered" KeyDown="Window_KeyDown" SourceInitialized="Window_SourceInitialized" Style="{StaticResource ApplicationWindow}"
+        Activated="Window_Activated" Closing="Window_Closing" ContentRendered="Window_ContentRendered" KeyDown="Window_KeyDown" SourceInitialized="Window_SourceInitialized" Style="{StaticResource ApplicationWindow}"
         Height="860" Width="1388">
     <Window.CommandBindings>
         <CommandBinding Command="{x:Static SystemCommands.CloseWindowCommand}" CanExecute="CommandBinding_CanExecute" Executed="CloseWindow_Execute" />
