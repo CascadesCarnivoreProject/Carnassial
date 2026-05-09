@@ -107,6 +107,9 @@
       <Component Id="Microsoft.WindowsAPICodePack.dll" Bitness="always64">
         <File Id="Microsoft.WindowsAPICodePack.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\Microsoft.WindowsAPICodePack.dll" />
       </Component>
+      <Component Id="Microsoft.WindowsAPICodePack.Core.dll" Bitness="always64">
+        <File Id="Microsoft.WindowsAPICodePack.Core.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\Microsoft.WindowsAPICodePack.Core.dll" />
+      </Component>
       <Component Id="Microsoft.WindowsAPICodePack.Shell.dll" Bitness="always64">
         <File Id="Microsoft.WindowsAPICodePack.Shell.dll" KeyPath="yes" Source="$(var.Carnassial.TargetDir)publish\Microsoft.WindowsAPICodePack.Shell.dll" />
       </Component>
@@ -146,6 +149,7 @@
       <ComponentRef Id="DocumentFormat.OpenXml.Framework.dll" />
       <ComponentRef Id="MetadataExtractor.dll" />
       <ComponentRef Id="Microsoft.WindowsAPICodePack.dll" />
+      <ComponentRef Id="Microsoft.WindowsAPICodePack.Core.dll" />
       <ComponentRef Id="Microsoft.WindowsAPICodePack.Shell.dll" />
       <ComponentRef Id="SQLite.Interop.dll" />
       <ComponentRef Id="System.Data.SQLite.dll" />

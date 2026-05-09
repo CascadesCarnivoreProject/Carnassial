@@ -4,6 +4,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <OutputName>Carnassial</OutputName>
+    <AcceptEula>wix7</AcceptEula>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DefineConstants>Debug;var.Carnassial.TargetDir=$(SolutionDir)Carnassial\bin\$(Configuration);var.TemplateEditor.TargetDir=$(SolutionDir)TemplateEditor\bin\$(Configuration)</DefineConstants>
@@ -39,6 +40,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="WixToolset.NetFx.wixext" Version="6.0.2" />
+    <PackageReference Include="WixToolset.NetFx.wixext" Version="7.0.0" />
   </ItemGroup>
 </Project>

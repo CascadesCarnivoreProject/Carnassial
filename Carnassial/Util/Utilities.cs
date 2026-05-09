@@ -18,7 +18,7 @@ namespace Carnassial.Util
             return (hash << 5) + hash ^ obj2.GetHashCode();
         }
 
-        public static int CombineHashCodes(params object?[] objects)
+        public static int CombineHashCodes(params ReadOnlySpan<object?> objects)
         {
             Debug.Assert(objects[0] != null, "objects[0] unexpectedly null.");
 

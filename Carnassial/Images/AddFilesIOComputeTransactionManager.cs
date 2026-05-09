@@ -3,6 +3,7 @@ using Carnassial.Interop;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -21,7 +22,7 @@ namespace Carnassial.Images
             : base(onProgressUpdate, desiredProgressInterval)
         {
             this.FilesToLoad = 0;
-            this.filesToLoadByRelativeFolderPath = new(StringComparer.OrdinalIgnoreCase);
+            this.filesToLoadByRelativeFolderPath = new(StringComparer.Create(CultureInfo.CurrentUICulture, CompareOptions.NumericOrdering));
             this.FolderPaths = [];
         }
 
@@ -163,24 +164,34 @@ namespace Carnassial.Images
             return atoms;
         }
 
+        /// <summary>
+        /// Gather sorted lists of files to load from each folder in <see cref="this.FolderPaths"/> and count total files to load.
+        /// </summary>
+        /// <remarks>
+        /// Files are sorted alphabetically by folder name and then by UTC creation time within each folder. In general, cameras lay down
+        /// images in sequentially numbered folders and file copies preserve creation time, so this has the effect of adding files to the 
+        /// image set in chronological order.
+        /// </remarks>
         public void FindFilesToLoad(string imageSetFolderPath)
         {
             this.FilesToLoad = 0;
             this.filesToLoadByRelativeFolderPath.Clear();
 
-            // sorting keeps folders and files in alphabetical order
-            // This
-            // - improves user experience as progress images displayed during loading are likely in order
-            // - allows AddFilesAggregator to flow files to the database in order
-            // - may improve disk read speed performance
             List<string> extensions = [ Constant.File.AviFileExtension, Constant.File.Mp4FileExtension, Constant.File.JpgFileExtension ];
+            EnumerationOptions folderEnumerationOptions = new()
+            {
+                BufferSize = Constant.File.DefaultBufferSizeInBytes // overkill but fine (docs describe 16 kB as large)
+            };
             foreach (string folderPath in this.FolderPaths)
             {
+                // regex not supported so have to list all files and filter
                 DirectoryInfo folder = new(folderPath);
-                IEnumerable<FileInfo> matchingFiles = folder.EnumerateFiles().Where(file => extensions.Contains(file.Extension, StringComparer.OrdinalIgnoreCase));
-                List<string> filesToLoadfromFolder = [.. matchingFiles.Select(file => file.Name).OrderBy(fileName => fileName, StringComparer.OrdinalIgnoreCase)];
+                IEnumerable<FileInfo> folderFiles = folder.EnumerateFiles("*.*", folderEnumerationOptions).Where(fileInfo => extensions.Contains(fileInfo.Extension, StringComparer.OrdinalIgnoreCase));
+
+                List<string> filesToLoadfromFolder = [.. folderFiles.OrderBy(fileInfo => fileInfo.LastWriteTimeUtc).Select(fileInfo => fileInfo.Name)];
                 string relativeFolderPath = NativeMethods.GetRelativePathFromDirectoryToDirectory(imageSetFolderPath, folderPath);
                 this.FilesToLoad += filesToLoadfromFolder.Count;
+
                 this.filesToLoadByRelativeFolderPath.Add(relativeFolderPath, filesToLoadfromFolder);
             }
             this.Status.TotalFiles = this.FilesToLoad;

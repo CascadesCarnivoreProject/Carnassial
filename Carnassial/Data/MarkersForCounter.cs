@@ -98,9 +98,9 @@ namespace Carnassial.Data
             return pointList.ToString();
         }
 
-        public static string? MarkerPositionsToSpreadsheetString(byte[] packedFloats)
+        public static string? MarkerPositionsToSpreadsheetString(ReadOnlySpan<byte> packedFloats)
         {
-            if ((packedFloats == null) || (packedFloats.Length == 0))
+            if (packedFloats.Length == 0)
             {
                 return null;
             }
@@ -109,15 +109,15 @@ namespace Carnassial.Data
                 throw new ArgumentOutOfRangeException(nameof(packedFloats), App.FindResource<string>(Constant.ResourceKey.MarkersForCounterFloatsUnpaired));
             }
 
-            float x = BitConverter.ToSingle(packedFloats, 0);
-            float y = BitConverter.ToSingle(packedFloats, sizeof(float));
+            float x = BitConverter.ToSingle(packedFloats);
+            float y = BitConverter.ToSingle(packedFloats[sizeof(float)..]);
             string xAsString = x.ToString(Constant.Excel.MarkerCoordinateFormat, Constant.InvariantCulture);
             string yAsString = y.ToString(Constant.Excel.MarkerCoordinateFormat, Constant.InvariantCulture);
             StringBuilder pointList = new(xAsString + Constant.Excel.MarkerCoordinateSeparator + yAsString);
             for (int index = 2 * sizeof(float); index < packedFloats.Length; index += 2 * sizeof(float))
             {
-                x = BitConverter.ToSingle(packedFloats, index);
-                y = BitConverter.ToSingle(packedFloats, index + sizeof(float));
+                x = BitConverter.ToSingle(packedFloats[index..]);
+                y = BitConverter.ToSingle(packedFloats[(index + sizeof(float))..]);
                 xAsString = x.ToString(Constant.Excel.MarkerCoordinateFormat, Constant.InvariantCulture);
                 yAsString = y.ToString(Constant.Excel.MarkerCoordinateFormat, Constant.InvariantCulture);
                 pointList.Append(Constant.Excel.MarkerPositionSeparator + xAsString + Constant.Excel.MarkerCoordinateSeparator + yAsString);

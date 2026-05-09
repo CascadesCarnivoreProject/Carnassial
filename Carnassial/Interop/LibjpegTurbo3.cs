@@ -9,14 +9,17 @@ namespace Carnassial.Interop
     {
         public static readonly int[] PixelSize = [ 3, 3, 4, 4, 4, 4, 1, 4, 4, 4, 4, 4 ]; // tjPixelSize
 
-        public static unsafe int Decompress8(IntPtr decompressor, byte* jpegBytes, int lengthInBytes, byte* pinnedPixels, int pitchInBytes, LibjpegPixelFormat pixelFormat)
+        public static unsafe int Decompress8(IntPtr decompressor, byte* pinnedJpegBytes, int lengthInBytes, Span<byte> pixels, int pitchInBytes, LibjpegPixelFormat pixelFormat)
         {
-            return LibjpegTurbo3.tj3Decompress8(decompressor, jpegBytes, lengthInBytes, pinnedPixels, pitchInBytes, pixelFormat);
+            fixed (byte* pinnedPixels = &pixels[0])
+            {
+                return LibjpegTurbo3.tj3Decompress8(decompressor, pinnedJpegBytes, lengthInBytes, pinnedPixels, pitchInBytes, pixelFormat);
+            }
         }
 
-        public static unsafe int DecompressHeader(IntPtr decompressor, byte* jpegBytes, int lengthInBytes)
+        public static unsafe int DecompressHeader(IntPtr decompressor, byte* pinnedJpegBytes, int lengthInBytes)
         {
-            return LibjpegTurbo3.tj3DecompressHeader(decompressor, jpegBytes, lengthInBytes);
+            return LibjpegTurbo3.tj3DecompressHeader(decompressor, pinnedJpegBytes, lengthInBytes);
         }
 
         public static void Destroy(IntPtr decompressor)

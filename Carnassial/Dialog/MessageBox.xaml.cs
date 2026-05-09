@@ -1,6 +1,5 @@
 ﻿using Carnassial.Util;
 using System;
-using System.Globalization;
 using System.Windows;
 
 namespace Carnassial.Dialog

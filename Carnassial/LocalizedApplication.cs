@@ -68,7 +68,7 @@ namespace Carnassial
             return LocalizedApplication.FindResource<TResource>(key);
         }
 
-        public static string FormatResource(string key, params object?[] args)
+        public static string FormatResource(string key, params ReadOnlySpan<object?> args)
         {
             string format = LocalizedApplication.FindResource<string>(key);
             return String.Format(CultureInfo.CurrentCulture, format, args);

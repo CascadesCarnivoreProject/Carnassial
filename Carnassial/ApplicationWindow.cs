@@ -18,7 +18,7 @@ namespace Carnassial
             this.NonpersistentUserSettings = false;
         }
 
-        protected void Instructions_PreviewDrag(object sender, DragEventArgs dragEvent)
+        protected void Instructions_PreviewDrag(object _, DragEventArgs dragEvent)
         {
             if (ApplicationWindow.IsSingleTemplateFileDrag(dragEvent, out string? _))
             {

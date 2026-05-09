@@ -52,6 +52,7 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Style", "IDE0270:Use coalesce expression", Justification = "readability", Scope = "member", Target = "~M:Carnassial.Data.Spreadsheet.SpreadsheetReaderWriter.TryImportXlsx(System.String,Carnassial.Data.FileDatabase)~Carnassial.Data.FileImportResult")]
 [assembly: SuppressMessage("Style", "IDE0270:Use coalesce expression", Justification = "readability", Scope = "member", Target = "~M:Carnassial.Data.TemplateDatabase.#ctor(System.String)")]
 [assembly: SuppressMessage("Style", "IDE0270:Use coalesce expression", Justification = "readability", Scope = "member", Target = "~M:Carnassial.Database.SQLiteDatabase.GetBackupFilePath~System.String")]
+[assembly: SuppressMessage("Style", "IDE0270:Use coalesce expression", Justification = "readability", Scope = "member", Target = "~M:Carnassial.Interop.Recycler.#ctor")]
 [assembly: SuppressMessage("Style", "IDE0270:Use coalesce expression", Justification = "readability", Scope = "member", Target = "~M:Carnassial.Interop.UnbufferedSequentialReader.#ctor(System.String)")]
 [assembly: SuppressMessage("Style", "IDE0270:Use coalesce expression", Justification = "readability", Scope = "member", Target = "~M:Carnassial.Util.MostRecentlyUsedList`1.#ctor(System.Collections.IList,System.Int32)")]
 [assembly: SuppressMessage("Style", "IDE0270:Use coalesce expression", Justification = "readability", Scope = "type", Target = "~T:Carnassial.CarnassialWindow")]

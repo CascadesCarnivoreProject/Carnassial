@@ -83,9 +83,9 @@ namespace Carnassial.Data
         /// </summary>
         public override int AddToSequence(IList<FileLoad> files, int offset, int length)
         {
-            Debug.Assert(files != null, nameof(files) + " is null.");
-            Debug.Assert(offset >= 0, nameof(offset) + " is less than zero.");
-            Debug.Assert(length >= 0, nameof(length) + " is less than zero.");
+            Debug.Assert(files != null, $"{nameof(files)} is null.");
+            Debug.Assert(offset >= 0, $"{nameof(offset)} is less than zero.");
+            Debug.Assert(length >= 0, $"{nameof(length)} is less than zero.");
             Debug.Assert((offset + length) <= files.Count, $"Offset {offset} plus length {length} exceeds length of {nameof(files)} ({files.Count}).");
 
             // insert performance of early Carnassial 2.2.0.3 development (still using 2.2.0.2 schema)

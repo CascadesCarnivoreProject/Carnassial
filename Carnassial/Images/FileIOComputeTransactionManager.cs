@@ -29,7 +29,6 @@ namespace Carnassial.Images
         private int addFileStopIndex;
         private int computeAtomIndex;
         private int computeFileIndex;
-        private readonly int computeTaskCount;
         private readonly Task<int>?[] computeTasks;
         private bool disposed;
         private FileLoad[]? fileLoads;
@@ -39,7 +38,6 @@ namespace Carnassial.Images
         private SortedDictionary<string, List<string>>.Enumerator ioFilesByRelativePathEnumerator;
         private List<string>? ioFilesInCurrentFolder;
         private int ioFilesInCurrentFolderIndex;
-        private readonly int ioTaskCount;
         private readonly Task?[] ioTasks;
         private int ioTasksActive;
         private bool isCompleted;
@@ -105,12 +103,14 @@ namespace Carnassial.Images
             int threadsAvailable = Environment.ProcessorCount;
             int physicalCores = Processor.PhysicalCores;
             int hyperthreadsAvailable = threadsAvailable - physicalCores;
+            int ioTaskCount;
+            int computeTaskCount;
             if (hyperthreadsAvailable == physicalCores)
             {
                 // AMD, Intel prior to Alder Lake
                 // Leaves half of hyperthreads available for SQL, OS, and other processes.
-                this.ioTaskCount = Int32.Max(hyperthreadsAvailable / 2, 1); // guarantee an IO thread in single core edge case
-                this.computeTaskCount = physicalCores;
+                ioTaskCount = Int32.Max(hyperthreadsAvailable / 2, 1); // guarantee an IO thread in single core edge case
+                computeTaskCount = physicalCores;
             }
             else
             {
@@ -134,23 +134,22 @@ namespace Carnassial.Images
                 //          4         10      16        5            10
                 // for now, leave one thread for background SQL
                 int netThreadsAvailable = threadsAvailable - 1; // reserved threads can be increased if a performance advantage is found
-                this.ioTaskCount = netThreadsAvailable / 3;
-                this.computeTaskCount = netThreadsAvailable - this.ioTaskCount;
+                ioTaskCount = netThreadsAvailable / 3;
+                computeTaskCount = netThreadsAvailable - ioTaskCount;
             }
             this.ioTasksActive = 0;
 
-            this.computeTasks = new Task<int>[this.computeTaskCount];
-            for (int computeTaskIndex = 0; computeTaskIndex < this.computeTaskCount; ++computeTaskIndex)
+            this.computeTasks = new Task<int>[computeTaskCount];
+            for (int computeTaskIndex = 0; computeTaskIndex < this.computeTasks.Length; ++computeTaskIndex)
             {
                 this.computeTasks[computeTaskIndex] = null;
             }
 
-            this.ioTasks = new Task[this.ioTaskCount];
-            this.ioAtomsCompletedByTask = new int[this.ioTaskCount];
-            for (int ioTaskIndex = 0; ioTaskIndex < this.ioTaskCount; ++ioTaskIndex)
+            this.ioTasks = new Task[ioTaskCount];
+            this.ioAtomsCompletedByTask = new int[ioTaskCount];
+            for (int ioTaskIndex = 0; ioTaskIndex < this.ioTasks.Length; ++ioTaskIndex)
             {
                 this.ioAtomsCompletedByTask[ioTaskIndex] = -1;
-                this.ioTasks[ioTaskIndex] = null;
             }
         }
 
@@ -372,8 +371,7 @@ namespace Carnassial.Images
             this.loadAtoms = new FileLoadAtom[filesToLoad];
             this.transactionSequence = transactionSequence;
 
-            this.ioTasksActive = this.ioTaskCount;
-            for (int ioTask = 0; ioTask < this.ioTaskCount; ++ioTask)
+            for (int ioTask = 0; ioTask < this.ioTasks.Length; ++ioTask)
             {
                 int ioTaskNumber = ioTask;
                 this.ioTasks[ioTask] = Task.Run(() =>
@@ -389,8 +387,9 @@ namespace Carnassial.Images
                     }
                 });
             }
+            this.ioTasksActive = this.ioTasks.Length;
 
-            for (int computeTask = 0; computeTask < this.computeTaskCount; ++computeTask)
+            for (int computeTask = 0; computeTask < this.computeTasks.Length; ++computeTask)
             {
                 int computeTaskNumber = computeTask;
                 this.computeTasks[computeTask] = Task.Run(() =>
@@ -407,7 +406,7 @@ namespace Carnassial.Images
                 });
             }
 
-            if (this.ioTasks != null)
+            if (this.ioTasks.Length > 0)
             {
                 await Task.WhenAll(this.ioTasks!).ConfigureAwait(false);
             }

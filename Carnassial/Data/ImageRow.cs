@@ -264,16 +264,8 @@ namespace Carnassial.Data
             get { return this.dateTimeOffset.Offset; }
         }
 
-        private static bool ByteArraysEqual(byte[] currentValue, byte[] newValue)
+        private static bool ByteArraysEqual(ReadOnlySpan<byte> currentValue, ReadOnlySpan<byte> newValue)
         {
-            if (currentValue == null)
-            {
-                return newValue == null;
-            }
-            if (newValue == null)
-            {
-                return false;
-            }
             return currentValue.SequenceEqual(newValue);
         }
 

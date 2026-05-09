@@ -84,12 +84,12 @@
     <Resource Include="Resources\Menu\ZoomToFit_16x.png" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
-    <PackageReference Include="MetadataExtractor" Version="2.9.0" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
+    <PackageReference Include="MetadataExtractor" Version="2.9.3" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.119" />
-    <PackageReference Include="Microsoft.Windows.Compatibility" Version="10.0.0" />
-    <PackageReference Include="System.Speech" Version="10.0.0" />
-    <PackageReference Include="WindowsAPICodePack" Version="8.0.12" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="10.0.7" />
+    <PackageReference Include="System.Speech" Version="10.0.7" />
+    <PackageReference Include="WindowsAPICodePack" Version="8.0.15.1" />
   </ItemGroup>
   <ItemGroup>
     <Page Remove="Dialog\FileCounts.xaml" />

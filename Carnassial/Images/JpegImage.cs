@@ -30,9 +30,10 @@ namespace Carnassial.Images
         public JpegImage(string filePath)
         {
             this.disposed = false;
-            this.Metadata = null;
             this.reader = new UnbufferedSequentialReader(filePath);
             this.reader.ExtendBuffer(Constant.Images.JpegInitialBufferSize);
+
+            this.Metadata = null;
         }
 
         public void Dispose()

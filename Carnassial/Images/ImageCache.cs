@@ -168,10 +168,9 @@ namespace Carnassial.Images
             // unaltered image is also contained in this.unalteredImagesByID and is disposed from that collection
             this.differenceCache[ImageDifference.Unaltered] = null;
 
-            foreach (ImageDifference difference in new ImageDifference[] { ImageDifference.Previous, ImageDifference.Next, ImageDifference.Combined })
-            {
-                this.differenceCache[difference] = null;
-            }
+            this.differenceCache[ImageDifference.Previous] = null;
+            this.differenceCache[ImageDifference.Next] = null;
+            this.differenceCache[ImageDifference.Combined] = null;
         }
 
         private async Task<CachedImage?> TryGetImageAsync(int fileRow)
@@ -371,6 +370,7 @@ namespace Carnassial.Images
             // all three images are available, so calculate difference and cache result if it still applies at completion
             return await Task.Run(() =>
             {
+                // TODO: check for evictable image and reuse its MemoryImage instance for difference calculation to reduce memory pressure and GC load
                 Stopwatch stopwatch = new();
                 stopwatch.Start();
                 bool success = unaltered.Image.TryDifference(previous.Image, next.Image, differenceThreshold, out MemoryImage? difference);
@@ -457,6 +457,7 @@ namespace Carnassial.Images
 
             return await Task.Run(() =>
             {
+                // TODO: check for evictable image and reuse its MemoryImage instance for difference calculation to reduce memory pressure and GC load
                 Stopwatch stopwatch = new();
                 stopwatch.Start();
                 bool success = unaltered.Image.TryDifference(comparisonImage.Image, differenceThreshold, out MemoryImage? difference);

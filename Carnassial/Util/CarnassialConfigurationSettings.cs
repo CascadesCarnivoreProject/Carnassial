@@ -34,7 +34,7 @@ namespace Carnassial.Util
             return CarnassialConfigurationSettings.GetUriSetting(Constant.GitHub.BaseAddress, "wiki", "Tutorial");
         }
 
-        private static Uri GetUriSetting(Uri baseAddress, params string[] additionalPath)
+        private static Uri GetUriSetting(Uri baseAddress, params ReadOnlySpan<string> additionalPath)
         {
             UriBuilder uriBuilder = new(baseAddress);
             uriBuilder.Path += CarnassialSettings.Default.GithubOrganizationAndRepo;

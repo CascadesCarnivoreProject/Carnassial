@@ -148,11 +148,8 @@ namespace Carnassial.Data.Spreadsheet
             {
                 // ensure workbook has needed parts
                 WorkbookPart? workbook = xlsx.WorkbookPart;
-                if (workbook == null)
-                {
-                    workbook = xlsx.AddWorkbookPart();
-                    workbook.Workbook = new Workbook();
-                }
+                workbook ??= xlsx.AddWorkbookPart();
+                workbook.Workbook ??= new Workbook();
                 if (workbook.Workbook.Sheets == null)
                 {
                     workbook.Workbook.Sheets = new();
@@ -816,7 +813,7 @@ namespace Carnassial.Data.Spreadsheet
                 using FileStream xlsxStream = new(xlsxFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, Constant.File.DefaultBufferSizeInBytes);
                 using SpreadsheetDocument xlsx = SpreadsheetDocument.Open(xlsxStream, false);
                 // find worksheet
-                Debug.Assert((xlsx.WorkbookPart != null) && (xlsx.WorkbookPart.Workbook.Sheets != null));
+                Debug.Assert((xlsx.WorkbookPart != null) && (xlsx.WorkbookPart.Workbook != null) && (xlsx.WorkbookPart.Workbook.Sheets != null));
                 WorkbookPart workbook = xlsx.WorkbookPart;
                 Sheet? worksheetInfo = workbook.Workbook.Sheets.Elements<Sheet>().FirstOrDefault(sheet => String.Equals(sheet.Name, Constant.Excel.FileDataWorksheetName, StringComparison.Ordinal));
                 if (worksheetInfo == null)

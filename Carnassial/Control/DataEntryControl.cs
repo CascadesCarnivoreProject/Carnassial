@@ -78,7 +78,7 @@ namespace Carnassial.Control
             this.Container.Tag = this;
         }
 
-        public void AppendToContextMenu(params MenuItem[] menuItems)
+        public void AppendToContextMenu(params ReadOnlySpan<MenuItem> menuItems)
         {
             if (menuItems.Length < 1)
             {

@@ -7,7 +7,6 @@ using System.ComponentModel;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Linq;
 
 namespace Carnassial.Data

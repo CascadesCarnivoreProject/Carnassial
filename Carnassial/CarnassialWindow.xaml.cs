@@ -193,7 +193,7 @@ namespace Carnassial
         }
 
         /// <summary>When the user selects a counter update the color and emphasis of its markers.</summary>
-        private void DataEntryCounter_LabelClick(object sender, RoutedEventArgs e)
+        private void DataEntryCounter_LabelClick(object _obj, RoutedEventArgs _event)
         {
             this.RefreshDisplayedMarkers();
         }
@@ -2365,6 +2365,8 @@ namespace Carnassial
 
             // update the user as to what files are in the database
             this.MaybeShowFileCountsDialog(true);
+
+            // TODO: move to first added file in the current selection, if any
             return true;
         }
 
