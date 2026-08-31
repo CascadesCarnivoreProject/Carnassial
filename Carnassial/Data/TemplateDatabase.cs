@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using ColumnDefinition = Carnassial.Database.ColumnDefinition;
@@ -275,8 +274,7 @@ namespace Carnassial.Data
 
             using (SQLiteTransaction transaction = this.Connection.BeginTransaction())
             {
-                // set pragmas available within a transaction
-                this.SetUserVersion(transaction, Constant.Release.V2_2_0_3);
+                this.SetUserVersion(transaction, Constant.Database.Schema02021000);
 
                 // create empty control table and image set tables
                 controlTableSchema.CreateTableAndIndicies(this.Connection, transaction);
@@ -296,7 +294,7 @@ namespace Carnassial.Data
                 else
                 {
                     Version otherVersion = other.GetUserVersion();
-                    if (otherVersion != Constant.Release.V2_2_0_3)
+                    if (otherVersion != Constant.Database.Schema02021000)
                     {
                         throw new ArgumentOutOfRangeException(nameof(other), $"Unexpected database version {otherVersion}.");
                     }
@@ -376,29 +374,31 @@ namespace Carnassial.Data
                 return false;
             }
 
-            if (this.GetUserVersion() < Constant.Release.V2_2_0_3)
+            Version schemaVersion = this.GetUserVersion();
+            if (schemaVersion < Constant.Database.Schema02021000)
             {
-                #pragma warning disable CS0612 // Type or member is obsolete
-                this.UpdateControlTableTo2203Schema();
-                #pragma warning restore CS0612 // Type or member is obsolete
-                using SQLiteTransaction transaction = this.Connection.BeginTransaction();
-                this.UpdateImageSetTo2203Schema(transaction, tables);
+                if (schemaVersion < Constant.Database.Schema02020003)
+                {
+                    using SQLiteTransaction transaction02020003 = this.Connection.BeginTransaction();
+                    this.UpdateControlTableTo02020003Schema();
+                    this.UpdateImageSetTo0202000Schema(tables);
+                }
 
+                using SQLiteTransaction transaction02021000 = this.Connection.BeginTransaction();
+                this.UpdateControlTableTo02021000Schema(transaction02021000);
                 if (other == null)
                 {
                     // if this is a template database being opened go ahead and update its version
                     // If it's a file database, don't update the database as the caller also needs to perform updates to complete
                     // version migration.
-                    this.SetUserVersion(transaction, Constant.Release.V2_2_0_3);
+                    this.SetUserVersion(transaction02021000, Constant.Database.Schema02021000);
                 }
 
-                transaction.Commit();
-            }
-            else
-            {
-                this.GetControlsSortedByControlOrder();
+                transaction02021000.Commit();
             }
 
+            this.GetControlsSortedByControlOrder();
+            Debug.Assert(this.Controls.RowCount > 0, "Controls table is unexpectedly empty.");
             this.LoadImageSet();
             return true;
         }
@@ -410,10 +410,28 @@ namespace Carnassial.Data
             using ControlTransactionSequence updateControl = ControlTransactionSequence.CreateUpdate(this);
             updateControl.AddControl(control);
             updateControl.Commit();
+
+            Debug.Assert(control.HasChanges == false, "HasChanges wasn't cleared by SQLite.");
         }
 
-        [Obsolete]
-        private void UpdateControlTableTo2203Schema()
+        private void UpdateControlTableTo02021000Schema(SQLiteTransaction transaction)
+        {
+            ColumnDefinition analysisLabel = new(Constant.ControlColumn.AnalysisField, Constant.SQLiteAffinity.Integer)
+            {
+                DefaultValue = 0.ToString(Constant.InvariantCulture),
+                NotNull = true
+            };
+            this.AddColumnToTable(transaction, Constant.DatabaseTable.Controls, 0, analysisLabel);
+
+            ColumnDefinition index = new(Constant.ControlColumn.CanProvidePrefix, Constant.SQLiteAffinity.Integer)
+            {
+                DefaultValue = 0.ToString(Constant.InvariantCulture),
+                NotNull = true
+            };
+            this.AddColumnToTable(transaction, Constant.DatabaseTable.Controls, 2, index);
+        }
+
+        private void UpdateControlTableTo02020003Schema()
         {
             // if this is a .tdb from Carnassial 2.2.0.2 or earlier
             // - insert AnalysisLabel column in controls table
@@ -443,6 +461,7 @@ namespace Carnassial.Data
                 convertTypeToInteger = true;
             }
 
+            #pragma warning disable CS0618 // Type or member is obsolete
             if (currentSchema.ColumnDefinitions.SingleOrDefault(column => String.Equals(column.Name, Constant.ControlColumn.List, StringComparison.Ordinal)) != null)
             {
                 renameList = true;
@@ -451,6 +470,7 @@ namespace Carnassial.Data
             {
                 renameWidth = true;
             }
+            #pragma warning restore CS0618 // Type or member is obsolete
 
             if (addAnalysisLabel || addIndex || convertCopyableAndVisibleToInteger || convertTypeToInteger || renameList || renameWidth)
             {
@@ -484,6 +504,7 @@ namespace Carnassial.Data
                     this.ConvertNonFlagEnumStringColumnToInteger<ControlType>(transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.Type);
                 }
 
+                #pragma warning disable CS0618 // Type or member is obsolete
                 if (renameList)
                 {
                     this.RenameColumn(transaction, Constant.DatabaseTable.Controls, Constant.ControlColumn.List, Constant.ControlColumn.WellKnownValues, (ColumnDefinition columnWithNameChanged) => { });
@@ -496,6 +517,7 @@ namespace Carnassial.Data
                         columnWithNameChanged.NotNull = true;
                     });
                 }
+                #pragma warning restore CS0618 // Type or member is obsolete
 
                 transaction.Commit();
             }
@@ -503,7 +525,9 @@ namespace Carnassial.Data
             this.GetControlsSortedByControlOrder();
 
             // rename image quality control to classification
+            #pragma warning disable CS0618 // Type or member is obsolete
             ControlRow? imageQuality = this.Controls.SingleOrDefault(control => String.Equals(control.DataLabel, Constant.FileColumn.ImageQuality, StringComparison.Ordinal));
+            #pragma warning restore CS0618 // Type or member is obsolete
             if (imageQuality != null)
             {
                 imageQuality.DataLabel = Constant.FileColumn.Classification;
@@ -551,8 +575,9 @@ namespace Carnassial.Data
             }
         }
 
-        private void UpdateImageSetTo2203Schema(SQLiteTransaction transaction, List<string> tables)
+        private void UpdateImageSetTo0202000Schema(List<string> tables)
         {
+            using SQLiteTransaction transaction = this.Connection.BeginTransaction();
             if (tables.Contains(Constant.DatabaseTable.ImageSet, StringComparer.Ordinal) == false)
             {
                 // create default ImageSet table if this is a .tdb from Carnassial 2.2.0.1 or earlier
@@ -573,6 +598,8 @@ namespace Carnassial.Data
                 this.ConvertNonFlagEnumStringColumnToInteger<FileSelection>(transaction, Constant.DatabaseTable.ImageSet, Constant.ImageSetColumn.FileSelection);
                 this.ConvertNonFlagEnumStringColumnToInteger<ImageSetOptions>(transaction, Constant.DatabaseTable.ImageSet, Constant.ImageSetColumn.Options);
             }
+
+            transaction.Commit();
         }
     }
 }

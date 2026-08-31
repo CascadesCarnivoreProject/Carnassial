@@ -525,7 +525,7 @@ namespace Carnassial.UnitTests
                     Assert.IsTrue(fileDatabaseReopened.Controls[widthIndex].MaxWidth == modifiedWidth);
 
                     ControlRow newControlInFileDatabase = fileDatabaseReopened.Controls.Single(control => String.Equals(control.DataLabel, newControl.DataLabel, StringComparison.Ordinal));
-                    Assert.IsTrue(fileDatabaseReopened.Files.UserColumnsByName.Count == expectedControlCount - numberOfStandardControls + fileDatabaseReopened.Controls.Count(control => control.ControlType == ControlType.Counter)); // counters have two columns each
+                    Assert.IsTrue(fileDatabaseReopened.Files.UserColumnsByDataLabel.Count == expectedControlCount - numberOfStandardControls + fileDatabaseReopened.Controls.Count(control => control.ControlType == ControlType.Counter)); // counters have two columns each
                 }
             }
         }
@@ -1024,12 +1024,12 @@ namespace Carnassial.UnitTests
             fileExpectation.Verify(file, imageSetTimeZone);
 
             // move file
-            Assert.IsTrue(file.TryMoveFileToFolder(fileDatabase.FolderPath, subfolderPath));
+            Assert.IsTrue(file.TryMoveFileToFolder(fileDatabase.FolderPath, subfolderPath, disambiguatingUserNoteIndex: null));
             fileExpectation.RelativePath = Path.GetFileName(subfolderPath);
             fileExpectation.Verify(file, imageSetTimeZone);
 
             // move file back
-            Assert.IsTrue(file.TryMoveFileToFolder(fileDatabase.FolderPath, fileDatabase.FolderPath));
+            Assert.IsTrue(file.TryMoveFileToFolder(fileDatabase.FolderPath, fileDatabase.FolderPath, disambiguatingUserNoteIndex: null));
             fileExpectation.RelativePath = Constant.ControlDefault.RelativePath;
             fileExpectation.Verify(file, imageSetTimeZone);
         }

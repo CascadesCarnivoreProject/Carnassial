@@ -11,7 +11,9 @@ namespace Carnassial.Data
 {
     public class ControlRow : SQLiteRow, INotifyPropertyChanged
     {
+        private bool analysisField;
         private bool analysisLabel;
+        private bool canProvidePrefix;
         private int controlOrder;
         private bool copyable;
         private string dataLabel;
@@ -19,7 +21,7 @@ namespace Carnassial.Data
         private bool indexInFileTable;
         private string label;
         private int maxWidth;
-        private int spreadSheetOrder;
+        private int spreadsheetOrder;
         private string tooltip;
         private ControlType type;
         private bool visible;
@@ -29,6 +31,8 @@ namespace Carnassial.Data
 
         public ControlRow(ControlType controlType, string dataLabel, int controlOrder)
         {
+            this.analysisField = true;
+            this.canProvidePrefix = false;
             this.controlOrder = controlOrder;
             this.copyable = true;
             this.dataLabel = dataLabel;
@@ -36,18 +40,20 @@ namespace Carnassial.Data
             this.label = dataLabel;
             this.wellKnownValues = Constant.ControlDefault.Value;
             this.maxWidth = Constant.ControlDefault.MaxWidth;
-            this.spreadSheetOrder = controlOrder;
+            this.spreadsheetOrder = controlOrder;
             this.type = controlType;
             this.visible = true;
 
             switch (controlType)
             {
                 case ControlType.Counter:
+                    this.analysisField = false;
                     this.copyable = false;
                     this.defaultValue = Constant.ControlDefault.CounterValue;
                     this.tooltip = Constant.ControlDefault.CounterTooltip;
                     break;
                 case ControlType.DateTime:
+                    this.analysisField = false;
                     this.copyable = false;
                     this.defaultValue = DateTimeHandler.ToDatabaseDateTimeString(Constant.ControlDefault.DateTimeValue.UtcDateTime);
                     this.indexInFileTable = true;
@@ -65,6 +71,7 @@ namespace Carnassial.Data
                     this.wellKnownValues = Constant.ControlDefault.FlagWellKnownValues;
                     break;
                 case ControlType.UtcOffset:
+                    this.analysisField = false;
                     this.copyable = false;
                     this.defaultValue = DateTimeHandler.ToDatabaseUtcOffsetString(Constant.ControlDefault.DateTimeValue.Offset);
                     this.tooltip = Constant.ControlDefault.UtcOffsetTooltip;
@@ -72,6 +79,24 @@ namespace Carnassial.Data
                     break;
                 default:
                     throw new NotSupportedException($"Unhandled control type {controlType}.");
+            }
+        }
+
+        public bool AnalysisField
+        {
+            get 
+            { 
+                return this.analysisField; 
+            }
+            set 
+            {
+                if (this.analysisField == value)
+                {
+                    return;
+                }
+                this.HasChanges |= true;
+                this.analysisField = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.AnalysisField)));
             }
         }
 
@@ -108,6 +133,24 @@ namespace Carnassial.Data
                 this.HasChanges |= true;
                 this.controlOrder = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.ControlOrder)));
+            }
+        }
+
+        public bool CanProvidePrefix
+        {
+            get
+            {
+                return this.canProvidePrefix;
+            }
+            set
+            {
+                if (this.canProvidePrefix == value)
+                {
+                    return;
+                }
+                this.HasChanges |= true;
+                this.canProvidePrefix = value;
+                this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.CanProvidePrefix)));
             }
         }
 
@@ -223,16 +266,16 @@ namespace Carnassial.Data
         {
             get
             {
-                return this.spreadSheetOrder;
+                return this.spreadsheetOrder;
             }
             set
             {
-                if (this.spreadSheetOrder == value)
+                if (this.spreadsheetOrder == value)
                 {
                     return;
                 }
                 this.HasChanges |= true;
-                this.spreadSheetOrder = value;
+                this.spreadsheetOrder = value;
                 this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.SpreadsheetOrder)));
             }
         }
@@ -416,10 +459,20 @@ namespace Carnassial.Data
             }
 
             bool synchronizationMadeChanges = false;
+            if (this.AnalysisField != other.AnalysisField)
+            {
+                this.AnalysisField = other.AnalysisField;
+                synchronizationMadeChanges = true;
+            }
             if (this.AnalysisLabel != other.AnalysisLabel)
             {
                 this.AnalysisLabel = other.AnalysisLabel;
                 synchronizationMadeChanges = true;
+            }
+            if (this.CanProvidePrefix != other.CanProvidePrefix)
+            {
+                this.CanProvidePrefix = other.CanProvidePrefix;
+                synchronizationMadeChanges |= true;
             }
             if (this.Copyable != other.Copyable)
             {

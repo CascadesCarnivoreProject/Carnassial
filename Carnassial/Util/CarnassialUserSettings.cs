@@ -16,7 +16,7 @@ namespace Carnassial.Util
             this.Throttles = new();
         }
 
-        public void SerializeToSettings()
+        public void SerializeToDefaultSettings()
         {
             CarnassialSettings.Default.CustomSelectionTermCombiningOperator = this.CustomSelectionTermCombiningOperator.ToString();
             CarnassialSettings.Default.MostRecentlyUsedImageSets = this.MostRecentImageSets.ToStringCollection();

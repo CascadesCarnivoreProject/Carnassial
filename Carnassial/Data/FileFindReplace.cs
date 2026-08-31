@@ -59,7 +59,7 @@ namespace Carnassial.Data
 
                 if (fileDatabase.Files.StandardColumnDataTypesByName.TryGetValue(control.DataLabel, out SqlDataType sqlDataType) == false)
                 {
-                    if (fileDatabase.Files.UserColumnsByName.TryGetValue(control.DataLabel, out FileTableColumn? fileColumn))
+                    if (fileDatabase.Files.UserColumnsByDataLabel.TryGetValue(control.DataLabel, out FileTableColumn? fileColumn))
                     {
                         sqlDataType = fileColumn.DataType;
                     }

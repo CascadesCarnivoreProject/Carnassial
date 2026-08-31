@@ -51,6 +51,12 @@ namespace Carnassial.Editor
             this.AddNoteButton.Tag = ControlType.Note;
             this.DataEntryControls.AllowDrop = true;
             this.Title = EditorConstant.MainWindowBaseTitle;
+
+            Rect windowPosition = Rect.Parse(EditorSettings.Default.EditorWindowPosition);
+            this.Top = windowPosition.Y;
+            this.Left = windowPosition.X;
+            this.Height = windowPosition.Height;
+            this.Width = windowPosition.Width;
             CommonUserInterface.TryFitWindowInWorkingArea(this);
 
             this.controlDataGridBeingUpdatedByCode = false;
@@ -912,12 +918,19 @@ namespace Carnassial.Editor
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             this.MenuFileCloseTemplate_Click(this, null);
-            this.userSettings.SerializeToSettings();
+
+            if (this.Top > -10 && this.Left > -10)
+            {
+                Rect windowPosition = new(new Point(this.Left, this.Top), new Size(this.Width, this.Height));
+                EditorSettings.Default.EditorWindowPosition = windowPosition.ToString(CultureInfo.InvariantCulture);
+            }
 
             if (this.NonpersistentUserSettings == false)
             {
-                EditorSettings.Default.Save();
+                this.userSettings.SerializeToDefaultSettings();
             }
+
+            EditorSettings.Default.Save();
         }
     }
 }

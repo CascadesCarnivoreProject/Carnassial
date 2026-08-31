@@ -27,7 +27,7 @@ namespace Carnassial.Data
             {
                 this.insertOrUpdateFiles.Parameters.Add(new SQLiteParameter($"@{standardColumn}"));
             }
-            foreach (KeyValuePair<string, FileTableColumn> userColumn in fileTable.UserColumnsByName)
+            foreach (KeyValuePair<string, FileTableColumn> userColumn in fileTable.UserColumnsByDataLabel)
             {
                 this.insertOrUpdateFiles.Parameters.Add(new SQLiteParameter(userColumn.Value.ParameterName));
                 this.userColumnNames.Add(userColumn.Key);
@@ -39,15 +39,15 @@ namespace Carnassial.Data
 
         public static FileTransactionSequence CreateInsert(SQLiteDatabase database, FileTable fileTable)
         {
-            List<string> columns = new(1 + Constant.Control.StandardControls.Count + fileTable.UserColumnsByName.Count);
-            List<string> parameterNames = new(1 + Constant.Control.StandardControls.Count + fileTable.UserColumnsByName.Count);
+            List<string> columns = new(1 + Constant.Control.StandardControls.Count + fileTable.UserColumnsByDataLabel.Count);
+            List<string> parameterNames = new(1 + Constant.Control.StandardControls.Count + fileTable.UserColumnsByDataLabel.Count);
 
             foreach (string standardColumn in Constant.Control.StandardControls)
             {
                 columns.Add(standardColumn);
                 parameterNames.Add($"@{standardColumn}");
             }
-            foreach (KeyValuePair<string, FileTableColumn> userColumn in fileTable.UserColumnsByName)
+            foreach (KeyValuePair<string, FileTableColumn> userColumn in fileTable.UserColumnsByDataLabel)
             {
                 columns.Add(userColumn.Value.QuotedName);
                 parameterNames.Add(userColumn.Value.ParameterName);
@@ -61,12 +61,12 @@ namespace Carnassial.Data
         public static FileTransactionSequence CreateUpdate(SQLiteDatabase database, FileTable fileTable)
         {
             StringBuilder updateCommand = new($"UPDATE {Constant.DatabaseTable.Files} SET ");
-            List<string> parameters = new(Constant.Control.StandardControls.Count + fileTable.UserColumnsByName.Count);
+            List<string> parameters = new(Constant.Control.StandardControls.Count + fileTable.UserColumnsByDataLabel.Count);
             foreach (string standardColumn in Constant.Control.StandardControls)
             {
                 parameters.Add($"{standardColumn}=@{standardColumn}");
             }
-            foreach (KeyValuePair<string, FileTableColumn> userColumn in fileTable.UserColumnsByName)
+            foreach (KeyValuePair<string, FileTableColumn> userColumn in fileTable.UserColumnsByDataLabel)
             {
                 parameters.Add($"{userColumn.Value.QuotedName}={userColumn.Value.ParameterName}");
             }

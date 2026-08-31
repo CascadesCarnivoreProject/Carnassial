@@ -285,10 +285,10 @@
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridCheckBoxColumn MinWidth="25" Header="{StaticResource EditorWindow.ControlDataGrid.AnalysisLabel}" Binding="{Binding Path=AnalysisLabel, Converter={StaticResource TrimmingConverter}}" Width="Auto" CanUserSort="False">
+                                <DataGridCheckBoxColumn MinWidth="25" Header="{StaticResource EditorWindow.ControlDataGrid.AnalysisField}" Binding="{Binding Path=AnalysisField}" Width="Auto" CanUserSort="False">
                                     <DataGridCheckBoxColumn.CellStyle>
                                         <Style TargetType="{x:Type DataGridCell}">
-                                            <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.AnalysisLabel.ToolTip}"/>
+                                            <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.AnalysisField.ToolTip}"/>
                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                             <Style.Triggers>
                                                 <Trigger Property="IsEnabled" Value="False">
@@ -303,6 +303,34 @@
                                     <DataGridCheckBoxColumn.CellStyle>
                                         <Style TargetType="{x:Type DataGridCell}">
                                             <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.Copyable.ToolTip}" />
+                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+                                            <Style.Triggers>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Background" Value="{StaticResource ControlGridDisabledCellBackground}" />
+                                                    <Setter Property="Foreground" Value="{StaticResource ControlGridDisabledCellForeground}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridCheckBoxColumn.CellStyle>
+                                </DataGridCheckBoxColumn>
+                                <DataGridCheckBoxColumn MinWidth="25" Header="{StaticResource EditorWindow.ControlDataGrid.AnalysisLabel}" Binding="{Binding Path=AnalysisLabel, Converter={StaticResource TrimmingConverter}}" Width="Auto" CanUserSort="False">
+                                    <DataGridCheckBoxColumn.CellStyle>
+                                        <Style TargetType="{x:Type DataGridCell}">
+                                            <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.AnalysisLabel.ToolTip}"/>
+                                            <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
+                                            <Style.Triggers>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Background" Value="{StaticResource ControlGridDisabledCellBackground}" />
+                                                    <Setter Property="Foreground" Value="{StaticResource ControlGridDisabledCellForeground}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </DataGridCheckBoxColumn.CellStyle>
+                                </DataGridCheckBoxColumn>
+                                <DataGridCheckBoxColumn MinWidth="25" Header="{StaticResource EditorWindow.ControlDataGrid.CanProvidePrefix}" Binding="{Binding Path=CanProvidePrefix}" Width="Auto" CanUserSort="False">
+                                    <DataGridCheckBoxColumn.CellStyle>
+                                        <Style TargetType="{x:Type DataGridCell}">
+                                            <Setter Property="ToolTip" Value="{StaticResource EditorWindow.ControlDataGrid.CanProvidePrefix.ToolTip}"/>
                                             <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
                                             <Style.Triggers>
                                                 <Trigger Property="IsEnabled" Value="False">

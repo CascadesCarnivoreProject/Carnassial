@@ -175,7 +175,7 @@ namespace Carnassial.Data
                     case Constant.FileColumn.UtcOffset:
                         throw new NotSupportedException(App.FindResource<string>(Constant.ResourceKey.ImageRowSetUtcOffsetThroughDateTimeOffset));
                     default:
-                        FileTableColumn userColumn = this.table.UserColumnsByName[propertyName];
+                        FileTableColumn userColumn = this.table.UserColumnsByDataLabel[propertyName];
                         return userColumn.DataType switch
                         {
                             SqlDataType.Boolean => this.UserFlags[userColumn.DataIndex],
@@ -217,7 +217,7 @@ namespace Carnassial.Data
                         throw new NotSupportedException(App.FindResource<string>(Constant.ResourceKey.ImageRowSetUtcOffsetThroughDateTimeOffset));
                     // user defined controls
                     default:
-                        FileTableColumn userColumn = this.table.UserColumnsByName[propertyName];
+                        FileTableColumn userColumn = this.table.UserColumnsByDataLabel[propertyName];
                         bool valueDifferent;
                         switch (userColumn.DataType)
                         {
@@ -290,7 +290,7 @@ namespace Carnassial.Data
                 case Constant.FileColumn.UtcOffset:
                     return DateTimeHandler.ToDatabaseUtcOffset(this.UtcOffset);
                 default:
-                    FileTableColumn userColumn = this.table.UserColumnsByName[dataLabel];
+                    FileTableColumn userColumn = this.table.UserColumnsByDataLabel[dataLabel];
                     return userColumn.DataType switch
                     {
                         SqlDataType.Boolean => this.UserFlags[userColumn.DataIndex],
@@ -356,7 +356,7 @@ namespace Carnassial.Data
 
                 if (fileDatabase.Files.StandardColumnDataTypesByName.TryGetValue(control.DataLabel, out SqlDataType dataType) == false)
                 {
-                    dataType = fileDatabase.Files.UserColumnsByName[control.DataLabel].DataType;
+                    dataType = fileDatabase.Files.UserColumnsByDataLabel[control.DataLabel].DataType;
                 }
                 object defaultValue;
                 switch (dataType)
@@ -441,7 +441,7 @@ namespace Carnassial.Data
                 case Constant.FileColumn.UtcOffset:
                     return DateTimeHandler.ToDisplayUtcOffsetString(this.UtcOffset);
                 default:
-                    FileTableColumn userColumn = this.table.UserColumnsByName[control.DataLabel];
+                    FileTableColumn userColumn = this.table.UserColumnsByDataLabel[control.DataLabel];
                     return userColumn.DataType switch
                     {
                         SqlDataType.Boolean => this.UserFlags[userColumn.DataIndex] ? Boolean.TrueString : Boolean.FalseString,
@@ -465,8 +465,8 @@ namespace Carnassial.Data
 
         public MarkersForCounter GetMarkersForCounter(string counterDataLabel)
         {
-            FileTableColumn counterColumn = this.table.UserColumnsByName[counterDataLabel];
-            FileTableColumn markerColumn = this.table.UserColumnsByName[FileTable.GetMarkerPositionColumnName(counterDataLabel)];
+            FileTableColumn counterColumn = this.table.UserColumnsByDataLabel[counterDataLabel];
+            FileTableColumn markerColumn = this.table.UserColumnsByDataLabel[FileTable.GetMarkerPositionColumnName(counterDataLabel)];
 
             MarkersForCounter markersForCounter = new(counterDataLabel, this.UserCounters[counterColumn.DataIndex]);
             markersForCounter.MarkerPositionsFromFloatArray(this.UserMarkerPositions[markerColumn.DataIndex]);
@@ -519,7 +519,7 @@ namespace Carnassial.Data
                 case Constant.FileColumn.UtcOffset:
                     return DateTimeHandler.ToDatabaseUtcOffsetString(this.UtcOffset);
                 default:
-                    FileTableColumn userColumn = this.table.UserColumnsByName[dataLabel];
+                    FileTableColumn userColumn = this.table.UserColumnsByDataLabel[dataLabel];
                     switch (userColumn.DataType)
                     {
                         case SqlDataType.Boolean:
@@ -553,7 +553,7 @@ namespace Carnassial.Data
                 { Constant.FileColumn.Classification, this.Classification },
                 { Constant.FileColumn.RelativePath, this.RelativePath }
             };
-            foreach (KeyValuePair<string, FileTableColumn> columnAndName in this.table.UserColumnsByName)
+            foreach (KeyValuePair<string, FileTableColumn> columnAndName in this.table.UserColumnsByDataLabel)
             {
                 FileTableColumn userColumn = columnAndName.Value;
                 object value = userColumn.DataType switch
@@ -909,7 +909,7 @@ namespace Carnassial.Data
             return new CachedImage(image);
         }
 
-        public bool TryMoveFileToFolder(string imageSetFolderPath, string destinationFolderPath)
+        public bool TryMoveFileToFolder(string imageSetFolderPath, string destinationFolderPath, int? disambiguatingUserNoteIndex)
         {
             string sourceFilePath = this.GetFilePath(imageSetFolderPath);
             if (!File.Exists(sourceFilePath))
@@ -918,7 +918,17 @@ namespace Carnassial.Data
                 return false;
             }
 
-            string destinationFilePath = Path.Combine(destinationFolderPath, this.FileName);
+            string maybeDisambiguatedFileName = this.FileName;
+            if (disambiguatingUserNoteIndex.HasValue)
+            {
+                string disambiguatingPrefix = this.UserNotesAndChoices[disambiguatingUserNoteIndex.Value];
+                if (maybeDisambiguatedFileName.StartsWith(disambiguatingPrefix, StringComparison.OrdinalIgnoreCase) == false)
+                {
+                    maybeDisambiguatedFileName = $"{disambiguatingPrefix} {maybeDisambiguatedFileName}";
+                }
+            }
+
+            string destinationFilePath = Path.Combine(destinationFolderPath, maybeDisambiguatedFileName);
             if (String.Equals(sourceFilePath, destinationFilePath, StringComparison.OrdinalIgnoreCase))
             {
                 // nothing to do if the source and destination locations are the same
@@ -942,6 +952,7 @@ namespace Carnassial.Data
                 return false;
             }
 
+            this.FileName = maybeDisambiguatedFileName;
             string? relativePath = NativeMethods.GetRelativePathFromDirectoryToDirectory(imageSetFolderPath, destinationFolderPath);
             if (String.IsNullOrEmpty(relativePath))
             {

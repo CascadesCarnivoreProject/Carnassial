@@ -11,6 +11,8 @@ namespace Carnassial.Control
 {
     public abstract class DataEntryControl
     {
+        public bool AnalysisField { get; protected set; }
+
         /// <summary>Gets or sets a value indicating whether the control's content is user editable.</summary>
         public abstract bool ContentReadOnly { get; protected set; }
 
@@ -50,6 +52,7 @@ namespace Carnassial.Control
         protected DataEntryControl(ControlRow control, DataEntryControls styleProvider)
         {
             // populate properties from database definition of control
+            this.AnalysisField = control.AnalysisField;
             // this.Content and Tooltip can't be set, however, as the caller hasn't instantiated the content control yet
             this.Copyable = control.Copyable;
             this.DataLabel = control.DataLabel;
@@ -116,7 +119,7 @@ namespace Carnassial.Control
             return [];
         }
 
-        public abstract void HighlightIfCopyable();
+        public abstract void HighlightIfAnalysisField();
 
         public virtual bool IsCopyableValue(object? value)
         {
@@ -129,7 +132,7 @@ namespace Carnassial.Control
             return true;
         }
 
-        public abstract void RemoveHighlightIfCopyable();
+        public abstract void RemoveHighlightIfAnalysisField();
 
         public virtual void SetWellKnownValues(List<string> choices)
         {
@@ -241,17 +244,17 @@ namespace Carnassial.Control
             FocusManager.SetFocusedElement(focusScope, this.ContentControl);
         }
 
-        public override void HighlightIfCopyable()
+        public override void HighlightIfAnalysisField()
         {
-            if (this.Copyable)
+            if (this.AnalysisField)
             {
                 this.LabelControl.Background = SystemColors.InactiveSelectionHighlightBrush;
             }
         }
 
-        public override void RemoveHighlightIfCopyable()
+        public override void RemoveHighlightIfAnalysisField()
         {
-            if (this.Copyable)
+            if (this.AnalysisField)
             {
                 this.LabelControl.ClearValue(DataEntryControl<TContent, TLabel>.Background);
             }

@@ -194,6 +194,25 @@ namespace Carnassial.Control
             this.disposed = true;
         }
 
+        public static Dictionary<string, object> GetAnalysisFields(ImageRow file, List<DataEntryControl> controls)
+        {
+            Dictionary<string, object> analysisFields = new(StringComparer.Ordinal);
+            foreach (DataEntryControl control in controls)
+            {
+                if (control.AnalysisField)
+                {
+                    analysisFields.Add(control.PropertyName, file[control.PropertyName]);
+                }
+            }
+            return analysisFields;
+        }
+
+        public Dictionary<string, object> GetAnalysisFieldsFromCurrentFile(List<DataEntryControl> controls)
+        {
+            Debug.Assert(this.ImageCache.IsFileAvailable, "Attempt to create analysis template form nonexistent file.");
+            return DataEntryHandler.GetAnalysisFields(this.ImageCache.Current, controls);
+        }
+
         public static Dictionary<string, object> GetCopyableFields(ImageRow file, List<DataEntryControl> controls)
         {
             Dictionary<string, object> copyableFields = new(StringComparer.Ordinal);
@@ -209,7 +228,7 @@ namespace Carnassial.Control
 
         public Dictionary<string, object> GetCopyableFieldsFromCurrentFile(List<DataEntryControl> controls)
         {
-            Debug.Assert(this.ImageCache.IsFileAvailable, "Attempt to copy from nonexistent file");
+            Debug.Assert(this.ImageCache.IsFileAvailable, "Attempt to copy from nonexistent file.");
             return DataEntryHandler.GetCopyableFields(this.ImageCache.Current, controls);
         }
 
@@ -252,14 +271,14 @@ namespace Carnassial.Control
         private void MenuContextCopyToAll_Click(object sender, RoutedEventArgs e)
         {
             DataEntryControl control = (DataEntryControl)((ContextMenu)((MenuItem)sender).Parent).Tag;
-            this.TryCopyToAll(control);
+            this.TryCopyFieldToAllFiles(control);
         }
 
         // propagate the current value of this control forward from this point across the current selection
         private void MenuContextPropagateForward_Click(object sender, RoutedEventArgs e)
         {
             DataEntryControl control = (DataEntryControl)((ContextMenu)((MenuItem)sender).Parent).Tag;
-            this.TryCopyForward(control);
+            this.TryCopyFieldForward(control);
         }
 
         private void MenuContextPropagateFromLastValue_Click(object sender, RoutedEventArgs e)
@@ -351,7 +370,7 @@ namespace Carnassial.Control
         }
 
         /// <summary>Propagate the current value of this control forward from this point across the current selection.</summary>
-        public bool TryCopyForward(DataEntryControl control)
+        public bool TryCopyFieldForward(DataEntryControl control)
         {
             int filesAffected = this.FileDatabase.CurrentlySelectedFileCount - this.ImageCache.CurrentRow - 1;
             if (filesAffected < 1)
@@ -427,7 +446,7 @@ namespace Carnassial.Control
         }
 
         /// <summary>Copy the current value of this control to all files.</summary>
-        private bool TryCopyToAll(DataEntryControl control)
+        private bool TryCopyFieldToAllFiles(DataEntryControl control)
         {
             Debug.Assert(this.ImageCache.Current != null);
 

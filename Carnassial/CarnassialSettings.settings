@@ -48,7 +48,7 @@
       <Value Profile="(Default)">303</Value>
     </Setting>
     <Setting Name="MostRecentCheckForUpdates" Type="System.DateTime" Scope="User">
-      <Value Profile="(Default)">2023-12-29</Value>
+      <Value Profile="(Default)">2026-08-31</Value>
     </Setting>
   </Settings>
 </SettingsFile>

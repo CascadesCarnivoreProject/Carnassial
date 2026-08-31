@@ -12,7 +12,7 @@ namespace Carnassial.Editor {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.8.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "18.9.0.0")]
     internal sealed partial class EditorSettings : global::System.Configuration.ApplicationSettingsBase {
         
         private static EditorSettings defaultInstance = ((EditorSettings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new EditorSettings())));
@@ -25,7 +25,7 @@ namespace Carnassial.Editor {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("2023-12-29")]
+        [global::System.Configuration.DefaultSettingValueAttribute("2026-08-31")]
         public global::System.DateTime MostRecentCheckForUpdates {
             get {
                 return ((global::System.DateTime)(this["MostRecentCheckForUpdates"]));
@@ -43,6 +43,18 @@ namespace Carnassial.Editor {
             }
             set {
                 this["MostRecentlyUsedTemplates"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0,0,1343,824")]
+        public string EditorWindowPosition {
+            get {
+                return ((string)(this["EditorWindowPosition"]));
+            }
+            set {
+                this["EditorWindowPosition"] = value;
             }
         }
     }

@@ -16,7 +16,9 @@ namespace Carnassial.Data
         {
             this.disposed = false;
             this.insertOrUpdateControls = new SQLiteCommand(command.ToString(), this.Database.Connection, this.Transaction);
+            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.AnalysisField}"));
             this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.AnalysisLabel}"));
+            this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.CanProvidePrefix}"));
             this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.ControlOrder}"));
             this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.Copyable}"));
             this.insertOrUpdateControls.Parameters.Add(new SQLiteParameter($"@{Constant.ControlColumn.DataLabel}"));
@@ -47,20 +49,22 @@ namespace Carnassial.Data
                     continue;
                 }
 
-                this.insertOrUpdateControls.Parameters[0].Value = control.AnalysisLabel;
-                this.insertOrUpdateControls.Parameters[1].Value = control.ControlOrder;
-                this.insertOrUpdateControls.Parameters[2].Value = control.Copyable;
-                this.insertOrUpdateControls.Parameters[3].Value = control.DataLabel;
-                this.insertOrUpdateControls.Parameters[4].Value = control.DefaultValue;
-                this.insertOrUpdateControls.Parameters[5].Value = control.IndexInFileTable;
-                this.insertOrUpdateControls.Parameters[6].Value = control.Label;
-                this.insertOrUpdateControls.Parameters[7].Value = control.SpreadsheetOrder;
-                this.insertOrUpdateControls.Parameters[8].Value = control.MaxWidth;
-                this.insertOrUpdateControls.Parameters[9].Value = control.Tooltip;
-                this.insertOrUpdateControls.Parameters[10].Value = (int)control.ControlType;
-                this.insertOrUpdateControls.Parameters[11].Value = control.Visible;
-                this.insertOrUpdateControls.Parameters[12].Value = control.WellKnownValues;
-                this.insertOrUpdateControls.Parameters[13].Value = control.ID;
+                this.insertOrUpdateControls.Parameters[0].Value = control.AnalysisField;
+                this.insertOrUpdateControls.Parameters[1].Value = control.AnalysisLabel;
+                this.insertOrUpdateControls.Parameters[2].Value = control.CanProvidePrefix;
+                this.insertOrUpdateControls.Parameters[3].Value = control.ControlOrder;
+                this.insertOrUpdateControls.Parameters[4].Value = control.Copyable;
+                this.insertOrUpdateControls.Parameters[5].Value = control.DataLabel;
+                this.insertOrUpdateControls.Parameters[6].Value = control.DefaultValue;
+                this.insertOrUpdateControls.Parameters[7].Value = control.IndexInFileTable;
+                this.insertOrUpdateControls.Parameters[8].Value = control.Label;
+                this.insertOrUpdateControls.Parameters[9].Value = control.SpreadsheetOrder;
+                this.insertOrUpdateControls.Parameters[10].Value = control.MaxWidth;
+                this.insertOrUpdateControls.Parameters[11].Value = control.Tooltip;
+                this.insertOrUpdateControls.Parameters[12].Value = (int)control.ControlType;
+                this.insertOrUpdateControls.Parameters[13].Value = control.Visible;
+                this.insertOrUpdateControls.Parameters[14].Value = control.WellKnownValues;
+                this.insertOrUpdateControls.Parameters[15].Value = control.ID;
 
                 this.insertOrUpdateControls.ExecuteNonQuery();
                 control.AcceptChanges();

@@ -1722,6 +1722,10 @@ namespace Carnassial
         {
             // clear undo/redo state as bulk edits aren't undoable
             this.ResetUndoRedoState();
+            // treat committing bulk edit as equivalent to pressing enter
+            // Without this user has to use enter or some other method to move focus off the control which was just bulk edited. Not
+            // a big deal but potentially unintuitve and a little annoying to experienced users.
+            this.FocusFileDisplay();
         }
 
         private async Task OnFileDatabaseOpenedOrFilesAddedAsync(bool filesJustAdded)
@@ -1855,7 +1859,7 @@ namespace Carnassial
         {
             foreach (DataEntryControl control in this.DataEntryControls.Controls)
             {
-                control.HighlightIfCopyable();
+                control.HighlightIfAnalysisField();
             }
         }
 
@@ -1866,7 +1870,7 @@ namespace Carnassial
         {
             foreach (DataEntryControl control in this.DataEntryControls.Controls)
             {
-                control.RemoveHighlightIfCopyable();
+                control.RemoveHighlightIfAnalysisField();
             }
         }
 
@@ -2377,7 +2381,7 @@ namespace Carnassial
                 return false;
             }
 
-            Dictionary<string, object> analysisValuesByDataLabel = this.DataHandler.GetCopyableFieldsFromCurrentFile(this.DataEntryControls.Controls);
+            Dictionary<string, object> analysisValuesByDataLabel = this.DataHandler.GetAnalysisFieldsFromCurrentFile(this.DataEntryControls.Controls);
             this.State.Analysis[analysisSlot] = analysisValuesByDataLabel;
             ((MenuItem)this.MenuEditPasteValuesFromAnalysis.Items[analysisSlot]).IsEnabled = true;
 
@@ -2749,7 +2753,6 @@ namespace Carnassial
         private async void Window_Closing(object sender, CancelEventArgs e)
         {
             await this.CloseImageSetAsync().ConfigureAwait(true);
-
             HwndSource.FromHwnd(new WindowInteropHelper(this).Handle).RemoveHook(new HwndSourceHook(this.WndProc));
 
             // persist user specific settings
@@ -2762,9 +2765,10 @@ namespace Carnassial
 
             if (this.NonpersistentUserSettings == false)
             {
-                this.State.SerializeToSettings();
-                CarnassialSettings.Default.Save();
+                this.State.SerializeToDefaultSettings();
             }
+
+            CarnassialSettings.Default.Save();
         }
 
         private async void Window_ContentRendered(object sender, EventArgs e)

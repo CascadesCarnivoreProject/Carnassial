@@ -18,11 +18,14 @@ namespace Carnassial.Data.Spreadsheet
             this.HasChanges = false;
 
             // ensure stylesheet exits
-            this.stylesheet = styles.Stylesheet;
-            if (this.stylesheet == null)
+            if (styles.Stylesheet == null)
             {
                 this.stylesheet = OpenXmlStylesheet.CreateDefaultStylesheet();
                 this.HasChanges = true;
+            }
+            else
+            {
+                this.stylesheet = styles.Stylesheet;
             }
 
             // find or insert a bold font

@@ -67,7 +67,9 @@ namespace Carnassial
         public static class ControlColumn
         {
             // columns unique to the controls table
+            public const string AnalysisField = "AnalysisField";
             public const string AnalysisLabel = "AnalysisLabel";
+            public const string CanProvidePrefix = "CanProvidePrefix";
             public const string ControlOrder = "ControlOrder";
             public const string Copyable = "Copyable";
             public const string DataLabel = "DataLabel";
@@ -88,7 +90,9 @@ namespace Carnassial
 
             public static readonly ReadOnlyCollection<string> Columns = new List<string>()
             {
+                ControlColumn.AnalysisField,
                 ControlColumn.AnalysisLabel,
+                ControlColumn.CanProvidePrefix,
                 ControlColumn.ControlOrder,
                 ControlColumn.Copyable,
                 ControlColumn.DataLabel,
@@ -160,6 +164,8 @@ namespace Carnassial
             public const int RowsPerTransaction = 5000;
 
             public static readonly TimeSpan BackupInterval = TimeSpan.FromMinutes(5.0);
+            public static readonly Version Schema02020003 = new(2, 2, 0, 3);
+            public static readonly Version Schema02021000 = new(2, 2, 10, 0);
         }
 
         public static class DatabaseColumn
@@ -428,11 +434,6 @@ namespace Carnassial
         public static class Platform
         {
             public const string Windows = "windows";
-        }
-
-        public static class Release
-        {
-            public static readonly Version V2_2_0_3 = new(2, 2, 0, 3);
         }
 
         public static class ResourceKey

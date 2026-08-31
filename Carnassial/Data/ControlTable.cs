@@ -1,4 +1,5 @@
 ﻿using Carnassial.Database;
+using Carnassial.Util;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -96,7 +97,9 @@ namespace Carnassial.Data
             schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.WellKnownValues, Constant.SQLiteAffinity.Text));
             schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.DefaultValue, Constant.SQLiteAffinity.Text));
             schema.ColumnDefinitions.Add(new ColumnDefinition(Constant.ControlColumn.Tooltip, Constant.SQLiteAffinity.Text));
+            schema.ColumnDefinitions.Add(ColumnDefinition.CreateBoolean(Constant.ControlColumn.AnalysisField));
             schema.ColumnDefinitions.Add(ColumnDefinition.CreateBoolean(Constant.ControlColumn.AnalysisLabel));
+            schema.ColumnDefinitions.Add(ColumnDefinition.CreateBoolean(Constant.ControlColumn.CanProvidePrefix));
             schema.ColumnDefinitions.Add(ColumnDefinition.CreateBoolean(Constant.ControlColumn.Copyable));
             schema.ColumnDefinitions.Add(ColumnDefinition.CreateBoolean(Constant.ControlColumn.IndexInFileTable));
             schema.ColumnDefinitions.Add(ColumnDefinition.CreateBoolean(Constant.ControlColumn.Visible));
@@ -169,89 +172,146 @@ namespace Carnassial.Data
 
         public override void Load(SQLiteDataReader reader)
         {
+            int analysisFieldIndex = -1;
             int analysisLabelIndex = -1;
+            int canProvidePrefixIndex = -1;
             int controlOrderIndex = -1;
             int copyableIndex = -1;
             int dataLabelIndex = -1;
             int defaultValueIndex = -1;
             int idIndex = -1;
-            int labelFileIndex = -1;
-            int listIndex = -1;
             int indexIndex = -1;
+            int labelFileIndex = -1;
+            int wellKnownValuesIndex = -1;
             int maxWidthIndex = -1;
             int spreadsheetOrderIndex = -1;
             int tooltipIndex = -1;
             int typeIndex = -1;
             int visibleIndex = -1;
+            bool analysisFieldPresent = false;
+            bool analysisLabelPresent = false;
+            bool canProvidePrefixPresent = false;
+            bool controlOrderPresent = false;
+            bool copyablePresent = false;
+            bool dataLabelPresent = false;
+            bool defaultValuePresent = false;
+            bool idPresent = false;
+            bool indexPresent = false;
+            bool labelFilePresent = false;
+            bool wellKnownValuesPresent = false;
+            bool maxWidthPresent = false;
+            bool spreadsheetOrderPresent = false;
+            bool tooltipPresent = false;
+            bool typePresent = false;
+            bool visiblePresent = false;
             for (int column = 0; column < reader.FieldCount; ++column)
             {
                 string columnName = reader.GetName(column);
                 switch (columnName)
                 {
+                    case Constant.ControlColumn.AnalysisField:
+                        analysisFieldIndex = column;
+                        analysisFieldPresent = true;
+                        break;
                     case Constant.ControlColumn.AnalysisLabel:
                         analysisLabelIndex = column;
+                        analysisLabelPresent = true;
+                        break;
+                    case Constant.ControlColumn.CanProvidePrefix:
+                        canProvidePrefixIndex = column;
+                        canProvidePrefixPresent = true;
                         break;
                     case Constant.ControlColumn.ControlOrder:
                         controlOrderIndex = column;
+                        controlOrderPresent = true;
                         break;
                     case Constant.ControlColumn.Copyable:
                         copyableIndex = column;
+                        copyablePresent = true;
                         break;
                     case Constant.ControlColumn.DataLabel:
                         dataLabelIndex = column;
+                        dataLabelPresent = true;
                         break;
                     case Constant.ControlColumn.DefaultValue:
                         defaultValueIndex = column;
+                        defaultValuePresent = true;
                         break;
                     case Constant.DatabaseColumn.ID:
                         idIndex = column;
+                        idPresent = true;
                         break;
                     case Constant.ControlColumn.IndexInFileTable:
                         indexIndex = column;
+                        indexPresent = true;
                         break;
                     case Constant.ControlColumn.Label:
                         labelFileIndex = column;
+                        labelFilePresent = true;
                         break;
                     case Constant.ControlColumn.WellKnownValues:
-                        listIndex = column;
+                        wellKnownValuesIndex = column;
+                        wellKnownValuesPresent = true;
                         break;
                     case Constant.ControlColumn.SpreadsheetOrder:
                         spreadsheetOrderIndex = column;
+                        spreadsheetOrderPresent = true;
                         break;
                     case Constant.ControlColumn.Tooltip:
                         tooltipIndex = column;
+                        tooltipPresent = true;
                         break;
                     case Constant.ControlColumn.Type:
                         typeIndex = column;
+                        typePresent = true;
                         break;
                     case Constant.ControlColumn.Visible:
                         visibleIndex = column;
+                        visiblePresent = true;
                         break;
                     case Constant.ControlColumn.MaxWidth:
                         maxWidthIndex = column;
+                        maxWidthPresent = true;
                         break;
                     default:
                         throw new NotSupportedException($"Unhandled column '{columnName}' in {reader.GetTableName(0)} table schema.");
                 }
             }
 
-            bool allStandardColumnsPresent = (analysisLabelIndex != -1) &&
-                                             (controlOrderIndex != -1) &&
-                                             (copyableIndex != -1) &&
-                                             (dataLabelIndex != -1) &&
-                                             (defaultValueIndex != -1) &&
-                                             (idIndex != -1) &&
-                                             (indexIndex != -1) &&
-                                             (labelFileIndex != -1) &&
-                                             (listIndex != -1) &&
-                                             (maxWidthIndex != -1) &&
-                                             (spreadsheetOrderIndex != -1) &&
-                                             (tooltipIndex != -1) &&
-                                             (typeIndex != -1) &&
-                                             (visibleIndex != -1);
+            bool allStandardColumnsPresent = analysisFieldPresent &&
+                                             analysisLabelPresent &&
+                                             controlOrderPresent &&
+                                             canProvidePrefixPresent &&
+                                             copyablePresent &&
+                                             dataLabelPresent &&
+                                             defaultValuePresent &&
+                                             idPresent &&
+                                             indexPresent &&
+                                             labelFilePresent &&
+                                             wellKnownValuesPresent &&
+                                             maxWidthPresent &&
+                                             spreadsheetOrderPresent &&
+                                             tooltipPresent &&
+                                             typePresent &&
+                                             visiblePresent;
             if (allStandardColumnsPresent == false)
             {
-                throw new SQLiteException(SQLiteErrorCode.Schema, $"At least one standard column is missing from table {reader.GetTableName(0)}.");
+                string missingColumns = StringExtensions.JoinSkippingNullAndWhiteSpace(", ", analysisFieldPresent ? null : Constant.ControlColumn.AnalysisField,
+                                                                                             analysisLabelPresent ? null : Constant.ControlColumn.AnalysisLabel,
+                                                                                             canProvidePrefixPresent ? null : Constant.ControlColumn.CanProvidePrefix,
+                                                                                             copyablePresent ? null : Constant.ControlColumn.Copyable,
+                                                                                             dataLabelPresent ? null : Constant.ControlColumn.DataLabel,
+                                                                                             defaultValuePresent ? null : Constant.ControlColumn.DefaultValue,
+                                                                                             idPresent ? null : Constant.DatabaseColumn.ID,
+                                                                                             indexPresent ? null : Constant.ControlColumn.IndexInFileTable,
+                                                                                             labelFilePresent ? null : Constant.ControlColumn.Label,
+                                                                                             wellKnownValuesPresent ? null : Constant.ControlColumn.WellKnownValues,
+                                                                                             maxWidthPresent ? null : Constant.ControlColumn.MaxWidth,
+                                                                                             spreadsheetOrderPresent ? null : Constant.ControlColumn.SpreadsheetOrder,
+                                                                                             tooltipPresent ? null : Constant.ControlColumn.Tooltip,
+                                                                                             typePresent ? null : Constant.ControlColumn.Type,
+                                                                                             visiblePresent ? String.Empty : Constant.ControlColumn.Visible);
+                throw new SQLiteException(SQLiteErrorCode.Schema, $"One or more standard control columns are missing from table {reader.GetTableName(0)}. Missing columns are {missingColumns}.");
             }
 
             this.controlsByDataLabel.Clear();
@@ -262,13 +322,15 @@ namespace Carnassial.Data
                 // read file values
                 ControlRow control = new((ControlType)reader.GetInt32(typeIndex), reader.GetString(dataLabelIndex), reader.GetInt32(controlOrderIndex))
                 {
+                    AnalysisField = reader.GetBoolean(analysisFieldIndex),
                     AnalysisLabel = reader.GetBoolean(analysisLabelIndex),
+                    CanProvidePrefix = reader.GetBoolean(canProvidePrefixIndex),
                     Copyable = reader.GetBoolean(copyableIndex),
                     DefaultValue = reader.GetString(defaultValueIndex),
                     ID = reader.GetInt64(idIndex),
                     IndexInFileTable = reader.GetBoolean(indexIndex),
                     Label = reader.GetString(labelFileIndex),
-                    WellKnownValues = reader.GetString(listIndex),
+                    WellKnownValues = reader.GetString(wellKnownValuesIndex),
                     MaxWidth = reader.GetInt32(maxWidthIndex),
                     SpreadsheetOrder = reader.GetInt32(spreadsheetOrderIndex),
                     Tooltip = reader.GetString(tooltipIndex),

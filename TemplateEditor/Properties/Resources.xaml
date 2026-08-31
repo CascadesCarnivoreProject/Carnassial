@@ -10,9 +10,9 @@
         <Run FontWeight="Bold">Terms of use:</Run>
         <LineBreak />
         <TextBlock Margin="50,0,0,0" TextWrapping="Wrap">
-            The template editor is supplied as is as a volunteer extension of our regular work.  However, we'd like to it make it better for you too.  Submit comments, problems, or suggestions at
+            The template editor is supplied as is as a volunteer extension of our regular work. However, we'd like to it make it better for you too. Submit comments, problems, or suggestions at
             <Hyperlink Name="IssuesLink">https://github.com/Organization/Repo/issues</Hyperlink> or email
-            <Hyperlink Name="EmailLink">devteam@provider.net</Hyperlink>.  If you fork the repo to address your needs please submit a pull request after ensuring your changes meet the commit requirements described in the readme!
+            <Hyperlink Name="EmailLink">devteam@provider.net</Hyperlink>. If you fork the repo to address your needs please submit a pull request after ensuring your changes meet the commit requirements described in the readme!
         </TextBlock>
         <LineBreak />
         <TextBlock Margin="50,10,0,0" TextWrapping="Wrap">
@@ -47,8 +47,8 @@
     <FlowDocument x:Key="EditorWindow.Instructions" FontSize="12" FontFamily="Verdana" x:Shared="False" TextAlignment="Left">
         <Paragraph FontWeight="Bold" FontSize="20">What the Template Editor does</Paragraph>
         <Paragraph>
-            Information recorded for each image or video from a camera is specific to the kinds of files you want to analyze, your data needs, and how that data will be processed.  This differs between organizations and possibly between different kinds of image sets.  You define your needs through this template editor which saves them in template (.tdb file) named
-            <Bold>CarnassialTemplate.tdb</Bold> by default.  This template file is then included in each image set folder.  Carnassial looks the template and uses it to create the user interface and manage the data you enter.
+            Information recorded for each image or video from a camera is specific to the kinds of files you want to analyze, your data needs, and how that data will be processed. This differs between organizations and possibly between different kinds of image sets. You define your needs through this template editor which saves them in template (.tdb file) named
+            <Bold>CarnassialTemplate.tdb</Bold> by default. This template file is then included in each image set folder. Carnassial looks the template and uses it to create the user interface and manage the data you enter.
         </Paragraph>
         <Paragraph FontWeight="Bold" FontSize="20">Working with templates</Paragraph>
         <List>
@@ -65,13 +65,13 @@
         </List>
         <Paragraph>Each template includes several required fields:
             <Bold>RelativePath, File, DateTime, UtcOffset, Classification,</Bold> and
-            <Bold>DeleteFlag</Bold> .  Carnassial fills these in automatically.  The template editor gives you the option of making these (and other) fields invisible in the user interface.  RelativePath and File locate files on disk and DateTime and UtcOffset completely describe when a file was captured.  ImageQuality powers much of Carnassial's select menu and DeleteFlag enables one selection option as well as delete options under Carnassial's edit menu.
+            <Bold>DeleteFlag</Bold> . Carnassial fills these in automatically. The template editor gives you the option of making these (and other) fields invisible in the user interface. RelativePath and File locate files on disk and DateTime and UtcOffset completely describe when a file was captured. ImageQuality powers much of Carnassial's select menu and DeleteFlag enables one selection option as well as delete options under Carnassial's edit menu.
         </Paragraph>
         <Paragraph>You can add new data fields specific to your project. Each will be one of the following types.</Paragraph>
         <List>
             <ListItem>
                 <Paragraph>
-                    <Bold>Counter</Bold> Numeric data (integers).  Normally used to count specific entities found in an image.
+                    <Bold>Counter</Bold> Numeric data (integers). Normally used to count specific entities found in an image.
                 </Paragraph>
             </ListItem>
             <ListItem>
@@ -95,7 +95,7 @@
         <List>
             <ListItem>
                 <Paragraph>
-                    <Bold>Data label</Bold> The field's column name in Carnassial's database file (.ddb).  Much more restricted than the label.
+                    <Bold>Data label</Bold> The field's column name in Carnassial's database file (.ddb). Much more restricted than the label.
                 </Paragraph>
             </ListItem>
             <ListItem>
@@ -105,12 +105,12 @@
             </ListItem>
             <ListItem>
                 <Paragraph>
-                    <Bold>Values</Bold> The choices available for a choice field, entered one per line, or the default set of autocompletions for a note.  Including an empty line allows the field to be set to empty.  Each entry in the list should be unique.
+                    <Bold>Values</Bold> The choices available for a choice field, entered one per line, or the default set of autocompletions for a note. Including an empty line allows the field to be set to empty. Each entry in the list should be unique.
                 </Paragraph>
             </ListItem>
             <ListItem>
                 <Paragraph>
-                    <Bold>Default Value</Bold> The field's initial value.  For example, if a survey name field is present it's often quite convenient to have it default to something like "Our Spiffy Project" rather than requiring this be typed in for every file in the image set.
+                    <Bold>Default Value</Bold> The field's initial value. For example, if a survey name field is present it's often quite convenient to have it default to something like "Our Spiffy Project" rather than requiring this be typed in for every file in the image set.
                 </Paragraph>
             </ListItem>
             <ListItem>
@@ -125,22 +125,22 @@
             </ListItem>
             <ListItem>
                 <Paragraph>
-                    <Bold>Copyable</Bold> Whether or not Carnassial's copy from previous button and context menus can be used to populate data in the field.  In most cases it's desirable to have fields be copyable.
+                    <Bold>Copyable</Bold> Whether or not Carnassial's copy from previous button and context menus can be used to populate data in the field. In most cases it's desirable to have fields be copyable.
                 </Paragraph>
             </ListItem>
             <ListItem>
                 <Paragraph>
-                    <Bold>Index</Bold> Whether an index is created for the field in Carnassial's database.  This should left unchecked unless custom selections using the field take too long.
+                    <Bold>Index</Bold> Whether an index is created for the field in Carnassial's database. This should left unchecked unless custom selections using the field take too long.
                 </Paragraph>
             </ListItem>
             <ListItem>
                 <Paragraph>
-                    <Bold>Visible</Bold> Whether or not a field is displayed in the Carnassial user interface.  Fields should generally be visible.
+                    <Bold>Visible</Bold> Whether or not a field is displayed in the Carnassial user interface. Fields should generally be visible.
                 </Paragraph>
             </ListItem>
             <ListItem>
                 <Paragraph>
-                    <Bold>Width</Bold> How wide the field appears in the Carnassial user interface.  The editor shows a preview of the layout.
+                    <Bold>Width</Bold> How wide the field appears in the Carnassial user interface. The editor shows a preview of the layout.
                 </Paragraph>
             </ListItem>
         </List>
@@ -151,13 +151,13 @@
     <system:String x:Key="EditorWindow.ControlDataGrid.ID">ID</system:String>
     <system:String x:Key="EditorWindow.ControlDataGrid.Type">Type</system:String>
     <system:String x:Key="EditorWindow.ControlDataGrid.Type.ToolTip.Counter">A counter field provides a point and click interface for counting entities in an image or video.</system:String>
-    <system:String x:Key="EditorWindow.ControlDataGrid.Type.ToolTip.DateTime">Carnassial automatically sets a file's date and time.  They can be edited if changes are required.</system:String>
-    <system:String x:Key="EditorWindow.ControlDataGrid.Type.ToolTip.FixedChoice">A choice field provides a drop down menu of choices.  Edit its well known values to create these choices.</system:String>
+    <system:String x:Key="EditorWindow.ControlDataGrid.Type.ToolTip.DateTime">Carnassial automatically sets a file's date and time. They can be edited if changes are required.</system:String>
+    <system:String x:Key="EditorWindow.ControlDataGrid.Type.ToolTip.FixedChoice">A choice field provides a drop down menu of choices. Edit its well known values to create these choices.</system:String>
     <system:String x:Key="EditorWindow.ControlDataGrid.Type.ToolTip.Flag">A flag field can be toggled between true and false.</system:String>
-    <system:String x:Key="EditorWindow.ControlDataGrid.Type.ToolTip.Note">A note field accepts free-form text.  Edit its well known values to define common values which will be available for autocomplete.</system:String>
+    <system:String x:Key="EditorWindow.ControlDataGrid.Type.ToolTip.Note">A note field accepts free-form text. Edit its well known values to define common values which will be available for autocomplete.</system:String>
     <!-- standard controls -->
-    <system:String x:Key="EditorWindow.ControlDataGrid.Type.ToolTip.Classification">By default, Carnassial sets a file's classifiction.  It can be edited or recalculated later if needed.</system:String>
-    <system:String x:Key="EditorWindow.ControlDataGrid.Type.ToolTip.DeleteFlag">The delete flag indicates whether a file is marked deletion.  Marked files can be removed from disk and from the image set using Carnassial's edit menu.</system:String>
+    <system:String x:Key="EditorWindow.ControlDataGrid.Type.ToolTip.Classification">By default, Carnassial sets a file's classifiction. It can be edited or recalculated later if needed.</system:String>
+    <system:String x:Key="EditorWindow.ControlDataGrid.Type.ToolTip.DeleteFlag">The delete flag indicates whether a file is marked deletion. Marked files can be removed from disk and from the image set using Carnassial's edit menu.</system:String>
     <system:String x:Key="EditorWindow.ControlDataGrid.Type.ToolTip.File">Carnassial automatically sets File to the file name of the image or video.</system:String>
     <system:String x:Key="EditorWindow.ControlDataGrid.Type.ToolTip.RelativePath">Carnassial automatically sets RelativePath to the folder path from the template to the file.</system:String>
     <system:String x:Key="EditorWindow.ControlDataGrid.DataLabel">Data Label</system:String>
@@ -176,13 +176,21 @@ Order</system:String>
 Order</system:String>
     <system:String x:Key="EditorWindow.ControlDataGrid.ToolTip">ToolTip</system:String>
     <system:String x:Key="EditorWindow.ControlDataGrid.ToolTip.ToolTip">The help text Carnassial displays when the mouse hovers over this field in its data entry panel.</system:String>
+
+    <system:String x:Key="EditorWindow.ControlDataGrid.AnalysisField" xml:space="preserve">Analysis
+Field</system:String>
+    <system:String x:Key="EditorWindow.ControlDataGrid.AnalysisField.ToolTip">Whether the value of this field is included when setting an analysis in Carnassial.</system:String>
+    <system:String x:Key="EditorWindow.ControlDataGrid.Copyable">Copyable</system:String>
+    <system:String x:Key="EditorWindow.ControlDataGrid.Copyable.ToolTip">Whether this value is updated when values are copied from other files or can be copied to other files by right clicking on the field in Carnassial.</system:String>
     <system:String x:Key="EditorWindow.ControlDataGrid.AnalysisLabel" xml:space="preserve">Analysis
 Label</system:String>
     <system:String x:Key="EditorWindow.ControlDataGrid.AnalysisLabel.ToolTip">Whether the value of this field is used to label the analysis buttons in Carnassial's data entry panel.</system:String>
-    <system:String x:Key="EditorWindow.ControlDataGrid.Copyable">Copyable</system:String>
-    <system:String x:Key="EditorWindow.ControlDataGrid.Copyable.ToolTip">Whether this value is updated when an analysis is assigned or values are copied from other files.</system:String>
+    <system:String x:Key="EditorWindow.ControlDataGrid.CanProvidePrefix" xml:space="preserve">Can
+Prefix</system:String>
+    <system:String x:Key="EditorWindow.ControlDataGrid.CanProvidePrefix.ToolTip">Whether the value of this field can be used as a prefix by Carnassial. Currently Carnassial uses prefixing only when moving files as a way of avoiding collisions between images from different cameras having the same file name. At most one control should have this checked.</system:String>
+
     <system:String x:Key="EditorWindow.ControlDataGrid.Index">Index</system:String>
-    <system:String x:Key="EditorWindow.ControlDataGrid.Index.ToolTip">Whether this field is indexed in Carnassial's database.  Leave this unchecked unless custom selections using the field take too long.</system:String>
+    <system:String x:Key="EditorWindow.ControlDataGrid.Index.ToolTip">Whether this field is indexed in Carnassial's database. Leave this unchecked unless custom selections using the field take too long.</system:String>
     <system:String x:Key="EditorWindow.ControlDataGrid.Visible">Visible</system:String>
     <system:String x:Key="EditorWindow.ControlDataGrid.Visible.ToolTip">Whether this field will be displayed in the Carnassial's data entry panel.</system:String>
     <system:String x:Key="EditorWindow.ControlDataGrid.MaxWidth" xml:space="preserve">Max
@@ -198,7 +206,7 @@ Width</system:String>
     <system:String x:Key="EditorWindow.Add.Flag.Tooltip">Add a new flag control.</system:String>
     <system:String x:Key="EditorWindow.Remove">_Remove</system:String>
     <system:String x:Key="EditorWindow.Remove.Tooltip">Remove the currently selected control.</system:String>
-    <system:String x:Key="EditorWindow.SpreadsheetOrder">The columns in spreadsheets exported from Carnassial while using this template are dislayed below.  Drag and drop columns to rearrange their order to your preference.</system:String>
+    <system:String x:Key="EditorWindow.SpreadsheetOrder">The columns in spreadsheets exported from Carnassial while using this template are dislayed below. Drag and drop columns to rearrange their order to your preference.</system:String>
     <system:String x:Key="EditorWindow.ControlOrder">Drag and drop the controls below by their labels to arrange them to your preference.</system:String>
     <system:String x:Key="EditorWindow.Exception">The template editor needs to close.</system:String>
     <system:String x:Key="EditorWindow.TemplateFile.OpenExisting">Select an existing template to open</system:String>
@@ -243,7 +251,7 @@ Width</system:String>
             <Run>You may have to recreate the template, restore it from a backup, or use another copy of it.</Run>
         </dialog:Message.Solution>
         <dialog:Message.Result>
-            <Run>The template editor won't do anything.  You can select another template file.</Run>
+            <Run>The template editor won't do anything. You can select another template file.</Run>
         </dialog:Message.Result>
         <dialog:Message.Hint>
             <Run>If the template can't be opened in a SQLite database editor the file is corrupt.</Run>
@@ -251,7 +259,7 @@ Width</system:String>
     </dialog:Message>
 
     <system:String x:Key="EditWellKnownValues.Title">Edit well known values for note or choice control</system:String>
-    <system:String x:Key="EditWellKnownValues.Instructions">Enter one value per line.  These values become the autocompletions for notes and the choices available in a choice control.</system:String>
+    <system:String x:Key="EditWellKnownValues.Instructions">Enter one value per line. These values become the autocompletions for notes and the choices available in a choice control.</system:String>
 
     <system:String x:Key="InspectMetadata.Title">Inspect metadata available in files</system:String>
     <system:String x:Key="InspectMetadata.Message.Title">See what metadata is available in a file of your choosing.</system:String>

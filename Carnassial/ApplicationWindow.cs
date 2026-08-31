@@ -11,7 +11,7 @@ namespace Carnassial
 {
     public class ApplicationWindow : WindowWithSystemMenu
     {
-        public bool NonpersistentUserSettings { get; set; }
+        public bool NonpersistentUserSettings { get; set; } // set to true as a test hook, expected to false in iteractive use
 
         public ApplicationWindow()
         {

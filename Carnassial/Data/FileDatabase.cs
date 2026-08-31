@@ -442,12 +442,28 @@ namespace Carnassial.Data
         {
             Debug.Assert(destinationFolderPath.StartsWith(this.FolderPath, StringComparison.OrdinalIgnoreCase), String.Create(CultureInfo.InvariantCulture, $"Destination path '{destinationFolderPath}' is not under '{this.FolderPath}'."));
 
+            int? disambiguatingColumnIndex = null;
+            string? disambiguatingDataLabel = null;
+            foreach (ControlRow control in this.Controls)
+            {
+                if (control.CanProvidePrefix)
+                {
+                    if (disambiguatingColumnIndex.HasValue)
+                    {
+                        throw new SQLiteException(SQLiteErrorCode.Format, $"File database {this.FileName} has at least two controls marked as being able to provide file name prefixes for disambiguating image files when moving them to another folder. The data labels for the conflicting controls are {disambiguatingDataLabel} and {control.DataLabel}. Update the template database to have only one control with {Constant.ControlColumn.CanProvidePrefix} set.");
+                    }
+                    disambiguatingDataLabel = control.DataLabel;
+                    disambiguatingColumnIndex = this.Files.UserColumnsByDataLabel[disambiguatingDataLabel].DataIndex;
+                }
+            }
+            
+
             List<ImageRow> filesToUpdate = [];
             List<string> immovableFiles = [];
             foreach (ImageRow file in this.Files)
             {
                 Debug.Assert(file.HasChanges == false, "File has unexpected pending changes.");
-                if (file.TryMoveFileToFolder(this.FolderPath, destinationFolderPath))
+                if (file.TryMoveFileToFolder(this.FolderPath, destinationFolderPath, disambiguatingColumnIndex))
                 {
                     filesToUpdate.Add(file);
                 }
@@ -483,7 +499,6 @@ namespace Carnassial.Data
 
             // load in memory file table
             this.Files.SetUserControls(this.Controls);
-            Debug.Assert(this.ImageSet != null);
             this.SelectFiles(this.ImageSet.FileSelection);
         }
 
@@ -607,11 +622,12 @@ namespace Carnassial.Data
                         }
                     }
 
-                    // update file table to 2.2.0.3 schema
+                    // update file table to current schema
+                    // Currently, the only file table schema is Carnassial 2.2.0.3 (the 2.2.10.0 schema changes only the control table).
                     Version databaseVersion = this.GetUserVersion();
-                    if (databaseVersion < Constant.Release.V2_2_0_3)
+                    if (databaseVersion < Constant.Database.Schema02020003)
                     {
-                        this.UpdateFileTableTo2203Schema(transaction);
+                        this.UpdateFileTableTo02020003Schema(transaction);
                     }
 
                     // add any new controls to the file database's control and file tables
@@ -814,9 +830,9 @@ namespace Carnassial.Data
                 other.Files.SetUserControls(other.Controls);
                 other.LoadImageSet();
                 other.SelectFiles(FileSelection.All);
-                foreach (KeyValuePair<string, FileTableColumn> thisColumn in this.Files.UserColumnsByName)
+                foreach (KeyValuePair<string, FileTableColumn> thisColumn in this.Files.UserColumnsByDataLabel)
                 {
-                    FileTableColumn otherColumn = other.Files.UserColumnsByName[thisColumn.Key];
+                    FileTableColumn otherColumn = other.Files.UserColumnsByDataLabel[thisColumn.Key];
                     if ((thisColumn.Value.DataIndex != otherColumn.DataIndex) ||
                         (thisColumn.Value.DataType != otherColumn.DataType))
                     {
@@ -975,7 +991,7 @@ namespace Carnassial.Data
             return updateFiles.RowsCommitted;
         }
 
-        private void UpdateFileTableTo2203Schema(SQLiteTransaction transaction)
+        private void UpdateFileTableTo02020003Schema(SQLiteTransaction transaction)
         {
             // rename FileData table to Files
             #pragma warning disable CS0618 // Type or member is obsolete
@@ -1003,7 +1019,7 @@ namespace Carnassial.Data
                 }
             }
 
-            this.SetUserVersion(transaction, Constant.Release.V2_2_0_3);
+            this.SetUserVersion(transaction, Constant.Database.Schema02020003);
             #pragma warning restore CS0618 // Type or member is obsolete
         }
     }

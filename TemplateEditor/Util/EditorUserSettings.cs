@@ -11,7 +11,7 @@ namespace Carnassial.Editor.Util
             this.MostRecentTemplates = new(EditorSettings.Default.MostRecentlyUsedTemplates, Constant.NumberOfMostRecentDatabasesToTrack);
         }
 
-        public void SerializeToSettings()
+        public void SerializeToDefaultSettings()
         {
             EditorSettings.Default.MostRecentlyUsedTemplates = this.MostRecentTemplates.ToStringCollection();
         }

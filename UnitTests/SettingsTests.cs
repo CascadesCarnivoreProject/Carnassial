@@ -44,7 +44,7 @@ namespace Carnassial.UnitTests
                 carnassialSettings.Throttles.SetDesiredImageRendersPerSecond(Constant.ThrottleValues.DesiredMaximumImageRendersPerSecondUpperBound);
                 CarnassialSettings.Default.VideoSlowdown = Constant.ThrottleValues.VideoSlowdownMinimum;
 
-                carnassialSettings.SerializeToSettings();
+                carnassialSettings.SerializeToDefaultSettings();
                 CarnassialSettings.Default.Save();
 
                 carnassialSettings = new();
@@ -110,7 +110,7 @@ namespace Carnassial.UnitTests
                 string templatePath = Path.Combine(this.WorkingDirectory, Constant.File.DefaultTemplateDatabaseFileName);
                 editorSettings.MostRecentTemplates.SetMostRecent(templatePath);
 
-                editorSettings.SerializeToSettings();
+                editorSettings.SerializeToDefaultSettings();
                 EditorSettings.Default.Save();
 
                 editorSettings = new();

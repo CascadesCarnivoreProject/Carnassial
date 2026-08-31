@@ -19,7 +19,7 @@ namespace Carnassial.Data
             this.UserNoteAndChoiceValues = new List<string>[fileTable.UserNotesAndChoices];
             this.UserNotesAndChoices = new FileTableColumn[fileTable.UserNotesAndChoices];
 
-            foreach (FileTableColumn userColumn in fileTable.UserColumnsByName.Values)
+            foreach (FileTableColumn userColumn in fileTable.UserColumnsByDataLabel.Values)
             {
                 switch (userColumn.Control.ControlType)
                 {

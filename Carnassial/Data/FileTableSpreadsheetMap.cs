@@ -63,7 +63,7 @@ namespace Carnassial.Data
                 }
                 else
                 {
-                    FileTableColumn userColumn = fileTable.UserColumnsByName[column];
+                    FileTableColumn userColumn = fileTable.UserColumnsByDataLabel[column];
                     switch (userColumn.Control.ControlType)
                     {
                         case ControlType.Counter:

@@ -12,7 +12,7 @@ namespace Carnassial.Data
     public class FileTable : SQLiteTable<ImageRow>
     {
         public Dictionary<string, SqlDataType> StandardColumnDataTypesByName { get; private init; }
-        public Dictionary<string, FileTableColumn> UserColumnsByName { get; private init; }
+        public Dictionary<string, FileTableColumn> UserColumnsByDataLabel { get; private init; }
         public int UserCounters { get; private set; }
         public int UserFlags { get; private set; }
         public int UserNotesAndChoices { get; private set; }
@@ -28,7 +28,7 @@ namespace Carnassial.Data
                 { Constant.FileColumn.RelativePath, SqlDataType.String },
                 { Constant.FileColumn.UtcOffset, SqlDataType.Real }
             };
-            this.UserColumnsByName = new Dictionary<string, FileTableColumn>(StringComparer.Ordinal);
+            this.UserColumnsByDataLabel = new Dictionary<string, FileTableColumn>(StringComparer.Ordinal);
         }
 
         public static SQLiteTableSchema CreateSchema(ControlTable controls)
@@ -245,7 +245,7 @@ namespace Carnassial.Data
                         utcOffsetIndex = columnIndex;
                         break;
                     default:
-                        FileTableColumn userColumn = this.UserColumnsByName[column];
+                        FileTableColumn userColumn = this.UserColumnsByDataLabel[column];
                         int dataIndex;
                         switch (userColumn.DataType)
                         {
@@ -303,7 +303,7 @@ namespace Carnassial.Data
                 file.DateTimeOffset = DateTimeHandler.FromDatabaseDateTimeOffset(reader.GetDateTime(dateTimeIndex), DateTimeHandler.FromDatabaseUtcOffset(utcOffset));
                 file.DeleteFlag = reader.GetBoolean(deleteFlagIndex);
                 file.ID = reader.GetInt64(idIndex);
-                foreach (FileTableColumn userColumn in this.UserColumnsByName.Values)
+                foreach (FileTableColumn userColumn in this.UserColumnsByDataLabel.Values)
                 {
                     switch (userColumn.DataType)
                     {
@@ -350,7 +350,7 @@ namespace Carnassial.Data
 
         public void SetUserControls(ControlTable controls)
         {
-            this.UserColumnsByName.Clear();
+            this.UserColumnsByDataLabel.Clear();
             this.UserCounters = 0;
             this.UserFlags = 0;
             this.UserNotesAndChoices = 0;
@@ -359,13 +359,13 @@ namespace Carnassial.Data
             {
                 if (control.IsUserControl())
                 {
-                    this.UserColumnsByName.Add(control.DataLabel, new FileTableColumn(control));
+                    this.UserColumnsByDataLabel.Add(control.DataLabel, new FileTableColumn(control));
                     switch (control.ControlType)
                     {
                         case ControlType.Counter:
                             string markerColumnName = FileTable.GetMarkerPositionColumnName(control.DataLabel);
                             FileTableColumn markerColumn = new(markerColumnName, control);
-                            this.UserColumnsByName.Add(markerColumnName, markerColumn);
+                            this.UserColumnsByDataLabel.Add(markerColumnName, markerColumn);
                             ++this.UserCounters;
                             break;
                         case ControlType.FixedChoice:
