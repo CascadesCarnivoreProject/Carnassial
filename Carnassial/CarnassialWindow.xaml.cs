@@ -119,7 +119,7 @@ namespace Carnassial
             this.MenuEditUndo.IsEnabled = this.State.UndoRedoChain.CanUndo;
         }
 
-        private async void Backup_TimerTick(object? sender, EventArgs e)
+        private async void Backup_TimerTick(object? sender, EventArgs? _)
         {
             if (this.IsFileDatabaseAvailable())
             {
@@ -193,13 +193,13 @@ namespace Carnassial
         }
 
         /// <summary>When the user selects a counter update the color and emphasis of its markers.</summary>
-        private void DataEntryCounter_LabelClick(object _obj, RoutedEventArgs _event)
+        private void DataEntryCounter_LabelClick(object? _sender, RoutedEventArgs? _)
         {
             this.RefreshDisplayedMarkers();
         }
 
         /// <summary>Highlight markers associated with a counter when the mouse enters the counter.</summary>
-        private void DataEntryCounter_MouseEnter(object sender, MouseEventArgs e)
+        private void DataEntryCounter_MouseEnter(object sender, MouseEventArgs? _)
         {
             Panel panel = (Panel)sender;
             this.State.MouseOverCounter = ((DataEntryCounter)panel.Tag).DataLabel;
@@ -207,7 +207,7 @@ namespace Carnassial
         }
 
         /// <summary>Remove marker highlighting when the mouse leaves a counter.</summary>
-        private void DataEntryCounter_MouseLeave(object sender, MouseEventArgs e)
+        private void DataEntryCounter_MouseLeave(object? _sender, MouseEventArgs? _)
         {
             this.State.MouseOverCounter = null;
             this.RefreshDisplayedMarkers();
@@ -299,14 +299,14 @@ namespace Carnassial
             }
         }
 
-        private async void FileNavigatorSlider_DragCompleted(object sender, DragCompletedEventArgs args)
+        private async void FileNavigatorSlider_DragCompleted(object? _sender, DragCompletedEventArgs args)
         {
             this.State.FileNavigatorSliderDragging = false;
             await this.ShowFileAsync(this.FileNavigatorSlider).ConfigureAwait(true);
             this.State.FileNavigatorSliderTimer.Stop();
         }
 
-        private void FileNavigatorSlider_DragStarted(object sender, DragStartedEventArgs args)
+        private void FileNavigatorSlider_DragStarted(object? _sender, DragStartedEventArgs args)
         {
             this.State.FileNavigatorSliderTimer.Start(); // The timer forces an image display update to the current slider position if the user pauses longer than the timer's interval. 
             this.State.FileNavigatorSliderDragging = true;
@@ -324,19 +324,19 @@ namespace Carnassial
             }
         }
 
-        private void FileNavigatorSlider_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        private void FileNavigatorSlider_GotKeyboardFocus(object? _sender, KeyboardFocusChangedEventArgs? _)
         {
             this.FocusFileDisplay();
         }
 
-        private async void FileNavigatorSlider_TimerTick(object? sender, EventArgs e)
+        private async void FileNavigatorSlider_TimerTick(object? sender, EventArgs? _)
         {
             // display the current file as the user drags the navigation slider 
             await this.ShowFileAsync(this.FileNavigatorSlider).ConfigureAwait(true);
             this.State.FileNavigatorSliderTimer.Stop();
         }
 
-        private async void FileNavigatorSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> args)
+        private async void FileNavigatorSlider_ValueChanged(object? _sender, RoutedPropertyChangedEventArgs<double> args)
         {
             // since the minimum value is 1 there's a value change event during InitializeComponent() to ignore
             if (this.State == null) // nullability is bypassed as InitializeComponent() is called before this.State is instantiated
@@ -354,7 +354,7 @@ namespace Carnassial
             }
         }
 
-        private async void FilePlay_TimerTick(object? sender, EventArgs e)
+        private async void FilePlay_TimerTick(object? sender, EventArgs? _)
         {
             await this.ShowFileWithoutSliderCallbackAsync(true, ModifierKeys.None).ConfigureAwait(true);
 
@@ -372,7 +372,7 @@ namespace Carnassial
             }
         }
 
-        private void FileViewGridSplitter_DragCompleted(object sender, DragCompletedEventArgs e)
+        private void FileViewGridSplitter_DragCompleted(object? _sender, DragCompletedEventArgs e)
         {
             // WPF's GridSplitter doesn't modify the width of grid elements even when set to resize the previous and next columns
             // This is a quirk of GridSplitter's implementation, which is mainly intended to work with star sizing.  The below 
@@ -454,7 +454,7 @@ namespace Carnassial
             statusMessage.Content = null;
         }
 
-        private async void Instructions_Drop(object sender, DragEventArgs dropEvent)
+        private async void Instructions_Drop(object? _sender, DragEventArgs dropEvent)
         {
             if (ApplicationWindow.IsSingleTemplateFileDrag(dropEvent, out string? templateDatabaseFilePath))
             {
@@ -547,7 +547,7 @@ namespace Carnassial
         // - update the list of markers held by that counter
         // - regenerate the list of markers used by the markableCanvas
         [SupportedOSPlatform(Constant.Platform.Windows)]
-        private void MarkableCanvas_MarkerCreatedOrDeleted(object sender, MarkerCreatedOrDeletedEventArgs e)
+        private void MarkableCanvas_MarkerCreatedOrDeleted(object? _sender, MarkerCreatedOrDeletedEventArgs e)
         {
             if (this.TryGetSelectedCounter(out DataEntryCounter? selectedCounter) == false)
             {
@@ -583,7 +583,7 @@ namespace Carnassial
             this.FileDisplay.Markers = this.GetDisplayMarkers();
         }
 
-        private void MenuEditCopy_Click(object sender, RoutedEventArgs e)
+        private void MenuEditCopy_Click(object? _sender, RoutedEventArgs? _)
         {
             if (this.IsFileAvailable())
             {
@@ -592,13 +592,13 @@ namespace Carnassial
             }
         }
 
-        private void MenuEditCopyValuesToAnalysis_Click(object sender, RoutedEventArgs e)
+        private void MenuEditCopyValuesToAnalysis_Click(object sender, RoutedEventArgs? _)
         {
             this.TryCopyValuesToAnalysis((int)((MenuItem)sender).Tag);
         }
 
         // Correct ambiguous dates dialog (i.e. dates that could be read as either month/day or day/month
-        private async void MenuEditCorrectAmbiguousDates_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditCorrectAmbiguousDates_Click(object? _sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.DataHandler != null);
             DateCorrectAmbiguous ambiguousDateCorrection = new(this.DataHandler.FileDatabase, this);
@@ -612,7 +612,7 @@ namespace Carnassial
         }
 
         /// <summary>Correct the date by specifying an offset.</summary>
-        private async void MenuEditDateTimeFixedCorrection_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditDateTimeFixedCorrection_Click(object? _sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.DataHandler != null);
             DateTimeFixedCorrection fixedDateCorrection = new(this.DataHandler.FileDatabase, this.DataHandler.ImageCache, this);
@@ -620,7 +620,7 @@ namespace Carnassial
         }
 
         /// <summary>Correct for drifting clock times. Correction applied only to selected files.</summary>
-        private async void MenuEditDateTimeLinearCorrection_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditDateTimeLinearCorrection_Click(object? _sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.DataHandler != null);
             DateTimeLinearCorrection linearDateCorrection = new(this.DataHandler.FileDatabase, this);
@@ -634,7 +634,7 @@ namespace Carnassial
         }
 
         /// <summary>Correct for daylight savings time.</summary>
-        private async void MenuEditDaylightSavingsTimeCorrection_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditDaylightSavingsTimeCorrection_Click(object? _sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.IsFileAvailable());
             if (this.DataHandler.ImageCache.Current!.IsDisplayable() == false)
@@ -649,7 +649,7 @@ namespace Carnassial
             await this.ShowBulkFileEditDialogAsync(daylightSavingsCorrection).ConfigureAwait(true);
         }
 
-        private void MenuEditDelete_SubmenuOpened(object sender, RoutedEventArgs e)
+        private void MenuEditDelete_SubmenuOpened(object? _sender, RoutedEventArgs? _)
         {
             if (this.IsFileAvailable())
             {
@@ -670,7 +670,7 @@ namespace Carnassial
 
         /// <summary>Soft delete one or more files marked for deletion, and optionally the data associated with those files.</summary>
         [SupportedOSPlatform(Constant.Platform.Windows)]
-        private async void MenuEditDeleteFiles_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditDeleteFiles_Click(object sender, RoutedEventArgs? _)
         {
             MenuItem menuItem = (MenuItem)sender;
             Debug.Assert(this.DataHandler != null);
@@ -738,13 +738,13 @@ namespace Carnassial
             }
         }
 
-        private void MenuEditFind_Click(object sender, RoutedEventArgs? e)
+        private void MenuEditFind_Click(object? _sender, RoutedEventArgs? _)
         {
             FindReplace findReplace = new(this);
             findReplace.ShowDialog();
         }
 
-        public async void MenuEditFindNext_Click(object sender, RoutedEventArgs? e)
+        public async void MenuEditFindNext_Click(object? _sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.DataHandler != null);
             if (this.DataHandler.TryFindNext(out int fileIndex))
@@ -753,7 +753,7 @@ namespace Carnassial
             }
         }
 
-        public async void MenuEditFindPrevious_Click(object sender, RoutedEventArgs? e)
+        public async void MenuEditFindPrevious_Click(object? _sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.DataHandler != null);
             if (this.DataHandler.TryFindPrevious(out int fileIndex))
@@ -763,7 +763,7 @@ namespace Carnassial
         }
 
         /// <summary>Edit text in the image set log.</summary>
-        private void MenuEditLog_Click(object sender, RoutedEventArgs e)
+        private void MenuEditLog_Click(object? _sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.IsFileDatabaseAvailable() && (this.DataHandler.FileDatabase.ImageSet.Log != null));
             EditLog editImageSetLog = new(this.DataHandler.FileDatabase.ImageSet.Log, this);
@@ -774,7 +774,7 @@ namespace Carnassial
             }
         }
 
-        private void MenuEditPaste_Click(object sender, RoutedEventArgs e)
+        private void MenuEditPaste_Click(object? _sender, RoutedEventArgs? _)
         {
             if (this.IsFileAvailable() == false)
             {
@@ -795,7 +795,7 @@ namespace Carnassial
             this.PasteValuesToCurrentFileWithUndo(new Dictionary<string, object>(valuesFromClipboard, StringComparer.Ordinal));
         }
 
-        private void MenuEditPasteFromAnalysis_Click(object sender, RoutedEventArgs e)
+        private void MenuEditPasteFromAnalysis_Click(object sender, RoutedEventArgs? _)
         {
             if (this.IsFileAvailable())
             {
@@ -804,7 +804,7 @@ namespace Carnassial
         }
 
         // populate a data field from metadata (example metadata displayed from the currently selected file)
-        private async void MenuEditPopulateFieldFromMetadata_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditPopulateFieldFromMetadata_Click(object? _sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.IsFileAvailable());
             if (this.DataHandler.ImageCache.Current!.IsDisplayable() == false)
@@ -823,14 +823,14 @@ namespace Carnassial
             await this.ShowBulkFileEditDialogAsync(populateField).ConfigureAwait(true);
         }
 
-        private async void MenuEditReclassify_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditReclassify_Click(object? _sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.DataHandler != null);
             using ReclassifyFiles reclassify = new(this.DataHandler.FileDatabase, this.DataHandler.ImageCache, this.State.Throttles, this);
             await this.ShowBulkFileEditDialogAsync(reclassify).ConfigureAwait(true);
         }
 
-        internal async void MenuEditRedo_Click(object? sender, RoutedEventArgs? e)
+        internal async void MenuEditRedo_Click(object? sender, RoutedEventArgs? _)
         {
             if (this.IsFileAvailable() == false)
             {
@@ -860,21 +860,21 @@ namespace Carnassial
             }
         }
 
-        private void MenuEditReplace_Click(object sender, RoutedEventArgs e)
+        private void MenuEditReplace_Click(object? _sender, RoutedEventArgs? _)
         {
             FindReplace findReplace = new(this);
             findReplace.FindReplaceTabs.SelectedItem = findReplace.ReplaceTab;
             findReplace.ShowDialog();
         }
 
-        private async void MenuEditRereadDateTimesFromFiles_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditRereadDateTimesFromFiles_Click(object? _sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.DataHandler != null);
             DateTimeRereadFromFiles rereadDates = new(this.DataHandler.FileDatabase, this.State.Throttles.GetDesiredProgressUpdateInterval(), this);
             await this.ShowBulkFileEditDialogAsync(rereadDates).ConfigureAwait(true);
         }
 
-        private void MenuEditResetValues_Click(object sender, RoutedEventArgs e)
+        private void MenuEditResetValues_Click(object? _sender, RoutedEventArgs? _)
         {
             if (this.IsFileAvailable() == false)
             {
@@ -885,19 +885,19 @@ namespace Carnassial
             this.MaybeExecuteMultipleFieldEdit(new FileMultipleFieldChange(this.DataHandler.ImageCache, defaultValues));
         }
 
-        private async void MenuEditSetTimeZone_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditSetTimeZone_Click(object? _sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.DataHandler != null);
             DateTimeSetTimeZone setTimeZone = new(this.DataHandler.FileDatabase, this.DataHandler.ImageCache, this);
             await this.ShowBulkFileEditDialogAsync(setTimeZone).ConfigureAwait(true);
         }
 
-        private async void MenuEditToggleCurrentFileDeleteFlag_Click(object sender, RoutedEventArgs e)
+        private async void MenuEditToggleCurrentFileDeleteFlag_Click(object? _sender, RoutedEventArgs? _)
         {
             await this.ToggleCurrentFileDeleteFlagAsync().ConfigureAwait(true);
         }
 
-        internal async void MenuEditUndo_Click(object? sender, RoutedEventArgs? e)
+        internal async void MenuEditUndo_Click(object? sender, RoutedEventArgs? _)
         {
             if (this.IsFileAvailable() == false)
             {
@@ -927,12 +927,12 @@ namespace Carnassial
             }
         }
 
-        private void MenuFile_SubmenuOpened(object sender, RoutedEventArgs e)
+        private void MenuFile_SubmenuOpened(object? _sender, RoutedEventArgs? _)
         {
             this.MenuFileRecentImageSets_Refresh();
         }
 
-        private async void MenuFileAddFilesToImageSet_Click(object sender, RoutedEventArgs e)
+        private async void MenuFileAddFilesToImageSet_Click(object? _sender, RoutedEventArgs? _)
         {
             if (this.ShowFolderSelectionDialog(out List<string>? folderPaths))
             {
@@ -943,7 +943,7 @@ namespace Carnassial
         /// <summary>
         /// Make a copy of the current file in the folder selected by the user and provide feedback in the status.
         /// </summary>
-        private void MenuFileCloneCurrent_Click(object sender, RoutedEventArgs e)
+        private void MenuFileCloneCurrent_Click(object? _sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.IsFileAvailable());
 
@@ -984,13 +984,13 @@ namespace Carnassial
             }
         }
 
-        private async void MenuFileCloseImageSet_Click(object sender, RoutedEventArgs e)
+        private async void MenuFileCloseImageSet_Click(object? _sender, RoutedEventArgs? _)
         {
             await this.CloseImageSetAsync().ConfigureAwait(true);
             this.MenuViewShowInstructions_Click(this, null);
         }
 
-        private async void MenuFileLoadImageSet_Click(object sender, RoutedEventArgs e)
+        private async void MenuFileLoadImageSet_Click(object? _sender, RoutedEventArgs? _)
         {
             if (this.TryGetTemplatePath(out string? templateDatabaseFilePath))
             {
@@ -998,7 +998,7 @@ namespace Carnassial
             }
         }
 
-        private async void MenuFileMoveFiles_Click(object sender, RoutedEventArgs e)
+        private async void MenuFileMoveFiles_Click(object? _sender, RoutedEventArgs? _)
         {
             using CommonOpenFileDialog folderSelectionDialog = new();
             folderSelectionDialog.Title = "Select the folder to move files to...";
@@ -1039,7 +1039,7 @@ namespace Carnassial
         }
 
         /// <summary>Write the .csv or .xlsx file and maybe send an open command to the system.</summary>
-        private async void MenuFileExportSpreadsheet_Click(object sender, RoutedEventArgs e)
+        private async void MenuFileExportSpreadsheet_Click(object sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.DataHandler != null);
 
@@ -1120,7 +1120,7 @@ namespace Carnassial
             this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusSpreadsheetExportCompleted, spreadsheetFileName, stopwatch.Elapsed.TotalSeconds, this.DataHandler.FileDatabase.CurrentlySelectedFileCount / stopwatch.Elapsed.TotalSeconds);
         }
 
-        private async void MenuFileImport_Click(object sender, RoutedEventArgs e)
+        private async void MenuFileImport_Click(object? _sender, RoutedEventArgs? _)
         {
             if (CarnassialSettings.Default.SuppressImportPrompt == false)
             {
@@ -1237,7 +1237,7 @@ namespace Carnassial
             this.SetStatusMessage(Constant.ResourceKey.CarnassialWindowStatusSpreadsheetImportCompleted, Path.GetFileName(otherDataFilePath), stopwatch.Elapsed.TotalSeconds, importResult.FilesAdded, importResult.FilesUpdated, importResult.FilesProcessed / stopwatch.Elapsed.TotalSeconds);
         }
 
-        private async void MenuFileRecentImageSet_Click(object sender, RoutedEventArgs e)
+        private async void MenuFileRecentImageSet_Click(object sender, RoutedEventArgs? _)
         {
             await this.TryOpenTemplateAndFileDatabaseAsync((string)((MenuItem)sender).ToolTip).ConfigureAwait(true);
         }
@@ -1281,7 +1281,7 @@ namespace Carnassial
             }
         }
 
-        private void MenuFileRenameFileDatabase_Click(object sender, RoutedEventArgs e)
+        private void MenuFileRenameFileDatabase_Click(object? _sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.DataHandler != null);
             RenameFileDatabaseFile renameFileDatabase = new(this.DataHandler.FileDatabase.FileName, this);
@@ -1292,13 +1292,13 @@ namespace Carnassial
             }
         }
 
-        private void MenuFileExit_Click(object sender, RoutedEventArgs e)
+        private void MenuFileExit_Click(object? _sender, RoutedEventArgs? _)
         {
             this.Close();
         }
 
         /// <summary>Display a message describing the version, etc.</summary> 
-        private void MenuHelpAbout_Click(object sender, RoutedEventArgs e)
+        private void MenuHelpAbout_Click(object? _sender, RoutedEventArgs? _)
         {
             About about = new(this);
             if ((about.ShowDialog() == true) && about.MostRecentCheckForUpdate.HasValue)
@@ -1308,7 +1308,7 @@ namespace Carnassial
         }
 
         /// <summary>Show advanced Carnassial options.</summary>
-        private void MenuOptionsAdvancedCarnassialOptions_Click(object sender, RoutedEventArgs e)
+        private void MenuOptionsAdvancedCarnassialOptions_Click(object? _sender, RoutedEventArgs? _)
         {
             AdvancedCarnassialOptions advancedCarnassialOptions = new(this.State, this.FileDisplay, this);
             if (advancedCarnassialOptions.ShowDialog() == true)
@@ -1319,7 +1319,7 @@ namespace Carnassial
         }
 
         /// <summary>Show advanced image set options.</summary>
-        private void MenuOptionsAdvancedImageSetOptions_Click(object sender, RoutedEventArgs e)
+        private void MenuOptionsAdvancedImageSetOptions_Click(object? _sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.DataHandler != null);
             AdvancedImageSetOptions advancedImageSetOptions = new(this.DataHandler.FileDatabase, this);
@@ -1327,25 +1327,25 @@ namespace Carnassial
         }
 
         /// <summary>Toggle audio feedback on and off.</summary>
-        private void MenuOptionsAudioFeedback_Click(object sender, RoutedEventArgs e)
+        private void MenuOptionsAudioFeedback_Click(object? _sender, RoutedEventArgs? _)
         {
             CarnassialSettings.Default.AudioFeedback = !CarnassialSettings.Default.AudioFeedback;
             this.MenuOptionsAudioFeedback.IsChecked = CarnassialSettings.Default.AudioFeedback;
         }
 
-        private void MenuOptionsEnableFileCountOnImportDialog_Click(object sender, RoutedEventArgs e)
+        private void MenuOptionsEnableFileCountOnImportDialog_Click(object? _sender, RoutedEventArgs? _)
         {
             CarnassialSettings.Default.SuppressFileCountOnImportDialog = !CarnassialSettings.Default.SuppressFileCountOnImportDialog;
             this.MenuOptionsEnableFileCountOnImportDialog.IsChecked = !CarnassialSettings.Default.SuppressFileCountOnImportDialog;
         }
 
-        private void MenuOptionsEnableImportPrompt_Click(object sender, RoutedEventArgs e)
+        private void MenuOptionsEnableImportPrompt_Click(object? _sender, RoutedEventArgs? _)
         {
             CarnassialSettings.Default.SuppressImportPrompt = !CarnassialSettings.Default.SuppressImportPrompt;
             this.MenuOptionsEnableImportPrompt.IsChecked = !CarnassialSettings.Default.SuppressImportPrompt;
         }
 
-        internal async void MenuOptionsOrderFilesByDateTime_Click(object sender, RoutedEventArgs e)
+        internal async void MenuOptionsOrderFilesByDateTime_Click(object? _sender, RoutedEventArgs? _)
         {
             if (this.IsFileDatabaseAvailable() == false)
             {
@@ -1358,13 +1358,13 @@ namespace Carnassial
             this.State.UndoRedoChain.AddCommand(orderingCommand);
         }
 
-        private void MenuOptionsSkipFileClassification_Click(object sender, RoutedEventArgs e)
+        private void MenuOptionsSkipFileClassification_Click(object? _sender, RoutedEventArgs? _)
         {
             CarnassialSettings.Default.SkipFileClassification = !CarnassialSettings.Default.SkipFileClassification;
             this.MenuOptionsSkipFileClassification.IsChecked = CarnassialSettings.Default.SkipFileClassification;
         }
 
-        private async void MenuSelectCustom_Click(object sender, RoutedEventArgs e)
+        private async void MenuSelectCustom_Click(object? _sender, RoutedEventArgs? _)
         {
             // the first time the custom selection dialog is launched update the DateTime and UtcOffset search terms to the time of the current file
             // Don't need to check CustomSelectionChange.HasChanges() as a change is guaranteed.
@@ -1408,13 +1408,13 @@ namespace Carnassial
         }
 
         /// <summary>Show a dialog box telling the user how many images were loaded, etc.</summary>
-        public void MenuSelectFileCounts_Click(object sender, RoutedEventArgs e)
+        public void MenuSelectFileCounts_Click(object? _sender, RoutedEventArgs? _)
         {
             this.MaybeShowFileCountsDialog(false);
         }
 
         /// <summary>Get the non-custom selection and update the view.</summary>
-        private async void MenuSelectFiles_Click(object sender, RoutedEventArgs e)
+        private async void MenuSelectFiles_Click(object sender, RoutedEventArgs? _)
         {
             // get selection 
             FileSelection selection;
@@ -1458,7 +1458,7 @@ namespace Carnassial
             await this.SelectFilesAndShowFileAsync(selection).ConfigureAwait(true);
         }
 
-        private void MenuSelect_SubmenuOpening(object sender, RoutedEventArgs e)
+        private void MenuSelect_SubmenuOpening(object? _sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.DataHandler != null);
             Dictionary<FileClassification, int> counts = this.DataHandler.FileDatabase.GetFileCountsByClassification();
@@ -1472,13 +1472,13 @@ namespace Carnassial
             this.MenuSelectVideoFiles.IsEnabled = counts[FileClassification.Video] > 0;
         }
 
-        private void MenuViewApplyBookmark_Click(object sender, RoutedEventArgs e)
+        private void MenuViewApplyBookmark_Click(object? _sender, RoutedEventArgs? _)
         {
             this.FileDisplay.ApplyBookmark();
         }
 
         /// <summary>Toggle the magnifier on and off.</summary>
-        private void MenuViewDisplayMagnifier_Click(object sender, RoutedEventArgs e)
+        private void MenuViewDisplayMagnifier_Click(object? _sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.DataHandler != null);
             bool displayMagnifier = this.DataHandler.FileDatabase.ImageSet.Options.HasFlag(ImageSetOptions.Magnifier);
@@ -1490,20 +1490,20 @@ namespace Carnassial
         }
 
         /// <summary>View the combined image differences.</summary>
-        private async void MenuViewDifferencesCombined_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewDifferencesCombined_Click(object? _sender, RoutedEventArgs? _)
         {
             await this.TryViewCombinedDifferenceAsync().ConfigureAwait(true);
         }
 
         /// <summary>Increase the magnification of the magnifying glass by several keyboard steps.</summary>
-        private void MenuViewMagnifierIncrease_Click(object sender, RoutedEventArgs e)
+        private void MenuViewMagnifierIncrease_Click(object? _sender, RoutedEventArgs? _)
         {
             this.FileDisplay.MagnifierZoomIn();
             this.FileDisplay.MagnifierZoomIn();
             this.FileDisplay.MagnifierZoomIn();
         }
 
-        private async void MenuViewGotoFile_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewGotoFile_Click(object? _sender, RoutedEventArgs? _)
         {
             if (this.IsFileDatabaseAvailable() == false)
             {
@@ -1519,14 +1519,14 @@ namespace Carnassial
         }
 
         /// <summary>Decrease the magnification of the magnifying glass by several keyboard steps.</summary>
-        private void MenuViewMagnifierDecrease_Click(object sender, RoutedEventArgs e)
+        private void MenuViewMagnifierDecrease_Click(object? _sender, RoutedEventArgs? _)
         {
             this.FileDisplay.MagnifierZoomOut();
             this.FileDisplay.MagnifierZoomOut();
             this.FileDisplay.MagnifierZoomOut();
         }
 
-        private void MenuViewPlayFiles_Click(object sender, RoutedEventArgs? e)
+        private void MenuViewPlayFiles_Click(object sender, RoutedEventArgs? _)
         {
             // if this event doesn't result from a button click, toggle the play files button's state
             if (sender != this.PlayFilesButton)
@@ -1547,39 +1547,39 @@ namespace Carnassial
             }
         }
 
-        private void MenuViewPlayVideo_Click(object sender, RoutedEventArgs e)
+        private void MenuViewPlayVideo_Click(object? _sender, RoutedEventArgs? _)
         {
             this.FileDisplay.TryPlayOrPauseVideo();
         }
 
         /// <summary>Cycle through next and previous image differences.</summary>
-        private async void MenuViewPreviousOrNextDifference_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewPreviousOrNextDifference_Click(object? _sender, RoutedEventArgs? _)
         {
             await this.TryViewPreviousOrNextDifferenceAsync().ConfigureAwait(true);
         }
 
-        private void MenuViewSetBookmark_Click(object sender, RoutedEventArgs e)
+        private void MenuViewSetBookmark_Click(object? _sender, RoutedEventArgs? _)
         {
             this.FileDisplay.SetBookmark();
         }
 
-        private async void MenuViewShowFirstFile_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowFirstFile_Click(object? _sender, RoutedEventArgs? _)
         {
             await this.ShowFileWithoutSliderCallbackAsync(0).ConfigureAwait(true);
         }
 
-        private void MenuViewShowFiles_Click(object sender, RoutedEventArgs? e)
+        private void MenuViewShowFiles_Click(object? _sender, RoutedEventArgs? _)
         {
             this.Tabs.SelectedIndex = Constant.UserInterface.TabSelectionIndexFiles;
             this.FocusFileDisplay();
         }
 
-        private void MenuViewShowInstructions_Click(object sender, RoutedEventArgs? e)
+        private void MenuViewShowInstructions_Click(object? _sender, RoutedEventArgs? _)
         {
             this.Tabs.SelectedIndex = Constant.UserInterface.TabSelectionIndexInstructions;
         }
 
-        private async void MenuViewShowLastFile_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowLastFile_Click(object? _sender, RoutedEventArgs? _)
         {
             if (this.IsFileDatabaseAvailable())
             {
@@ -1589,27 +1589,27 @@ namespace Carnassial
         }
 
         /// <summary>Navigate to the next file in this image set.</summary>
-        private async void MenuViewShowNextFile_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowNextFile_Click(object? _sender, RoutedEventArgs? _)
         {
             await this.ShowFileWithoutSliderCallbackAsync(true, ModifierKeys.None).ConfigureAwait(true);
         }
 
-        private async void MenuViewShowNextFileControl_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowNextFileControl_Click(object? _sender, RoutedEventArgs? _)
         {
             await this.ShowFileWithoutSliderCallbackAsync(true, ModifierKeys.Control).ConfigureAwait(true);
         }
 
-        private async void MenuViewShowNextFileControlShift_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowNextFileControlShift_Click(object? _sender, RoutedEventArgs? _)
         {
             await this.ShowFileWithoutSliderCallbackAsync(true, ModifierKeys.Control | ModifierKeys.Shift).ConfigureAwait(true);
         }
 
-        private async void MenuViewShowNextFileShift_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowNextFileShift_Click(object? _sender, RoutedEventArgs? _)
         {
             await this.ShowFileWithoutSliderCallbackAsync(true, ModifierKeys.Shift).ConfigureAwait(true);
         }
 
-        private async void MenuViewShowNextFilePageDown_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowNextFilePageDown_Click(object? _sender, RoutedEventArgs? _)
         {
             if (this.IsFileDatabaseAvailable())
             {
@@ -1620,27 +1620,27 @@ namespace Carnassial
         }
 
         /// <summary>Navigate to the previous file in this image set.</summary>
-        private async void MenuViewShowPreviousFile_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowPreviousFile_Click(object? _sender, RoutedEventArgs? _)
         {
             await this.ShowFileWithoutSliderCallbackAsync(false, ModifierKeys.None).ConfigureAwait(true);
         }
 
-        private async void MenuViewShowPreviousFileControl_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowPreviousFileControl_Click(object? _sender, RoutedEventArgs? _)
         {
             await this.ShowFileWithoutSliderCallbackAsync(false, ModifierKeys.Control).ConfigureAwait(true);
         }
 
-        private async void MenuViewShowPreviousFileControlShift_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowPreviousFileControlShift_Click(object? _sender, RoutedEventArgs? _)
         {
             await this.ShowFileWithoutSliderCallbackAsync(false, ModifierKeys.Control | ModifierKeys.Shift).ConfigureAwait(true);
         }
 
-        private async void MenuViewShowPreviousFileShift_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowPreviousFileShift_Click(object? _sender, RoutedEventArgs? _)
         {
             await this.ShowFileWithoutSliderCallbackAsync(false, ModifierKeys.Shift).ConfigureAwait(true);
         }
 
-        private async void MenuViewShowPreviousFilePageUp_Click(object sender, RoutedEventArgs e)
+        private async void MenuViewShowPreviousFilePageUp_Click(object? _sender, RoutedEventArgs? _)
         {
             if (this.IsFileDatabaseAvailable())
             {
@@ -1650,17 +1650,17 @@ namespace Carnassial
             }
         }
 
-        private void MenuViewZoomIn_Click(object sender, RoutedEventArgs e)
+        private void MenuViewZoomIn_Click(object? _sender, RoutedEventArgs? _)
         {
             this.FileDisplay.ZoomIn();
         }
 
-        private void MenuViewZoomOut_Click(object sender, RoutedEventArgs e)
+        private void MenuViewZoomOut_Click(object? _sender, RoutedEventArgs? _)
         {
             this.FileDisplay.ZoomOut();
         }
 
-        private void MenuViewZoomToFit_Click(object sender, RoutedEventArgs e)
+        private void MenuViewZoomToFit_Click(object? _sender, RoutedEventArgs? _)
         {
             this.FileDisplay.ZoomToFit();
         }
@@ -1718,7 +1718,7 @@ namespace Carnassial
             this.State.MostRecentlyFocusedControlIndex = -1;
         }
 
-        public void OnBulkEdit(object? sender, EventArgs? e)
+        public void OnBulkEdit(object? _sender, EventArgs? _)
         {
             // clear undo/redo state as bulk edits aren't undoable
             this.ResetUndoRedoState();
@@ -1836,7 +1836,7 @@ namespace Carnassial
         }
 
         [SupportedOSPlatform(Constant.Platform.Windows)]
-        private void OnUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+        private void OnUnhandledException(object? _sender, DispatcherUnhandledExceptionEventArgs e)
         {
             string? databasePath = null;
             if (this.IsFileDatabaseAvailable())
@@ -1855,7 +1855,7 @@ namespace Carnassial
         /// <summary>
         /// Highlight controls for copyable fields when the mouse enters the paste button.
         /// </summary>
-        private void PasteButton_MouseEnter(object sender, MouseEventArgs e)
+        private void PasteButton_MouseEnter(object? _sender, MouseEventArgs? _)
         {
             foreach (DataEntryControl control in this.DataEntryControls.Controls)
             {
@@ -1866,7 +1866,7 @@ namespace Carnassial
         /// <summary>
         /// Remove highlights when the mouse leaves the paste button.
         /// </summary>
-        private void PasteButton_MouseLeave(object sender, MouseEventArgs e)
+        private void PasteButton_MouseLeave(object? _sender, MouseEventArgs? _)
         {
             foreach (DataEntryControl control in this.DataEntryControls.Controls)
             {
@@ -1874,7 +1874,7 @@ namespace Carnassial
             }
         }
 
-        private void PasteNextValues_Click(object sender, RoutedEventArgs e)
+        private void PasteNextValues_Click(object? _sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.DataHandler != null);
             int nextIndex = this.DataHandler.ImageCache.CurrentRow + 1;
@@ -1888,7 +1888,7 @@ namespace Carnassial
             this.PasteValuesToCurrentFileWithUndo(DataEntryHandler.GetCopyableFields(nextFile, this.DataEntryControls.Controls));
         }
 
-        private void PastePreviousValues_Click(object sender, RoutedEventArgs e)
+        private void PastePreviousValues_Click(object? _sender, RoutedEventArgs? _)
         {
             Debug.Assert(this.DataHandler != null);
             int previousIndex = this.DataHandler.ImageCache.CurrentRow - 1;
@@ -2370,7 +2370,12 @@ namespace Carnassial
             // update the user as to what files are in the database
             this.MaybeShowFileCountsDialog(true);
 
-            // TODO: move to first added file in the current selection, if any
+            // move to first added file in the current selection, if any
+            if ((filesAddedToDatabase > 0) && (originalSelection == FileSelection.All))
+            {
+                // TODO: support other selection modes
+                this.MenuViewShowNextFile_Click(this, null);
+            }
             return true;
         }
 
@@ -2733,7 +2738,7 @@ namespace Carnassial
             this.LongRunningFeedback.ProgressBar.Value = progress.GetPercentage();
         }
 
-        private void Window_Activated(object _1, EventArgs _2)
+        private void Window_Activated(object? _sender, EventArgs? _)
         {
             // when activated (app launch, taskbar click, alt+tab) change focus to the instructions or files tab
             // This diverts the special case where, if a user clicks the minimize button and then reactivates Carnassial, WPF leaves
@@ -2750,7 +2755,7 @@ namespace Carnassial
         }
 
         [SupportedOSPlatform(Constant.Platform.Windows)]
-        private async void Window_Closing(object sender, CancelEventArgs e)
+        private async void Window_Closing(object? _sender, CancelEventArgs? _)
         {
             await this.CloseImageSetAsync().ConfigureAwait(true);
             HwndSource.FromHwnd(new WindowInteropHelper(this).Handle).RemoveHook(new HwndSourceHook(this.WndProc));
@@ -2771,7 +2776,7 @@ namespace Carnassial
             CarnassialSettings.Default.Save();
         }
 
-        private async void Window_ContentRendered(object sender, EventArgs e)
+        private async void Window_ContentRendered(object? _sender, EventArgs? _)
         {
             // check for updates
             if (DateTime.UtcNow - CarnassialSettings.Default.MostRecentCheckForUpdates > Constant.CheckForUpdateInterval)
@@ -3131,7 +3136,7 @@ namespace Carnassial
             }
         }
 
-        private void Window_SourceInitialized(object sender, EventArgs e)
+        private void Window_SourceInitialized(object? _sender, EventArgs? _)
         {
             // hook to enable image set navigation with horizontal mouse wheel moves and two finger horizontal touchpad swipes
             // Long standing workaround for https://github.com/dotnet/wpf/issues/3201.
